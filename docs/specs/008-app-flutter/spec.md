@@ -1,0 +1,103 @@
+# Spec 008 — App Flutter
+
+## 1. Estructura y stack
+
+Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod`/`riverpod_annotation`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `fl_chart` (dashboard), `intl` (formato COP).
+
+## 2. Mapa de navegación
+
+```mermaid
+flowchart TD
+    SPLASH[Splash / gate de sesión] -->|sin sesión| ONB[Onboarding]
+    SPLASH -->|con sesión| HOME
+    ONB --> G[1. Google Sign-In]
+    G --> GM[2. Conectar Gmail<br/>opcional, explicación clara]
+    GM --> NP[3. Permiso notificaciones<br/>solo Android, opcional]
+    NP --> ACC[4. Cuentas propias<br/>banco + últimos 4]
+    ACC --> HOME
+
+    HOME[Shell con bottom nav] --> D[Dashboard]
+    HOME --> TX[Transacciones]
+    HOME --> ADD[+ Registrar]
+    HOME --> RV[Revisión]
+    HOME --> ST[Ajustes]
+
+    TX --> TXD[Detalle transacción]
+    ADD --> QA[Formulario rápido<br/>también vía NFC deep link]
+    ST --> FR[Reporte de renta]
+    ST --> NFCW[Escribir tag NFC]
+    ST --> PRIV[Privacidad: exportar / borrar cuenta]
+```
+
+## 3. Especificación por pantalla
+
+### 3.1 Onboarding (RF-1)
+- Paso Gmail: pantalla propia explicando qué se lee ("solo correos de tus bancos, nunca tu correo personal") antes del consent de Google; botón "ahora no" visible (AC-1.3). Usa autorización incremental: `google_sign_in` solicita `gmail.readonly` y envía el `serverAuthCode` a `/gmail/connect`.
+- Paso notificaciones (Android): explica el uso (detectar pagos al instante), lista lo que se ignora; abre el ajuste del sistema de acceso a notificaciones. Detecta el estado al volver (AC-3.4).
+- Paso cuentas: formulario simple banco + últimos 4 + alias, repetible; explica su uso (detectar transferencias propias).
+
+### 3.2 Dashboard (RF-9)
+- Mes seleccionable; tarjetas: gastos, ingresos, balance; gráfico de top 5 categorías; delta vs mes anterior. Excluye transfers. Datos de `insights` con caché local; estado offline visible (banner discreto "sin conexión — datos locales").
+
+### 3.3 Transacciones (RF-9)
+- Lista infinita (paginada de Drift), agrupada por día; cada ítem: comercio, categoría (chip editable inline), monto con signo/color, íconos de fuente (correo/notif/SMS/manual/NFC) y badge `transfer`.
+- Filtros: rango de fechas, banco, cuenta, categoría, tipo, texto.
+- Detalle: todos los campos + fuentes con texto original (AC-9.3) + par de transferencia navegable + acciones (editar categoría → pregunta "¿aplicar siempre a este comercio?" = merchant_rule AC-7.2; marcar/desmarcar transfer; notas).
+
+### 3.4 Registrar (RF-4)
+- Formulario completo: monto (teclado numérico COP), dirección, fecha (default hoy), comercio, categoría, cuenta, nota.
+- **Formulario rápido (NFC)**: solo monto grande centrado + botón confirmar; categoría/cuenta del tag. Objetivo: 2 toques + monto. Abre por deep link `finanzia://quick-add?tag=<uuid>` (Android NDEF) o desde botón NFC (iOS foreground).
+- Ambos guardan primero en Drift + outbox (AC-4.2).
+
+### 3.5 Revisión (RF-8)
+- Lista de mensajes fallidos: texto fuente resaltando montos detectados, `partial_extract` prellenado.
+- Acciones: "crear transacción" (abre formulario prellenado) / "descartar". Badge con conteo en la bottom nav.
+
+### 3.6 Reporte de renta (RF-10)
+- Selector de año gravable; verificación de topes (semáforo por criterio con valores UVT); cifras por cédula expandibles → lista de transacciones que las soportan (AC-10.4); advertencias (p. ej. intereses de vivienda); datos manuales (dependientes, patrimonio) editables aquí; botón exportar Excel (descarga/share). Disclaimer fijo (spec 007 §1).
+
+### 3.7 Ajustes
+- Perfil Google; estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
+- Cuentas vinculadas (CRUD); categorías (CRUD de propias); escribir/gestionar tags NFC.
+- Privacidad: política, exportar datos (RF-11.2), borrar cuenta con doble confirmación + texto de irreversibilidad (RF-11.3).
+
+## 4. Servicios de plataforma (feature `capture`)
+
+### 4.1 NotificationCaptureService (Android)
+- Implementación con `notification_listener_service`; corre aunque la app esté cerrada (el sistema mantiene el listener).
+- Pipeline local: filtro por paquete (config remota cacheada) → filtro SMS por patrón de remitente → pre-filtro de monto → persistir en Drift outbox → flush batch a `/ingest/notifications` (inmediato con red; si no, al reconectar).
+- iOS: implementación no-op; la UI de onboarding/ajustes no muestra la sección.
+
+### 4.2 NfcService
+- Android: lectura NDEF por intent-filter (app cerrada) y en foreground; escritura de tags.
+- iOS: lectura en foreground con sesión Core NFC iniciada por el usuario.
+
+## 5. Sincronización offline (P4, contrato en spec 005 §9)
+
+- `SyncCoordinator` (provider) dispara: al abrir la app, al reconectar (connectivity_plus), tras push del outbox y cada 15 min en foreground.
+- Pull incremental por `updated_since` por tabla → upsert en Drift. Push: drena outbox FIFO con `Idempotency-Key`.
+- Conflictos: gana `updated_at` más reciente, salvo ediciones manuales del usuario que prevalecen (spec 003 §3).
+- Indicador global de estado de sync en Ajustes (última sincronización, ítems pendientes).
+
+## 6. Permisos y plataforma
+
+| Permiso | Plataforma | Momento | Fallback si se niega |
+|---|---|---|---|
+| Google Sign-In | ambas | onboarding paso 1 | no hay app sin login |
+| `gmail.readonly` (incremental) | ambas | onboarding paso 2 / Ajustes | captura manual + notificaciones |
+| Acceso a notificaciones | Android | onboarding paso 3 / Ajustes | captura por Gmail + manual |
+| NFC | ambas | al usar la función | registro manual normal |
+| Notificaciones push propias (avisos de la app) | ambas | post-onboarding | sin recordatorios |
+
+## 7. UX/UI
+
+- Material 3, tema claro/oscuro del sistema; español (Colombia) único idioma MVP (arquitectura lista para i18n con `intl`).
+- Formato de moneda: `$1.234.567` COP sin decimales en listas, con decimales en detalle.
+- Accesibilidad: targets ≥ 48dp, semántica en widgets custom, contraste AA.
+
+## 8. Criterios de aceptación específicos de la app
+
+- **AC-APP-1** La app abre y muestra transacciones locales en modo avión; registrar manual funciona y sincroniza al reconectar (test E2E).
+- **AC-APP-2** Matar la app en Android no detiene la captura de notificaciones (el listener del sistema persiste).
+- **AC-APP-3** Cambio de categoría refleja en dashboard y reporte fiscal local sin esperar al servidor (optimistic update + reconciliación).
+- **AC-APP-4** `flutter analyze` sin warnings; `flutter test` verde en CI para dominio y controllers de cada feature.
