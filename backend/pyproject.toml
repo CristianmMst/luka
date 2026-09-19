@@ -1,0 +1,129 @@
+[project]
+name = "finanzia"
+version = "0.1.0"
+description = "Backend de finanzia: monolito modular hexagonal (FastAPI + arq)."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.20.0,<2",
+    "arq>=0.28.0,<1",
+    "asyncpg>=0.31.0,<1",
+    "cachecontrol>=0.14.4,<1",
+    "fastapi>=0.141.1,<1",
+    "google-auth>=2.58.0,<3",
+    "pydantic>=2.13.5,<3",
+    "pydantic-settings>=2.15.0,<3",
+    "pyjwt>=2.14.0,<3",
+    "redis>=5.3.1,<6",
+    "requests>=2.34.2,<3",
+    "sqlalchemy[asyncio]>=2.0.54,<3",
+    "structlog>=26.1.0,<27",
+    "uvicorn[standard]>=0.53.0,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/finanzia"]
+
+[dependency-groups]
+dev = [
+    "asgi-lifespan>=2.1.0,<3",
+    "httpx>=0.28.1,<1",
+    "import-linter>=2.15,<3",
+    "pip-audit>=2.10.1,<3",
+    "pre-commit>=4.6.2,<5",
+    "pyright>=1.1.414,<2",
+    "pytest>=9.1.1,<10",
+    "pytest-asyncio>=1.4.0,<2",
+    "pytest-cov>=7.1.0,<8",
+    "ruff>=0.16.8,<1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S", "ASYNC", "T20", "RUF", "PL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S106", "PLR2004"]
+"migrations/**" = ["E501"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
+include = ["src", "tests"]
+strict = [
+    "src/finanzia/shared",
+    "src/finanzia/modules/*/domain",
+    "src/finanzia/modules/*/application",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+markers = [
+    "unit: tests unitarios sin infraestructura",
+    "integration: tests que requieren infraestructura (DB, Redis, etc.)",
+    "ci: tests que corren en pipeline de CI",
+]
+addopts = "--strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["finanzia"]
+
+[tool.importlinter]
+root_packages = ["finanzia"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]  # R1
+name = "R1 - domain solo importa stdlib y a si mismo"
+type = "forbidden"
+source_modules = ["finanzia.modules.*.domain"]
+forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker",
+  "finanzia.modules.*.application","finanzia.modules.*.infrastructure","finanzia.modules.*.events","finanzia.modules.*.public",
+  "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
+
+[[tool.importlinter.contracts]]  # R2
+name = "R2 - application solo importa domain, ports y events propios"
+type = "forbidden"
+source_modules = ["finanzia.modules.*.application"]
+forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker",
+  "finanzia.modules.*.infrastructure","finanzia.modules.*.public",
+  "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
+
+[[tool.importlinter.contracts]]  # R3a
+name = "R3a - events.py es puro"
+type = "forbidden"
+source_modules = ["finanzia.modules.*.events"]
+forbidden_modules = ["finanzia.shared","finanzia.modules.*.application","finanzia.modules.*.infrastructure",
+  "fastapi","starlette","pydantic","sqlalchemy","redis","arq","httpx","structlog","jwt","google"]
+
+[[tool.importlinter.contracts]]  # R3b
+name = "R3b - capas hexagonales por modulo"
+type = "layers"
+layers = ["infrastructure", "application", "domain"]
+containers = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
+  "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
+
+[[tool.importlinter.contracts]]  # R4
+name = "R4 - modulos independientes salvo public.py y events.py"
+type = "independence"
+modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
+  "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
+ignore_imports = ["finanzia.modules.** -> finanzia.modules.*.public", "finanzia.modules.** -> finanzia.modules.*.events"]
+# En Task 0 aun no existen imports cruzados reales (solo esqueleto); "warn" evita que
+# import-linter aborte por "No matches for ignored import" mientras el patron no aplique.
+unmatched_ignore_imports_alerting = "warn"
+
+[[tool.importlinter.contracts]]  # Kernel
+name = "Kernel - shared nunca importa modulos ni composition roots"
+type = "forbidden"
+source_modules = ["finanzia.shared"]
+forbidden_modules = ["finanzia.modules","finanzia.app","finanzia.main","finanzia.worker"]

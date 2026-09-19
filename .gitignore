@@ -1,0 +1,28 @@
+# Controller scratch dir (no es parte del repo)
+.superpowers/
+
+# Backend (Python)
+backend/.venv/
+backend/.env
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.import_linter_cache/
+backend/.coverage
+backend/htmlcov/
+backend/dist/
+backend/*.egg-info/
+**/__pycache__/
+*.pyc
+
+# App (Flutter) — placeholder hasta F0.6
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/build/
+app/.packages
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

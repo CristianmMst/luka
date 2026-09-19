@@ -44,15 +44,20 @@ Decisión central: **monolito modular con arquitectura hexagonal** en el backend
 ### 2.1 Módulos (bounded contexts)
 
 ```
-backend/src/
-├── shared/                # kernel: config, db (SQLAlchemy), seguridad, bus de eventos, errores
-└── modules/
-    ├── identity/          # Google Sign-In, JWT/refresh, usuarios, consentimientos, borrado de cuenta
-    ├── ingestion/         # webhook Pub/Sub, endpoint de notificaciones, gestión de watches Gmail
-    ├── parsing/           # plantillas por banco + adapter LLM; corre en workers
-    ├── ledger/            # transacciones, dedupe, transferencias, categorías, cuentas vinculadas, revisión
-    ├── fiscal/            # reglas 210, tablas UVT, generación de reportes
-    └── insights/          # resúmenes mensuales, agregados del dashboard
+backend/
+├── src/finanzia/
+│   ├── shared/             # kernel: config, db (SQLAlchemy), seguridad, bus de eventos, errores
+│   ├── modules/
+│   │   ├── identity/       # Google Sign-In, JWT/refresh, usuarios, consentimientos, borrado de cuenta
+│   │   ├── ingestion/      # webhook Pub/Sub, endpoint de notificaciones, gestión de watches Gmail
+│   │   ├── parsing/        # plantillas por banco + adapter LLM; corre en workers
+│   │   ├── ledger/         # transacciones, dedupe, transferencias, categorías, cuentas vinculadas, revisión
+│   │   ├── fiscal/         # reglas 210, tablas UVT, generación de reportes
+│   │   └── insights/       # resúmenes mensuales, agregados del dashboard
+│   ├── app.py              # FastAPI factory (composition root del API)
+│   ├── main.py             # entrypoint ASGI
+│   └── worker.py           # entrypoint del worker arq
+└── migrations/              # Alembic, fuera del paquete
 ```
 
 ### 2.2 Estructura hexagonal de cada módulo
@@ -69,8 +74,8 @@ modules/<nombre>/
 
 Reglas de dependencia (verificadas con **import-linter** en CI):
 1. `domain` no importa nada fuera de sí mismo y de la stdlib.
-2. `application` importa solo `domain` y sus propios ports.
-3. `infrastructure` implementa ports; es el único lugar con SQLAlchemy/HTTP/Redis.
+2. `application` importa solo `domain` y sus propios ports. `application` también puede importar el `events.py` del propio módulo; `events.py` es puro (solo stdlib).
+3. `infrastructure` implementa ports; es el único lugar con SQLAlchemy/HTTP/Redis. `shared` es el kernel (usa SQLAlchemy/Redis) y nunca importa `modules`.
 4. Un módulo NUNCA importa internals de otro: solo su API pública (`modules/x/public.py`) o sus eventos.
 
 ### 2.3 Comunicación entre módulos: eventos de dominio
