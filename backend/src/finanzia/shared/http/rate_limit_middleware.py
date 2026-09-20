@@ -79,10 +79,13 @@ class RateLimitMiddleware:
 
         matching_rules = [rule for rule in self._rules if path.startswith(rule.path_prefix)]
         if matching_rules:
-            limiter = self._limiter_provider()
             ip = _client_ip(scope, trust_proxy_headers=self._trust_proxy_headers)
             user_id = _silent_user_id(scope, self._jwt_secret)
 
+            # Orden de evaluacion = orden de la lista `rules`; el primer rechazo
+            # corta la ejecucion. Si una request termina en 429, los cupos de las
+            # reglas anteriores a la rechazada ya quedaron consumidos (no hay
+            # rollback de los `hit()` ya aplicados).
             for rule in matching_rules:
                 if rule.scope == "user" and user_id is None:
                     continue
@@ -91,7 +94,7 @@ class RateLimitMiddleware:
                     if rule.scope == "ip"
                     else f"rl:user:{user_id}:{rule.name}"
                 )
-                decision = await _safe_hit(limiter, key, rule)
+                decision = await _safe_hit(self._limiter_provider, key, rule)
                 if decision is not None and not decision.allowed:
                     await _send_rate_limited(send, decision.retry_after)
                     return
@@ -99,11 +102,26 @@ class RateLimitMiddleware:
         await self._app(scope, receive, send)
 
 
-async def _safe_hit(limiter: SlidingWindowLimiter, key: str, rule: Rule) -> Decision | None:
-    """Ejecuta `limiter.hit` con timeout; None (fail-open) si Redis no responde."""
+async def _safe_hit(
+    limiter_provider: Callable[[], SlidingWindowLimiter], key: str, rule: Rule
+) -> Decision | None:
+    """Resuelve el limiter y ejecuta `hit` con timeout; None (fail-open) si algo falla.
+
+    Cubre tanto la caida de Redis (timeout, `RedisError`, `OSError`) como la
+    falla al resolver el limiter en si (p. ej. `app.state.rate_limiter` todavia
+    no existe o el provider lanza): ambos casos deben dejar pasar la request.
+    """
     try:
+        limiter = limiter_provider()
         return await asyncio.wait_for(limiter.hit(key, rule.limit, rule.window_s), _REDIS_TIMEOUT_S)
-    except (redis.exceptions.RedisError, OSError, TimeoutError):
+    except (
+        redis.exceptions.RedisError,
+        OSError,
+        TimeoutError,
+        AttributeError,
+        LookupError,
+        RuntimeError,
+    ):
         # No se loguea la IP/user_id: solo el nombre de la regla (spec 009 SS5).
         _logger.warning("rate_limit_backend_unavailable", rule=rule.name)
         return None

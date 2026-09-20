@@ -160,3 +160,27 @@ async def test_falla_abierto_si_redis_no_responde(settings: Settings) -> None:
     assert response.status_code == 400
     warnings = [entry for entry in logs if entry.get("event") == "rate_limit_backend_unavailable"]
     assert warnings
+
+
+async def test_falla_abierto_si_el_limiter_no_esta_disponible(settings: Settings) -> None:
+    """Regresion (fix round 1): resolver `app.state.rate_limiter` tambien falla-abierto.
+
+    Antes del fix, `limiter_provider()` se llamaba fuera del `try/except` de
+    `_safe_hit`, asi que un provider ausente/roto tumbaba la request con 500 en
+    vez de dejarla pasar.
+    """
+    app = create_app(settings)
+    async with LifespanManager(app):
+        del app.state.rate_limiter
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            health_response = await client.get("/health")
+            assert health_response.status_code == 200
+
+            with structlog.testing.capture_logs() as logs:
+                auth_response = await client.post("/v1/auth/google", json={"id_token": "short"})
+
+    assert auth_response.status_code == 400
+    warnings = [entry for entry in logs if entry.get("event") == "rate_limit_backend_unavailable"]
+    assert warnings
