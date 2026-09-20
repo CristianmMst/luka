@@ -40,10 +40,14 @@ from finanzia.modules.ledger.infrastructure.api.deps import (
     get_update_transaction_use_case,
 )
 from finanzia.modules.ledger.infrastructure.api.patch_utils import resolve_required_patch_field
-from finanzia.modules.ledger.infrastructure.api.presenters import transaction_response
+from finanzia.modules.ledger.infrastructure.api.presenters import (
+    transaction_list_item,
+    transaction_response,
+)
 from finanzia.modules.ledger.infrastructure.api.schemas import (
     CreateTransactionRequest,
     PatchTransactionRequest,
+    TransactionListItem,
     TransactionResponse,
     TransferPairRequest,
 )
@@ -81,9 +85,13 @@ async def list_transactions(  # noqa: PLR0913, PLR0917 - un parametro por filtro
     updated_since: datetime | None = Query(None),
     user_id: UUID = Depends(get_current_user_id),
     use_case: ListTransactions = Depends(get_list_transactions_use_case),
-    get_transaction: GetTransaction = Depends(get_get_transaction_use_case),
-) -> Page[TransactionResponse]:
-    """Lista transacciones propias, paginadas por cursor (spec 005 SS1/SS6)."""
+) -> Page[TransactionListItem]:
+    """Lista transacciones propias, paginadas por cursor (spec 005 SS1/SS6).
+
+    Los items NO incluyen `sources`/`pair` (esos solo se exponen en
+    `GET /transactions/{id}`): una unica consulta al repositorio arma toda la
+    pagina, sin el N+1 de recargar cada fila (RNF-3, p95 < 300 ms).
+    """
     expected_kind: CursorKind = "updated" if updated_since is not None else "occurred"
     cursor: Cursor | None = None
     if page.cursor is not None:
@@ -102,13 +110,13 @@ async def list_transactions(  # noqa: PLR0913, PLR0917 - un parametro por filtro
         updated_since=updated_since,
     )
     result = await use_case.execute(user_id, filters, cursor, page.limit)
-    items = [await _build_response(tx, get_transaction, user_id) for tx in result.items]
+    items = [transaction_list_item(tx) for tx in result.items]
     next_cursor = None
     if result.next_cursor is not None:
         next_cursor = encode_cursor(
             result.next_cursor.sort_key, result.next_cursor.id, expected_kind
         )
-    return Page[TransactionResponse](items=items, next_cursor=next_cursor)
+    return Page[TransactionListItem](items=items, next_cursor=next_cursor)
 
 
 @router.post("/transactions", status_code=status.HTTP_201_CREATED)

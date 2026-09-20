@@ -150,11 +150,12 @@ class TransactionSummary(BaseModel):
     fiscal_tag: str
 
 
-class TransactionResponse(BaseModel):
-    """Representacion publica completa de una transaccion (spec 005 SS6, SS9.3).
+class TransactionListItem(BaseModel):
+    """Item de `GET /transactions` (spec 005 SS6): sin `sources`/`pair`.
 
-    Omite deliberadamente `user_id` y `dedupe_key`: son detalles de persistencia
-    del propio usuario autenticado, sin valor para el cliente (spec 009 SS4/SS5).
+    `sources` solo se expone en `GET /transactions/{id}` (RNF-3 p95 < 300 ms: cargarlas
+    por fila haria del listado una consulta N+1). Comparte todos los demas campos con
+    `TransactionResponse`, que hereda de esta clase y agrega `sources`/`pair`.
     """
 
     id: UUID
@@ -176,6 +177,15 @@ class TransactionResponse(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class TransactionResponse(TransactionListItem):
+    """Representacion publica completa de una transaccion (spec 005 SS6, SS9.3).
+
+    Omite deliberadamente `user_id` y `dedupe_key`: son detalles de persistencia
+    del propio usuario autenticado, sin valor para el cliente (spec 009 SS4/SS5).
+    """
+
     sources: list[TransactionSourceResponse]
     pair: TransactionSummary | None
 

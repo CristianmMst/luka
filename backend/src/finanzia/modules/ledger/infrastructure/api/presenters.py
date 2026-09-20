@@ -5,12 +5,14 @@ modulo por debajo de ~200 lineas (guia de organizacion de codigo de la tarea).
 """
 
 from decimal import Decimal
+from typing import Any
 
 from finanzia.modules.ledger.application.dto import TransactionDetail
 from finanzia.modules.ledger.domain.entities import Category, LinkedAccount, Transaction
 from finanzia.modules.ledger.infrastructure.api.schemas import (
     AccountResponse,
     CategoryResponse,
+    TransactionListItem,
     TransactionResponse,
     TransactionSourceResponse,
     TransactionSummary,
@@ -22,6 +24,40 @@ _CENTS = Decimal("0.01")
 def _amount_str(amount: Decimal) -> str:
     """Formatea un monto como cadena decimal con exactamente 2 decimales."""
     return str(amount.quantize(_CENTS))
+
+
+def _list_item_fields(tx: Transaction) -> dict[str, Any]:
+    """Campos comunes a `TransactionListItem` y `TransactionResponse`."""
+    return {
+        "id": tx.id,
+        "amount": _amount_str(tx.amount),
+        "currency": tx.currency,
+        "direction": tx.direction.value,
+        "kind": tx.kind.value,
+        "occurred_at": tx.occurred_at,
+        "merchant": tx.merchant,
+        "description": tx.description,
+        "bank": tx.bank.value if tx.bank is not None else None,
+        "account_id": tx.account_id,
+        "category_id": tx.category_id,
+        "fiscal_tag": tx.fiscal_tag.value,
+        "transfer_pair_id": tx.transfer_pair_id,
+        "transfer_auto": tx.transfer_auto,
+        "parsed_by": tx.parsed_by,
+        "confidence": tx.confidence,
+        "notes": tx.notes,
+        "created_at": tx.created_at,
+        "updated_at": tx.updated_at,
+    }
+
+
+def transaction_list_item(tx: Transaction) -> TransactionListItem:
+    """Item de `GET /transactions`: sin `sources`/`pair` (spec 005 SS6, RNF-3).
+
+    Se construye directo desde la entidad devuelta por `ListTransactions`, sin
+    ninguna consulta adicional (nada de `sources`/pareja por fila).
+    """
+    return TransactionListItem(**_list_item_fields(tx))
 
 
 def transaction_summary(tx: Transaction) -> TransactionSummary:
@@ -44,25 +80,7 @@ def transaction_response(detail: TransactionDetail) -> TransactionResponse:
     """Construye la respuesta completa de una transaccion (spec 005 SS6, SS9.3)."""
     tx = detail.transaction
     return TransactionResponse(
-        id=tx.id,
-        amount=_amount_str(tx.amount),
-        currency=tx.currency,
-        direction=tx.direction.value,
-        kind=tx.kind.value,
-        occurred_at=tx.occurred_at,
-        merchant=tx.merchant,
-        description=tx.description,
-        bank=tx.bank.value if tx.bank is not None else None,
-        account_id=tx.account_id,
-        category_id=tx.category_id,
-        fiscal_tag=tx.fiscal_tag.value,
-        transfer_pair_id=tx.transfer_pair_id,
-        transfer_auto=tx.transfer_auto,
-        parsed_by=tx.parsed_by,
-        confidence=tx.confidence,
-        notes=tx.notes,
-        created_at=tx.created_at,
-        updated_at=tx.updated_at,
+        **_list_item_fields(tx),
         sources=[
             TransactionSourceResponse(
                 id=source.id,

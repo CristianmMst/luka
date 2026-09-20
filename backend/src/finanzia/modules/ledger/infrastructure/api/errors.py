@@ -34,7 +34,8 @@ LEDGER_EXCEPTION_MAP: ExceptionMap = {
     AccountNotFound: lambda e: NotFoundError(),
     SystemCategoryImmutable: lambda e: ForbiddenError(),
     NotManualTransaction: lambda e: ForbiddenError(),
-    DuplicateAccount: lambda e: ConflictError(message="La cuenta ya existe", field="last4"),
+    # `field` se omite: la unicidad es sobre `(bank, last4)`, no sobre `last4` solo.
+    DuplicateAccount: lambda e: ConflictError(message="La cuenta ya existe"),
     DuplicateCategoryName: lambda e: ConflictError(message="El nombre ya existe", field="name"),
     AlreadyPaired: lambda e: ConflictError(message="La transaccion ya esta emparejada"),
     TransferPairInvalid: lambda e: ValidationAppError(message="Par de transferencia invalido"),

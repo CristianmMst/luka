@@ -79,7 +79,7 @@
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/transactions` | Filtros: `from`, `to`, `kind`, `category_id`, `bank`, `account_id`, `channel`, `q` (texto), `updated_since` (sync). Paginado |
+| GET | `/transactions` | Filtros: `from`, `to`, `kind`, `category_id`, `bank`, `account_id`, `channel`, `q` (texto), `updated_since` (sync). Paginado; los ítems no incluyen `sources` ni `pair` (ver `GET /transactions/{id}`) |
 | POST | `/transactions` | Registro manual/NFC. Body: monto, dirección, fecha, comercio, categoría, cuenta opcional, `nfc_tag_id` opcional (marca la fuente con `channel: "nfc"`; el identificador en sí no se persiste) |
 | GET | `/transactions/{id}` | Incluye `sources[]` (AC-9.3) y transacción emparejada si es transfer |
 | PATCH | `/transactions/{id}` | Editables: `category_id` (dispara merchant_rule si el comercio no está vacío, AC-7.2; `learn_merchant_rule: bool = true` para omitirlo), `notes`, `merchant`, `kind` transfer↔original (AC-6.3/6.4) |
