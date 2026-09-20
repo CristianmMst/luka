@@ -45,6 +45,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | expires_at | TIMESTAMPTZ | |
 | revoked_at | TIMESTAMPTZ NULL | |
 | device_info | TEXT | descripción del dispositivo |
+| created_at / updated_at | TIMESTAMPTZ | |
 
 ### 2.3 `gmail_connections` (ingestion)
 
@@ -65,9 +66,9 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | user_id | UUID FK | |
 | bank | TEXT | enum de bancos soportados + `other` |
 | kind | TEXT | `savings` / `checking` / `credit_card` / `wallet` |
-| last4 | TEXT | últimos dígitos que aparecen en correos/notifs |
+| last4 | TEXT NULL | últimos dígitos que aparecen en correos/notifs; `CHECK (last4 ~ '^[0-9]{1,4}$')` |
 | alias | TEXT | nombre que le da el usuario |
-| UNIQUE | (user_id, bank, last4) | |
+| UNIQUE NULLS NOT DISTINCT | (user_id, bank, last4) | dos cuentas del mismo banco sin `last4` conocido cuentan como duplicado |
 
 ### 2.5 `transactions` (ledger)
 
@@ -83,11 +84,12 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | merchant | TEXT | comercio/contraparte normalizado |
 | description | TEXT | |
 | bank | TEXT | |
-| account_id | UUID FK NULL | linked_account si se identificó |
-| category_id | UUID FK | |
-| fiscal_tag | TEXT | denormalizado de la categoría al momento (auditable) |
-| transfer_pair_id | UUID FK NULL | la otra pata de la transferencia (RF-6) |
+| account_id | UUID FK NULL | linked_account si se identificó; `ON DELETE SET NULL` |
+| category_id | UUID FK NOT NULL | `ON DELETE RESTRICT`; default `sin_categoria` (spec 004 §2.8.1) |
+| fiscal_tag | TEXT NOT NULL | denormalizado de la categoría al momento (auditable): `'transferencia'` si `kind='transfer'`, si no `categoria.fiscal_tag` |
+| transfer_pair_id | UUID FK NULL | la otra pata de la transferencia (RF-6); `ON DELETE SET NULL` |
 | transfer_auto | BOOLEAN DEFAULT false | true si la emparejó el matcher |
+| transfer_exclusions | JSONB NOT NULL DEFAULT '[]' | pares `transfer_pair_id` desmarcados manualmente (AC-6.3), para que el matcher no los reempareje |
 | dedupe_key | TEXT NOT NULL | huella (ver §3) |
 | parsed_by | TEXT | `rule:<banco>:<plantilla>` / `llm` / `manual` |
 | confidence | REAL NULL | confianza del LLM |
@@ -96,20 +98,22 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 
 **Índices**:
 - `UNIQUE (user_id, dedupe_key)` ← garantía de P2/RF-5.
-- `(user_id, occurred_at DESC)` ← historial y reportes.
-- `(user_id, category_id)`, `(user_id, kind)`.
+- `(user_id, occurred_at DESC, id DESC)` ← historial y reportes, paginación por keyset.
+- `(user_id, updated_at, id)` ← sync incremental de la app.
+- `(user_id, category_id)`, `(user_id, kind)`, `(transfer_pair_id)`.
 
-**Particionado futuro** (RNF-2): la tabla se crea lista para `PARTITION BY RANGE (occurred_at)`; en MVP una sola partición por defecto. Los índices incluyen `user_id` primero para que las consultas siempre poden por usuario.
+**Particionado** (RNF-2): tabla plana en el MVP (una sola tabla `transactions`, sin `PARTITION BY`). `PARTITION BY RANGE (occurred_at)` obligaría a incluir `occurred_at` en todo índice `UNIQUE`, y `UNIQUE (user_id, dedupe_key)` dejaría de garantizar P2: dos fuentes de la misma compra pueden traer un `occurred_at` ligeramente distinto entre sí, así que la unicidad ya no se podría exigir sin `occurred_at` en la clave; además rompería las FK que apuntan a `transactions(id)` (`transfer_pair_id`, `transaction_sources.transaction_id`), que Postgres no soporta contra tablas particionadas por rango sin duplicar la columna de partición en la FK. Camino de escalamiento futuro: `PARTITION BY HASH (user_id)`, que no tiene esa restricción. "Lista para particionar" en el MVP significa: `user_id` es la primera columna de todo índice, y los repositorios siempre filtran por `user_id`.
 
 ### 2.6 `transaction_sources` (ledger) — evidencias
 
 | Columna | Tipo | Notas |
 |---|---|---|
 | id | UUID PK | |
-| transaction_id | UUID FK | |
-| raw_message_id | UUID FK NULL | NULL si fuente manual/NFC |
+| transaction_id | UUID FK | `ON DELETE CASCADE` |
+| raw_message_id | UUID NULL | NULL si fuente manual/NFC; sin FK todavía — se añade a `raw_messages` en F2.1 |
 | channel | TEXT | `email` / `notification` / `sms_notification` / `manual` / `nfc` |
 | received_at | TIMESTAMPTZ | |
+| UNIQUE parcial | `(transaction_id, raw_message_id) WHERE raw_message_id IS NOT NULL` | evita adjuntar la misma fuente dos veces; varias fuentes manuales/NFC (`raw_message_id IS NULL`) sí pueden coexistir |
 
 ### 2.7 `raw_messages` (ingestion)
 
@@ -130,12 +134,44 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 
 | Columna | Tipo | Notas |
 |---|---|---|
-| id | UUID PK | |
+| id | UUID PK | en las categorías del sistema, `uuid5(NAMESPACE_URL, "https://finanzia.app/categories/{slug}")` (determinístico, ver §2.8.1) |
 | user_id | UUID FK NULL | NULL = categoría del sistema (RF-7.4) |
+| slug | TEXT NULL UNIQUE | solo en categorías del sistema; `CHECK ((user_id IS NULL) = (slug IS NOT NULL))` |
 | name | TEXT | |
 | icon / color | TEXT | |
 | fiscal_tag | TEXT NOT NULL | ver spec 007 §2 |
-| UNIQUE | (user_id, name) | |
+| UNIQUE NULLS NOT DISTINCT | (user_id, name) | dos categorías del sistema (`user_id NULL`) no pueden compartir nombre |
+
+#### 2.8.1 Categorías del sistema
+
+Seed insertado por la migración `0002_ledger_core` (24 filas, `user_id NULL`), espejado en `ledger/domain/system_categories.py` (`SYSTEM_CATEGORIES`):
+
+| slug | name | fiscal_tag |
+|---|---|---|
+| sin_categoria | Sin categoría | no_deducible |
+| mercado | Mercado y supermercado | no_deducible |
+| restaurantes | Restaurantes y domicilios | no_deducible |
+| transporte | Transporte y movilidad | no_deducible |
+| servicios_publicos | Servicios públicos e internet | no_deducible |
+| arriendo | Arriendo y administración | no_deducible |
+| compras | Compras y ropa | no_deducible |
+| entretenimiento | Entretenimiento y suscripciones | no_deducible |
+| salud | Salud y farmacia | no_deducible |
+| educacion | Educación | no_deducible |
+| impuestos_comisiones | Impuestos, comisiones y cuotas de manejo | no_deducible |
+| efectivo | Retiros de efectivo | no_deducible |
+| medicina_prepagada | Medicina prepagada y seguros de salud | deducible_salud |
+| credito_vivienda | Cuota crédito de vivienda | deducible_vivienda |
+| pension_voluntaria | Aportes voluntarios a pensión | aporte_pension_voluntaria |
+| afc | Ahorro AFC | aporte_afc |
+| seguridad_social | Salud y pensión obligatorias (PILA) | aporte_obligatorio |
+| donaciones | Donaciones | donacion |
+| nomina | Nómina y salario | ingreso_laboral |
+| honorarios | Honorarios y servicios independientes | ingreso_honorarios |
+| rendimientos | Rendimientos, intereses y arriendos recibidos | ingreso_capital |
+| pension_recibida | Mesada pensional | ingreso_pension |
+| otros_ingresos | Otros ingresos | ingreso_no_laboral |
+| transferencias | Transferencias entre cuentas propias | transferencia |
 
 ### 2.9 `merchant_rules` (ledger) — aprendizaje de correcciones (AC-7.2)
 
@@ -173,19 +209,15 @@ Vista lógica sobre `raw_messages` con `status='failed'` + campos extraídos par
 
 Definición canónica (implementada en `ledger/domain`, testeada sin DB):
 
-```
+```python
 dedupe_key = sha256(
-    user_id
-  + bank_normalizado
-  + amount (2 decimales)
-  + direction
-  + time_bucket(occurred_at, 10 min)   # floor a ventanas de 10 min; se prueba también la ventana adyacente
-  + last4 (o "----" si no hay)
+    f"{user_id}|{bank}|{amount:.2f}|{direction}|{bucket}|{last4 or '----'}"
 )
+bucket = int(occurred_at_utc.timestamp()) // 600  # floor a ventanas de 10 min
 ```
 
 - El insert usa `ON CONFLICT (user_id, dedupe_key) DO NOTHING` + adjuntar la nueva fuente a la transacción existente (AC-5.1).
-- Ventanas: para tolerar relojes distintos entre banco/correo/notificación, el matcher consulta bucket N y N±1 antes de insertar; el índice único usa el bucket canónico del primer insert.
+- Ventanas: para tolerar relojes distintos entre banco/correo/notificación, el matcher consulta bucket N y N±1 antes de insertar; el índice único usa el bucket canónico del primer insert. Los candidatos de los buckets N±1 solo se aceptan si además `|Δoccurred_at| ≤ 10 min` respecto al `occurred_at` original: sin esa condición, dos movimientos reales cercanos al borde de la ventana (p. ej. 14:01 y 14:19) podrían fusionarse por error, violando AC-5.3.
 - Registro manual: `dedupe_key` aleatoria (no debe colisionar con capturas automáticas).
 
 ## 4. Matcher de transferencias (reglas de dominio, RF-6)

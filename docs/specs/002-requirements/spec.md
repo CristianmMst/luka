@@ -62,7 +62,7 @@ Formato: historias de usuario con criterios de aceptación **Given/When/Then**. 
 
 - **AC-7.1** Toda transacción recibe una categoría automática (del parser/LLM o por regla de comercio aprendida); el usuario puede corregirla.
 - **AC-7.2** Given una corrección de categoría, When el usuario la confirma, Then se crea una regla `comercio → categoría` propia del usuario que aplica a futuras transacciones.
-- **AC-7.3** Cada categoría tiene una etiqueta fiscal (ver spec 007): `ingreso_laboral`, `deducible_salud`, `deducible_vivienda`, `aporte_pension`, `no_deducible`, etc.
+- **AC-7.3** Cada categoría tiene una etiqueta fiscal (ver spec 007): `ingreso_laboral`, `deducible_salud`, `deducible_vivienda`, `aporte_pension_voluntaria`, `no_deducible`, etc.
 - **AC-7.4** Existen categorías del sistema (no eliminables) y categorías personalizadas del usuario.
 
 ### RF-8 · Cola de revisión
