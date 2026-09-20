@@ -131,6 +131,54 @@ async def test_xff_respetado_solo_con_trust_proxy_headers(settings: Settings) ->
     assert third.status_code == 429
 
 
+async def test_xff_usa_el_ultimo_valor_no_el_primero(settings: Settings) -> None:
+    """El hop de la derecha lo agrega el proxy de confianza; la izquierda la controla
+    el cliente (controller ruling, spec 009 SS4). Dos requests con el mismo valor mas
+    a la derecha comparten cupo aunque el valor mas a la izquierda (spoofeado por el
+    cliente) sea distinto.
+    """
+    custom_settings = settings.model_copy(
+        update={"rate_limit_auth_per_minute": 1, "trust_proxy_headers": True}
+    )
+    async with _client_for(custom_settings) as client:
+        first = await client.post(
+            "/v1/auth/google",
+            json={"id_token": "short"},
+            headers={"X-Forwarded-For": "9.9.9.9, 1.1.1.1"},
+        )
+        # Mismo valor derecho (1.1.1.1) con un valor izquierdo distinto/spoofeado:
+        # debe compartir el mismo cupo que la request anterior.
+        second = await client.post(
+            "/v1/auth/google",
+            json={"id_token": "short"},
+            headers={"X-Forwarded-For": "666.666.666.666, 1.1.1.1"},
+        )
+
+    assert first.status_code == 400
+    assert second.status_code == 429
+
+
+async def test_xff_valores_derechos_distintos_no_comparten_cupo(settings: Settings) -> None:
+    custom_settings = settings.model_copy(
+        update={"rate_limit_auth_per_minute": 1, "trust_proxy_headers": True}
+    )
+    async with _client_for(custom_settings) as client:
+        first = await client.post(
+            "/v1/auth/google",
+            json={"id_token": "short"},
+            headers={"X-Forwarded-For": "9.9.9.9, 1.1.1.1"},
+        )
+        # Mismo valor izquierdo (spoofeado), valor derecho distinto: cupo distinto.
+        second = await client.post(
+            "/v1/auth/google",
+            json={"id_token": "short"},
+            headers={"X-Forwarded-For": "9.9.9.9, 2.2.2.2"},
+        )
+
+    assert first.status_code == 400
+    assert second.status_code == 400
+
+
 async def test_xff_ignorado_sin_trust_proxy_headers(settings: Settings) -> None:
     custom_settings = settings.model_copy(
         update={"rate_limit_auth_per_minute": 1, "trust_proxy_headers": False}

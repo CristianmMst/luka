@@ -40,7 +40,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 
 ## 4. Protección de la API
 
-- **Rate limiting** (Redis, sliding window): `/auth/*` 10/min por IP; `/ingest/notifications` 60/min por usuario; global 600/min por usuario; respuesta 429 + `Retry-After`. La IP se toma de `request.client.host`, salvo que `FINANZIA_TRUST_PROXY_HEADERS=true` (Caddy en producción), en cuyo caso se usa el primer valor de `X-Forwarded-For`. `/health*` está exento. Si Redis no responde, el limitador falla abierto y registra una advertencia (decisión MVP: disponibilidad sobre límite).
+- **Rate limiting** (Redis, sliding window): `/auth/*` 10/min por IP; `/ingest/notifications` 60/min por usuario; global 600/min por usuario; respuesta 429 + `Retry-After`. La IP se toma de `request.client.host`, salvo que `FINANZIA_TRUST_PROXY_HEADERS=true` (Caddy en producción), en cuyo caso se usa el último valor de `X-Forwarded-For` (el añadido por el proxy de confianza; los valores a la izquierda los controla el cliente). `/health*` está exento. Si Redis no responde, el limitador falla abierto y registra una advertencia (decisión MVP: disponibilidad sobre límite).
 - **Validación**: Pydantic estricto en todo input; límites de tamaño de body (1 MB general, 64 KB por notificación); listas de enums cerradas (bancos, canales).
 - **Cabeceras**: HSTS, `X-Content-Type-Options: nosniff`, CSP restrictiva en cualquier página servida.
 - **CORS**: cerrado (la app móvil no lo necesita); si hay web futura, allowlist explícita.

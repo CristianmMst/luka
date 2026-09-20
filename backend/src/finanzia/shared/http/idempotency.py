@@ -92,7 +92,10 @@ class IdempotencyMiddleware:
             await self._app(scope, receive, send)
             return
 
-        body, replay_receive = await _drain_body(receive)
+        drained = await _drain_body_or_send_error(receive, send)
+        if drained is None:
+            return
+        body, replay_receive = drained
         fingerprint = _fingerprint(scope, body)
         record_key = f"idem:{user_id}:{raw_key}"
         lock_key = f"{record_key}:lock"
@@ -100,18 +103,11 @@ class IdempotencyMiddleware:
         try:
             redis_client = self._redis_provider()
             stored_raw = await redis_client.get(record_key)
-        except (*_RedisErrors, *_ProviderErrors):
-            _logger.warning("idempotency_backend_unavailable")
-            await self._app(scope, replay_receive, send)
-            return
-
-        if stored_raw is not None:
-            await _handle_existing_record(send, stored_raw, fingerprint)
-            return
-
-        try:
+            if stored_raw is not None:
+                await _handle_existing_record(send, stored_raw, fingerprint)
+                return
             acquired = await redis_client.set(lock_key, b"1", nx=True, ex=_LOCK_TTL_S)
-        except _RedisErrors:
+        except (*_RedisErrors, *_ProviderErrors):
             _logger.warning("idempotency_backend_unavailable")
             await self._app(scope, replay_receive, send)
             return
@@ -200,6 +196,22 @@ async def _run_and_store(  # noqa: PLR0913 - firma interna, agrupa el estado de 
         await redis_client.set(record_key, json.dumps(record), ex=ttl_seconds)
     except _RedisErrors:
         _logger.warning("idempotency_backend_unavailable")
+
+
+async def _drain_body_or_send_error(receive: Receive, send: Send) -> tuple[bytes, Receive] | None:
+    """Envuelve `_drain_body`: si drenar levanta un `AppError`, lo renderiza y
+    devuelve `None` en vez de propagar.
+
+    Cubre p. ej. la `ValidationAppError` de `BodyLimitMiddleware` cuando el body
+    llega chunked (sin `Content-Length` fiable) y supera `max_body_bytes`: eso
+    solo se detecta al drenar, aqui mismo, asi que hay que renderizarlo nosotros
+    (400) en vez de dejarlo propagar sin manejar (500).
+    """
+    try:
+        return await _drain_body(receive)
+    except AppError as exc:
+        await _send_app_error(send, exc)
+        return None
 
 
 async def _drain_body(receive: Receive) -> tuple[bytes, Receive]:

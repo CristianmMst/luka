@@ -8,9 +8,11 @@ contra cualquier app construida con los mismos `settings` (mismo `jwt_secret`), 
 que se reutiliza tal cual contra la app de este modulo.
 """
 
-from collections.abc import AsyncGenerator, Awaitable, Callable
+import json
+from collections.abc import AsyncGenerator, Awaitable, Callable, MutableMapping
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
@@ -336,6 +338,74 @@ async def test_respuesta_demasiado_grande_no_se_almacena_y_reejecuta(
     warnings = [entry for entry in logs if entry.get("event") == "idempotency_response_too_large"]
     assert warnings
     assert all(entry["size"] > 256 * 1024 for entry in warnings)
+
+
+async def test_body_chunked_que_excede_el_limite_al_drenar_devuelve_400(
+    settings: Settings,
+) -> None:
+    """Regresion (review final, item I): al drenar el body para calcular el
+    fingerprint, `IdempotencyMiddleware` puede recibir la `ValidationAppError` que
+    levanta `BodyLimitMiddleware` cuando el body llega chunked (sin `Content-Length`
+    fiable) y supera `max_body_bytes`. Antes se propagaba sin manejar (500); ahora
+    debe renderizarse como cualquier otro `AppError` (400 `validation_error`).
+
+    Maneja el ASGI app directamente (como en `test_middlewares.py`) para poder
+    enviar el body en streaming, sin `Content-Length`.
+    """
+    app, _counters = _build_app(settings)
+    token = encode_access_token(
+        user_id=uuid4(),
+        now=datetime.now(UTC),
+        ttl=timedelta(minutes=15),
+        secret=settings.jwt_secret.get_secret_value(),
+    )
+
+    chunk_size = (settings.max_body_bytes // 2) + 10
+    pending_messages: list[dict[str, Any]] = [
+        {"type": "http.request", "body": b'{"a": "', "more_body": True},
+        {"type": "http.request", "body": b"x" * chunk_size, "more_body": True},
+        {"type": "http.request", "body": b"x" * chunk_size, "more_body": False},
+    ]
+
+    async def receive() -> dict[str, Any]:
+        if pending_messages:
+            return pending_messages.pop(0)
+        return {"type": "http.disconnect"}
+
+    sent_messages: list[dict[str, Any]] = []
+
+    async def send(message: MutableMapping[str, Any]) -> None:
+        sent_messages.append(dict(message))
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "asgi": {"version": "3.0", "spec_version": "2.3"},
+        "http_version": "1.1",
+        "method": "POST",
+        "scheme": "http",
+        "path": "/v1/idem-test",
+        "raw_path": b"/v1/idem-test",
+        "query_string": b"",
+        "root_path": "",
+        "headers": [
+            (b"content-type", b"application/json"),
+            (b"authorization", f"Bearer {token}".encode()),
+            (b"idempotency-key", str(uuid4()).encode()),
+        ],
+        "client": ("testclient", 123),
+        "server": ("testserver", 80),
+    }
+
+    async with LifespanManager(app):
+        await app(scope, receive, send)
+
+    start = next(m for m in sent_messages if m["type"] == "http.response.start")
+    body_message = next(m for m in sent_messages if m["type"] == "http.response.body")
+    assert start["status"] == 400
+    payload = body_message["body"]
+    error = json.loads(payload)["error"]
+    assert error["code"] == "validation_error"
+    assert error["field"] == "body"
 
 
 async def test_falla_abierto_si_redis_no_responde(settings: Settings) -> None:

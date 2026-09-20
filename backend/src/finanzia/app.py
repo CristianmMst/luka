@@ -81,7 +81,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await redis_client.aclose()
             await engine.dispose()
 
-    app = FastAPI(title="finanzia", lifespan=lifespan)
+    # En prod se apagan los docs interactivos y el schema OpenAPI (controller ruling,
+    # review final item H): no hay motivo para exponer la superficie de la API sin
+    # autenticacion en un ambiente publico.
+    is_prod = resolved_settings.env == "prod"
+    app = FastAPI(
+        title="finanzia",
+        lifespan=lifespan,
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
+    )
 
     # `add_middleware` apila en orden inverso: el ultimo agregado queda mas afuera.
     # Orden de ejecucion resultante: RequestId -> SecurityHeaders -> BodyLimit -> RateLimit

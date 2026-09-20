@@ -128,13 +128,18 @@ async def _safe_hit(
 
 
 def _client_ip(scope: Scope, *, trust_proxy_headers: bool) -> str:
-    """IP segun spec 009 SS1.5: `client.host`, salvo proxy de confianza con XFF."""
+    """IP segun spec 009 SS1.5: `client.host`, salvo proxy de confianza con XFF.
+
+    Con `trust_proxy_headers`, se usa el ULTIMO valor de `X-Forwarded-For`: es el
+    unico hop que agrego el proxy de confianza. Los valores a la izquierda los
+    controla el cliente y son spoofeables (controller ruling, spec 009 SS4).
+    """
     if trust_proxy_headers:
         forwarded_for = _get_header(scope, b"x-forwarded-for")
         if forwarded_for is not None:
-            first = forwarded_for.split(",")[0].strip()
-            if first:
-                return first
+            last = forwarded_for.split(",")[-1].strip()
+            if last:
+                return last
 
     client = scope.get("client")
     if not client:
