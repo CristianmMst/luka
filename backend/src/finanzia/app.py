@@ -11,6 +11,10 @@ from finanzia.modules.identity.infrastructure.api.errors import (
     EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
+from finanzia.modules.identity.infrastructure.google_verifier import (
+    FakeGoogleIdTokenVerifier,
+    GoogleAuthIdTokenVerifier,
+)
 from finanzia.modules.ledger.infrastructure.api.errors import LEDGER_EXCEPTION_MAP
 from finanzia.modules.ledger.infrastructure.api.router_accounts import (
     router as ledger_accounts_router,
@@ -62,6 +66,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.redis = redis_client
         app.state.rate_limiter = SlidingWindowLimiter(redis_client)
         app.state.event_bus = RedisStreamsEventBus(redis_client, build_registry())
+        # Construido una unica vez por proceso (no por request): evita recrear la
+        # sesion HTTP con cache de claves publicas de Google en cada login (review
+        # final, item D). Settings ya prohibe "fake" en env="prod".
+        app.state.google_verifier = (
+            FakeGoogleIdTokenVerifier()
+            if resolved_settings.google_verifier == "fake"
+            else GoogleAuthIdTokenVerifier(resolved_settings.google_client_id)
+        )
 
         try:
             yield

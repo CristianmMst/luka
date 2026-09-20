@@ -19,10 +19,6 @@ from finanzia.modules.identity.application.use_cases.logout import Logout
 from finanzia.modules.identity.application.use_cases.refresh_session import RefreshSession
 from finanzia.modules.identity.infrastructure.access_token_issuer import JwtAccessTokenIssuer
 from finanzia.modules.identity.infrastructure.audit import StructlogAudit
-from finanzia.modules.identity.infrastructure.google_verifier import (
-    FakeGoogleIdTokenVerifier,
-    GoogleAuthIdTokenVerifier,
-)
 from finanzia.modules.identity.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
     SqlAlchemyUserRepository,
@@ -54,13 +50,15 @@ def get_clock() -> SystemClock:
     return SystemClock()
 
 
-def get_google_verifier(
-    settings: Settings = Depends(get_settings_dep),
-) -> GoogleIdTokenVerifierPort:
-    """Selecciona el verificador de Google segun `settings.google_verifier`."""
-    if settings.google_verifier == "fake":
-        return FakeGoogleIdTokenVerifier()
-    return GoogleAuthIdTokenVerifier(settings.google_client_id)
+def get_google_verifier(request: Request) -> GoogleIdTokenVerifierPort:
+    """Devuelve el verificador de Google construido una unica vez en el lifespan.
+
+    `GoogleAuthIdTokenVerifier` mantiene una sesion HTTP con cache de claves publicas
+    (`cachecontrol`); construirlo por request tiraria ese cache en cada login. Se crea
+    una sola vez en `app.py` (`app.state.google_verifier`, fake o real segun
+    `settings.google_verifier`) y esta dependencia solo lo expone.
+    """
+    return request.app.state.google_verifier  # type: ignore[no-any-return]
 
 
 async def get_current_user_id(

@@ -39,13 +39,16 @@ class GoogleAuthIdTokenVerifier:
         if claims.get("iss") not in _VALID_ISSUERS:
             raise InvalidGoogleToken
 
-        return GoogleIdentity(
-            sub=claims["sub"],
-            email=claims["email"],
-            email_verified=bool(claims.get("email_verified")),
-            name=claims.get("name"),
-            picture=claims.get("picture"),
-        )
+        try:
+            return GoogleIdentity(
+                sub=claims["sub"],
+                email=claims["email"],
+                email_verified=bool(claims.get("email_verified", False)),
+                name=claims.get("name"),
+                picture=claims.get("picture"),
+            )
+        except (KeyError, ValueError, GoogleAuthError) as exc:
+            raise InvalidGoogleToken from exc
 
 
 class FakeGoogleIdTokenVerifier:
