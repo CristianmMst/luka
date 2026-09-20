@@ -28,13 +28,15 @@ def _b64url(data: bytes) -> str:
 @pytest.mark.unit
 def test_roundtrip_devuelve_los_claims_esperados() -> None:
     user_id = uuid.uuid4()
+    jti = uuid.uuid4()
     now = datetime.now(UTC)
 
-    token = encode_access_token(user_id=user_id, now=now, ttl=TTL, secret=SECRET)
+    token = encode_access_token(user_id=user_id, now=now, ttl=TTL, secret=SECRET, jti=jti)
     claims = decode_access_token(token, SECRET)
 
     assert isinstance(claims, AccessClaims)
     assert claims.sub == user_id
+    assert claims.jti == jti
     assert claims.exp == datetime.fromtimestamp(int((now + TTL).timestamp()), tz=UTC)
 
 
@@ -135,6 +137,12 @@ def test_payload_no_contiene_pii() -> None:
     assert set(decoded.keys()) == {"sub", "iat", "exp", "jti"}
     assert "email" not in decoded
     assert "name" not in decoded
+
+
+@pytest.mark.unit
+def test_token_con_texto_arbitrario_lanza_unauthorized_error() -> None:
+    with pytest.raises(UnauthorizedError):
+        decode_access_token("not-a-jwt", SECRET)
 
 
 @pytest.mark.unit

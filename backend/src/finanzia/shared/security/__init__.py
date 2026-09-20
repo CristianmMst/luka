@@ -28,7 +28,7 @@ def bearer_token(authorization: str | None) -> str:
         raise UnauthorizedError
 
     scheme, sep, token = authorization.partition(" ")
-    if not sep or scheme != "Bearer" or not token or " " in token:
+    if not sep or scheme != "Bearer" or not token or any(ch.isspace() for ch in token):
         raise UnauthorizedError
 
     return token

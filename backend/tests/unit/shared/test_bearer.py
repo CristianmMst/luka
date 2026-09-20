@@ -22,6 +22,10 @@ def test_header_valido_devuelve_el_token() -> None:
         "Bearer",
         "Bearer a b",
         "Bearer  x",
+        "Bearer abc\tdef",
+        "Bearer abc\ndef",
+        "Bearer abc\rdef",
+        "Bearer abc ",
     ],
 )
 def test_headers_invalidos_lanzan_unauthorized_error(authorization: str | None) -> None:
