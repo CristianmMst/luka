@@ -14,6 +14,7 @@ from finanzia.shared.db.engine import create_engine, create_session_factory
 from finanzia.shared.http.body_limit import BodyLimitMiddleware
 from finanzia.shared.http.error_handlers import install_error_handlers
 from finanzia.shared.http.health import router as health_router
+from finanzia.shared.http.idempotency import IdempotencyMiddleware
 from finanzia.shared.http.rate_limit import SlidingWindowLimiter
 from finanzia.shared.http.rate_limit_middleware import RateLimitMiddleware, Rule
 from finanzia.shared.http.request_id import RequestIdMiddleware
@@ -59,9 +60,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # `add_middleware` apila en orden inverso: el ultimo agregado queda mas afuera.
     # Orden de ejecucion resultante: RequestId -> SecurityHeaders -> BodyLimit -> RateLimit
-    # -> router. RateLimit se agrega PRIMERO (queda mas adentro, junto al router).
-    # `limiter_provider` es perezoso porque `app.state.rate_limiter` recien existe
-    # despues de que el lifespan corrio (ver docstring de RateLimitMiddleware).
+    # -> Idempotency -> router. Idempotency se agrega PRIMERO (queda mas adentro, junto
+    # al router) para que ya haya pasado el rate limiting antes de tocar Redis por la
+    # clave de idempotencia. `redis_provider`/`limiter_provider` son perezosos porque
+    # `app.state.redis`/`app.state.rate_limiter` recien existen despues de que el
+    # lifespan corrio (ver docstrings de IdempotencyMiddleware/RateLimitMiddleware).
+    app.add_middleware(
+        IdempotencyMiddleware,
+        redis_provider=lambda: app.state.redis,
+        ttl_seconds=resolved_settings.idempotency_ttl_seconds,
+        jwt_secret=resolved_settings.jwt_secret.get_secret_value(),
+    )
     app.add_middleware(
         RateLimitMiddleware,
         limiter_provider=lambda: app.state.rate_limiter,
