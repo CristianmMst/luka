@@ -55,3 +55,7 @@ class InvalidLast4(LedgerError):  # noqa: N818
 
 class InvalidCursor(LedgerError):  # noqa: N818
     """El cursor de paginacion recibido no es valido."""
+
+
+class InvalidKindChange(LedgerError):  # noqa: N818
+    """El `kind` solicitado en un PATCH es incompatible con la `direction` de la transaccion."""
