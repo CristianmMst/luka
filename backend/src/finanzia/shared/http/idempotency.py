@@ -34,6 +34,7 @@ ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 _LOCK_TTL_S = 30
 _PERSISTED_HEADERS = (b"content-type", b"location")
+_MAX_STORED_BODY = 256 * 1024
 
 _RedisErrors = (redis.exceptions.RedisError, OSError, TimeoutError)
 _ProviderErrors = (AttributeError, LookupError, RuntimeError)
@@ -179,17 +180,26 @@ async def _run_and_store(  # noqa: PLR0913 - firma interna, agrupa el estado de 
             _logger.warning("idempotency_backend_unavailable")
 
     status = captured.get("status")
-    if status is not None and status < 500:  # noqa: PLR2004 - umbral del contrato (5xx no se persiste)
-        record = {
-            "fingerprint": fingerprint,
-            "status": status,
-            "headers": _persisted_headers(captured.get("headers", [])),
-            "body_b64": base64.b64encode(b"".join(body_chunks)).decode("ascii"),
-        }
-        try:
-            await redis_client.set(record_key, json.dumps(record), ex=ttl_seconds)
-        except _RedisErrors:
-            _logger.warning("idempotency_backend_unavailable")
+    if status is None or status >= 500:  # noqa: PLR2004 - umbral del contrato (5xx no se persiste)
+        return
+
+    body = b"".join(body_chunks)
+    if len(body) > _MAX_STORED_BODY:
+        # No se guarda el registro: una respuesta tan grande no se replica en Redis
+        # (evita inflar la clave); la siguiente request con el mismo key re-ejecuta.
+        _logger.warning("idempotency_response_too_large", size=len(body))
+        return
+
+    record = {
+        "fingerprint": fingerprint,
+        "status": status,
+        "headers": _persisted_headers(captured.get("headers", [])),
+        "body_b64": base64.b64encode(body).decode("ascii"),
+    }
+    try:
+        await redis_client.set(record_key, json.dumps(record), ex=ttl_seconds)
+    except _RedisErrors:
+        _logger.warning("idempotency_backend_unavailable")
 
 
 async def _drain_body(receive: Receive) -> tuple[bytes, Receive]:

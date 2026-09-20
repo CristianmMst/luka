@@ -18,7 +18,7 @@ import redis.asyncio as redis_asyncio
 import structlog
 from asgi_lifespan import LifespanManager
 from fastapi import APIRouter, Depends, FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from httpx import ASGITransport, AsyncClient
 from support.auth import AuthedUser
 
@@ -70,6 +70,12 @@ def _build_app(settings: Settings) -> tuple[FastAPI, dict[str, int]]:
         return JSONResponse(
             status_code=500, content={"error": {"code": "internal", "message": "boom"}}
         )
+
+    @router.post("/v1/idem-big", status_code=status.HTTP_201_CREATED)
+    async def _idem_big(user_id: UUID = Depends(get_current_user_id)) -> PlainTextResponse:
+        key = f"big:{user_id}"
+        counters[key] = counters.get(key, 0) + 1
+        return PlainTextResponse("a" * (300 * 1024), status_code=status.HTTP_201_CREATED)
 
     app.include_router(router)
     return app, counters
@@ -283,6 +289,53 @@ async def test_get_nunca_se_toca(
     assert second.status_code == 200
     assert "idempotency-replayed" not in first.headers
     assert "idempotency-replayed" not in second.headers
+
+
+async def test_lock_ocupado_devuelve_409(
+    settings: Settings, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    """Regresion (fix round 1): rama (b) del middleware, lock ya tomado por otra request."""
+    user = await user_factory()
+    app, counters = _build_app(settings)
+    idem_key = str(uuid4())
+    lock_key = f"idem:{user.id}:{idem_key}:lock"
+
+    async with _client_for(app) as client:
+        acquired = await app.state.redis.set(lock_key, b"1", nx=True, ex=30)
+        assert acquired
+        response = await client.post(
+            "/v1/idem-test",
+            json={"amount": 1},
+            headers={**user.headers, "Idempotency-Key": idem_key},
+        )
+
+    assert response.status_code == 409
+    error = response.json()["error"]
+    assert error["code"] == "conflict"
+    assert "field" not in error
+    assert str(user.id) not in counters
+
+
+async def test_respuesta_demasiado_grande_no_se_almacena_y_reejecuta(
+    settings: Settings, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    """Regresion (fix round 1): respuestas > 256 KiB no se guardan (re-ejecutan)."""
+    user = await user_factory()
+    app, counters = _build_app(settings)
+    idem_key = str(uuid4())
+    headers = {**user.headers, "Idempotency-Key": idem_key}
+
+    async with _client_for(app) as client:
+        with structlog.testing.capture_logs() as logs:
+            first = await client.post("/v1/idem-big", json={}, headers=headers)
+            second = await client.post("/v1/idem-big", json={}, headers=headers)
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert counters[f"big:{user.id}"] == 2
+    warnings = [entry for entry in logs if entry.get("event") == "idempotency_response_too_large"]
+    assert warnings
+    assert all(entry["size"] > 256 * 1024 for entry in warnings)
 
 
 async def test_falla_abierto_si_redis_no_responde(settings: Settings) -> None:

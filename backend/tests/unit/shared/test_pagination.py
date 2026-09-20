@@ -14,7 +14,7 @@ from finanzia.shared.http.error_handlers import install_error_handlers
 from finanzia.shared.http.pagination import PageParams, decode_cursor, encode_cursor, page_params
 
 
-def _b64(payload: dict[str, object]) -> str:
+def _b64(payload: object) -> str:
     raw = json.dumps(payload).encode("utf-8")
     return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
 
@@ -115,6 +115,52 @@ def test_datetime_naive_lanza_validation_error() -> None:
 @pytest.mark.unit
 def test_datetime_invalida_lanza_validation_error() -> None:
     raw = _b64({"k": "occurred", "t": "no-es-una-fecha", "i": str(uuid4())})
+
+    with pytest.raises(ValidationAppError) as exc_info:
+        decode_cursor(raw, "occurred")
+    assert exc_info.value.field == "cursor"
+
+
+@pytest.mark.unit
+def test_id_no_string_lanza_validation_error() -> None:
+    """Regresion (fix round 1): `UUID(123)` lanza `AttributeError`, no cubierto antes."""
+    raw = _b64({"k": "occurred", "t": "2026-01-01T00:00:00+00:00", "i": 123})
+
+    with pytest.raises(ValidationAppError) as exc_info:
+        decode_cursor(raw, "occurred")
+    assert exc_info.value.field == "cursor"
+
+
+@pytest.mark.unit
+def test_sort_key_no_string_lanza_validation_error() -> None:
+    raw = _b64({"k": "occurred", "t": 123, "i": str(uuid4())})
+
+    with pytest.raises(ValidationAppError) as exc_info:
+        decode_cursor(raw, "occurred")
+    assert exc_info.value.field == "cursor"
+
+
+@pytest.mark.unit
+def test_kind_no_string_lanza_validation_error() -> None:
+    raw = _b64({"k": 1, "t": "2026-01-01T00:00:00+00:00", "i": str(uuid4())})
+
+    with pytest.raises(ValidationAppError) as exc_info:
+        decode_cursor(raw, "occurred")
+    assert exc_info.value.field == "cursor"
+
+
+@pytest.mark.unit
+def test_json_es_un_arreglo_lanza_validation_error() -> None:
+    raw = _b64(["occurred", "2026-01-01T00:00:00+00:00", str(uuid4())])
+
+    with pytest.raises(ValidationAppError) as exc_info:
+        decode_cursor(raw, "occurred")
+    assert exc_info.value.field == "cursor"
+
+
+@pytest.mark.unit
+def test_json_es_un_string_lanza_validation_error() -> None:
+    raw = _b64("solo-un-string")
 
     with pytest.raises(ValidationAppError) as exc_info:
         decode_cursor(raw, "occurred")

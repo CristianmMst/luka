@@ -15,7 +15,7 @@ import base64
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, cast
 from uuid import UUID
 
 from fastapi import Query
@@ -25,7 +25,7 @@ from finanzia.shared.errors import ValidationAppError
 
 CursorKind = Literal["occurred", "updated"]
 
-_DECODE_ERRORS = (ValueError, KeyError, TypeError, UnicodeDecodeError)
+_DECODE_ERRORS = (ValueError, KeyError, TypeError, UnicodeDecodeError, AttributeError)
 
 
 def encode_cursor(sort_key: datetime, id: UUID, kind: CursorKind) -> str:
@@ -40,19 +40,31 @@ def decode_cursor(raw: str, expected_kind: CursorKind) -> tuple[datetime, UUID]:
     try:
         padded = raw + "=" * (-len(raw) % 4)
         decoded = base64.urlsafe_b64decode(padded.encode("ascii"))
-        payload = json.loads(decoded)
+        raw_payload = json.loads(decoded)
+        if not isinstance(raw_payload, dict):
+            message = "cursor debe decodificar a un objeto JSON"
+            raise TypeError(message)
+        payload = cast("dict[str, object]", raw_payload)
 
         kind = payload["k"]
-        if kind != expected_kind:
+        if not isinstance(kind, str) or kind != expected_kind:
             message = "kind de cursor inesperado"
             raise ValueError(message)
 
-        sort_key = datetime.fromisoformat(payload["t"])
+        raw_sort_key = payload["t"]
+        if not isinstance(raw_sort_key, str):
+            message = "sort_key de cursor invalido"
+            raise TypeError(message)
+        sort_key = datetime.fromisoformat(raw_sort_key)
         if sort_key.tzinfo is None or sort_key.tzinfo.utcoffset(sort_key) is None:
             message = "sort_key naive"
             raise ValueError(message)
 
-        cursor_id = UUID(payload["i"])
+        raw_id = payload["i"]
+        if not isinstance(raw_id, str):
+            message = "id de cursor invalido"
+            raise TypeError(message)
+        cursor_id = UUID(raw_id)
     except _DECODE_ERRORS as exc:
         raise ValidationAppError(message="Cursor invalido", field="cursor") from exc
 
