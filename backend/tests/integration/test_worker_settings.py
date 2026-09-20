@@ -91,3 +91,27 @@ async def test_worker_ejecuta_ping_en_modo_burst(worker_settings_module, redis_c
         if task is not asyncio.current_task() and not task.done()
     ]
     assert lingering == []
+
+
+async def test_supervise_reinicia_tras_una_excepcion_inesperada(worker_settings_module) -> None:
+    """Fix round 1 (review Task 14): `_supervise` es la ultima red de seguridad
+    sobre un consumer que termina con una excepcion inesperada (no cubierta ya por
+    el propio fail-soft de `StreamConsumer.run`): lo reinicia en vez de dejarlo
+    muerto en silencio.
+    """
+    calls = {"n": 0}
+    stop = asyncio.Event()
+
+    async def flaky() -> None:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            msg = "boom"
+            raise RuntimeError(msg)
+        stop.set()  # segundo intento: termina normal, sin excepcion
+
+    await worker_settings_module._supervise(
+        flaky, stop, event_type="test.Event", group="test-group"
+    )
+
+    assert calls["n"] == 2
+    assert stop.is_set()

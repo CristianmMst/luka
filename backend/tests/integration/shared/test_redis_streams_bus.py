@@ -14,6 +14,7 @@ from uuid import uuid4
 
 import pytest
 import redis.asyncio as redis_asyncio
+import redis.exceptions
 
 from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
 from finanzia.modules.ledger.events import TransactionCaptured
@@ -179,9 +180,10 @@ async def test_handler_que_falla_termina_en_dlq_tras_max_deliveries(
     stream = bus.stream_name(_EVENT_TYPE)
     await bus.ensure_group(stream, "g1")
     event = _make_event()
+    attempts: list[object] = []
 
     async def failing_handler(event: object) -> None:
-        del event
+        attempts.append(event)
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -220,6 +222,131 @@ async def test_handler_que_falla_termina_en_dlq_tras_max_deliveries(
     _dlq_id, dlq_fields = dlq_entries[0]
     assert dlq_fields[b"failed_group"] == b"g1"
     assert dlq_fields[b"event_id"] == str(event.event_id).encode()
+    # max_deliveries=2 cuenta INTENTOS de handler: se intenta 2 veces (delivery_count
+    # 1 y 2, ninguno > max_deliveries) y recien en el 3er intento (delivery_count=3
+    # > 2) se manda a DLQ sin volver a llamar al handler.
+    assert len(attempts) == 2
+
+
+async def test_error_transitorio_en_xack_no_mata_el_consumer(
+    redis_client, registry: EventRegistry
+) -> None:
+    """Fix round 1 (review Task 14): antes, un `RedisError` en `XACK`/`XADD` DLQ
+    dentro de `_process` (o en `ensure_group`, o en el propio `for` de `run()`)
+    escapaba de `run()` sin proteccion y mataba la tarea de fondo para siempre.
+    Ahora todo el cuerpo del loop es fail-soft: se loguea, se espera 1s y se
+    reintenta; el mensaje no ackeado queda pendiente y se re-entrega.
+    """
+    bus = _bus(redis_client, registry)
+    stream = bus.stream_name(_EVENT_TYPE)
+    await bus.ensure_group(stream, "g1")
+    event = _make_event()
+    received: list[object] = []
+
+    async def handler(event: object) -> None:
+        received.append(event)
+
+    consumer = StreamConsumer(
+        bus,
+        redis_client,
+        registry,
+        group="g1",
+        event_type=_EVENT_TYPE,
+        handler=handler,
+        block_ms=200,
+        claim_min_idle_ms=0,
+    )
+
+    original_xack = redis_client.xack
+    xack_calls = {"n": 0}
+
+    async def flaky_xack(*args: object, **kwargs: object) -> object:
+        xack_calls["n"] += 1
+        if xack_calls["n"] == 1:
+            raise redis.exceptions.ConnectionError("boom")
+        return await original_xack(*args, **kwargs)
+
+    redis_client.xack = flaky_xack
+
+    stop = asyncio.Event()
+    task = asyncio.create_task(consumer.run(stop))
+    try:
+        await bus.publish(event)
+
+        async def received_once() -> bool:
+            return len(received) == 1
+
+        assert await _poll_until(received_once)
+
+        async def acked() -> bool:
+            summary = await redis_client.xpending(stream, "g1")
+            return summary["pending"] == 0
+
+        assert await _poll_until(acked)
+    finally:
+        stop.set()
+        await task
+        redis_client.xack = original_xack
+
+    assert xack_calls["n"] >= 2
+    assert len(received) == 1  # el handler no se re-ejecuto: solo el ACK se reintento
+
+
+async def test_ensure_group_falla_una_vez_y_el_consumer_arranca_igual(
+    redis_client, registry: EventRegistry
+) -> None:
+    """Fix round 1 (review Task 14): `ensure_group` ahora se reintenta dentro del
+    loop de `run()` en vez de correr una sola vez, sin proteccion, antes de el.
+    """
+    bus = _bus(redis_client, registry)
+    stream = bus.stream_name(_EVENT_TYPE)
+    # Se crea el grupo real ANTES de publicar (evita la carrera de otros tests) y
+    # ANTES de parchear `ensure_group`: la version parchada solo simula una falla
+    # transitoria en el primer llamado, delegando al original (que ya es un no-op
+    # via BUSYGROUP) despues.
+    await bus.ensure_group(stream, "g1")
+    event = _make_event()
+    received: list[object] = []
+
+    async def handler(event: object) -> None:
+        received.append(event)
+
+    consumer = StreamConsumer(
+        bus,
+        redis_client,
+        registry,
+        group="g1",
+        event_type=_EVENT_TYPE,
+        handler=handler,
+        block_ms=200,
+    )
+
+    original_ensure_group = bus.ensure_group
+    ensure_group_calls = {"n": 0}
+
+    async def flaky_ensure_group(stream: str, group: str) -> None:
+        ensure_group_calls["n"] += 1
+        if ensure_group_calls["n"] == 1:
+            raise redis.exceptions.ConnectionError("boom")
+        await original_ensure_group(stream, group)
+
+    bus.ensure_group = flaky_ensure_group
+
+    stop = asyncio.Event()
+    task = asyncio.create_task(consumer.run(stop))
+    try:
+        await bus.publish(event)
+
+        async def received_once() -> bool:
+            return len(received) == 1
+
+        assert await _poll_until(received_once)
+    finally:
+        stop.set()
+        await task
+        bus.ensure_group = original_ensure_group
+
+    assert ensure_group_calls["n"] >= 2
 
 
 async def test_dos_grupos_reciben_el_mismo_evento(redis_client, registry: EventRegistry) -> None:

@@ -56,6 +56,11 @@ class StreamConsumer:
         max_deliveries: int = _DEFAULT_MAX_DELIVERIES,
         claim_min_idle_ms: int = _DEFAULT_CLAIM_MIN_IDLE_MS,
     ) -> None:
+        """`max_deliveries` es el numero de INTENTOS de handler permitidos: un
+        mensaje va a la DLQ recien cuando ya se intento `max_deliveries` veces y
+        volvio a quedar pendiente (`delivery_count > max_deliveries`), no en el
+        intento numero `max_deliveries` (ese todavia se ejecuta).
+        """
         self._bus = bus
         self._redis = redis
         self._registry = registry
@@ -70,20 +75,34 @@ class StreamConsumer:
         self._idempotent = IdempotentHandler(redis, group=group, handler=handler)
 
     async def run(self, stop: asyncio.Event) -> None:
-        """Corre hasta que `stop` se marque; cancelable entre iteraciones del loop."""
-        await self._bus.ensure_group(self._stream, self._group)
+        """Corre hasta que `stop` se marque; cancelable entre iteraciones del loop.
+
+        Fail-soft de punta a punta: `ensure_group`, el claim de pendientes, la
+        lectura y el procesamiento del batch completo (fresco o reclamado) corren
+        bajo la misma guarda. Un error de Redis en cualquiera de esos pasos —
+        incluidos el `XACK`/`XADD` a DLQ dentro de `_process`, que antes quedaban
+        sin proteger— se loguea y reintenta tras 1s en vez de propagar y matar la
+        tarea de fondo. Un mensaje que no se pudo ACKear por una falla transitoria
+        queda pendiente y se reintenta en la siguiente iteracion (at-least-once).
+        `ensure_group` tambien se reintenta hasta que el grupo quede listo.
+        """
+        group_ready = False
         while not stop.is_set():
             try:
+                if not group_ready:
+                    await self._bus.ensure_group(self._stream, self._group)
+                    group_ready = True
                 await self._claim_stale_pending()
                 messages = await self._read_new()
+                for message_id, fields in messages:
+                    await self._process(message_id, fields)
             except (redis.exceptions.RedisError, OSError) as exc:
                 _logger.warning(
-                    "event_consumer_backend_error", event_type=self._event_type, error=str(exc)
+                    "event_consumer_backend_error",
+                    event_type=self._event_type,
+                    error_type=type(exc).__name__,
                 )
                 await asyncio.sleep(_BACKEND_ERROR_SLEEP_S)
-                continue
-            for message_id, fields in messages:
-                await self._process(message_id, fields)
 
     async def _read_new(self) -> list[_StreamMessage]:
         try:
@@ -132,7 +151,7 @@ class StreamConsumer:
             return
 
         delivery_count = await self._delivery_count(message_id)
-        if delivery_count >= self._max_deliveries:
+        if delivery_count > self._max_deliveries:
             await self._to_dlq(message_id, fields, reason="max_deliveries_exceeded")
             await self._redis.xack(self._stream, self._group, message_id)
             return

@@ -7,7 +7,7 @@ Fase 1 (F1.8): un unico observador (`ledger-observer`) que solo loguea que llego
 from __future__ import annotations
 
 import asyncio
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import redis.asyncio as redis_asyncio
 import structlog
@@ -19,9 +19,13 @@ from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.logging import configure_logging
 from finanzia.shared.settings import get_settings
 
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
 _logger = structlog.get_logger()
 
 _LEDGER_OBSERVER_GROUP = "ledger-observer"
+_SUPERVISOR_RESTART_DELAY_S = 1.0
 
 
 async def ping(ctx: dict[str, Any]) -> str:
@@ -38,6 +42,36 @@ async def log_transaction_captured(event: object) -> None:
         event_id=str(getattr(event, "event_id", "")),
         transaction_id=str(getattr(event, "transaction_id", "")),
     )
+
+
+async def _supervise(
+    coro_factory: Callable[[], Awaitable[None]],
+    stop: asyncio.Event,
+    *,
+    event_type: str,
+    group: str,
+) -> None:
+    """Ultima red de seguridad sobre `coro_factory()` (normalmente `consumer.run(stop)`).
+
+    `StreamConsumer.run` ya es fail-soft ante errores de Redis (los loguea y
+    reintenta sin retornar), pero esto cubre cualquier otra excepcion inesperada
+    que la termine: en vez de dejar el consumer muerto en silencio para siempre,
+    se loguea y se reinicia tras `_SUPERVISOR_RESTART_DELAY_S`, hasta que `stop`
+    se marque.
+    """
+    while not stop.is_set():
+        try:
+            await coro_factory()
+        except Exception as exc:  # cualquier falla inesperada reinicia el consumer
+            if stop.is_set():
+                return
+            _logger.warning(
+                "event_consumer_restarted",
+                event_type=event_type,
+                group=group,
+                error_type=type(exc).__name__,
+            )
+            await asyncio.sleep(_SUPERVISOR_RESTART_DELAY_S)
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:
@@ -57,7 +91,14 @@ async def on_startup(ctx: dict[str, Any]) -> None:
         event_type="ledger.TransactionCaptured",
         handler=log_transaction_captured,
     )
-    task = asyncio.create_task(consumer.run(stop))
+    task = asyncio.create_task(
+        _supervise(
+            lambda: consumer.run(stop),
+            stop,
+            event_type="ledger.TransactionCaptured",
+            group=_LEDGER_OBSERVER_GROUP,
+        )
+    )
 
     # Claves propias (no "redis"/"pool"): arq ya usa `ctx["redis"]` para su propio
     # pool de colas; reusar ese nombre pisaria la conexion que arq necesita.
