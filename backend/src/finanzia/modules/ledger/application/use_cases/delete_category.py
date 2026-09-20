@@ -9,7 +9,6 @@ from finanzia.modules.ledger.application.ports import (
     TransactionRepositoryPort,
     UnitOfWorkPort,
 )
-from finanzia.modules.ledger.domain.enums import FiscalTag
 from finanzia.modules.ledger.domain.errors import CategoryNotFound, SystemCategoryImmutable
 from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
 
@@ -41,9 +40,12 @@ class DeleteCategory:
         if category.is_system:
             raise SystemCategoryImmutable
 
+        sin_categoria = await self._categories.get_system_by_slug("sin_categoria")
+        assert sin_categoria is not None  # noqa: S101 - sin_categoria la crea 0002_ledger_core
+
         now = self._clock.now()
         await self._transactions.reassign_category(
-            user_id, id, SIN_CATEGORIA_ID, FiscalTag.NO_DEDUCIBLE, now
+            user_id, id, SIN_CATEGORIA_ID, sin_categoria.fiscal_tag, now
         )
         await self._merchant_rules.delete_for_category(user_id, id)
         await self._categories.delete(user_id, id)

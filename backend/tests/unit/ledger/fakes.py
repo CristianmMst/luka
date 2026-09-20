@@ -19,7 +19,7 @@ from finanzia.modules.ledger.domain.entities import (
     Transaction,
     TransactionSource,
 )
-from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag
+from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag, Kind
 from finanzia.modules.ledger.domain.system_categories import SYSTEM_CATEGORIES
 
 __all__ = [
@@ -180,8 +180,13 @@ class InMemoryTransactionRepo:
         count = 0
         for tx in list(self._by_id.values()):
             if tx.user_id == user_id and tx.category_id == from_category_id:
+                # Invariante spec 004 SS2.5: una transferencia conserva
+                # `fiscal_tag = 'transferencia'` sin importar la categoria destino.
+                new_fiscal_tag = FiscalTag.TRANSFERENCIA if tx.kind == Kind.TRANSFER else fiscal_tag
                 await self.update(
-                    replace(tx, category_id=to_category_id, fiscal_tag=fiscal_tag, updated_at=now)
+                    replace(
+                        tx, category_id=to_category_id, fiscal_tag=new_fiscal_tag, updated_at=now
+                    )
                 )
                 count += 1
         return count

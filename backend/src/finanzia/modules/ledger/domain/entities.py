@@ -15,7 +15,7 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.errors import InvalidAmount, InvalidLast4
+from finanzia.modules.ledger.domain.errors import InvalidAmount, InvalidKindChange, InvalidLast4
 
 _CENTS = Decimal("0.01")
 _LAST4_PATTERN = re.compile(r"^[0-9]{1,4}$")
@@ -149,7 +149,16 @@ def new_manual_transaction(  # noqa: PLR0913 - un parametro por atributo inmutab
     notes: str | None = None,
     kind: Kind | None = None,
 ) -> Transaction:
-    """Crea una transaccion registrada manualmente por el usuario (spec 004 SS2.6)."""
+    """Crea una transaccion registrada manualmente por el usuario (spec 004 SS2.6).
+
+    `kind` es opcional: por defecto se deriva de `direction` (spec 004 SS2.5). Si se
+    pasa explicitamente `expense`/`income`, debe coincidir con `derive_kind(direction)`
+    o se lanza `InvalidKindChange` (el mismo error que usa el PATCH de `kind` en
+    `update_transaction.py`: cubre tanto el cambio post-creacion como la creacion
+    inconsistente). Solo `kind=transfer` puede anular la direccion derivada.
+    """
+    if kind in (Kind.EXPENSE, Kind.INCOME) and kind != derive_kind(direction):
+        raise InvalidKindChange("kind incompatible con la direccion de la transaccion")
     resolved_kind = kind or derive_kind(direction)
     return Transaction(
         id=id,

@@ -104,6 +104,28 @@ async def test_occurred_at_naive_es_400(
     assert response.status_code == 400
 
 
+async def test_kind_income_con_direction_debit_es_400_con_field_kind(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    user = await user_factory()
+    response = await client.post(
+        "/v1/transactions",
+        json={**_BASE_BODY, "direction": "debit", "kind": "income"},
+        headers=user.headers,
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["field"] == "kind"
+
+
+async def test_kind_transfer_en_post_es_aceptado(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    user = await user_factory()
+    body = await _post_transaction(client, user.headers, kind="transfer")
+    assert body["kind"] == "transfer"
+    assert body["fiscal_tag"] == "transferencia"
+
+
 async def test_respuesta_amount_es_string_con_dos_decimales(
     client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
 ) -> None:
@@ -382,3 +404,32 @@ async def test_post_manual_publica_evento_decodable_y_dedupe_hit_no_agrega_event
         assert len(entries_after) == 2
     finally:
         await redis_client.aclose()
+
+
+async def test_post_manual_con_event_bus_caido_devuelve_201_igual(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    app: FastAPI,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """El publish post-commit es fail-soft (review final, item C): la transaccion ya
+    quedo confirmada, asi que un bus de eventos caido no debe convertirse en un 500.
+    """
+    user = await user_factory()
+
+    class _FailingEventBus:
+        async def publish(self, event: object) -> None:
+            raise ConnectionError("redis unreachable")
+
+    app.state.event_bus = _FailingEventBus()
+
+    response = await client.post("/v1/transactions", json=_BASE_BODY, headers=user.headers)
+    assert response.status_code == 201, response.text
+
+    async with session_factory() as session:
+        count = (
+            await session.execute(
+                text("SELECT count(*) FROM transactions WHERE user_id = :u"), {"u": str(user.id)}
+            )
+        ).scalar_one()
+    assert count == 1

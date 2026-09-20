@@ -18,7 +18,7 @@ from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, Select, delete, exists, or_, select, tuple_, update
+from sqlalchemy import CursorResult, Select, case, delete, exists, or_, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -186,13 +186,19 @@ class SqlAlchemyTransactionRepository:
         fiscal_tag: FiscalTag,
         now: datetime,
     ) -> int:
+        # Invariante spec 004 SS2.5: `fiscal_tag = 'transferencia'` siempre que
+        # `kind = 'transfer'`, sin importar la categoria destino de la reasignacion.
+        new_fiscal_tag = case(
+            (TransactionRow.kind == "transfer", FiscalTag.TRANSFERENCIA.value),
+            else_=fiscal_tag.value,
+        )
         stmt = (
             update(TransactionRow)
             .where(
                 TransactionRow.user_id == user_id,
                 TransactionRow.category_id == from_category_id,
             )
-            .values(category_id=to_category_id, fiscal_tag=fiscal_tag.value, updated_at=now)
+            .values(category_id=to_category_id, fiscal_tag=new_fiscal_tag, updated_at=now)
         )
         result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
         return result.rowcount

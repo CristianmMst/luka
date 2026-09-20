@@ -86,6 +86,47 @@ async def test_delete_categoria_propia_reasigna_transacciones_a_sin_categoria(
     assert body["fiscal_tag"] == "no_deducible"
 
 
+async def test_delete_categoria_en_transferencia_conserva_kind_y_fiscal_tag(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    """Invariante spec 004 SS2.5 (review final item A): al borrar la categoria de una
+    transferencia, `category_id` se reasigna a `sin_categoria` pero `kind` y
+    `fiscal_tag` deben seguir siendo `transfer`/`transferencia` (nunca `no_deducible`).
+    """
+    user = await user_factory()
+    category_resp = await client.post(
+        "/v1/categories",
+        json={"name": "Ahorros", "fiscal_tag": "no_deducible"},
+        headers=user.headers,
+    )
+    category_id = category_resp.json()["id"]
+
+    tx_resp = await client.post(
+        "/v1/transactions",
+        json={
+            "amount": "50000.00",
+            "direction": "debit",
+            "occurred_at": "2026-01-01T12:00:00+00:00",
+            "category_id": category_id,
+            "kind": "transfer",
+        },
+        headers=user.headers,
+    )
+    assert tx_resp.status_code == 201, tx_resp.text
+    tx_id = tx_resp.json()["id"]
+    assert tx_resp.json()["kind"] == "transfer"
+
+    delete_resp = await client.delete(f"/v1/categories/{category_id}", headers=user.headers)
+    assert delete_resp.status_code == 204
+
+    get_resp = await client.get(f"/v1/transactions/{tx_id}", headers=user.headers)
+    assert get_resp.status_code == 200
+    body = get_resp.json()
+    assert body["category_id"] == str(SIN_CATEGORIA_ID)
+    assert body["kind"] == "transfer"
+    assert body["fiscal_tag"] == "transferencia"
+
+
 async def test_delete_cuenta_pone_null_account_id_en_transacciones(
     client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
 ) -> None:

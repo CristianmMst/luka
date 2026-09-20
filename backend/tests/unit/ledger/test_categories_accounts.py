@@ -25,7 +25,7 @@ from finanzia.modules.ledger.application.use_cases.list_categories import ListCa
 from finanzia.modules.ledger.application.use_cases.update_account import UpdateAccount
 from finanzia.modules.ledger.application.use_cases.update_category import UpdateCategory
 from finanzia.modules.ledger.domain.entities import MerchantRule
-from finanzia.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag
+from finanzia.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag, Kind
 from finanzia.modules.ledger.domain.errors import (
     AccountNotFound,
     DuplicateAccount,
@@ -145,6 +145,51 @@ async def test_borrar_categoria_propia_reasigna_transacciones_y_borra_reglas() -
     assert refreshed.fiscal_tag == FiscalTag.NO_DEDUCIBLE
     assert await repos.merchant_rules.list_for_user(USER) == []
     assert await repos.categories.get_visible(USER, category.id) is None
+
+
+@pytest.mark.unit
+async def test_borrar_categoria_de_una_transferencia_conserva_kind_y_fiscal_tag() -> None:
+    """Invariante spec 004 SS2.5 (review final item A)."""
+    repos = await build_ledger_repos()
+    create_category = _create_category_use_case(repos)
+    category = await create_category.execute(
+        USER, CategoryInput(name="Ahorros", icon=None, color=None, fiscal_tag=FiscalTag.DONACION)
+    )
+    manual_use_case = CreateManualTransaction(
+        transactions=repos.transactions,
+        sources=repos.sources,
+        categories=repos.categories,
+        accounts=repos.accounts,
+        events=repos.events,
+        clock=FixedClock(NOW),
+        ids=repos.ids,
+        uow=repos.uow,
+    )
+
+    tx = await manual_use_case.execute(
+        ManualTransactionCommand(
+            user_id=USER,
+            amount=Decimal("50000"),
+            direction=Direction.DEBIT,
+            occurred_at=NOW,
+            category_id=category.id,
+            merchant=None,
+            description=None,
+            account_id=None,
+            notes=None,
+            kind=Kind.TRANSFER,
+        )
+    )
+    assert tx.kind == Kind.TRANSFER
+
+    delete_use_case = _delete_category_use_case(repos)
+    await delete_use_case.execute(USER, category.id)
+
+    refreshed = await repos.transactions.get(USER, tx.id)
+    assert refreshed is not None
+    assert refreshed.category_id == SIN_CATEGORIA_ID
+    assert refreshed.kind == Kind.TRANSFER
+    assert refreshed.fiscal_tag == FiscalTag.TRANSFERENCIA
 
 
 @pytest.mark.unit

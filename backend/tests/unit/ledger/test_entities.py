@@ -22,7 +22,7 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.errors import InvalidAmount, InvalidLast4
+from finanzia.modules.ledger.domain.errors import InvalidAmount, InvalidKindChange, InvalidLast4
 
 NOW = datetime(2026, 8, 5, 15, 0, 0, tzinfo=UTC)
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
@@ -217,6 +217,48 @@ class TestNewManualTransaction:
         )
         assert tx.kind == Kind.TRANSFER
         assert tx.fiscal_tag == FiscalTag.TRANSFERENCIA
+
+    def test_kind_income_con_direccion_debit_lanza_invalid_kind_change(self) -> None:
+        with pytest.raises(InvalidKindChange):
+            new_manual_transaction(
+                id=uuid4(),
+                user_id=uuid4(),
+                amount=Decimal("50000"),
+                direction=Direction.DEBIT,
+                occurred_at=OCCURRED_AT,
+                category=CATEGORY_GENERIC,
+                now=NOW,
+                dedupe_key="manual:" + "d" * 16,
+                kind=Kind.INCOME,
+            )
+
+    def test_kind_expense_con_direccion_credit_lanza_invalid_kind_change(self) -> None:
+        with pytest.raises(InvalidKindChange):
+            new_manual_transaction(
+                id=uuid4(),
+                user_id=uuid4(),
+                amount=Decimal("50000"),
+                direction=Direction.CREDIT,
+                occurred_at=OCCURRED_AT,
+                category=CATEGORY_USER,
+                now=NOW,
+                dedupe_key="manual:" + "e" * 16,
+                kind=Kind.EXPENSE,
+            )
+
+    def test_kind_explicito_coherente_con_direccion_no_lanza(self) -> None:
+        tx = new_manual_transaction(
+            id=uuid4(),
+            user_id=uuid4(),
+            amount=Decimal("50000"),
+            direction=Direction.DEBIT,
+            occurred_at=OCCURRED_AT,
+            category=CATEGORY_GENERIC,
+            now=NOW,
+            dedupe_key="manual:" + "f" * 16,
+            kind=Kind.EXPENSE,
+        )
+        assert tx.kind == Kind.EXPENSE
 
     def test_direccion_credito_deriva_income(self) -> None:
         tx = new_manual_transaction(

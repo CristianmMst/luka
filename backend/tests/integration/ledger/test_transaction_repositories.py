@@ -198,16 +198,23 @@ async def test_q_escapa_wildcards_de_like(
         await repo.insert_if_absent(
             _make_tx(user_id=user.id, dedupe_key="dedupe-q-rappi", merchant="Rappi")
         )
+        await repo.insert_if_absent(
+            _make_tx(user_id=user.id, dedupe_key="dedupe-q-underscore", merchant="under_score")
+        )
         await session.commit()
 
     async with session_factory() as session:
         repo = SqlAlchemyTransactionRepository(session)
         exact_match = await repo.list(user.id, Filters(q="100%"), None, 50)
         percent_only = await repo.list(user.id, Filters(q="%"), None, 50)
+        underscore_only = await repo.list(user.id, Filters(q="_"), None, 50)
 
     assert {row.merchant for row in exact_match} == {"100%"}
     # `q="%"` escapado solo matchea comercios que contienen un `%` literal, no todos.
     assert {row.merchant for row in percent_only} == {"100%"}
+    # `q="_"` escapado solo matchea comercios que contienen un `_` literal (no es
+    # el comodin "un caracter cualquiera" de LIKE, que matchearia tambien "Rappi").
+    assert {row.merchant for row in underscore_only} == {"under_score"}
 
 
 async def test_find_transfer_candidates_ventana_inclusive(
