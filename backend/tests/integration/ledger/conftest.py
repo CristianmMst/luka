@@ -4,10 +4,6 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def _tablas_limpias(db_clean: None) -> None:
-    """Cada test de ledger arranca con las tablas de usuario vacias.
-
-    `categories` nunca se limpia por completo (ver `conftest.py` raiz): el seed
-    de las 24 categorias del sistema persiste entre tests.
-    """
-    del db_clean
+def _tablas_y_redis_limpias(db_clean: None, redis_clean: None) -> None:
+    """Cada test de ledger arranca con tablas de usuario y Redis (db 1) vacias."""
+    del db_clean, redis_clean
