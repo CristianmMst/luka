@@ -15,8 +15,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Composition root de metadata: import explicito de cada modulo con tablas.
-# Task 9 agrega `finanzia.modules.ledger.infrastructure.orm` a esta lista.
-import finanzia.modules.identity.infrastructure.orm  # noqa: F401
+import finanzia.modules.identity.infrastructure.orm
+import finanzia.modules.ledger.infrastructure.orm  # noqa: F401
 from finanzia.shared.db.base import Base
 from finanzia.shared.settings import Settings
 

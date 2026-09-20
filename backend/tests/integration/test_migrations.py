@@ -164,6 +164,17 @@ async def test_nombres_de_constraints_e_indices_siguen_la_convencion(
         )
         indices_refresh_tokens = {row[0] for row in result}
 
+        result = await conn.execute(
+            text("SELECT conname FROM pg_constraint WHERE conrelid = 'transactions'::regclass")
+        )
+        constraints_transactions = {row[0] for row in result}
+
+    assert {
+        "uq_transactions_user_id_dedupe_key",
+        "fk_transactions_category_id_categories",
+        "fk_transactions_user_id_users",
+        "pk_transactions",
+    } <= constraints_transactions
     assert {
         "pk_users",
         "uq_users_google_sub",

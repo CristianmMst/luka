@@ -115,12 +115,19 @@ async def redis_clean(settings: Settings) -> AsyncGenerator[None, None]:
 
 @pytest.fixture
 async def db_clean(session_factory: async_sessionmaker[AsyncSession]) -> None:
-    """Vacia `refresh_tokens` y `users` antes de cada test (no autouse global).
+    """Vacia las tablas de usuario antes de cada test (no autouse global).
 
-    Nota para tareas futuras: a partir de Task 9 tambien debera borrar
-    `categories WHERE user_id IS NOT NULL`.
+    Orden: hijos del ledger antes que sus padres, y `refresh_tokens`/`users` al
+    final (spec 004 SS2.1-2.9, Task 9/F1.5). `categories` nunca se trunca
+    completa: solo se borran las categorias de usuario (`user_id IS NOT NULL`)
+    para preservar el seed de las 24 categorias del sistema.
     """
     async with session_factory() as session:
+        await session.execute(text("DELETE FROM merchant_rules"))
+        await session.execute(text("DELETE FROM transaction_sources"))
+        await session.execute(text("DELETE FROM transactions"))
+        await session.execute(text("DELETE FROM linked_accounts"))
+        await session.execute(text("DELETE FROM categories WHERE user_id IS NOT NULL"))
         await session.execute(text("DELETE FROM refresh_tokens"))
         await session.execute(text("DELETE FROM users"))
         await session.commit()
