@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
+import redis.asyncio as redis_asyncio
 from alembic import command
 from alembic.config import Config
 from asgi_lifespan import LifespanManager
@@ -39,6 +40,12 @@ def settings() -> Settings:
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
         google_verifier="fake",
+        # Limites altos por defecto (Task 8/F1.4): el resto de la suite hace muchos
+        # logins/llamadas autenticadas desde la misma IP de test y no debe toparse
+        # con el rate limiting. Los tests de rate limiting propios usan
+        # `settings.model_copy(update={...})` con limites bajos a proposito.
+        rate_limit_auth_per_minute=1000,
+        rate_limit_user_per_minute=10000,
     )
 
 
@@ -88,6 +95,22 @@ async def session_factory(
         yield factory
     finally:
         await engine.dispose()
+
+
+@pytest.fixture
+async def redis_clean(settings: Settings) -> AsyncGenerator[None, None]:
+    """Vacia la Redis de test (db 1) antes y despues del test (Task 8/F1.4).
+
+    No es autouse: solo los tests de rate limiting la piden, para no interferir
+    con otras claves (idempotency-key, etc.) usadas por otras suites.
+    """
+    client = redis_asyncio.from_url(str(settings.redis_url))
+    try:
+        await client.flushdb()
+        yield
+        await client.flushdb()
+    finally:
+        await client.aclose()
 
 
 @pytest.fixture
