@@ -84,12 +84,13 @@ class UpdateTransaction:
         category = await self._categories.get_visible(user_id, category_id)
         if category is None:
             raise CategoryNotFound
+        category_changed = category.id != tx.category_id
         tx = replace(
             tx,
             category_id=category.id,
             fiscal_tag=resolve_fiscal_tag(tx.kind, category.fiscal_tag),
         )
-        if learn_merchant_rule:
+        if learn_merchant_rule and category_changed:
             normalized = normalize_merchant(tx.merchant)
             if normalized:
                 await self._merchant_rules.upsert(

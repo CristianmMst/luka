@@ -21,7 +21,12 @@ from finanzia.modules.ledger.application.use_cases.record_captured_transaction i
     RecordCapturedTransaction,
 )
 from finanzia.modules.ledger.application.use_cases.update_transaction import UpdateTransaction
-from finanzia.modules.ledger.domain.entities import Category, LinkedAccount, Transaction
+from finanzia.modules.ledger.domain.entities import (
+    Category,
+    LinkedAccount,
+    MerchantRule,
+    Transaction,
+)
 from finanzia.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
@@ -179,6 +184,30 @@ async def test_patch_category_con_learn_merchant_rule_false_no_aprende_regla() -
     )
 
     assert await repos.merchant_rules.list_for_user(USER) == []
+
+
+@pytest.mark.unit
+async def test_patch_con_el_mismo_category_id_no_aprende_ni_toca_reglas() -> None:
+    """Plan §1.4 / AC-7.2: solo se aprende regla si `category_id` realmente cambia."""
+    repos = await build_ledger_repos()
+    other_category = await _add_category(repos)
+    existing_rule = MerchantRule(
+        id=uuid4(),
+        user_id=USER,
+        merchant_pattern=normalize_merchant("EXITO BOGOTA"),
+        category_id=other_category.id,
+    )
+    await repos.merchant_rules.upsert(existing_rule)
+    tx = await _create_manual(repos, merchant="EXITO BOGOTA")
+    use_case = _update_use_case(repos)
+
+    updated = await use_case.execute(
+        USER, tx.id, TransactionPatch(category_id=tx.category_id, learn_merchant_rule=True)
+    )
+
+    assert updated.category_id == tx.category_id
+    rules = await repos.merchant_rules.list_for_user(USER)
+    assert rules == [existing_rule]
 
 
 @pytest.mark.unit
