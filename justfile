@@ -2,19 +2,19 @@
 
 set shell := ["bash", "-uc"]
 
-# Levanta la infra de desarrollo (Postgres + Redis). docker-compose.yml llega en F0.4.
+# Levanta la infra de desarrollo (Postgres + Redis).
 up:
-	docker compose up -d
+	docker compose -f backend/docker-compose.dev.yml up -d --wait
 
 # Detiene la infra de desarrollo.
 down:
-	docker compose down
+	docker compose -f backend/docker-compose.dev.yml down
 
-# Corre la API en modo desarrollo con recarga automatica. finanzia.main llega en Task 1.
+# Corre la API en modo desarrollo con recarga automatica.
 dev:
 	cd backend && uv run uvicorn finanzia.main:app --reload
 
-# Corre el worker arq. finanzia.worker llega en Task 1.
+# Corre el worker arq. finanzia.worker llega en una tarea posterior.
 worker:
 	cd backend && uv run arq finanzia.worker.WorkerSettings
 
