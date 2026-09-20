@@ -14,24 +14,26 @@
 
 | HTTP | code | Cuándo |
 |---|---|---|
-| 400 | `validation_error` | entrada inválida |
+| 400 | `validation_error` | entrada inválida; reemplaza el 422 por defecto de FastAPI. `field` es el `loc` del error sin el prefijo `body`/`query`/`path` |
 | 401 | `unauthorized` / `token_expired` | sin token o vencido |
-| 403 | `forbidden` | recurso de otro usuario |
-| 404 | `not_found` | |
+| 403 | `forbidden` | acción no permitida sobre un recurso propio o visible (p. ej. modificar/borrar una categoría del sistema, o borrar una transacción no manual). **Nunca** para un recurso ajeno: ver 404 |
+| 404 | `not_found` | recurso inexistente **o de otro usuario** (spec 009 §4: no se distingue para no filtrar existencia) |
 | 409 | `conflict` | p. ej. cuenta duplicada |
 | 429 | `rate_limited` | header `Retry-After` |
 | 500 | `internal` | sin detalles internos |
 
-- Idempotencia en mutaciones de la app: header `Idempotency-Key: <uuid>` (el outbox offline reintenta sin duplicar).
+- Idempotencia en mutaciones de la app: header `Idempotency-Key: <uuid>`, solo en `POST` (el outbox offline reintenta sin duplicar). Clave en Redis: `(user_id, key)`, TTL 24 h. La misma clave con el mismo cuerpo (hash) reproduce la respuesta original (status, `content-type`, body) agregando `Idempotency-Replayed: true`; la misma clave con un cuerpo distinto, o mientras la primera solicitud sigue en vuelo, responde 409. Solo se persisten respuestas con status < 500.
+- Paginación por cursor: el cursor es opaco (`base64url(json)`); orden por defecto `(occurred_at DESC, id DESC)`; con `updated_since`, orden `(updated_at ASC, id ASC)`. `limit` entre 1 y 200 (default 50). Un cursor inválido, vencido o del orden equivocado responde 400 `validation_error` con `field: "cursor"`.
+- `GET /health` y `GET /health/ready` son públicos, no llevan el prefijo `/v1` y están exentos de rate limiting.
 
 ## 2. Auth (módulo identity)
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/auth/google` **público** | Body `{ "id_token": "..." }` → verifica firma/audiencia con Google, crea o encuentra usuario. Respuesta: `{ access_token, refresh_token, expires_in, user }` |
-| POST | `/auth/refresh` **público** | Body `{ "refresh_token" }` → rota el refresh (familia) y emite nuevo par. Reuso de token rotado → 401 + revocación de familia |
-| POST | `/auth/logout` | Revoca el refresh token actual |
-| GET | `/me` | Perfil + estado de conexiones (`gmail: active/none/error`, notificaciones) |
+| POST | `/auth/google` **público** | Body `{ "id_token": "...", "device_info?" }` (`device_info` opcional, ≤200 caracteres) → verifica firma/audiencia con Google, crea o encuentra usuario. `email_verified=false` → 401 `unauthorized`. Respuesta: `{ access_token, refresh_token, expires_in, user }` |
+| POST | `/auth/refresh` **público** | Body `{ "refresh_token", "device_info?" }` (mismo límite) → rota el refresh (familia) y emite nuevo par. Refresh vencido, revocado, reusado o desconocido → 401 `unauthorized` genérico (no se distingue el motivo); `token_expired` es exclusivo del access JWT |
+| POST | `/auth/logout` | Body `{ "refresh_token" }` → revoca ese refresh token. Responde 204 siempre, exista o no el token |
+| GET | `/me` | Perfil + `consents` + `connections`. En Fase 1, `connections` es `{ "gmail": "none", "notifications": "none" \| "granted" }` |
 | DELETE | `/me` | Inicia borrado de cuenta (RF-11.3). Respuesta 202 |
 | GET | `/me/export` | Genera exportación completa (job async) → `{ job_id }`; se consulta en `/me/export/{job_id}` (RF-11.2) |
 
@@ -78,19 +80,19 @@
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/transactions` | Filtros: `from`, `to`, `kind`, `category_id`, `bank`, `account_id`, `channel`, `q` (texto), `updated_since` (sync). Paginado |
-| POST | `/transactions` | Registro manual/NFC. Body: monto, dirección, fecha, comercio, categoría, cuenta opcional, `nfc_tag_id` opcional |
+| POST | `/transactions` | Registro manual/NFC. Body: monto, dirección, fecha, comercio, categoría, cuenta opcional, `nfc_tag_id` opcional (marca la fuente con `channel: "nfc"`; el identificador en sí no se persiste) |
 | GET | `/transactions/{id}` | Incluye `sources[]` (AC-9.3) y transacción emparejada si es transfer |
-| PATCH | `/transactions/{id}` | Editables: `category_id` (dispara merchant_rule, AC-7.2), `notes`, `merchant`, `kind` transfer↔original (AC-6.3/6.4) |
-| DELETE | `/transactions/{id}` | Solo transacciones manuales |
-| POST | `/transactions/{id}/transfer-pair` | Body `{ "pair_id" }` — emparejar manualmente |
-| DELETE | `/transactions/{id}/transfer-pair` | Desemparejar (registra exclusión) |
+| PATCH | `/transactions/{id}` | Editables: `category_id` (dispara merchant_rule si el comercio no está vacío, AC-7.2; `learn_merchant_rule: bool = true` para omitirlo), `notes`, `merchant`, `kind` transfer↔original (AC-6.3/6.4) |
+| DELETE | `/transactions/{id}` | Solo transacciones manuales (`parsed_by = "manual"`); sobre una capturada automáticamente → 403 |
+| POST | `/transactions/{id}/transfer-pair` | Body `{ "pair_id" }` — emparejar manualmente. Ambas deben ser propias (si no, 404) y de dirección opuesta; si alguna ya está emparejada → 409. No exige monto igual. Queda `transfer_auto: false` |
+| DELETE | `/transactions/{id}/transfer-pair` | Desemparejar (registra exclusión mutua que solo bloquea el emparejador automático; un nuevo `transfer-pair` manual entre las mismas dos sigue funcionando) |
 
 ## 7. Categorías, cuentas, revisión
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET/POST | `/categories` · PATCH/DELETE `/categories/{id}` | Sistema + propias; las del sistema no se modifican (403) |
-| GET/POST | `/accounts` · PATCH/DELETE `/accounts/{id}` | Cuentas vinculadas (RF-6) |
+| GET/POST | `/categories` · PATCH/DELETE `/categories/{id}` | Sistema + propias; las del sistema no se modifican ni se borran (403). Nombre duplicado → 409. Ajena → 404. `DELETE` de una propia reasigna sus transacciones a `sin_categoria` y borra las `merchant_rules` que apuntaban a ella |
+| GET/POST | `/accounts` · PATCH/DELETE `/accounts/{id}` | Cuentas vinculadas (RF-6). `(bank, last4)` duplicado para el usuario → 409. `DELETE` dejar `account_id` en `NULL` en sus transacciones (`ON DELETE SET NULL`) |
 | GET | `/review` | Cola de revisión con `partial_extract` |
 | POST | `/review/{raw_message_id}/convert` | Body = transacción completa → crea transacción `parsed_by: manual` y marca resuelto |
 | POST | `/review/{raw_message_id}/discard` | Descarta |
