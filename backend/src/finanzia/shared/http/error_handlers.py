@@ -69,8 +69,14 @@ async def _handle_http_exception(request: Request, exc: Exception) -> JSONRespon
     assert isinstance(exc, StarletteHTTPException)  # noqa: S101
     if exc.status_code in (404, 405):
         return _error_response(404, "not_found", _MESSAGE_BY_CODE["not_found"])
-    code = _STATUS_CODE_TO_CODE.get(exc.status_code, "internal")
-    message = _MESSAGE_BY_CODE.get(code, _MESSAGE_BY_CODE["internal"])
+    code = _STATUS_CODE_TO_CODE.get(exc.status_code)
+    if code is None:
+        # Status HTTP sin mapeo explicito: nunca se refleja tal cual (evita filtrar
+        # semantica no contemplada); se degrada a 500 internal y se deja rastro para
+        # detectar el hueco de mapeo.
+        structlog.get_logger().warning("unmapped_http_exception", status=exc.status_code)
+        return _error_response(500, "internal", _MESSAGE_BY_CODE["internal"])
+    message = _MESSAGE_BY_CODE[code]
     headers = dict(exc.headers) if exc.headers else None
     return _error_response(exc.status_code, code, message, headers=headers)
 

@@ -7,7 +7,7 @@ ASGI directamente, como exige la spec 009 SS5 (logs sin cuerpo/query string).
 import re
 import time
 import uuid
-from collections.abc import Awaitable, Callable, MutableMapping
+from collections.abc import Awaitable, Callable, Iterable, MutableMapping
 from typing import Any
 
 import structlog
@@ -80,10 +80,44 @@ def _route_template(scope: Scope) -> str:
     """Devuelve la plantilla de ruta si el router la expuso; nunca la ruta cruda.
 
     El path crudo puede contener identificadores de recursos; para no arriesgar
-    filtrarlos, si el framework no publico `scope["route"]` se reporta "unmatched".
+    filtrarlos, nunca se usa `scope["path"]`. Se intenta primero `scope["route"]`
+    (por si una version futura de Starlette lo publica); si no esta, se busca en
+    `scope["app"].routes` la ruta cuyo `endpoint` coincide con `scope["endpoint"]`
+    (dejado por el router al hacer match, incluso cuando levanta una excepcion
+    despues, p. ej. 422/validation). Si no hay match, se reporta "unmatched".
     """
     route = scope.get("route")
     path = getattr(route, "path", None)
     if isinstance(path, str):
         return path
+
+    endpoint = scope.get("endpoint")
+    app = scope.get("app")
+    routes: Iterable[Any] | None = getattr(app, "routes", None)
+    if endpoint is not None and routes is not None:
+        found = _find_route_path(routes, endpoint)
+        if found is not None:
+            return found
     return "unmatched"
+
+
+def _find_route_path(routes: Iterable[Any], endpoint: object, prefix: str = "") -> str | None:
+    """Busca recursivamente (via `Mount`/`.routes` anidados) la ruta de `endpoint`."""
+    for route in routes:
+        route_path = getattr(route, "path", None)
+        route_prefix = f"{prefix}{route_path}" if isinstance(route_path, str) else prefix
+
+        route_endpoint = getattr(route, "endpoint", None)
+        if (
+            route_endpoint is not None
+            and route_endpoint is endpoint
+            and isinstance(route_path, str)
+        ):
+            return route_prefix
+
+        nested_routes = getattr(route, "routes", None)
+        if nested_routes:
+            found = _find_route_path(nested_routes, endpoint, route_prefix)
+            if found is not None:
+                return found
+    return None

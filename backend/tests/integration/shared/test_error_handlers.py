@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from asgi_lifespan import LifespanManager
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel
 
@@ -48,6 +48,10 @@ def _build_test_app(settings: Settings) -> FastAPI:
     @router.post("/_test/body")
     async def _recibe_cuerpo(payload: _CuerpoDePrueba) -> dict[str, int]:
         return {"amount": payload.amount}
+
+    @router.get("/_test/teapot")
+    async def _raise_unmapped_http_exception() -> None:
+        raise HTTPException(status_code=418, detail="soy una tetera, detalle interno")
 
     app.include_router(router)
     return app
@@ -120,3 +124,16 @@ async def test_module_map_convierte_excepcion_propia_en_conflict(
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "conflict"
+
+
+@pytest.mark.integration
+async def test_http_exception_con_status_no_mapeado_degrada_a_internal(
+    error_test_client: AsyncClient,
+) -> None:
+    response = await error_test_client.get("/_test/teapot")
+
+    assert response.status_code == 500
+    body = response.json()
+    assert body["error"]["code"] == "internal"
+    assert "tetera" not in response.text
+    assert "detalle interno" not in response.text
