@@ -54,9 +54,16 @@ select = ["E", "F", "W", "I", "B", "UP", "N", "S", "ASYNC", "T20", "RUF", "PL"]
 "migrations/**" = ["E501"]
 
 [tool.ruff.lint.flake8-bugbear]
-# FastAPI resuelve `Depends(...)` en cada request; no es una llamada mutable
-# reevaluada en tiempo de import (patron estandar de inyeccion de dependencias).
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+# FastAPI resuelve `Depends(...)`/`Query(...)` en cada request; no son llamadas
+# mutables reevaluadas en tiempo de import (patron estandar de inyeccion de
+# dependencias y de parametros de query, este ultimo necesario en `?from=&to=&...`
+# de `GET /transactions`, F1.7).
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query",
+]
 
 [tool.pyright]
 venvPath = "."
@@ -124,10 +131,13 @@ name = "R4 - modulos independientes salvo public.py y events.py"
 type = "independence"
 modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
   "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
-ignore_imports = ["finanzia.modules.** -> finanzia.modules.*.public", "finanzia.modules.** -> finanzia.modules.*.events"]
-# En Task 0 aun no existen imports cruzados reales (solo esqueleto); "warn" evita que
-# import-linter aborte por "No matches for ignored import" mientras el patron no aplique.
-unmatched_ignore_imports_alerting = "warn"
+# Pares explicitos que existen hoy (Task 13/F1.7): ledger.infrastructure.api.deps es el
+# unico punto que cruza a otro modulo, y lo hace via `identity.public` (nunca a
+# internals de identity). Ningun modulo importa todavia los `events.py` de otro (ese
+# cruce llegara con el consumidor de eventos de un modulo distinto al productor), asi
+# que no hay patron de `events.py` que ignorar aun: agregar uno sin uso real volveria a
+# disparar "No matches for ignored import" con la alerta por defecto ("error").
+ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.modules.identity.public"]
 
 [[tool.importlinter.contracts]]  # Kernel
 name = "Kernel - shared nunca importa modulos ni composition roots"

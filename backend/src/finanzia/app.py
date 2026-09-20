@@ -11,6 +11,16 @@ from finanzia.modules.identity.infrastructure.api.errors import (
     EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
+from finanzia.modules.ledger.infrastructure.api.errors import LEDGER_EXCEPTION_MAP
+from finanzia.modules.ledger.infrastructure.api.router_accounts import (
+    router as ledger_accounts_router,
+)
+from finanzia.modules.ledger.infrastructure.api.router_categories import (
+    router as ledger_categories_router,
+)
+from finanzia.modules.ledger.infrastructure.api.router_transactions import (
+    router as ledger_transactions_router,
+)
 from finanzia.shared.db.engine import create_engine, create_session_factory
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.http.body_limit import BodyLimitMiddleware
@@ -85,8 +95,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware, is_prod=resolved_settings.env == "prod")
     app.add_middleware(RequestIdMiddleware)
 
-    install_error_handlers(app, [IDENTITY_EXCEPTION_MAP])
+    install_error_handlers(app, [IDENTITY_EXCEPTION_MAP, LEDGER_EXCEPTION_MAP])
 
     app.include_router(health_router)
     app.include_router(identity_router, prefix="/v1")
+    app.include_router(ledger_transactions_router, prefix="/v1")
+    app.include_router(ledger_categories_router, prefix="/v1")
+    app.include_router(ledger_accounts_router, prefix="/v1")
     return app
