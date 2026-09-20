@@ -6,11 +6,13 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis_asyncio
 from fastapi import FastAPI
 
+from finanzia.events_registry import build_registry
 from finanzia.modules.identity.infrastructure.api.errors import (
     EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
 from finanzia.shared.db.engine import create_engine, create_session_factory
+from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.http.body_limit import BodyLimitMiddleware
 from finanzia.shared.http.error_handlers import install_error_handlers
 from finanzia.shared.http.health import router as health_router
@@ -49,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = session_factory
         app.state.redis = redis_client
         app.state.rate_limiter = SlidingWindowLimiter(redis_client)
+        app.state.event_bus = RedisStreamsEventBus(redis_client, build_registry())
 
         try:
             yield

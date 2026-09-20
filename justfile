@@ -14,7 +14,7 @@ down:
 dev:
 	cd backend && uv run uvicorn finanzia.main:app --reload
 
-# Corre el worker arq. finanzia.worker llega en una tarea posterior.
+# Corre el worker arq (bus de eventos Redis Streams, F1.8).
 worker:
 	cd backend && uv run arq finanzia.worker.WorkerSettings
 

@@ -93,7 +93,7 @@ include_external_packages = true
 name = "R1 - domain solo importa stdlib y a si mismo"
 type = "forbidden"
 source_modules = ["finanzia.modules.*.domain"]
-forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker",
+forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry",
   "finanzia.modules.*.application","finanzia.modules.*.infrastructure","finanzia.modules.*.events","finanzia.modules.*.public",
   "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
 
@@ -101,7 +101,7 @@ forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.
 name = "R2 - application solo importa domain, ports y events propios"
 type = "forbidden"
 source_modules = ["finanzia.modules.*.application"]
-forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker",
+forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry",
   "finanzia.modules.*.infrastructure","finanzia.modules.*.public",
   "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
 
@@ -133,4 +133,4 @@ unmatched_ignore_imports_alerting = "warn"
 name = "Kernel - shared nunca importa modulos ni composition roots"
 type = "forbidden"
 source_modules = ["finanzia.shared"]
-forbidden_modules = ["finanzia.modules","finanzia.app","finanzia.main","finanzia.worker"]
+forbidden_modules = ["finanzia.modules","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry"]
