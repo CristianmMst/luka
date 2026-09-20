@@ -50,8 +50,13 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "B", "UP", "N", "S", "ASYNC", "T20", "RUF", "PL"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S106", "PLR2004"]
+"tests/**" = ["S101", "S105", "S106", "PLR2004"]
 "migrations/**" = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI resuelve `Depends(...)` en cada request; no es una llamada mutable
+# reevaluada en tiempo de import (patron estandar de inyeccion de dependencias).
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
 
 [tool.pyright]
 venvPath = "."

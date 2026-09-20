@@ -6,6 +6,10 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis_asyncio
 from fastapi import FastAPI
 
+from finanzia.modules.identity.infrastructure.api.errors import (
+    EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
+)
+from finanzia.modules.identity.infrastructure.api.router import router as identity_router
 from finanzia.shared.db.engine import create_engine, create_session_factory
 from finanzia.shared.http.body_limit import BodyLimitMiddleware
 from finanzia.shared.http.error_handlers import install_error_handlers
@@ -48,7 +52,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware, is_prod=resolved_settings.env == "prod")
     app.add_middleware(RequestIdMiddleware)
 
-    install_error_handlers(app)
+    install_error_handlers(app, [IDENTITY_EXCEPTION_MAP])
 
     app.include_router(health_router)
+    app.include_router(identity_router, prefix="/v1")
     return app
