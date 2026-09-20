@@ -7,13 +7,19 @@ import redis.asyncio as redis_asyncio
 from fastapi import FastAPI
 
 from finanzia.shared.db.engine import create_engine, create_session_factory
+from finanzia.shared.http.body_limit import BodyLimitMiddleware
+from finanzia.shared.http.error_handlers import install_error_handlers
 from finanzia.shared.http.health import router as health_router
+from finanzia.shared.http.request_id import RequestIdMiddleware
+from finanzia.shared.http.security_headers import SecurityHeadersMiddleware
+from finanzia.shared.logging import configure_logging
 from finanzia.shared.settings import Settings, get_settings
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Crea la aplicacion FastAPI, cableando settings, DB y Redis en `app.state`."""
     resolved_settings = settings if settings is not None else get_settings()
+    configure_logging(resolved_settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -35,5 +41,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await engine.dispose()
 
     app = FastAPI(title="finanzia", lifespan=lifespan)
+
+    # `add_middleware` apila en orden inverso: el ultimo agregado queda mas afuera.
+    # Orden de ejecucion resultante: RequestId -> SecurityHeaders -> BodyLimit -> router.
+    app.add_middleware(BodyLimitMiddleware, max_bytes=resolved_settings.max_body_bytes)
+    app.add_middleware(SecurityHeadersMiddleware, is_prod=resolved_settings.env == "prod")
+    app.add_middleware(RequestIdMiddleware)
+
+    install_error_handlers(app)
+
     app.include_router(health_router)
     return app
