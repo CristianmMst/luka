@@ -2,8 +2,10 @@
 
 import asyncio
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from uuid import UUID, uuid4
 
 import pytest
 from alembic import command
@@ -11,8 +13,12 @@ from alembic.config import Config
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from support.auth import AuthedUser
 
 from finanzia.app import create_app
+from finanzia.shared.security import encode_access_token
 from finanzia.shared.settings import Settings
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -68,3 +74,73 @@ async def migrated_db(settings: Settings) -> None:
     cfg.set_main_option("script_location", str(_BACKEND_DIR / "migrations"))
     cfg.set_main_option("sqlalchemy.url", str(settings.database_url))
     await asyncio.to_thread(command.upgrade, cfg, "head")
+
+
+@pytest.fixture(scope="session")
+async def session_factory(
+    settings: Settings, migrated_db: None
+) -> AsyncGenerator[async_sessionmaker[AsyncSession], None]:
+    """Engine + session factory propios de los tests, independientes del de la app."""
+    del migrated_db
+    engine = create_async_engine(str(settings.database_url))
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        yield factory
+    finally:
+        await engine.dispose()
+
+
+@pytest.fixture
+async def db_clean(session_factory: async_sessionmaker[AsyncSession]) -> None:
+    """Vacia `refresh_tokens` y `users` antes de cada test (no autouse global).
+
+    Nota para tareas futuras: a partir de Task 9 tambien debera borrar
+    `categories WHERE user_id IS NOT NULL`.
+    """
+    async with session_factory() as session:
+        await session.execute(text("DELETE FROM refresh_tokens"))
+        await session.execute(text("DELETE FROM users"))
+        await session.commit()
+
+
+@pytest.fixture
+def user_factory(client: AsyncClient, db_clean: None) -> Callable[..., Awaitable[AuthedUser]]:
+    """Callable async que loguea un usuario fake real via `POST /v1/auth/google`."""
+    del db_clean
+
+    async def make_user(
+        sub: str = "sub-1",
+        email: str = "ana@example.com",
+        device_info: str | None = None,
+    ) -> AuthedUser:
+        response = await client.post(
+            "/v1/auth/google",
+            json={"id_token": f"fake:{sub}:{email}", "device_info": device_info},
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        return AuthedUser(
+            id=UUID(body["user"]["id"]),
+            email=body["user"]["email"],
+            access_token=body["access_token"],
+            refresh_token=body["refresh_token"],
+        )
+
+    return make_user
+
+
+@pytest.fixture
+async def second_user(user_factory: Callable[..., Awaitable[AuthedUser]]) -> AuthedUser:
+    """Segundo usuario de prueba, para casos de aislamiento entre usuarios."""
+    return await user_factory(sub="sub-2", email="beatriz@example.com")
+
+
+@pytest.fixture
+def expired_access_token(settings: Settings) -> str:
+    """Access JWT valido en forma pero vencido: emitido hace 16 minutos (TTL 15 min)."""
+    return encode_access_token(
+        user_id=uuid4(),
+        now=datetime.now(UTC) - timedelta(minutes=16),
+        ttl=timedelta(minutes=15),
+        secret=settings.jwt_secret.get_secret_value(),
+    )

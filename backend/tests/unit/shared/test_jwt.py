@@ -15,9 +15,9 @@ from finanzia.shared.security.jwt import (
     encode_access_token,
 )
 
-SECRET = "un-secreto-de-pruebas-con-longitud-suficiente-32b"  # noqa: S105
-OTHER_SECRET = "otro-secreto-de-pruebas-con-longitud-suficiente"  # noqa: S105
-HS512_SECRET = "un-secreto-de-pruebas-con-longitud-suficiente-para-hs512-64bytes"  # noqa: S105
+SECRET = "un-secreto-de-pruebas-con-longitud-suficiente-32b"
+OTHER_SECRET = "otro-secreto-de-pruebas-con-longitud-suficiente"
+HS512_SECRET = "un-secreto-de-pruebas-con-longitud-suficiente-para-hs512-64bytes"
 TTL = timedelta(minutes=15)
 
 
