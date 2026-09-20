@@ -101,6 +101,10 @@ def test_job_test_crea_bases_de_datos_y_corre_pytest_con_cobertura() -> None:
         == "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test"
     )
     assert env.get("FINANZIA_TEST_REDIS_URL") == "redis://localhost:6379/1"
+    assert (
+        env.get("FINANZIA_TEST_MIGRATIONS_DATABASE_URL")
+        == "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test_migrations"
+    )
 
     assert _steps_usan(job, "actions/upload-artifact")
 
