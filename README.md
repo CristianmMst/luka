@@ -2,7 +2,7 @@
 
 App multiplataforma (Flutter) de control de gastos personales con **captura automática de transacciones** (Gmail, notificaciones bancarias, SMS, NFC) y **generación del reporte anual de renta colombiano** (cifras organizadas según el formulario 210 de la DIAN).
 
-> **Estado**: fase de especificación (Spec-Driven Development). No hay código aún — toda la implementación se derivará de los documentos en `docs/`.
+> **Estado**: Spec-Driven Development en marcha. El **backend** (Fase 0: fundaciones del repo/tooling/CI; Fase 1: `identity` + `ledger` + bus de eventos sobre Redis Streams) ya está implementado en la rama `CristianmMst/backend-architecture-setup` (PR pendiente) — ver la guía completa en [`backend/README.md`](backend/README.md). Pendiente: la app Flutter (F0.6, F1.9) y las fases 2 en adelante (parsing, Gmail, motor fiscal, producción).
 
 ## Metodología
 

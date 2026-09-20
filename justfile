@@ -33,7 +33,7 @@ lint:
 	cd backend && uv run pyright
 	cd backend && uv run lint-imports
 
-# Aplica migraciones Alembic. backend/migrations se puebla en tasks posteriores.
+# Aplica migraciones Alembic (0001 identity, 0002 ledger).
 migrate:
 	cd backend && uv run alembic upgrade head
 
@@ -41,5 +41,9 @@ migrate:
 revision name:
 	cd backend && uv run alembic revision --autogenerate -m "{{name}}"
 
-# Pipeline de CI: lint + tests.
-ci: lint test
+# Gate de cobertura de dominio (ledger.domain + identity.domain >= 90%).
+coverage-domain:
+	cd backend && uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov-fail-under=90
+
+# Pipeline de CI: lint + tests + cobertura de dominio.
+ci: lint test coverage-domain

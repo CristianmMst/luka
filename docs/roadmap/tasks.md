@@ -1,33 +1,33 @@
 # Roadmap de implementación
 
-> **Estado: BLOQUEADO por decisión del usuario.** No se escribe código hasta aprobación explícita. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
+> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (PR pendiente). Pendientes: F0.6 y F1.9 (app Flutter) y las fases 2 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
 
 Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
 ## Fase 0 — Fundaciones del repositorio
 
-| ID | Tarea | Specs | Deps |
-|---|---|---|---|
-| F0.1 | Estructura monorepo: `/app`, `/backend`, `.gitignore`, licencias | 003 | — |
-| F0.2 | Backend scaffold: uv + FastAPI + estructura modular/hexagonal vacía (shared + 6 módulos con carpetas domain/application/infrastructure) | 003 §2 | F0.1 |
-| F0.3 | Tooling backend: ruff, pyright, pytest, import-linter con las 4 reglas de dependencia | 003 §2.2 | F0.2 |
-| F0.4 | docker-compose dev: Postgres 16 + Redis 7; settings con pydantic-settings | 003 §5 | F0.2 |
-| F0.5 | CI GitHub Actions: lint + tests + import-linter + pip-audit + gitleaks | 009 §8, RNF-7 | F0.3 |
-| F0.6 | App scaffold: `flutter create`, estructura feature-first vacía, riverpod/drift/dio/go_router configurados, flutter analyze/test en CI | 003 §3, 008 §1 | F0.1 |
+| ID | Tarea | Specs | Deps | Estado |
+|---|---|---|---|---|
+| F0.1 | Estructura monorepo: `/app`, `/backend`, `.gitignore`, licencias | 003 | — | ✅ |
+| F0.2 | Backend scaffold: uv + FastAPI + estructura modular/hexagonal vacía (shared + 6 módulos con carpetas domain/application/infrastructure) | 003 §2 | F0.1 | ✅ |
+| F0.3 | Tooling backend: ruff, pyright, pytest, import-linter con las 4 reglas de dependencia | 003 §2.2 | F0.2 | ✅ |
+| F0.4 | docker-compose dev: Postgres 16 + Redis 7; settings con pydantic-settings | 003 §5 | F0.2 | ✅ |
+| F0.5 | CI GitHub Actions: lint + tests + import-linter + pip-audit + gitleaks | 009 §8, RNF-7 | F0.3 | ✅ |
+| F0.6 | App scaffold: `flutter create`, estructura feature-first vacía, riverpod/drift/dio/go_router configurados, flutter analyze/test en CI | 003 §3, 008 §1 | F0.1 | pendiente |
 
 ## Fase 1 — Identity + Ledger básico (RF-1, RF-7 parcial)
 
-| ID | Tarea | Specs | Deps |
-|---|---|---|---|
-| F1.1 | Migraciones Alembic: users, refresh_tokens | 004 §2.1–2.2 | F0.4 |
-| F1.2 | `identity`: verificación id_token Google + `POST /auth/google` | 005 §2, 009 §2.1 | F1.1 |
-| F1.3 | `identity`: JWT + refresh rotativo con familias + `/auth/refresh`, `/auth/logout`; tests de reuso | 009 §2.2 | F1.2 |
-| F1.4 | Rate limiting middleware (Redis) para `/auth/*` | 009 §4 | F1.3 |
-| F1.5 | Migraciones: linked_accounts, categories (+seed sistema con fiscal_tags), transactions, transaction_sources, merchant_rules | 004 | F1.1 |
-| F1.6 | `ledger`: dominio puro — dedupe_key + tests; matcher transferencias + tests (incl. ambigüedad y exclusiones) | 004 §3–4, RF-5/6 | F1.5 |
-| F1.7 | `ledger`: repos SQLAlchemy + API transacciones/categorías/cuentas (CRUD, filtros, paginación cursor, Idempotency-Key) | 005 §6–7 | F1.6 |
-| F1.8 | Bus de eventos sobre Redis Streams en `shared` + consumers idempotentes | 003 §2.3 | F0.4 |
-| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 |
+| ID | Tarea | Specs | Deps | Estado |
+|---|---|---|---|---|
+| F1.1 | Migraciones Alembic: users, refresh_tokens | 004 §2.1–2.2 | F0.4 | ✅ |
+| F1.2 | `identity`: verificación id_token Google + `POST /auth/google` | 005 §2, 009 §2.1 | F1.1 | ✅ |
+| F1.3 | `identity`: JWT + refresh rotativo con familias + `/auth/refresh`, `/auth/logout`; tests de reuso | 009 §2.2 | F1.2 | ✅ |
+| F1.4 | Rate limiting middleware (Redis) para `/auth/*` | 009 §4 | F1.3 | ✅ |
+| F1.5 | Migraciones: linked_accounts, categories (+seed sistema con fiscal_tags), transactions, transaction_sources, merchant_rules | 004 | F1.1 | ✅ |
+| F1.6 | `ledger`: dominio puro — dedupe_key + tests; matcher transferencias + tests (incl. ambigüedad y exclusiones) | 004 §3–4, RF-5/6 | F1.5 | ✅ |
+| F1.7 | `ledger`: repos SQLAlchemy + API transacciones/categorías/cuentas (CRUD, filtros, paginación cursor, Idempotency-Key) | 005 §6–7 | F1.6 | ✅ |
+| F1.8 | Bus de eventos sobre Redis Streams en `shared` + consumers idempotentes | 003 §2.3 | F0.4 | ✅ |
+| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 | pendiente |
 
 ## Fase 2 — Pipeline de parsing (RF-2 parcial, RF-5, RF-8)
 

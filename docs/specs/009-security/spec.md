@@ -45,11 +45,11 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 - **Cabeceras**: HSTS, `X-Content-Type-Options: nosniff`, CSP restrictiva en cualquier página servida.
 - **CORS**: cerrado (la app móvil no lo necesita); si hay web futura, allowlist explícita.
 - **Autorización**: toda query filtra por `user_id` del token en la capa repositorio (imposible acceder a recursos ajenos → 404, no 403, para no filtrar existencia).
-- **Idempotency-Key**: almacenada 24 h en Redis; replay devuelve la respuesta original.
+- **Idempotency-Key**: almacenada 24 h en Redis; replay devuelve la respuesta original. Solo se guarda el cuerpo de la respuesta si pesa ≤ 256 KiB (uno mayor no se persiste y la siguiente solicitud con la misma clave se re-ejecuta); si Redis no responde, el middleware falla abierto (deja pasar la solicitud sin deduplicar) y registra una advertencia, igual que el rate limiter.
 
 ## 5. Logging y monitoreo
 
-- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. **Prohibido**: cuerpos de mensajes, montos, comercios, emails, tokens (P1). Test de CI que greppea patrones prohibidos en llamadas de log.
+- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. La `ruta` registrada es siempre la **plantilla** de la ruta (p. ej. `/v1/transactions/{id}`), nunca el path crudo ni el query string, para no filtrar identificadores ni parámetros de búsqueda a los logs. **Prohibido**: cuerpos de mensajes, montos, comercios, emails, tokens (P1). Test de CI que greppea patrones prohibidos en llamadas de log.
 - Auditoría de eventos sensibles: login, refresh reuse detectado, conexión/desconexión Gmail, exportación, borrado de cuenta.
 - Alertas mínimas MVP: tasa de 5xx, backlog de colas, fallos de renovación de watch, presupuesto LLM global.
 

@@ -56,7 +56,8 @@ backend/
 │   │   └── insights/       # resúmenes mensuales, agregados del dashboard
 │   ├── app.py              # FastAPI factory (composition root del API)
 │   ├── main.py             # entrypoint ASGI
-│   └── worker.py           # entrypoint del worker arq
+│   ├── worker.py           # entrypoint del worker arq
+│   └── events_registry.py # composition root: registra los eventos de dominio conocidos
 └── migrations/              # Alembic, fuera del paquete
 ```
 
@@ -91,6 +92,8 @@ Bus interno sobre **Redis Streams** (consumer groups → reintentos y at-least-o
 | `UserDeleted` | identity | todos | purga de datos del usuario |
 
 Como los consumidores son at-least-once, **todo handler es idempotente** (P2).
+
+La implementación del bus vive en `shared/events/`: un codec de eventos (serialización/registro por `event_type`), un adapter de Redis Streams, un consumer con grupos de consumidores (`XREADGROUP`) que reclama pendientes abandonados con `XAUTOCLAIM` y envía a una DLQ (`finanzia:events:dlq`) los mensajes que superan el máximo de reintentos, y un handler idempotente que marca cada `event_id` procesado por grupo con un marcador de 7 días. Los consumers corren dentro del proceso worker arq, cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada. La publicación del evento ocurre después del commit de la transacción que lo origina, sin patrón outbox transaccional: se acepta como riesgo del MVP (§6 del plan de implementación); si un caso de uso futuro depende de no perder nunca el evento, se añade un outbox en Fase 2.
 
 ### 2.4 Request path vs workers
 
