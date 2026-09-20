@@ -220,4 +220,9 @@ Ver [`.env.example`](.env.example) — todas tienen el prefijo `FINANZIA_`:
 
 ## 11. Verificación (corrida real)
 
-Ver el reporte de la Tarea 15 (`.superpowers/sdd/quiero-que-empieces-con-floofy-gray/task-15-report.md`) para la salida completa y actualizada de `ruff`/`pyright`/`lint-imports`/`pytest`/cobertura/`alembic check`/`docker build` y la corrida real del recorrido de curl de §8 contra una instancia local.
+La suite completa se corrió y pasó en verde en la última verificación de cierre de F0/F1: 417 tests
+(`uv run pytest -q`), los 6 contratos de `import-linter` en KEPT (`uv run lint-imports`), cobertura de
+dominio ≥ 98 % (`ledger.domain` + `identity.domain`, `--cov-fail-under=90` real), `alembic check` sin
+diferencias pendientes contra el modelo, y `docker build`/`docker run` sirviendo la imagen correctamente.
+El recorrido de curl completo contra una instancia local está documentado y es reproducible en la
+sección "8. Recorrido de la API (curl)" de este mismo README.

@@ -72,6 +72,16 @@ async def _supervise(
                 error_type=type(exc).__name__,
             )
             await asyncio.sleep(_SUPERVISOR_RESTART_DELAY_S)
+        else:
+            # `coro_factory()` no deberia retornar sin excepcion mientras `stop` este
+            # sin marcar (`consumer.run(stop)` solo retorna cuando `stop` se marca),
+            # pero si ocurre, dormir igual evita un loop caliente reintentando sin
+            # pausa (review final, item J).
+            if not stop.is_set():
+                _logger.warning(
+                    "event_consumer_returned_unexpectedly", event_type=event_type, group=group
+                )
+                await asyncio.sleep(_SUPERVISOR_RESTART_DELAY_S)
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:

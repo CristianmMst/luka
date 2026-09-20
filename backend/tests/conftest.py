@@ -40,12 +40,13 @@ def settings() -> Settings:
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
         google_verifier="fake",
-        # Limites altos por defecto (Task 8/F1.4): el resto de la suite hace muchos
-        # logins/llamadas autenticadas desde la misma IP de test y no debe toparse
-        # con el rate limiting. Los tests de rate limiting propios usan
-        # `settings.model_copy(update={...})` con limites bajos a proposito.
-        rate_limit_auth_per_minute=1000,
-        rate_limit_user_per_minute=10000,
+        # Limites altos por defecto (Task 8/F1.4, subidos en review final item J):
+        # el resto de la suite hace muchos logins/llamadas autenticadas desde la
+        # misma IP de test y no debe toparse con el rate limiting real. Los limites
+        # reales (bajos) se prueban aparte via `settings.model_copy(update={...})`
+        # en los tests de rate limiting propios (`test_rate_limit_api.py`).
+        rate_limit_auth_per_minute=100_000,
+        rate_limit_user_per_minute=1_000_000,
     )
 
 

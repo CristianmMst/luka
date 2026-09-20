@@ -188,7 +188,9 @@ async def test_dos_refresh_concurrentes_nunca_devuelven_dos_200(
 
     status_a, status_b = await asyncio.gather(_refresh(), _refresh())
 
-    assert (status_a, status_b).count(200) <= 1
+    # Exactamente uno debe ganar la rotacion (review final item J): el otro debe
+    # fallar por reuse (401), nunca ambos exito ni ambos fallo.
+    assert (status_a, status_b).count(200) == 1
     assert {status_a, status_b} <= {200, 401}
 
 

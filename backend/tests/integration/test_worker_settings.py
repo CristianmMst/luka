@@ -115,3 +115,35 @@ async def test_supervise_reinicia_tras_una_excepcion_inesperada(worker_settings_
 
     assert calls["n"] == 2
     assert stop.is_set()
+
+
+async def test_supervise_duerme_si_run_retorna_normal_sin_stop_marcado(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Review final (item J): si `coro_factory()` retorna sin excepcion y sin que
+    `stop` quede marcado (no deberia pasar con `consumer.run`, pero es la ultima
+    red de seguridad), `_supervise` debe dormir igual antes de reintentar, en vez
+    de reintentar en un loop caliente sin pausa.
+    """
+    calls = {"n": 0}
+    sleep_calls: list[float] = []
+    stop = asyncio.Event()
+
+    async def _fake_sleep(delay: float) -> None:
+        sleep_calls.append(delay)
+
+    monkeypatch.setattr(worker_settings_module.asyncio, "sleep", _fake_sleep)
+
+    async def returns_without_setting_stop() -> None:
+        calls["n"] += 1
+        if calls["n"] == 2:
+            stop.set()
+        # primer intento: retorna normal SIN marcar stop (el caso a cubrir)
+
+    await worker_settings_module._supervise(
+        returns_without_setting_stop, stop, event_type="test.Event", group="test-group"
+    )
+
+    assert calls["n"] == 2
+    assert stop.is_set()
+    assert sleep_calls == [worker_settings_module._SUPERVISOR_RESTART_DELAY_S]
