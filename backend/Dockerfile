@@ -11,8 +11,11 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# Codigo fuente del proyecto. alembic.ini se sumara cuando exista (tarea de migraciones).
-COPY pyproject.toml uv.lock README.md src migrations ./
+# Codigo fuente del proyecto, incluido alembic.ini (antes faltaba: sin el,
+# `alembic upgrade head` no encuentra su configuracion dentro de la imagen).
+COPY pyproject.toml uv.lock README.md alembic.ini ./
+COPY src ./src
+COPY migrations ./migrations
 RUN uv sync --frozen --no-dev
 
 FROM python:3.12-slim-bookworm AS runtime
