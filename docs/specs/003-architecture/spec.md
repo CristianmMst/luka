@@ -93,6 +93,17 @@ Bus interno sobre **Redis Streams** (consumer groups → reintentos y at-least-o
 
 Como los consumidores son at-least-once, **todo handler es idempotente** (P2).
 
+Grupo de consumidores por evento (F2.2):
+
+| Evento | Grupo |
+|---|---|
+| `RawMessageReceived` | `parsing` |
+| `TransactionParsed` | `ledger` |
+| `ParseFailed` | `ledger-review` |
+| `TransactionCaptured` | `ledger-observer` |
+
+Los grupos se crean (idempotente) tanto al arrancar la API como el worker, para que un evento publicado antes del primer arranque del worker no se pierda (`XGROUP CREATE ... $ MKSTREAM` ignora entradas previas si el grupo no existía aún). `event_id` es determinista por `raw_message_id` + resultado (D8): así la reentrega de un evento de parsing —incluida la de un reproceso tras un fallo de commit— es absorbida por el `IdempotentHandler`, aunque llegue en una entrada de stream distinta.
+
 La implementación del bus vive en `shared/events/`: un codec de eventos (serialización/registro por `event_type`), un adapter de Redis Streams, un consumer con grupos de consumidores (`XREADGROUP`) que reclama pendientes abandonados con `XAUTOCLAIM` y envía a una DLQ (`finanzia:events:dlq`) los mensajes que superan el máximo de reintentos, y un handler idempotente que marca cada `event_id` procesado por grupo con un marcador de 7 días. Los consumers corren dentro del proceso worker arq, cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada. La publicación del evento ocurre después del commit de la transacción que lo origina, sin patrón outbox transaccional: se acepta como riesgo del MVP (§6 del plan de implementación); si un caso de uso futuro depende de no perder nunca el evento, se añade un outbox en Fase 2.
 
 ### 2.4 Request path vs workers

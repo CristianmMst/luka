@@ -4,9 +4,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis_asyncio
+import redis.exceptions
+import structlog
 from fastapi import FastAPI
 
-from finanzia.events_registry import build_registry
+from finanzia.events_registry import build_registry, ensure_consumer_groups
 from finanzia.modules.identity.infrastructure.api.errors import (
     EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
 )
@@ -38,6 +40,8 @@ from finanzia.shared.http.security_headers import SecurityHeadersMiddleware
 from finanzia.shared.logging import configure_logging
 from finanzia.shared.settings import Settings, get_settings
 
+_logger = structlog.get_logger()
+
 
 def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
     """Reglas por defecto (spec 009 SS4, F1.4): `/auth/*` por IP y global por usuario."""
@@ -66,6 +70,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.redis = redis_client
         app.state.rate_limiter = SlidingWindowLimiter(redis_client)
         app.state.event_bus = RedisStreamsEventBus(redis_client, build_registry())
+        # D10: crea (idempotente) los grupos de consumidores en el arranque de la
+        # API, no solo en el worker, para que un evento publicado antes del primer
+        # arranque del worker no se pierda. Fail-soft (igual que el rate limiter):
+        # un Redis caido en el arranque de la API no debe tumbarla.
+        try:
+            await ensure_consumer_groups(app.state.event_bus)
+        except (redis.exceptions.RedisError, OSError):
+            _logger.warning("consumer_groups_not_ensured")
         # Construido una unica vez por proceso (no por request): evita recrear la
         # sesion HTTP con cache de claves publicas de Google en cada login (review
         # final, item D). Settings ya prohibe "fake" en env="prod".

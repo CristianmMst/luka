@@ -13,7 +13,7 @@ import redis.asyncio as redis_asyncio
 import structlog
 from arq.connections import RedisSettings
 
-from finanzia.events_registry import build_registry
+from finanzia.events_registry import CONSUMER_GROUPS, build_registry
 from finanzia.shared.events.consumer import StreamConsumer
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.logging import configure_logging
@@ -24,7 +24,10 @@ if TYPE_CHECKING:
 
 _logger = structlog.get_logger()
 
-_LEDGER_OBSERVER_GROUP = "ledger-observer"
+_LEDGER_OBSERVER_EVENT_TYPE = "ledger.TransactionCaptured"
+# Nombre del grupo tomado de `CONSUMER_GROUPS` (F2.2/D10): una unica fuente de
+# verdad, compartida con `ensure_consumer_groups` en el lifespan de la API.
+_LEDGER_OBSERVER_GROUP = dict(CONSUMER_GROUPS)[_LEDGER_OBSERVER_EVENT_TYPE]
 _SUPERVISOR_RESTART_DELAY_S = 1.0
 
 
@@ -98,14 +101,14 @@ async def on_startup(ctx: dict[str, Any]) -> None:
         redis,
         registry,
         group=_LEDGER_OBSERVER_GROUP,
-        event_type="ledger.TransactionCaptured",
+        event_type=_LEDGER_OBSERVER_EVENT_TYPE,
         handler=log_transaction_captured,
     )
     task = asyncio.create_task(
         _supervise(
             lambda: consumer.run(stop),
             stop,
-            event_type="ledger.TransactionCaptured",
+            event_type=_LEDGER_OBSERVER_EVENT_TYPE,
             group=_LEDGER_OBSERVER_GROUP,
         )
     )

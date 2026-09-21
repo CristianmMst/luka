@@ -1,5 +1,6 @@
 """Tests del codec de eventos: roundtrip, tipos y errores (spec 003 SS2.3, F1.8)."""
 
+import dataclasses
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -8,8 +9,16 @@ from uuid import uuid4
 import pytest
 
 from finanzia.modules.identity.events import UserDeleted
+from finanzia.modules.ingestion.events import RawMessageReceived
 from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
 from finanzia.modules.ledger.events import TransactionCaptured
+from finanzia.modules.parsing.domain.enums import (
+    Direction as ParsingDirection,
+)
+from finanzia.modules.parsing.domain.enums import (
+    ParseFailureReason,
+)
+from finanzia.modules.parsing.events import ParseFailed, TransactionParsed
 from finanzia.shared.events.codec import EventRegistry, UnknownEventType
 
 pytestmark = pytest.mark.unit
@@ -37,11 +46,60 @@ def _make_user_deleted() -> UserDeleted:
     )
 
 
+def _make_raw_message_received() -> RawMessageReceived:
+    return RawMessageReceived(
+        event_id=uuid4(),
+        occurred_at=datetime(2026, 9, 18, 12, 0, 0, tzinfo=UTC),
+        raw_message_id=uuid4(),
+        user_id=uuid4(),
+        channel="email",
+        bank="bancolombia",
+        received_at=datetime(2026, 9, 18, 11, 58, 0, tzinfo=UTC),
+    )
+
+
+def _make_transaction_parsed(*, confidence: float | None = 0.92) -> TransactionParsed:
+    return TransactionParsed(
+        event_id=uuid4(),
+        occurred_at=datetime(2026, 9, 18, 12, 0, 0, tzinfo=UTC),
+        raw_message_id=uuid4(),
+        user_id=uuid4(),
+        channel="email",
+        bank="bancolombia",
+        amount=Decimal("1820000.00"),
+        direction=ParsingDirection.DEBIT,
+        transaction_occurred_at=datetime(2026, 5, 1, 16, 28, 0, tzinfo=UTC),
+        last4="4455",
+        merchant="MARIA PEREZ",
+        suggested_category=None,
+        parsed_by="rule:bancolombia:transferencia_llave:v1",
+        confidence=confidence,
+        received_at=datetime(2026, 9, 18, 11, 58, 0, tzinfo=UTC),
+    )
+
+
+def _make_parse_failed() -> ParseFailed:
+    return ParseFailed(
+        event_id=uuid4(),
+        occurred_at=datetime(2026, 9, 18, 12, 0, 0, tzinfo=UTC),
+        raw_message_id=uuid4(),
+        user_id=uuid4(),
+        channel="notification",
+        bank=None,
+        reason=ParseFailureReason.LLM_LOW_CONFIDENCE,
+        partial_extract={"amount": "45900", "merchant": "OXXO"},
+        received_at=datetime(2026, 9, 18, 11, 58, 0, tzinfo=UTC),
+    )
+
+
 @pytest.fixture
 def registry() -> EventRegistry:
     reg = EventRegistry()
     reg.register(TransactionCaptured)
     reg.register(UserDeleted)
+    reg.register(RawMessageReceived)
+    reg.register(TransactionParsed)
+    reg.register(ParseFailed)
     return reg
 
 
@@ -119,6 +177,81 @@ def test_registrar_event_type_duplicado_con_otra_clase_levanta_value_error(
 
     with pytest.raises(ValueError, match=re.escape("ledger.TransactionCaptured")):
         registry.register(_Impostor)
+
+
+def test_roundtrip_raw_message_received(registry: EventRegistry) -> None:
+    event = _make_raw_message_received()
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert decoded.bank == "bancolombia"  # type: ignore[union-attr]
+
+
+def test_roundtrip_raw_message_received_con_bank_none(registry: EventRegistry) -> None:
+    event = dataclasses.replace(_make_raw_message_received(), bank=None)
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert decoded.bank is None  # type: ignore[union-attr]
+
+
+def test_roundtrip_transaction_parsed_preserva_tipos_exactos(registry: EventRegistry) -> None:
+    event = _make_transaction_parsed()
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert isinstance(decoded.amount, Decimal)  # type: ignore[union-attr]
+    assert decoded.amount == Decimal("1820000.00")  # type: ignore[union-attr]
+    assert decoded.direction is ParsingDirection.DEBIT  # type: ignore[union-attr]
+    assert isinstance(decoded.confidence, float)  # type: ignore[union-attr]
+    assert decoded.confidence == pytest.approx(0.92)  # type: ignore[union-attr]
+
+
+def test_roundtrip_transaction_parsed_con_campos_opcionales_none(
+    registry: EventRegistry,
+) -> None:
+    event = dataclasses.replace(
+        _make_transaction_parsed(confidence=None),
+        last4=None,
+        merchant=None,
+        suggested_category=None,
+    )
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert decoded.confidence is None  # type: ignore[union-attr]
+    assert decoded.last4 is None  # type: ignore[union-attr]
+
+
+def test_roundtrip_parse_failed_preserva_reason_y_dict(registry: EventRegistry) -> None:
+    event = _make_parse_failed()
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert decoded.reason is ParseFailureReason.LLM_LOW_CONFIDENCE  # type: ignore[union-attr]
+    assert decoded.partial_extract == {"amount": "45900", "merchant": "OXXO"}  # type: ignore[union-attr]
+    assert all(isinstance(v, str) for v in decoded.partial_extract.values())  # type: ignore[union-attr]
+
+
+def test_roundtrip_parse_failed_con_bank_none_y_extract_vacio(registry: EventRegistry) -> None:
+    event = dataclasses.replace(_make_parse_failed(), bank=None, partial_extract={})
+
+    fields = registry.encode(event)
+    decoded = registry.decode(fields)
+
+    assert decoded == event
+    assert decoded.bank is None  # type: ignore[union-attr]
+    assert decoded.partial_extract == {}  # type: ignore[union-attr]
 
 
 def test_register_usable_como_decorador() -> None:

@@ -8,7 +8,7 @@ import pytest
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 
-from finanzia.events_registry import build_registry
+from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
 from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
 from finanzia.modules.ledger.events import TransactionCaptured
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
@@ -45,3 +45,21 @@ async def test_lifespan_crea_event_bus_y_publica_en_el_stream_correcto(
         [(_message_id, fields)] = await app.state.redis.xrange(stream)
         decoded = build_registry().decode(fields)
         assert decoded == event
+
+
+async def test_lifespan_crea_los_4_grupos_de_consumidores(app: FastAPI, redis_clean: None) -> None:
+    """D10: los grupos ya existen tras el lifespan, via MKSTREAM (streams vacios)."""
+    del redis_clean
+    async with LifespanManager(app):
+        for event_type, group in CONSUMER_GROUPS:
+            stream = app.state.event_bus.stream_name(event_type)
+            raw_groups = await app.state.redis.xinfo_groups(stream)
+            names = {info["name"].decode() for info in raw_groups}
+            assert group in names, f"grupo {group!r} no existe en {stream!r}: {names!r}"
+
+
+async def test_ensure_consumer_groups_es_idempotente(app: FastAPI, redis_clean: None) -> None:
+    del redis_clean
+    async with LifespanManager(app):
+        await ensure_consumer_groups(app.state.event_bus)  # no debe levantar (BUSYGROUP)
+        await ensure_consumer_groups(app.state.event_bus)
