@@ -197,6 +197,21 @@ async def test_publica_el_evento_antes_de_marcar_y_commitear() -> None:
     assert log == ["publish:TransactionParsed", "mark:parsed", "commit"]
 
 
+async def test_publica_el_evento_fallido_antes_de_marcar_y_commitear() -> None:
+    """D8 tambien en el camino de fallo: publish -> mark("failed") -> commit."""
+    view = _view(body=None)
+    log: list[str] = []
+    gateway = FakeGateway({view.id: view}, log=log)
+    events = RecordingPublisher(log=log)
+    uow = NoopUoW(log=log)
+    use_case = make_use_case(gateway=gateway, events=events, uow=uow, clock=FixedClock(NOW))
+
+    outcome = await use_case.execute(view.id)
+
+    assert outcome == Failed(ParseFailureReason.BODY_PURGED)
+    assert log == ["publish:ParseFailed", "mark:failed", "commit"]
+
+
 # --- Idempotencia / reentrega ---------------------------------------------------------
 
 
@@ -215,6 +230,38 @@ async def test_estado_no_pending_es_skipped_sin_efectos() -> None:
     assert gateway.marks == []
     assert metrics.calls == []
     assert uow.commits == 0
+
+
+async def test_segunda_ejecucion_tras_cambio_de_estado_es_skipped() -> None:
+    """Reentrega tras un exito: la primera ejecucion parsea y marca `parsed`; la
+    segunda, sobre el MISMO gateway/vista (ya mutada por `mark`), no debe repetir
+    ningun efecto (idempotencia, P2).
+    """
+    fixture = next(f for f in bancolombia_fixtures() if f.name == "compra_tdeb.txt")
+    raw_message_id = uuid4()
+    view = view_from_fixture(fixture, USER_ID, raw_message_id=raw_message_id)
+    gateway = FakeGateway({view.id: view})
+    events = RecordingPublisher()
+    metrics = RecordingMetrics()
+    uow = NoopUoW()
+    use_case = make_use_case(
+        gateway=gateway, events=events, metrics=metrics, uow=uow, clock=FixedClock(NOW)
+    )
+
+    first_outcome = await use_case.execute(raw_message_id)
+    assert isinstance(first_outcome, Parsed)
+    marks_after_first = list(gateway.marks)
+    events_after_first = list(events.events)
+    metrics_after_first = list(metrics.calls)
+    commits_after_first = uow.commits
+
+    second_outcome = await use_case.execute(raw_message_id)
+
+    assert second_outcome == Skipped("not_pending")
+    assert gateway.marks == marks_after_first
+    assert events.events == events_after_first
+    assert metrics.calls == metrics_after_first
+    assert uow.commits == commits_after_first
 
 
 async def test_id_desconocido_es_skipped_not_found() -> None:
@@ -579,3 +626,39 @@ async def test_llm_invalido_luego_no_disponible_suma_tokens_del_primero() -> Non
     assert outcome == Failed(ParseFailureReason.LLM_ERROR)
     assert len(llm.calls) == 2
     assert budget.adds == [(USER_ID, "202609", 30)]
+
+
+# --- bank=None (mensajes tipo Nu, fuera del allowlist de plantillas) -------------------
+
+
+async def test_falla_con_bank_none_propaga_bank_none_al_evento_y_a_la_metrica() -> None:
+    """Un `raw_message` sin banco resuelto (p. ej. Nu, D5) que falla debe seguir
+    llevando `bank=None` en `ParseFailed` y en la metrica `sent_to_review`, nunca
+    inventar un banco.
+    """
+    view = _view(bank=None)
+    gateway = FakeGateway({view.id: view})
+    llm = FakeLlmParser([], enabled=False)
+    events = RecordingPublisher()
+    metrics = RecordingMetrics()
+    use_case = make_use_case(
+        gateway=gateway, llm=llm, events=events, metrics=metrics, clock=FixedClock(NOW)
+    )
+
+    outcome = await use_case.execute(view.id)
+
+    assert outcome == Failed(ParseFailureReason.LLM_DISABLED)
+    assert len(events.events) == 1
+    event = events.events[0]
+    assert isinstance(event, ParseFailed)
+    assert event.bank is None
+    assert metrics.calls == [
+        MetricCall(
+            "sent_to_review",
+            bank=None,
+            channel="email",
+            template_id=None,
+            reason="llm_disabled",
+            llm_tokens=None,
+        )
+    ]
