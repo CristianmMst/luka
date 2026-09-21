@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -17,6 +18,7 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
+from finanzia.modules.ledger.domain.review import ReviewItem, ReviewReason
 
 # --- Sentinel "no establecido" en un PATCH parcial (distinto de `None`) -----------
 #
@@ -204,6 +206,64 @@ class AccountPatch:
     alias: str | Unset | None = UNSET
 
 
+# --- Cola de revision (spec 004 SS2.10, D1) ---------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewSourceView:
+    """Proyeccion del `raw_message` asociado a un item de revision (via `ReviewSourcePort`)."""
+
+    raw_message_id: UUID
+    channel: Channel
+    bank: Bank | None
+    sender: str
+    text: str | None
+    received_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewEntry:
+    """Un item de la cola junto con la vista de su mensaje crudo (si aun existe)."""
+
+    item: ReviewItem
+    source: ReviewSourceView | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewPage:
+    """Pagina de `ListReview`: `next_cursor is None` marca el final del listado."""
+
+    items: tuple[ReviewEntry, ...]
+    next_cursor: Cursor | None
+
+
+@dataclass(frozen=True, slots=True)
+class EnqueueForReviewCommand:
+    """Comando de entrada de `EnqueueForReview` (publicado por `ParseFailed`)."""
+
+    raw_message_id: UUID
+    user_id: UUID
+    reason: ReviewReason
+    partial_extract: Mapping[str, str]
+
+
+@dataclass(frozen=True, slots=True)
+class ConvertReviewCommand:
+    """Comando de entrada de `ConvertReviewItem`: mismos campos que un alta manual."""
+
+    user_id: UUID
+    raw_message_id: UUID
+    amount: Decimal
+    direction: Direction
+    occurred_at: datetime
+    category_id: UUID | None
+    merchant: str | None
+    description: str | None
+    account_id: UUID | None
+    notes: str | None
+    kind: Kind | None
+
+
 __all__ = [
     "UNSET",
     "AccountInput",
@@ -211,11 +271,16 @@ __all__ = [
     "CapturedTransactionCommand",
     "CategoryInput",
     "CategoryPatch",
+    "ConvertReviewCommand",
     "Cursor",
+    "EnqueueForReviewCommand",
     "Filters",
     "ManualTransactionCommand",
     "Page",
     "Recorded",
+    "ReviewEntry",
+    "ReviewPage",
+    "ReviewSourceView",
     "SourceInput",
     "TransactionDetail",
     "TransactionPatch",

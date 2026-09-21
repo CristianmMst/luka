@@ -123,6 +123,34 @@ class PatchAccountRequest(BaseModel):
     alias: str | None = Field(default=None, max_length=60)
 
 
+# --- Requests: revision (spec 005 SS7, D1) -----------------------------------------
+
+
+class ConvertReviewRequest(BaseModel):
+    """Body de `POST /review/{raw_message_id}/convert`: igual a `CreateTransactionRequest`
+    salvo `nfc_tag_id` (la fuente es siempre el `raw_message`, no NFC).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    amount: AmountStr
+    direction: Direction
+    occurred_at: datetime
+    category_id: UUID | None = None
+    merchant: str | None = Field(default=None, max_length=200)
+    description: str | None = Field(default=None, max_length=500)
+    account_id: UUID | None = None
+    notes: str | None = Field(default=None, max_length=1000)
+    kind: Kind | None = None
+
+    @field_validator("occurred_at")
+    @classmethod
+    def _occurred_at_debe_ser_aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            raise ValueError("occurred_at debe incluir zona horaria")
+        return value
+
+
 # --- Respuestas ------------------------------------------------------------------------
 
 
@@ -211,3 +239,25 @@ class AccountResponse(BaseModel):
     kind: str
     last4: str | None
     alias: str | None
+
+
+class ReviewEntryResponse(BaseModel):
+    """Item de `GET /review` (spec 005 SS7, D1): mensaje crudo + motivo de la cola."""
+
+    raw_message_id: UUID
+    channel: str
+    bank: str | None
+    sender: str
+    received_at: datetime
+    reason: str
+    partial_extract: dict[str, str]
+    text: str | None
+    created_at: datetime
+
+
+class DiscardReviewResponse(BaseModel):
+    """Respuesta de `POST /review/{raw_message_id}/discard` (spec 005 SS7)."""
+
+    raw_message_id: UUID
+    resolution: str
+    resolved_at: datetime

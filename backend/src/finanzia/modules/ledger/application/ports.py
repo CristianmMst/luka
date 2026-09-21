@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Protocol
 from uuid import UUID
 
-from finanzia.modules.ledger.application.dto import Cursor, Filters
+from finanzia.modules.ledger.application.dto import Cursor, Filters, ReviewSourceView
 from finanzia.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
@@ -17,6 +17,7 @@ from finanzia.modules.ledger.domain.entities import (
     TransactionSource,
 )
 from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag
+from finanzia.modules.ledger.domain.review import ReviewItem, ReviewResolution
 
 # --- Transacciones -----------------------------------------------------------------
 
@@ -167,6 +168,51 @@ class MerchantRuleRepositoryPort(Protocol):
     async def delete_for_category(self, user_id: UUID, category_id: UUID) -> None: ...
 
 
+# --- Cola de revision (spec 004 SS2.10, D1) ---------------------------------------
+
+
+class ReviewQueueRepositoryPort(Protocol):
+    """Persistencia de la cola de revision. Toda consulta filtra por `user_id`."""
+
+    async def insert_if_absent(self, item: ReviewItem) -> bool:
+        """Inserta `item`; `False` si `raw_message_id` ya existia (idempotente, P2)."""
+        ...
+
+    async def get(self, user_id: UUID, raw_message_id: UUID) -> ReviewItem | None:
+        """Item propio por `raw_message_id`, o `None` si no existe o es ajeno."""
+        ...
+
+    async def list_open(self, user_id: UUID, cursor: Cursor | None, limit: int) -> list[ReviewItem]:
+        """Items abiertos (`resolved_at IS NULL`) del usuario, keyset por
+        `(created_at DESC, raw_message_id DESC)`.
+        """
+        ...
+
+    async def resolve(
+        self, user_id: UUID, raw_message_id: UUID, resolution: ReviewResolution, now: datetime
+    ) -> bool:
+        """Marca el item como resuelto; `False` si no existia, era ajeno o ya estaba
+        resuelto (evita pisar una resolucion previa).
+        """
+        ...
+
+
+class ReviewSourcePort(Protocol):
+    """Cruce hacia el `raw_message` de un item de revision (D1: implementado por
+    `infrastructure/raw_messages_gateway.py` delegando en `ingestion.public`).
+    """
+
+    async def load_views(self, user_id: UUID, ids: Sequence[UUID]) -> dict[UUID, ReviewSourceView]:
+        """Vistas de los mensajes crudos propios cuyo id este en `ids`."""
+        ...
+
+    async def mark_status(self, raw_message_id: UUID, status: str, now: datetime) -> bool:
+        """Actualiza el estado del `raw_message`; no comitea (el llamador controla
+        la transaccion, mismo contrato que `ingestion.public.mark_raw_message`).
+        """
+        ...
+
+
 # --- Infraestructura transversal ------------------------------------------------------
 
 
@@ -205,6 +251,8 @@ __all__ = [
     "IdGeneratorPort",
     "LinkedAccountRepositoryPort",
     "MerchantRuleRepositoryPort",
+    "ReviewQueueRepositoryPort",
+    "ReviewSourcePort",
     "TransactionRepositoryPort",
     "TransactionSourceRepositoryPort",
     "UnitOfWorkPort",

@@ -32,6 +32,9 @@ from finanzia.modules.ledger.infrastructure.api.router_accounts import (
 from finanzia.modules.ledger.infrastructure.api.router_categories import (
     router as ledger_categories_router,
 )
+from finanzia.modules.ledger.infrastructure.api.router_review import (
+    router as ledger_review_router,
+)
 from finanzia.modules.ledger.infrastructure.api.router_transactions import (
     router as ledger_transactions_router,
 )
@@ -172,6 +175,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(ledger_transactions_router, prefix="/v1")
     app.include_router(ledger_categories_router, prefix="/v1")
     app.include_router(ledger_accounts_router, prefix="/v1")
+    app.include_router(ledger_review_router, prefix="/v1")
     app.include_router(ingestion_ingest_router, prefix="/v1")
     app.include_router(ingestion_config_router, prefix="/v1")
     return app

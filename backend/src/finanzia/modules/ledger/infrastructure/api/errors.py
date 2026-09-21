@@ -16,6 +16,8 @@ from finanzia.modules.ledger.domain.errors import (
     InvalidKindChange,
     InvalidLast4,
     NotManualTransaction,
+    ReviewAlreadyResolved,
+    ReviewItemNotFound,
     SystemCategoryImmutable,
     TransactionNotFound,
     TransferPairInvalid,
@@ -43,4 +45,6 @@ LEDGER_EXCEPTION_MAP: ExceptionMap = {
     InvalidLast4: lambda e: ValidationAppError(message="last4 invalido", field="last4"),
     InvalidCursor: lambda e: ValidationAppError(message="Cursor invalido", field="cursor"),
     InvalidKindChange: lambda e: ValidationAppError(message="kind invalido", field="kind"),
+    ReviewItemNotFound: lambda e: NotFoundError(),
+    ReviewAlreadyResolved: lambda e: ConflictError(message="El item ya fue resuelto"),
 }

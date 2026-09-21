@@ -1,6 +1,6 @@
 """Caso de uso: crear una transaccion manual (spec 004 SS2.6, AC-6.4)."""
 
-from finanzia.modules.ledger.application.dto import ManualTransactionCommand
+from finanzia.modules.ledger.application.dto import ManualTransactionCommand, SourceInput
 from finanzia.modules.ledger.application.ports import (
     CategoryRepositoryPort,
     ClockPort,
@@ -49,8 +49,18 @@ class CreateManualTransaction:
         self._ids = ids
         self._uow = uow
 
-    async def execute(self, cmd: ManualTransactionCommand) -> Transaction:
-        """Valida categoria/cuenta propias, inserta, corre el matcher y publica el evento."""
+    async def create(
+        self, cmd: ManualTransactionCommand, *, source_override: SourceInput | None = None
+    ) -> Transaction:
+        """Valida categoria/cuenta propias, inserta la transaccion y corre el matcher.
+
+        NO comitea ni publica `TransactionCaptured` (eso lo hace `execute`, el uso
+        normal). `source_override` reemplaza la fuente por defecto (`cmd.channel`,
+        sin `raw_message_id`, recibida "ahora"): lo usa `ConvertReviewItem` (Task 8)
+        para adjuntar la evidencia real del `raw_message` (canal/`received_at` del
+        mensaje crudo) y para poder resolver la cola de revision y comitear todo en
+        una sola transaccion (una sola unidad de trabajo, sin doble commit).
+        """
         if cmd.category_id is not None:
             category = await self._categories.get_visible(cmd.user_id, cmd.category_id)
             if category is None:
@@ -88,24 +98,32 @@ class CreateManualTransaction:
         if inserted_id is None:
             raise LedgerError("colision inesperada de dedupe_key manual")
 
+        source = source_override or SourceInput(
+            channel=cmd.channel, raw_message_id=None, received_at=now
+        )
         await self._sources.attach(
             TransactionSource(
                 id=self._ids.new_id(),
                 transaction_id=tx.id,
-                raw_message_id=None,
-                channel=cmd.channel,
-                received_at=now,
+                raw_message_id=source.raw_message_id,
+                channel=source.channel,
+                received_at=source.received_at,
             )
         )
 
         if tx.account_id is not None and tx.kind != Kind.TRANSFER:
             tx = await try_auto_pair(tx, transactions=self._transactions, clock=self._clock)
 
+        return tx
+
+    async def execute(self, cmd: ManualTransactionCommand) -> Transaction:
+        """Uso normal: `create` + commit + publicacion de `TransactionCaptured`."""
+        tx = await self.create(cmd)
         await self._uow.commit()
         await self._events.publish(
             TransactionCaptured(
                 event_id=self._ids.new_id(),
-                occurred_at=now,
+                occurred_at=tx.created_at,
                 user_id=cmd.user_id,
                 transaction_id=tx.id,
                 kind=tx.kind,

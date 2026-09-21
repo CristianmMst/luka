@@ -23,7 +23,7 @@ from pydantic import BaseModel
 
 from finanzia.shared.errors import ValidationAppError
 
-CursorKind = Literal["occurred", "updated"]
+CursorKind = Literal["occurred", "updated", "review"]
 
 _DECODE_ERRORS = (ValueError, KeyError, TypeError, UnicodeDecodeError, AttributeError)
 

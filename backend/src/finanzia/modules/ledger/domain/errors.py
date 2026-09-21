@@ -59,3 +59,11 @@ class InvalidCursor(LedgerError):  # noqa: N818
 
 class InvalidKindChange(LedgerError):  # noqa: N818
     """El `kind` solicitado en un PATCH es incompatible con la `direction` de la transaccion."""
+
+
+class ReviewItemNotFound(LedgerError):  # noqa: N818
+    """No existe un item de revision con ese `raw_message_id` para el usuario (o es ajeno)."""
+
+
+class ReviewAlreadyResolved(LedgerError):  # noqa: N818
+    """El item de revision ya fue convertido o descartado."""

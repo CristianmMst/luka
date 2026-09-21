@@ -114,6 +114,32 @@
 | POST | `/review/{raw_message_id}/convert` | Body = transacción completa → crea transacción `parsed_by: manual` y marca resuelto |
 | POST | `/review/{raw_message_id}/discard` | Descarta |
 
+**Detalle de `/review` (Task 8, F2.5/F2.6, dueño: ledger — ver spec 004 §2.10, spec 003 §2.3).** Un mensaje crudo que `parsing` no pudo convertir en transacción (`ParseFailed`) queda en la cola; el usuario lo resuelve convirtiéndolo a mano o descartándolo. Ambas acciones marcan el `raw_message` subyacente (`reviewed`/`discarded`, vía `ingestion.public`).
+
+- `GET /review` — paginado por cursor (spec 005 §1; cursor kind `review`, orden `(created_at DESC, raw_message_id DESC)`). `limit`/`cursor` igual que `/transactions`. Respuesta:
+
+  ```json
+  { "items": [ {
+      "raw_message_id": "uuid", "channel": "email", "bank": "bancolombia" ,
+      "sender": "alertasynotificaciones@an.notificacionesbancolombia.com",
+      "received_at": "2026-09-19T21:52:00-05:00",
+      "reason": "llm_low_confidence",
+      "partial_extract": { "amount": "45900" },
+      "text": "Bancolombia: Compraste $45.900 en ...", "created_at": "2026-09-19T21:53:10Z"
+    } ], "next_cursor": "..." | null }
+  ```
+
+  `reason` es uno de los 8 valores cerrados (`no_template`, `llm_disabled`, `llm_budget_exceeded`, `llm_invalid_json`, `llm_invalid_output`, `llm_low_confidence`, `llm_error`, `body_purged`); `text` es el cuerpo del mensaje (`null` si ya fue purgado, spec 004 §2.7). Solo lista items propios y abiertos (sin resolver); un item ajeno nunca aparece (no hay 404 en el listado: es un filtro, no una búsqueda por id).
+
+- `POST /review/{raw_message_id}/convert` — body idéntico a `CreateTransactionRequest` (spec 005 §6) salvo que no acepta `nfc_tag_id` (la fuente siempre es el `raw_message`, no NFC). Crea la transacción con `parsed_by: "manual"` y una fuente (`sources[0]`) con `raw_message_id` = el del mensaje crudo, `channel` = el canal original del mensaje (no `manual`). Respuesta **201** `TransactionResponse` (mismo shape que `POST /transactions`, spec 005 §9.3). Errores: **404** `not_found` si el item no existe o es de otro usuario (009 §4/§8); **409** `conflict` si ya fue convertido o descartado.
+- `POST /review/{raw_message_id}/discard` — sin body. Resuelve el item sin crear transacción. Respuesta **200**:
+
+  ```json
+  { "raw_message_id": "uuid", "resolution": "discarded", "resolved_at": "2026-09-19T22:00:00Z" }
+  ```
+
+  Mismos errores que `convert` (**404**/**409**).
+
 ## 8. Insights y reporte fiscal
 
 | Método | Ruta | Descripción |

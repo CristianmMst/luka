@@ -9,6 +9,9 @@ from finanzia.modules.ledger.infrastructure.repositories.categories import (
 from finanzia.modules.ledger.infrastructure.repositories.merchant_rules import (
     SqlAlchemyMerchantRuleRepository,
 )
+from finanzia.modules.ledger.infrastructure.repositories.review_queue import (
+    SqlAlchemyReviewQueueRepository,
+)
 from finanzia.modules.ledger.infrastructure.repositories.sources import (
     SqlAlchemyTransactionSourceRepository,
 )
@@ -20,6 +23,7 @@ __all__ = [
     "SqlAlchemyCategoryRepository",
     "SqlAlchemyLinkedAccountRepository",
     "SqlAlchemyMerchantRuleRepository",
+    "SqlAlchemyReviewQueueRepository",
     "SqlAlchemyTransactionRepository",
     "SqlAlchemyTransactionSourceRepository",
 ]

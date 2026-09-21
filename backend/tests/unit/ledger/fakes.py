@@ -11,7 +11,7 @@ from uuid import UUID
 
 from support.clock import FixedClock
 
-from finanzia.modules.ledger.application.dto import Cursor, Filters
+from finanzia.modules.ledger.application.dto import Cursor, Filters, ReviewSourceView
 from finanzia.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
@@ -20,13 +20,16 @@ from finanzia.modules.ledger.domain.entities import (
     TransactionSource,
 )
 from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag, Kind
+from finanzia.modules.ledger.domain.review import ReviewItem, ReviewResolution
 from finanzia.modules.ledger.domain.system_categories import SYSTEM_CATEGORIES
 
 __all__ = [
+    "FakeReviewSource",
     "FixedClock",
     "InMemoryCategoryRepo",
     "InMemoryLinkedAccountRepo",
     "InMemoryMerchantRuleRepo",
+    "InMemoryReviewQueueRepo",
     "InMemoryTransactionRepo",
     "InMemoryTransactionSourceRepo",
     "LedgerRepos",
@@ -334,6 +337,57 @@ class NoopUoW:
 
     async def commit(self) -> None:
         self.commits += 1
+
+
+class InMemoryReviewQueueRepo:
+    """Doble en memoria de `ReviewQueueRepositoryPort`."""
+
+    def __init__(self) -> None:
+        self._by_id: dict[UUID, ReviewItem] = {}
+
+    async def insert_if_absent(self, item: ReviewItem) -> bool:
+        if item.raw_message_id in self._by_id:
+            return False
+        self._by_id[item.raw_message_id] = item
+        return True
+
+    async def get(self, user_id: UUID, raw_message_id: UUID) -> ReviewItem | None:
+        item = self._by_id.get(raw_message_id)
+        return item if item is not None and item.user_id == user_id else None
+
+    async def list_open(self, user_id: UUID, cursor: Cursor | None, limit: int) -> list[ReviewItem]:
+        rows = [i for i in self._by_id.values() if i.user_id == user_id and i.is_open]
+        rows.sort(key=lambda i: (i.created_at, i.raw_message_id), reverse=True)
+        if cursor is not None:
+            rows = [
+                i for i in rows if (i.created_at, i.raw_message_id) < (cursor.sort_key, cursor.id)
+            ]
+        return rows[:limit]
+
+    async def resolve(
+        self, user_id: UUID, raw_message_id: UUID, resolution: ReviewResolution, now: datetime
+    ) -> bool:
+        item = self._by_id.get(raw_message_id)
+        if item is None or item.user_id != user_id or not item.is_open:
+            return False
+        self._by_id[raw_message_id] = replace(item, resolved_at=now, resolution=resolution)
+        return True
+
+
+class FakeReviewSource:
+    """Doble de `ReviewSourcePort`: vistas precargadas a mano por el test."""
+
+    def __init__(self) -> None:
+        self.views: dict[UUID, ReviewSourceView] = {}
+        self.marked: dict[UUID, tuple[str, datetime]] = {}
+
+    async def load_views(self, user_id: UUID, ids: Sequence[UUID]) -> dict[UUID, ReviewSourceView]:
+        del user_id
+        return {i: self.views[i] for i in ids if i in self.views}
+
+    async def mark_status(self, raw_message_id: UUID, status: str, now: datetime) -> bool:
+        self.marked[raw_message_id] = (status, now)
+        return True
 
 
 class LedgerRepos:

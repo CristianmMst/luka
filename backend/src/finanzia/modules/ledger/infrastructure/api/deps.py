@@ -12,6 +12,7 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.identity.public import get_current_user_id
+from finanzia.modules.ledger.application.use_cases.convert_review_item import ConvertReviewItem
 from finanzia.modules.ledger.application.use_cases.create_account import CreateAccount
 from finanzia.modules.ledger.application.use_cases.create_category import CreateCategory
 from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
@@ -20,9 +21,11 @@ from finanzia.modules.ledger.application.use_cases.create_manual_transaction imp
 from finanzia.modules.ledger.application.use_cases.delete_account import DeleteAccount
 from finanzia.modules.ledger.application.use_cases.delete_category import DeleteCategory
 from finanzia.modules.ledger.application.use_cases.delete_transaction import DeleteTransaction
+from finanzia.modules.ledger.application.use_cases.discard_review_item import DiscardReviewItem
 from finanzia.modules.ledger.application.use_cases.get_transaction import GetTransaction
 from finanzia.modules.ledger.application.use_cases.list_accounts import ListAccounts
 from finanzia.modules.ledger.application.use_cases.list_categories import ListCategories
+from finanzia.modules.ledger.application.use_cases.list_review import ListReview
 from finanzia.modules.ledger.application.use_cases.list_transactions import ListTransactions
 from finanzia.modules.ledger.application.use_cases.set_transfer_pair import SetTransferPair
 from finanzia.modules.ledger.application.use_cases.unset_transfer_pair import UnsetTransferPair
@@ -31,10 +34,12 @@ from finanzia.modules.ledger.application.use_cases.update_category import Update
 from finanzia.modules.ledger.application.use_cases.update_transaction import UpdateTransaction
 from finanzia.modules.ledger.infrastructure.event_publisher import BusEventPublisher
 from finanzia.modules.ledger.infrastructure.id_generator import SecretsIdGenerator
+from finanzia.modules.ledger.infrastructure.raw_messages_gateway import IngestionReviewSource
 from finanzia.modules.ledger.infrastructure.repositories import (
     SqlAlchemyCategoryRepository,
     SqlAlchemyLinkedAccountRepository,
     SqlAlchemyMerchantRuleRepository,
+    SqlAlchemyReviewQueueRepository,
     SqlAlchemyTransactionRepository,
     SqlAlchemyTransactionSourceRepository,
 )
@@ -224,5 +229,58 @@ def get_delete_account_use_case(
 ) -> DeleteAccount:
     return DeleteAccount(
         accounts=SqlAlchemyLinkedAccountRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_list_review_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> ListReview:
+    return ListReview(
+        review_queue=SqlAlchemyReviewQueueRepository(session),
+        review_source=IngestionReviewSource(session),
+    )
+
+
+def get_convert_review_item_use_case(
+    session: AsyncSession = Depends(get_session),
+    clock: SystemClock = Depends(get_clock),
+    ids: SecretsIdGenerator = Depends(get_ids),
+    events: BusEventPublisher = Depends(get_event_publisher),
+) -> ConvertReviewItem:
+    create_manual = CreateManualTransaction(
+        transactions=SqlAlchemyTransactionRepository(session),
+        sources=SqlAlchemyTransactionSourceRepository(session),
+        categories=SqlAlchemyCategoryRepository(session),
+        accounts=SqlAlchemyLinkedAccountRepository(session),
+        events=events,
+        clock=clock,
+        ids=ids,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    get_transaction = GetTransaction(
+        transactions=SqlAlchemyTransactionRepository(session),
+        sources=SqlAlchemyTransactionSourceRepository(session),
+    )
+    return ConvertReviewItem(
+        review_queue=SqlAlchemyReviewQueueRepository(session),
+        review_source=IngestionReviewSource(session),
+        create_manual=create_manual,
+        get_transaction=get_transaction,
+        events=events,
+        clock=clock,
+        ids=ids,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_discard_review_item_use_case(
+    session: AsyncSession = Depends(get_session),
+    clock: SystemClock = Depends(get_clock),
+) -> DiscardReviewItem:
+    return DiscardReviewItem(
+        review_queue=SqlAlchemyReviewQueueRepository(session),
+        review_source=IngestionReviewSource(session),
+        clock=clock,
         uow=SqlAlchemyUnitOfWork(session),
     )

@@ -7,11 +7,14 @@ modulo por debajo de ~200 lineas (guia de organizacion de codigo de la tarea).
 from decimal import Decimal
 from typing import Any
 
-from finanzia.modules.ledger.application.dto import TransactionDetail
+from finanzia.modules.ledger.application.dto import ReviewEntry, TransactionDetail
 from finanzia.modules.ledger.domain.entities import Category, LinkedAccount, Transaction
+from finanzia.modules.ledger.domain.review import ReviewItem
 from finanzia.modules.ledger.infrastructure.api.schemas import (
     AccountResponse,
     CategoryResponse,
+    DiscardReviewResponse,
+    ReviewEntryResponse,
     TransactionListItem,
     TransactionResponse,
     TransactionSourceResponse,
@@ -116,4 +119,38 @@ def account_response(account: LinkedAccount) -> AccountResponse:
         kind=account.kind.value,
         last4=account.last4,
         alias=account.alias,
+    )
+
+
+def review_entry_response(entry: ReviewEntry) -> ReviewEntryResponse | None:
+    """Construye el item de `GET /review`; `None` si el `raw_message` ya no existe
+    (`entry.source is None`, caso defensivo: el FK es CASCADE, no deberia ocurrir).
+    """
+    source = entry.source
+    if source is None:
+        return None
+    item = entry.item
+    return ReviewEntryResponse(
+        raw_message_id=item.raw_message_id,
+        channel=source.channel.value,
+        bank=source.bank.value if source.bank is not None else None,
+        sender=source.sender,
+        received_at=source.received_at,
+        reason=item.reason.value,
+        partial_extract=dict(item.partial_extract),
+        text=source.text,
+        created_at=item.created_at,
+    )
+
+
+def discard_review_response(item: ReviewItem) -> DiscardReviewResponse:
+    """Construye la respuesta de `POST /review/{raw_message_id}/discard`."""
+    resolved_at = item.resolved_at
+    resolution = item.resolution
+    if resolved_at is None or resolution is None:
+        raise RuntimeError("item de revision sin resolver")
+    return DiscardReviewResponse(
+        raw_message_id=item.raw_message_id,
+        resolution=resolution.value,
+        resolved_at=resolved_at,
     )
