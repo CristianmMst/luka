@@ -5,6 +5,18 @@ timings cortos para tests (spec 003 SS2.3-2.4, F2.2/F2.5/F2.6, Task 9).
 Deliberadamente NO arranca el `ledger-observer` (`ledger.TransactionCaptured`):
 ningun test e2e del pipeline necesita ese logger, solo los 3 consumers que
 mueven un `raw_message` hasta convertirse en transaccion o en revision.
+
+`parsing` se importa por su fachada (`finanzia.modules.parsing.public`), NO por
+`infrastructure.consumers`/`infrastructure.config_loader` directo: igual que en
+`finanzia.worker` (fix round 1, Task 9), entrar al modulo por ahi dispara un
+import circular real (`parsing.infrastructure.consumers` ->
+`parsing.infrastructure.raw_message_gateway` -> `ingestion.public` ->
+`ingestion.infrastructure.sender_policy` -> `parsing.public` ->
+`parsing.infrastructure.consumers`, a medio inicializar). `pytest` nunca lo
+expone porque el conftest raiz importa `finanzia.app` (que resuelve
+`parsing.public` primero) antes que cualquier test module; un
+`python -c "import tests.support.pipeline"` aislado (sin pytest) si revienta.
+Ver `tests/unit/test_import_cycles.py`, que pinea el fix en un subproceso limpio.
 """
 
 from __future__ import annotations
@@ -19,9 +31,7 @@ from finanzia.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
 )
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
-from finanzia.modules.parsing.infrastructure.consumers import make_raw_message_received_handler
-from finanzia.modules.parsing.infrastructure.metrics import StructlogMetrics
+from finanzia.modules.parsing import public as parsing_public
 from finanzia.shared.events.consumer import StreamConsumer
 
 if TYPE_CHECKING:
@@ -82,14 +92,14 @@ class PipelineHarness:
         de cualquier publish del test (evita perder el primer evento por la
         ventana `$` de `XGROUP CREATE`).
         """
-        parsing_handler = make_raw_message_received_handler(
+        parsing_handler = parsing_public.make_raw_message_received_handler(
             session_factory=session_factory,
             event_bus=bus,
             clock=clock,
             llm=llm,
             budget=budget,
-            registry=load_parsing_config().templates,
-            metrics=StructlogMetrics(),
+            registry=parsing_public.load_parsing_config().templates,
+            metrics=parsing_public.StructlogMetrics(),
             settings=settings,
         )
         ledger_transaction_handler = make_transaction_parsed_handler(

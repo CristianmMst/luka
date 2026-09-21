@@ -32,7 +32,7 @@ tiene el mismo ciclo (no importa `ingestion.public`).
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
 import httpx
 import redis.asyncio as redis_asyncio
@@ -62,6 +62,19 @@ if TYPE_CHECKING:
 
 _logger = structlog.get_logger()
 
+
+class _ConsumerKwargs(TypedDict, total=False):
+    """Override opcional de `StreamConsumer` (solo `block_ms`, ver `on_startup`).
+
+    `TypedDict` en vez de `dict[str, int]`: con un `dict` homogeneo, pyright
+    exige que TODOS los parametros de `StreamConsumer.__init__` acepten `int`
+    al esparcir `**consumer_kwargs` (revienta contra `consumer_name: str |
+    None`); un `TypedDict` valida por nombre de clave, solo contra `block_ms`.
+    """
+
+    block_ms: int
+
+
 _LEDGER_OBSERVER_EVENT_TYPE = "ledger.TransactionCaptured"
 _SUPERVISOR_RESTART_DELAY_S = 1.0
 
@@ -81,6 +94,19 @@ _CONSUMER_GROUPS_TIMEOUT_S = 2.0
 # verificacion Docker de esta tarea). 10s deja margen sobre esos 6s.
 _REDIS_CONNECT_TIMEOUT_S = 2.0
 _REDIS_SOCKET_TIMEOUT_S = 10.0
+
+# Clave de `ctx` que un test puede precargar antes de llamar `on_startup(ctx)`
+# directo, para bajar el `block_ms` de sus `StreamConsumer` (ver el comentario en
+# `on_startup`, fix round 1 Task 9). Nunca la usa produccion (arq llama
+# `on_startup({})`).
+_TEST_CONSUMER_BLOCK_MS_CTX_KEY = "_test_consumer_block_ms"
+# Cota dura sobre `asyncio.gather(*tasks)` en `on_shutdown`: sin esto, una tarea
+# que por algun motivo no respondiera a `stop` (p. ej. bloqueada dentro de un
+# `XREADGROUP ... BLOCK` largo) dejaria `on_shutdown` colgado para siempre. Con
+# el `block_ms` de produccion (5000ms) cada consumer responde a `stop` en <=6s
+# (ver arriba), asi que 15s deja margen de sobra para los 4 a la vez; fail-soft
+# (loguea y sigue cerrando http/engine/redis) en vez de propagar.
+_SHUTDOWN_TASKS_TIMEOUT_S = 15.0
 
 
 async def ping(ctx: dict[str, Any]) -> str:
@@ -222,6 +248,19 @@ async def on_startup(ctx: dict[str, Any]) -> None:
         _LEDGER_OBSERVER_EVENT_TYPE: log_transaction_captured,
     }
 
+    # `_TEST_CONSUMER_BLOCK_MS_CTX_KEY` (fix round 1, Task 9): un test que llama a
+    # `on_startup(ctx)` directo puede precargar `ctx` con esta clave para bajar el
+    # `block_ms` de sus `StreamConsumer` (p. ej. a 200ms, igual que
+    # `PipelineHarness`) y asi hacer que `on_shutdown` responda a `stop` casi al
+    # instante en vez de esperar hasta ~6s (block_ms/1000+1 de
+    # `StreamConsumer._read_new`) por consumer. arq nunca pasa esta clave (llama
+    # `on_startup({})`), asi que en produccion el kwarg se omite del todo y
+    # `StreamConsumer` usa su propio default — cero riesgo de drift.
+    test_block_ms = ctx.get(_TEST_CONSUMER_BLOCK_MS_CTX_KEY)
+    consumer_kwargs: _ConsumerKwargs = (
+        {"block_ms": test_block_ms} if test_block_ms is not None else {}
+    )
+
     stop = asyncio.Event()
     tasks: list[asyncio.Task[None]] = []
     for event_type, group in CONSUMER_GROUPS:
@@ -232,6 +271,7 @@ async def on_startup(ctx: dict[str, Any]) -> None:
             group=group,
             event_type=event_type,
             handler=handlers_by_event_type[event_type],
+            **consumer_kwargs,
         )
         tasks.append(
             asyncio.create_task(
@@ -254,13 +294,25 @@ async def on_startup(ctx: dict[str, Any]) -> None:
 
 
 async def on_shutdown(ctx: dict[str, Any]) -> None:
-    """Detiene los consumers, espera sus tareas y cierra http/engine/redis."""
+    """Detiene los consumers, espera sus tareas (acotado) y cierra http/engine/redis."""
     stop: asyncio.Event | None = ctx.get("events_stop")
     if stop is not None:
         stop.set()
-    tasks = ctx.get("events_tasks") or []
+    tasks: list[asyncio.Task[None]] = ctx.get("events_tasks") or []
     if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True), timeout=_SHUTDOWN_TASKS_TIMEOUT_S
+            )
+        except TimeoutError:
+            # Fail-soft (fix round 1, Task 9): no deberia pasar nunca (cada consumer
+            # responde a `stop` en <=block_ms/1000+1s), pero si pasa, no dejar
+            # `on_shutdown` colgado para siempre — loguear y seguir cerrando
+            # http/engine/redis igual. Las tareas que no llegaron a tiempo siguen
+            # vivas (no se cancelan a la fuerza): `asyncio.Task.cancel()` sobre un
+            # consumer a medio `XACK`/commit podria dejar estado a medias.
+            still_running = sum(1 for task in tasks if not task.done())
+            _logger.warning("event_consumer_shutdown_timed_out", still_running=still_running)
 
     http_client = ctx.get("events_http_client")
     if http_client is not None:

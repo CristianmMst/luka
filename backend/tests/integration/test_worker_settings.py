@@ -31,6 +31,22 @@ from finanzia.shared.settings import Settings, get_settings
 
 pytestmark = pytest.mark.integration
 
+# Fix round 1 (review Task 9, finding 2): los tests que llaman `on_startup(ctx)`
+# directo controlan `ctx` por completo, asi que pueden precargar la clave de
+# prueba `_test_consumer_block_ms` (ver `finanzia.worker`) para que los 4
+# `StreamConsumer` respondan a `stop` casi al instante en `on_shutdown`, en vez
+# de hasta ~6s (block_ms/1000+1 de produccion) cada uno. Sin esto, cada test que
+# arranca+apaga consumers reales tardaba varios segundos, y una tarea que
+# tardara justo lo suficiente en volver a chequear `stop` podia solaparse con el
+# `redis_clean`/`db_clean` del siguiente test (misma suite, mismo loop de
+# asyncio de sesion) y disparar `NOGROUP`/colisiones de datos intermitentes.
+_TEST_CONSUMER_BLOCK_MS = 50
+
+
+def _new_worker_ctx() -> dict[str, Any]:
+    """`ctx` base para llamar `on_startup`/`on_shutdown` directo en un test."""
+    return {"_test_consumer_block_ms": _TEST_CONSUMER_BLOCK_MS}
+
 
 @pytest.fixture(autouse=True)
 def _sigusr1_shim(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -158,18 +174,26 @@ async def test_supervise_duerme_si_run_retorna_normal_sin_stop_marcado(
 
 
 async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabilitado(
-    worker_settings_module, monkeypatch: pytest.MonkeyPatch, redis_clean: None
+    worker_settings_module,
+    monkeypatch: pytest.MonkeyPatch,
+    redis_clean: None,
+    db_clean: None,
 ) -> None:
     """Task 9: sin `FINANZIA_DEEPSEEK_API_KEY` (dev/test), el worker arranca los 4
     consumers igual (`parsing`, `ledger`, `ledger-review`, `ledger-observer`, uno
     por entrada de `CONSUMER_GROUPS`) con el LLM deshabilitado, y lo deja
     explicito en el log de arranque (nunca la api key, P1).
+
+    `redis_clean`/`db_clean` explicitos (fix round 1, finding 2): este test
+    arranca consumers reales contra la Redis/DB de test; declararlos aqui deja
+    el contrato de aislamiento explicito en vez de depender solo del orden de
+    ejecucion con otros archivos.
     """
-    del redis_clean
+    del redis_clean, db_clean
     monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
-    ctx: dict[str, Any] = {}
+    ctx = _new_worker_ctx()
     with structlog.testing.capture_logs() as captured:
         await worker_settings_module.on_startup(ctx)
     try:
@@ -185,18 +209,27 @@ async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabili
     finally:
         await worker_settings_module.on_shutdown(ctx)
 
+    # Fix round 1 (finding 2): antes de que el siguiente test corra su propio
+    # `redis_clean`, todas las tareas deben estar `done()` — si alguna sigue viva,
+    # su proximo `XREADGROUP`/`ensure_group` puede pisarse con el FLUSHDB del
+    # siguiente test (`NOGROUP ResponseError`).
+    assert all(task.done() for task in ctx["events_tasks"])
+
 
 async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_nada_colgado(
-    worker_settings_module, monkeypatch: pytest.MonkeyPatch, redis_clean: None
+    worker_settings_module,
+    monkeypatch: pytest.MonkeyPatch,
+    redis_clean: None,
+    db_clean: None,
 ) -> None:
     """Task 9: `on_shutdown` cancela las 4 tareas supervisadas, cierra el
     `httpx.AsyncClient` compartido y no deja tareas de fondo colgadas.
     """
-    del redis_clean
+    del redis_clean, db_clean
     monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
-    ctx: dict[str, Any] = {}
+    ctx = _new_worker_ctx()
     await worker_settings_module.on_startup(ctx)
 
     await worker_settings_module.on_shutdown(ctx)
@@ -232,22 +265,28 @@ def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_setting
     assert requeue_job.run_at_startup is False
 
 
-async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(
+async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(  # noqa: PLR0913, PLR0917 - un parametro por fixture inyectada (patron pytest)
     worker_settings_module,
     monkeypatch: pytest.MonkeyPatch,
     redis_clean: None,
+    db_clean: None,
     session_factory: async_sessionmaker[AsyncSession],
     user_factory: Callable[..., Awaitable[AuthedUser]],
 ) -> None:
     """El job cron delega en `ingestion.public.purge_expired_bodies` sobre una
     sesion abierta desde `ctx["events_session_factory"]` y loguea solo el conteo
     (nunca el cuerpo purgado, P6).
+
+    `sub`/`email` propios (fix round 1, finding 2): el default de `user_factory`
+    (`sub-1`) lo usan decenas de tests de otros archivos; un `sub` propio por
+    test de este archivo evita cualquier colision de `uq_users_google_sub` con
+    otra suite, con independencia de que `db_clean` ya aisle cada test.
     """
-    del redis_clean
+    del redis_clean, db_clean
     monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
-    user = await user_factory()
+    user = await user_factory(sub="worker-cron-purge", email="worker-cron-purge@example.com")
     now = datetime.now(UTC)
     vencido = await insert_raw_message(
         session_factory,
@@ -256,7 +295,7 @@ async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(
         received_at=now - timedelta(days=200),
     )
 
-    ctx: dict[str, Any] = {}
+    ctx = _new_worker_ctx()
     await worker_settings_module.on_startup(ctx)
     try:
         with structlog.testing.capture_logs() as captured:
@@ -283,22 +322,27 @@ async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(
     assert row.body is None
 
 
-async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_count(
+async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_count(  # noqa: PLR0913, PLR0917 - un parametro por fixture inyectada (patron pytest)
     worker_settings_module,
     monkeypatch: pytest.MonkeyPatch,
     redis_clean: None,
+    db_clean: None,
     session_factory: async_sessionmaker[AsyncSession],
     user_factory: Callable[..., Awaitable[AuthedUser]],
 ) -> None:
     """El job cron delega en `ingestion.public.requeue_pending_raw_messages`, usando
     tanto la sesion (`events_session_factory`) como el bus (`events_bus`) que
     `on_startup` guarda en `ctx` para los consumers.
+
+    `sub`/`email` propios: ver docstring de
+    `test_purge_raw_message_bodies_cron_purga_y_loguea_count` (fix round 1,
+    finding 2).
     """
-    del redis_clean
+    del redis_clean, db_clean
     monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
-    user = await user_factory()
+    user = await user_factory(sub="worker-cron-requeue", email="worker-cron-requeue@example.com")
     now = datetime.now(UTC)
     huerfano = await insert_raw_message(
         session_factory, user_id=user.id, external_id="cron-requeue-huerfano", status="pending"
@@ -318,7 +362,7 @@ async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_co
         )
         await session.commit()
 
-    ctx: dict[str, Any] = {}
+    ctx = _new_worker_ctx()
     await worker_settings_module.on_startup(ctx)
     try:
         with structlog.testing.capture_logs() as captured:
