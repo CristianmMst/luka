@@ -43,6 +43,19 @@ class RawMessageRepositoryPort(Protocol):
         """
         ...
 
+    async def list_pending_older_than(self, before: datetime, limit: int) -> list[RawMessage]:
+        """Filas `status='pending'` con `updated_at < before`, mas antiguas primero
+        (cron `requeue_pending_raw_messages`, riesgo 4 / D9: cierra el hueco
+        "commit ok + publish fallo" sin outbox).
+        """
+        ...
+
+    async def touch(self, id: UUID, now: datetime) -> None:
+        """Actualiza `updated_at` sin tocar `status` (evita republicar la misma fila
+        en cada corrida del cron dentro de la misma ventana).
+        """
+        ...
+
 
 class SenderPolicyPort(Protocol):
     """Allowlists de remitentes/paquetes de captura, delegadas en `parsing.public` (D6)."""

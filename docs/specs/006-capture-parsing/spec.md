@@ -157,6 +157,7 @@ templates:
 - Vocabulario de resultado de una ingesta: `accepted` (fila nueva, evento publicado), `duplicate` (fila ya existía; republica el evento solo si seguía `pending`) o `discarded` (remitente/paquete no soportado, nada se persiste, AC-2.4).
 - Dedupe de transacciones: huella de spec 004 §3 con `ON CONFLICT DO NOTHING`; si conflicto → adjuntar `transaction_source` a la existente (AC-5.1).
 - El matcher de transferencias corre tras cada inserción (spec 004 §4).
+- Mitigación adicional a la falta de outbox (riesgo 4, F3.7 adelantado en F2 — Task 10): el cron `requeue_pending_raw_messages` corre cada 15 min (`minute={0,15,30,45}`) y republica `RawMessageReceived` para toda fila `raw_messages` que siga `status='pending'` con `updated_at` de más de 10 min (cubre el caso "commit ok, publish falló" incluso sin una ingesta duplicada que lo dispare). Cada fila reencolada se "toca" (`updated_at = now()`) para no volver a republicarse en la misma ventana. Es idempotente: `ParseRawMessage` (F2.2) descarta con `Skipped(not_pending)` cualquier evento cuyo `raw_message_id` ya no esté `pending` al momento de procesarlo, así que una reentrega tras un procesamiento exitoso no duplica nada.
 
 ## 5. NFC (app)
 

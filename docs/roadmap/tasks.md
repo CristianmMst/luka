@@ -51,7 +51,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F3.4 | Webhook `/webhooks/gmail`: verificación OIDC + history.list + filtro remitentes + encolar; tests con payloads simulados | 005 §4, 006 §2 | F3.3, F2.2 |
 | F3.5 | Cron renovación de watches + resync tras cursor inválido | 006 §2.1 | F3.4 |
 | F3.6 | App: paso de onboarding Gmail con autorización incremental + estado en Ajustes | 008 §3.1 | F1.9, F3.3 |
-| F3.7 | Job de purga de raw_messages a 90 días | 004 §6 | F2.1 |
+| F3.7 | Job de purga de raw_messages a 90 días | 004 §6 | ✅ adelantado en F2 (Task 10) |
 
 ## Fase 4 — App completa (RF-3, RF-4, RF-9)
 

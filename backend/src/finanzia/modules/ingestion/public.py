@@ -9,6 +9,7 @@ solo lleva ids).
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -28,6 +29,9 @@ from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch
 from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
 from finanzia.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
 from finanzia.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
+from finanzia.modules.ingestion.application.use_cases.requeue_pending import (
+    RequeuePendingRawMessages,
+)
 from finanzia.modules.ingestion.domain.entities import RawMessage
 from finanzia.modules.ingestion.domain.enums import RawMessageStatus
 from finanzia.modules.ingestion.events import RawMessageReceived
@@ -63,10 +67,13 @@ __all__ = [
     "load_raw_messages_for_review",
     "mark_raw_message",
     "purge_expired_bodies",
+    "requeue_pending_raw_messages",
 ]
 
 _RETENTION_DAYS_DEFAULT = 90
 _BODY_MAX_BYTES_DEFAULT = 8192
+_REQUEUE_OLDER_THAN_DEFAULT = timedelta(minutes=10)
+_REQUEUE_LIMIT_DEFAULT = 500
 
 
 def _view(msg: RawMessage) -> RawMessageView:
@@ -181,3 +188,24 @@ async def purge_expired_bodies(session: AsyncSession, now: datetime) -> int:
         repo=SqlAlchemyRawMessageRepository(session), uow=SqlAlchemyUnitOfWork(session)
     )
     return await use_case.execute(now)
+
+
+async def requeue_pending_raw_messages(
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    *,
+    older_than: timedelta = _REQUEUE_OLDER_THAN_DEFAULT,
+    limit: int = _REQUEUE_LIMIT_DEFAULT,
+) -> int:
+    """Republica `RawMessageReceived` para filas `pending` huerfanas (riesgo 4, D9);
+    comitea (job cron cada 15 min).
+    """
+    use_case = RequeuePendingRawMessages(
+        repo=SqlAlchemyRawMessageRepository(session),
+        events=BusEventPublisher(event_bus),
+        clock=clock,
+        ids=SecretsIdGenerator(),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await use_case.execute(older_than=older_than, limit=limit)

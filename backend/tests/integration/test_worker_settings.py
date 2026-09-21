@@ -15,11 +15,17 @@ en Linux, donde `worker.py` mantiene los defaults).
 
 import asyncio
 import signal
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
 import structlog.testing
 from arq import Worker, create_pool
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from support.auth import AuthedUser
+from support.raw_messages import insert_raw_message
 
 from finanzia.shared.settings import Settings, get_settings
 
@@ -204,3 +210,122 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
         if task is not asyncio.current_task() and not task.done()
     ]
     assert lingering == []
+
+
+def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_settings_module) -> None:
+    """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 03:00 y reencolado cada 15
+    min (`minute={0,15,30,45}`), ninguno corre al arrancar (`run_at_startup=False`).
+    """
+    cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
+    assert len(cron_jobs) == 2
+
+    by_name = {job.name: job for job in cron_jobs}
+    assert set(by_name) == {"cron:purge_raw_message_bodies", "cron:requeue_pending_raw_messages"}
+
+    purge_job = by_name["cron:purge_raw_message_bodies"]
+    assert purge_job.hour == 3
+    assert purge_job.minute == 0
+    assert purge_job.run_at_startup is False
+
+    requeue_job = by_name["cron:requeue_pending_raw_messages"]
+    assert requeue_job.minute == {0, 15, 30, 45}
+    assert requeue_job.run_at_startup is False
+
+
+async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(
+    worker_settings_module,
+    monkeypatch: pytest.MonkeyPatch,
+    redis_clean: None,
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """El job cron delega en `ingestion.public.purge_expired_bodies` sobre una
+    sesion abierta desde `ctx["events_session_factory"]` y loguea solo el conteo
+    (nunca el cuerpo purgado, P6).
+    """
+    del redis_clean
+    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    user = await user_factory()
+    now = datetime.now(UTC)
+    vencido = await insert_raw_message(
+        session_factory,
+        user_id=user.id,
+        external_id="cron-purge-vencido",
+        received_at=now - timedelta(days=200),
+    )
+
+    ctx: dict[str, Any] = {}
+    await worker_settings_module.on_startup(ctx)
+    try:
+        with structlog.testing.capture_logs() as captured:
+            await worker_settings_module.purge_raw_message_bodies(ctx)
+
+        logs = [e for e in captured if e.get("event") == "raw_message_bodies_purged"]
+        assert len(logs) == 1
+        # `>= 1` (no `== 1`): el job purga *toda* `raw_messages` (spec 004 §6, no
+        # esta acotado por usuario), asi que en una corrida de la suite completa
+        # puede sumar filas vencidas de otros tests; lo que importa aqui es que
+        # cuenta y loguea, y que nuestra fila vencida especifica quedo purgada
+        # (verificado abajo).
+        assert logs[0]["count"] >= 1
+        assert "body" not in repr(logs[0])
+    finally:
+        await worker_settings_module.on_shutdown(ctx)
+
+    async with session_factory() as session:
+        row = (
+            await session.execute(
+                text("SELECT body FROM raw_messages WHERE id = :id"), {"id": vencido}
+            )
+        ).one()
+    assert row.body is None
+
+
+async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_count(
+    worker_settings_module,
+    monkeypatch: pytest.MonkeyPatch,
+    redis_clean: None,
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """El job cron delega en `ingestion.public.requeue_pending_raw_messages`, usando
+    tanto la sesion (`events_session_factory`) como el bus (`events_bus`) que
+    `on_startup` guarda en `ctx` para los consumers.
+    """
+    del redis_clean
+    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    user = await user_factory()
+    now = datetime.now(UTC)
+    huerfano = await insert_raw_message(
+        session_factory, user_id=user.id, external_id="cron-requeue-huerfano", status="pending"
+    )
+    reciente = await insert_raw_message(
+        session_factory, user_id=user.id, external_id="cron-requeue-reciente", status="pending"
+    )
+
+    async with session_factory() as session:
+        await session.execute(
+            text("UPDATE raw_messages SET updated_at = :updated_at WHERE id = :id"),
+            {"updated_at": now - timedelta(minutes=20), "id": huerfano},
+        )
+        await session.execute(
+            text("UPDATE raw_messages SET updated_at = :updated_at WHERE id = :id"),
+            {"updated_at": now - timedelta(minutes=5), "id": reciente},
+        )
+        await session.commit()
+
+    ctx: dict[str, Any] = {}
+    await worker_settings_module.on_startup(ctx)
+    try:
+        with structlog.testing.capture_logs() as captured:
+            await worker_settings_module.requeue_pending_raw_messages(ctx)
+
+        logs = [e for e in captured if e.get("event") == "raw_messages_requeued"]
+        assert len(logs) == 1
+        assert logs[0]["count"] == 1
+    finally:
+        await worker_settings_module.on_shutdown(ctx)

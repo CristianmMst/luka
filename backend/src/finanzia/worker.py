@@ -38,9 +38,11 @@ import httpx
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 import structlog
+from arq import cron
 from arq.connections import RedisSettings
 
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
+from finanzia.modules.ingestion import public as ingestion_public
 from finanzia.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
@@ -95,6 +97,31 @@ async def log_transaction_captured(event: object) -> None:
         event_id=str(getattr(event, "event_id", "")),
         transaction_id=str(getattr(event, "transaction_id", "")),
     )
+
+
+async def purge_raw_message_bodies(ctx: dict[str, Any]) -> None:
+    """Cron diario 03:00: anula `raw_messages.body` vencido (spec 004 §6, riesgo P6).
+
+    Nunca loguea el cuerpo purgado ni ningun otro dato crudo del mensaje, solo el
+    conteo de filas afectadas.
+    """
+    session_factory = ctx["events_session_factory"]
+    clock = SystemClock()
+    async with session_factory() as session:
+        count = await ingestion_public.purge_expired_bodies(session, clock.now())
+    _logger.info("raw_message_bodies_purged", count=count)
+
+
+async def requeue_pending_raw_messages(ctx: dict[str, Any]) -> None:
+    """Cron cada 15 min: republica `RawMessageReceived` para `raw_messages` `pending`
+    huerfanos (riesgo 4 / D9, mitiga la falta de outbox sin outbox).
+    """
+    session_factory = ctx["events_session_factory"]
+    bus = ctx["events_bus"]
+    clock = SystemClock()
+    async with session_factory() as session:
+        count = await ingestion_public.requeue_pending_raw_messages(session, bus, clock)
+    _logger.info("raw_messages_requeued", count=count)
 
 
 async def _supervise(
@@ -219,6 +246,11 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     ctx["events_http_client"] = http_client
     ctx["events_stop"] = stop
     ctx["events_tasks"] = tasks
+    # Task 10: los crons (`purge_raw_message_bodies`, `requeue_pending_raw_messages`)
+    # necesitan abrir su propia sesion por corrida y publicar en el mismo bus que los
+    # consumers; se guardan aqui (additive, no restructura lo de arriba).
+    ctx["events_session_factory"] = session_factory
+    ctx["events_bus"] = bus
 
 
 async def on_shutdown(ctx: dict[str, Any]) -> None:
@@ -247,6 +279,12 @@ class WorkerSettings:
     """Configuracion de arq (spec 003 SS2.4): mismo Docker image, proceso separado."""
 
     functions: ClassVar[list[Any]] = [ping]
+    # Task 10 (F3.7 adelantado, riesgo 4): purga diaria de cuerpos (03:00, spec 004
+    # §6) y reencolado de `raw_messages` `pending` huerfanos (cada 15 min, D9).
+    cron_jobs: ClassVar[list[Any]] = [
+        cron(purge_raw_message_bodies, hour=3, minute=0, run_at_startup=False),
+        cron(requeue_pending_raw_messages, minute={0, 15, 30, 45}, run_at_startup=False),
+    ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))
     on_startup = on_startup
     on_shutdown = on_shutdown

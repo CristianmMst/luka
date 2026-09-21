@@ -260,3 +260,10 @@ Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usua
 | Transacciones y agregados | indefinida (dato del usuario) | borrado solo con la cuenta |
 | Cuenta borrada | purga total ≤ 72 h | evento `UserDeleted` + CASCADE + job de verificación |
 | Backups | 30 días | rotación de backups cifrados |
+
+El job de purga (`purge_raw_message_bodies`, cron arq diario a las 03:00, F3.7
+adelantado en F2 — Task 10) anula `raw_messages.body` (`UPDATE ... SET body =
+NULL`) de las filas con `purge_after < now()`; nunca toca `status` ni el resto
+de columnas, y no loguea el cuerpo purgado (P6). Si una fila purgada ya está en
+`review_queue` (revisión pendiente sin resolver, spec 005 §7), `GET /v1/review`
+la sigue listando pero con `text: null` (la app muestra "contenido expirado").

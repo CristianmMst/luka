@@ -84,5 +84,22 @@ class SqlAlchemyRawMessageRepository:
         result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
         return result.rowcount
 
+    async def list_pending_older_than(self, before: datetime, limit: int) -> list[RawMessage]:
+        stmt = (
+            select(RawMessageRow)
+            .where(
+                RawMessageRow.status == RawMessageStatus.PENDING.value,
+                RawMessageRow.updated_at < before,
+            )
+            .order_by(RawMessageRow.updated_at.asc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return [raw_message_row_to_entity(row) for row in result.scalars()]
+
+    async def touch(self, id: UUID, now: datetime) -> None:
+        stmt = update(RawMessageRow).where(RawMessageRow.id == id).values(updated_at=now)
+        await self._session.execute(stmt)
+
 
 __all__ = ["SqlAlchemyRawMessageRepository"]

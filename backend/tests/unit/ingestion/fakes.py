@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from support.clock import FixedClock
@@ -29,9 +29,15 @@ class InMemoryRawMessageRepo:
     external_id)` como `insert_if_absent` idempotente.
     """
 
+    #: sentinel `updated_at` para filas nunca "tocadas" (`touch`): muy en el pasado,
+    #: asi que por defecto siempre cuentan como huerfanas en `list_pending_older_than`
+    #: hasta que un test llame `touch` explicito.
+    _SENTINEL_UPDATED_AT = datetime.min.replace(tzinfo=UTC)
+
     def __init__(self) -> None:
         self.by_id: dict[UUID, RawMessage] = {}
         self._index: dict[tuple[UUID, str, str], UUID] = {}
+        self.updated_at: dict[UUID, datetime] = {}
 
     async def insert_if_absent(self, msg: RawMessage) -> UUID | None:
         key = (msg.user_id, msg.channel.value, msg.external_id)
@@ -39,6 +45,7 @@ class InMemoryRawMessageRepo:
             return None
         self.by_id[msg.id] = msg
         self._index[key] = msg.id
+        self.updated_at[msg.id] = self._SENTINEL_UPDATED_AT
         return msg.id
 
     async def get_by_external_id(
@@ -69,6 +76,19 @@ class InMemoryRawMessageRepo:
                 self.by_id[id] = replace(msg, body=None)
                 count += 1
         return count
+
+    async def list_pending_older_than(self, before: datetime, limit: int) -> list[RawMessage]:
+        pending = [
+            msg
+            for msg in self.by_id.values()
+            if msg.status is RawMessageStatus.PENDING
+            and self.updated_at.get(msg.id, self._SENTINEL_UPDATED_AT) < before
+        ]
+        pending.sort(key=lambda msg: self.updated_at.get(msg.id, self._SENTINEL_UPDATED_AT))
+        return pending[:limit]
+
+    async def touch(self, id: UUID, now: datetime) -> None:
+        self.updated_at[id] = now
 
 
 class FakeSenderPolicy:
