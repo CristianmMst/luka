@@ -23,9 +23,18 @@ class TemplateExtractionInvalid(ParsingError):  # noqa: N818
     """
 
 
+class LlmUnavailable(ParsingError):  # noqa: N818
+    """El adapter del LLM no pudo completar la llamada (timeout/5xx/red, D11).
+
+    `ParseRawMessage` la traduce de inmediato a `ParseFailed(reason=llm_error)`
+    en vez de dejarla propagar (evita reintentos ciegos + DLQ opaca).
+    """
+
+
 __all__ = [
     "AmountInvalid",
     "DateInvalid",
+    "LlmUnavailable",
     "ParsingError",
     "TemplateConfigError",
     "TemplateExtractionInvalid",
