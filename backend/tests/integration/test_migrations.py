@@ -169,12 +169,35 @@ async def test_nombres_de_constraints_e_indices_siguen_la_convencion(
         )
         constraints_transactions = {row[0] for row in result}
 
+        result = await conn.execute(
+            text(
+                "SELECT conname FROM pg_constraint WHERE conrelid = 'transaction_sources'::regclass"
+            )
+        )
+        constraints_transaction_sources = {row[0] for row in result}
+
+        result = await conn.execute(
+            text("SELECT conname FROM pg_constraint WHERE conrelid = 'raw_messages'::regclass")
+        )
+        constraints_raw_messages = {row[0] for row in result}
+
+        result = await conn.execute(
+            text("SELECT conname FROM pg_constraint WHERE conrelid = 'review_queue'::regclass")
+        )
+        constraints_review_queue = {row[0] for row in result}
+
     assert {
         "uq_transactions_user_id_dedupe_key",
         "fk_transactions_category_id_categories",
         "fk_transactions_user_id_users",
         "pk_transactions",
     } <= constraints_transactions
+    assert {"uq_raw_messages_user_id_channel_external_id"} <= constraints_raw_messages
+    assert {"fk_transaction_sources_raw_message_id_raw_messages"} <= constraints_transaction_sources
+    assert {
+        "pk_review_queue",
+        "ck_review_queue_resolucion_consistente",
+    } <= constraints_review_queue
     assert {
         "pk_users",
         "uq_users_google_sub",

@@ -7,6 +7,7 @@ from pydantic import PostgresDsn, RedisDsn, SecretStr, field_validator, model_va
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _JWT_SECRET_MIN_LENGTH = 32
+_RAW_MESSAGE_BODY_MAX_BYTES_MINIMO = 512
 
 
 class Settings(BaseSettings):
@@ -43,11 +44,47 @@ class Settings(BaseSettings):
     db_pool_size: int = 10
     db_echo: bool = False
 
+    rate_limit_ingest_per_minute: int = 60
+
+    deepseek_api_key: SecretStr | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-v4-flash"
+    llm_timeout_seconds: float = 20.0
+    llm_monthly_token_budget_per_user: int = 200_000
+    llm_confidence_threshold: float = 0.8
+
+    raw_message_retention_days: int = 90
+    raw_message_body_max_bytes: int = 8192
+
     @field_validator("jwt_secret")
     @classmethod
     def _jwt_secret_debe_ser_largo(cls, value: SecretStr) -> SecretStr:
         if len(value.get_secret_value()) < _JWT_SECRET_MIN_LENGTH:
             msg = f"jwt_secret debe tener al menos {_JWT_SECRET_MIN_LENGTH} caracteres"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("llm_confidence_threshold")
+    @classmethod
+    def _llm_confidence_threshold_en_rango(cls, value: float) -> float:
+        if not (0 < value <= 1):
+            msg = "llm_confidence_threshold debe estar en el rango (0, 1]"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("raw_message_retention_days")
+    @classmethod
+    def _raw_message_retention_days_minimo(cls, value: int) -> int:
+        if value < 1:
+            msg = "raw_message_retention_days debe ser >= 1"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("raw_message_body_max_bytes")
+    @classmethod
+    def _raw_message_body_max_bytes_minimo(cls, value: int) -> int:
+        if value < _RAW_MESSAGE_BODY_MAX_BYTES_MINIMO:
+            msg = "raw_message_body_max_bytes debe ser >= 512"
             raise ValueError(msg)
         return value
 

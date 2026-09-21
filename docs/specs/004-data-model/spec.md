@@ -110,7 +110,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 |---|---|---|
 | id | UUID PK | |
 | transaction_id | UUID FK | `ON DELETE CASCADE` |
-| raw_message_id | UUID NULL | NULL si fuente manual/NFC; sin FK todavía — se añade a `raw_messages` en F2.1 |
+| raw_message_id | UUID NULL FK | `→ raw_messages ON DELETE SET NULL` (la evidencia sobrevive; NULL si fuente manual/NFC o si el mensaje crudo se borró) |
 | channel | TEXT | `email` / `notification` / `sms_notification` / `manual` / `nfc` |
 | received_at | TIMESTAMPTZ | |
 | UNIQUE parcial | `(transaction_id, raw_message_id) WHERE raw_message_id IS NOT NULL` | evita adjuntar la misma fuente dos veces; varias fuentes manuales/NFC (`raw_message_id IS NULL`) sí pueden coexistir |
@@ -125,10 +125,12 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | external_id | TEXT | Gmail message id, o hash del payload de notificación |
 | UNIQUE | (user_id, channel, external_id) | idempotencia de ingesta (AC-5.2) |
 | sender | TEXT | remitente / paquete Android |
-| body | TEXT | contenido relevante (se purga a 90 días, RF-11.4) |
+| bank | TEXT NULL | banco resuelto por el filtro de remitente al ingerir (`bancolombia` / `nequi` / `davivienda` / `daviplata` / `bbva` / `banco_bogota` / `other`); evita recalcular y sirve a métricas/revisión |
+| body | TEXT NULL | contenido relevante; el job de purga lo pone en NULL a los 90 días (RF-11.4) |
 | status | TEXT | `pending` / `parsed` / `failed` / `discarded` / `reviewed` |
 | received_at | TIMESTAMPTZ | |
-| purge_after | TIMESTAMPTZ | `received_at + 90 días`; job de purga borra `body` |
+| purge_after | TIMESTAMPTZ | `received_at + 90 días`; job de purga pone `body` en NULL |
+| Índices | `(user_id, status)`; `(purge_after) WHERE body IS NOT NULL` | el segundo es parcial: solo filas con `body` aún presente |
 
 ### 2.8 `categories` (ledger)
 
@@ -185,14 +187,22 @@ Seed insertado por la migración `0002_ledger_core` (24 filas, `user_id NULL`), 
 
 ### 2.10 `review_queue` (ledger)
 
-Vista lógica sobre `raw_messages` con `status='failed'` + campos extraídos parciales:
+Tabla propia (no una vista lógica): mensajes crudos con `status='failed'` que
+requieren revisión manual, más lo que el parseo sí logró extraer. Dueña: ledger
+(el dueño de la resolución `convert`/`discard`); `user_id` va denormalizado para
+filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 
 | Columna | Tipo | Notas |
 |---|---|---|
-| raw_message_id | UUID PK/FK | |
-| partial_extract | JSONB | lo que reglas/LLM sí extrajeron |
+| raw_message_id | UUID PK/FK | `→ raw_messages ON DELETE CASCADE` |
+| user_id | UUID FK | denormalizado; `→ users ON DELETE CASCADE` |
+| reason | TEXT NOT NULL | `no_template` / `llm_disabled` / `llm_budget_exceeded` / `llm_invalid_json` / `llm_invalid_output` / `llm_low_confidence` / `llm_error` / `body_purged` |
+| partial_extract | JSONB NOT NULL DEFAULT '{}' | lo que reglas/LLM sí extrajeron |
+| created_at / updated_at | TIMESTAMPTZ | |
 | resolved_at | TIMESTAMPTZ NULL | |
 | resolution | TEXT NULL | `converted` / `discarded` |
+| CHECK | `(resolved_at IS NULL) = (resolution IS NULL)` | consistencia de resolución |
+| Índice parcial | `(user_id, created_at DESC, raw_message_id DESC) WHERE resolved_at IS NULL` | cola de pendientes por usuario, más recientes primero |
 
 ### 2.11 `fiscal_reports` (fiscal) — reportes generados (caché/auditoría)
 

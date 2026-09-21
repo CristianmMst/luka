@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Composition root de metadata: import explicito de cada modulo con tablas.
 import finanzia.modules.identity.infrastructure.orm
+import finanzia.modules.ingestion.infrastructure.orm
 import finanzia.modules.ledger.infrastructure.orm  # noqa: F401
 from finanzia.shared.db.base import Base
 from finanzia.shared.settings import Settings

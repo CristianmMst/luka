@@ -12,6 +12,7 @@ from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
+from support.raw_messages import insert_raw_message
 
 from finanzia.events_registry import build_registry
 from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
@@ -306,6 +307,7 @@ async def test_delete_transaccion_no_manual_es_403(
     settings: Settings,
 ) -> None:
     user = await user_factory()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
     redis_client = redis_asyncio.from_url(str(settings.redis_url))
     bus = RedisStreamsEventBus(redis_client, build_registry())
     try:
@@ -327,7 +329,9 @@ async def test_delete_transaccion_no_manual_es_403(
                     parsed_by="rule:bancolombia:x",
                     confidence=0.8,
                     source=SourceInput(
-                        channel=Channel.EMAIL, raw_message_id=uuid4(), received_at=datetime.now(UTC)
+                        channel=Channel.EMAIL,
+                        raw_message_id=raw_message_id,
+                        received_at=datetime.now(UTC),
                     ),
                 ),
             )
@@ -374,6 +378,8 @@ async def test_post_manual_publica_evento_decodable_y_dedupe_hit_no_agrega_event
         assert str(event.transaction_id) == created["id"]
 
         bus = RedisStreamsEventBus(redis_client, registry)
+        session_factory = app.state.session_factory
+        raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
         cmd = CapturedTransactionCommand(
             user_id=user.id,
             bank=Bank.NEQUI,
@@ -387,10 +393,9 @@ async def test_post_manual_publica_evento_decodable_y_dedupe_hit_no_agrega_event
             parsed_by="rule:nequi:x",
             confidence=0.7,
             source=SourceInput(
-                channel=Channel.EMAIL, raw_message_id=uuid4(), received_at=datetime.now(UTC)
+                channel=Channel.EMAIL, raw_message_id=raw_message_id, received_at=datetime.now(UTC)
             ),
         )
-        session_factory = app.state.session_factory
 
         async with session_factory() as session:
             first = await record_captured_transaction(session, bus, SystemClock(), cmd)

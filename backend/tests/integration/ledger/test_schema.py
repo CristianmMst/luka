@@ -11,6 +11,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from support.raw_messages import insert_raw_message
 
 from finanzia.modules.ledger.domain.system_categories import (
     SIN_CATEGORIA_ID,
@@ -339,7 +340,7 @@ async def test_dos_transaction_sources_mismo_raw_message_id_lanza_integrity_erro
         )
         await session.commit()
 
-    raw_message_id = uuid4()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
     async with session_factory() as session:
         await session.execute(
             text(
@@ -414,3 +415,226 @@ async def test_catalogo_de_indices_de_transactions(
     assert "uq_transactions_user_id_dedupe_key" in indices
     assert "UNIQUE" in indices["uq_transactions_user_id_dedupe_key"]
     assert "ix_transactions_user_id_occurred_at_id" in indices
+
+
+async def test_transaction_sources_raw_message_id_inexistente_lanza_integrity_error(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        user_id = await _insert_user(session, sub="sub-fk-raw", email="fk-raw@example.com")
+        transaction_id = await _insert_transaction(
+            session, user_id=user_id, dedupe_key="dedupe-fk-raw"
+        )
+        await session.commit()
+
+    with pytest.raises(IntegrityError):
+        async with session_factory() as session:
+            await session.execute(
+                text(
+                    "INSERT INTO transaction_sources "
+                    "(transaction_id, raw_message_id, channel, received_at) "
+                    "VALUES (:transaction_id, :raw_message_id, 'email', now())"
+                ),
+                {"transaction_id": transaction_id, "raw_message_id": uuid4()},
+            )
+            await session.commit()
+
+
+async def test_borrar_raw_message_pone_null_en_transaction_sources_y_sobrevive_la_fuente(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        user_id = await _insert_user(
+            session, sub="sub-raw-set-null", email="raw-set-null@example.com"
+        )
+        transaction_id = await _insert_transaction(
+            session, user_id=user_id, dedupe_key="dedupe-raw-set-null"
+        )
+        await session.commit()
+
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
+    async with session_factory() as session:
+        source_id = (
+            await session.execute(
+                text(
+                    "INSERT INTO transaction_sources "
+                    "(transaction_id, raw_message_id, channel, received_at) "
+                    "VALUES (:transaction_id, :raw_message_id, 'email', now()) RETURNING id"
+                ),
+                {"transaction_id": transaction_id, "raw_message_id": raw_message_id},
+            )
+        ).scalar_one()
+        await session.commit()
+
+    async with session_factory() as session:
+        await session.execute(
+            text("DELETE FROM raw_messages WHERE id = :id"), {"id": raw_message_id}
+        )
+        await session.commit()
+
+    async with session_factory() as session:
+        fila = (
+            await session.execute(
+                text("SELECT raw_message_id FROM transaction_sources WHERE id = :id"),
+                {"id": source_id},
+            )
+        ).one()
+
+    assert fila.raw_message_id is None
+
+
+async def test_review_queue_resolution_sin_resolved_at_lanza_integrity_error(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        user_id = await _insert_user(
+            session, sub="sub-review-consist", email="review-consist@example.com"
+        )
+        await session.commit()
+
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
+
+    with pytest.raises(IntegrityError):
+        async with session_factory() as session:
+            await session.execute(
+                text(
+                    "INSERT INTO review_queue "
+                    "(raw_message_id, user_id, reason, resolution) "
+                    "VALUES (:raw_message_id, :user_id, 'no_template', 'converted')"
+                ),
+                {"raw_message_id": raw_message_id, "user_id": user_id},
+            )
+            await session.commit()
+
+
+async def test_review_queue_reason_invalido_lanza_integrity_error(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        user_id = await _insert_user(
+            session, sub="sub-review-reason", email="review-reason@example.com"
+        )
+        await session.commit()
+
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
+
+    with pytest.raises(IntegrityError):
+        async with session_factory() as session:
+            await session.execute(
+                text(
+                    "INSERT INTO review_queue (raw_message_id, user_id, reason) "
+                    "VALUES (:raw_message_id, :user_id, 'razon_inexistente')"
+                ),
+                {"raw_message_id": raw_message_id, "user_id": user_id},
+            )
+            await session.commit()
+
+
+async def test_borrar_usuario_encascada_raw_messages_y_review_queue(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        user_id = await _insert_user(
+            session, sub="sub-cascada-review", email="cascada-review@example.com"
+        )
+        await session.commit()
+
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
+    async with session_factory() as session:
+        await session.execute(
+            text(
+                "INSERT INTO review_queue (raw_message_id, user_id, reason) "
+                "VALUES (:raw_message_id, :user_id, 'no_template')"
+            ),
+            {"raw_message_id": raw_message_id, "user_id": user_id},
+        )
+        await session.commit()
+
+    async with session_factory() as session:
+        await session.execute(text("DELETE FROM users WHERE id = :id"), {"id": user_id})
+        await session.commit()
+
+    async with session_factory() as session:
+        mensajes = (
+            await session.execute(
+                text("SELECT count(*) FROM raw_messages WHERE user_id = :id"), {"id": user_id}
+            )
+        ).scalar_one()
+        cola = (
+            await session.execute(
+                text("SELECT count(*) FROM review_queue WHERE user_id = :id"), {"id": user_id}
+            )
+        ).scalar_one()
+
+    assert (mensajes, cola) == (0, 0)
+
+
+async def test_catalogo_de_constraints_e_indices_de_raw_messages_y_review_queue(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    async with session_factory() as session:
+        constraints_transaction_sources = (
+            await session.execute(
+                text(
+                    "SELECT conname FROM pg_constraint "
+                    "WHERE conrelid = 'transaction_sources'::regclass"
+                )
+            )
+        ).scalars()
+        constraints_review_queue = (
+            await session.execute(
+                text("SELECT conname FROM pg_constraint WHERE conrelid = 'review_queue'::regclass")
+            )
+        ).scalars()
+        result = await session.execute(
+            text("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'review_queue'")
+        )
+        indices_review_queue = {row.indexname: row.indexdef for row in result}
+
+    assert "fk_transaction_sources_raw_message_id_raw_messages" in set(
+        constraints_transaction_sources
+    )
+    assert {"pk_review_queue", "ck_review_queue_resolucion_consistente"} <= set(
+        constraints_review_queue
+    )
+    assert "ix_review_queue_user_id_created_at_raw_message_id" in indices_review_queue
+    assert (
+        "WHERE (resolved_at IS NULL)"
+        in indices_review_queue["ix_review_queue_user_id_created_at_raw_message_id"]
+    )
+
+
+async def test_db_clean_setup_inserta_una_fila_en_review_queue(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Precondicion del siguiente test: `db_clean` debe dejar `review_queue` vacia."""
+    async with session_factory() as session:
+        user_id = await _insert_user(
+            session, sub="sub-db-clean-review", email="db-clean-review@example.com"
+        )
+        await session.commit()
+
+    raw_message_id = await insert_raw_message(session_factory, user_id=user_id)
+    async with session_factory() as session:
+        await session.execute(
+            text(
+                "INSERT INTO review_queue (raw_message_id, user_id, reason) "
+                "VALUES (:raw_message_id, :user_id, 'no_template')"
+            ),
+            {"raw_message_id": raw_message_id, "user_id": user_id},
+        )
+        await session.commit()
+
+        cantidad = (await session.execute(text("SELECT count(*) FROM review_queue"))).scalar_one()
+
+    assert cantidad == 1
+
+
+async def test_db_clean_dejo_review_queue_vacia(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """`_tablas_y_redis_limpias` (autouse) corrio antes de este test (Task 1/F2.1)."""
+    async with session_factory() as session:
+        cantidad = (await session.execute(text("SELECT count(*) FROM review_queue"))).scalar_one()
+
+    assert cantidad == 0

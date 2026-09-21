@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
+from support.raw_messages import insert_raw_message
 
 from finanzia.modules.ledger.application.dto import Filters
 from finanzia.modules.ledger.domain.entities import LinkedAccount, Transaction, TransactionSource
@@ -107,7 +108,7 @@ async def test_attach_idempotente_para_mismo_raw_message_id(
         await SqlAlchemyTransactionRepository(session).insert_if_absent(tx)
         await session.commit()
 
-    raw_message_id = uuid4()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
     source = TransactionSource(
         id=uuid4(),
         transaction_id=tx.id,

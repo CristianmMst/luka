@@ -34,6 +34,11 @@ _FISCAL_TAG_VALUES = (
     "'ingreso_pension','deducible_salud','deducible_vivienda','aporte_pension_voluntaria',"
     "'aporte_afc','aporte_obligatorio','donacion','no_deducible','transferencia'"
 )
+_REASON_VALUES = (
+    "'no_template','llm_disabled','llm_budget_exceeded','llm_invalid_json',"
+    "'llm_invalid_output','llm_low_confidence','llm_error','body_purged'"
+)
+_RESOLUTION_VALUES = "'converted','discarded'"
 
 
 class CategoryRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -148,8 +153,11 @@ class TransactionSourceRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     transaction_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False
     )
-    # Sin FK a `raw_messages` todavia: esa tabla llega en F2.1 (ingestion).
-    raw_message_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    # `SET NULL` (no CASCADE): la evidencia sobrevive al borrado del mensaje crudo;
+    # el job de purga (F3.7) solo anula `raw_messages.body` (spec 004 SS2.6).
+    raw_message_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("raw_messages.id", ondelete="SET NULL"), nullable=True
+    )
     channel: Mapped[str] = mapped_column(Text, nullable=False)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -167,3 +175,44 @@ class MerchantRuleRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     category_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("categories.id", ondelete="CASCADE"), nullable=False
     )
+
+
+class ReviewQueueRow(Base, TimestampMixin):
+    """Tabla `review_queue`: mensajes crudos que requieren revision manual (spec 004
+    SS2.10, F2.1). Duena: ledger (ver ruling D1); `user_id` va denormalizado para
+    filtrar por usuario sin join cross-modulo hacia `raw_messages` (ingestion).
+    """
+
+    __tablename__ = "review_queue"
+    __table_args__ = (
+        CheckConstraint(f"reason IN ({_REASON_VALUES})", name="reason_valido"),
+        CheckConstraint(
+            f"resolution IS NULL OR resolution IN ({_RESOLUTION_VALUES})",
+            name="resolution_valida",
+        ),
+        CheckConstraint(
+            "(resolved_at IS NULL) = (resolution IS NULL)", name="resolucion_consistente"
+        ),
+        # Cola de pendientes por usuario, mas recientes primero; `resolved_at IS NULL`
+        # la mantiene pequena (indice parcial) frente al historial ya resuelto.
+        Index(
+            "ix_review_queue_user_id_created_at_raw_message_id",
+            "user_id",
+            desc("created_at"),
+            desc("raw_message_id"),
+            postgresql_where=text("resolved_at IS NULL"),
+        ),
+    )
+
+    raw_message_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("raw_messages.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    partial_extract: Mapped[dict[str, object]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'")
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolution: Mapped[str | None] = mapped_column(Text, nullable=True)

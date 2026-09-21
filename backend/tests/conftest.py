@@ -47,6 +47,7 @@ def settings() -> Settings:
         # en los tests de rate limiting propios (`test_rate_limit_api.py`).
         rate_limit_auth_per_minute=100_000,
         rate_limit_user_per_minute=1_000_000,
+        rate_limit_ingest_per_minute=100_000,
     )
 
 
@@ -118,17 +119,21 @@ async def redis_clean(settings: Settings) -> AsyncGenerator[None, None]:
 async def db_clean(session_factory: async_sessionmaker[AsyncSession]) -> None:
     """Vacia las tablas de usuario antes de cada test (no autouse global).
 
-    Orden: hijos del ledger antes que sus padres, y `refresh_tokens`/`users` al
-    final (spec 004 SS2.1-2.9, Task 9/F1.5). `categories` nunca se trunca
-    completa: solo se borran las categorias de usuario (`user_id IS NOT NULL`)
-    para preservar el seed de las 24 categorias del sistema.
+    Orden: hijos del ledger antes que sus padres, `raw_messages` (ingestion)
+    antes que `users` (spec 004 SS2.1-2.10, Task 9/F1.5, F2.1). `review_queue`
+    referencia `raw_messages` por PK/FK CASCADE, pero se borra explicito primero
+    por claridad. `categories` nunca se trunca completa: solo se borran las
+    categorias de usuario (`user_id IS NOT NULL`) para preservar el seed de las
+    24 categorias del sistema.
     """
     async with session_factory() as session:
+        await session.execute(text("DELETE FROM review_queue"))
         await session.execute(text("DELETE FROM merchant_rules"))
         await session.execute(text("DELETE FROM transaction_sources"))
         await session.execute(text("DELETE FROM transactions"))
         await session.execute(text("DELETE FROM linked_accounts"))
         await session.execute(text("DELETE FROM categories WHERE user_id IS NOT NULL"))
+        await session.execute(text("DELETE FROM raw_messages"))
         await session.execute(text("DELETE FROM refresh_tokens"))
         await session.execute(text("DELETE FROM users"))
         await session.commit()

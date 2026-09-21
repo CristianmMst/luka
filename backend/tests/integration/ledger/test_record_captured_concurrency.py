@@ -10,13 +10,14 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 import redis.asyncio as redis_asyncio
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
+from support.raw_messages import insert_raw_message
 
 from finanzia.events_registry import build_registry
 from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
@@ -104,7 +105,8 @@ async def test_dos_sesiones_concurrentes_mismo_comando_generan_una_transaccion_y
     bus = RedisStreamsEventBus(redis_client, build_registry())
     clock = SystemClock()
     occurred_at = datetime(2026, 2, 1, 12, 0, tzinfo=UTC)
-    cmd = _cmd(user_id=user.id, raw_message_id=uuid4(), occurred_at=occurred_at)
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
+    cmd = _cmd(user_id=user.id, raw_message_id=raw_message_id, occurred_at=occurred_at)
 
     async def _run() -> Recorded:
         async with session_factory() as session:
@@ -134,12 +136,21 @@ async def test_email_y_notificacion_concurrentes_generan_una_transaccion_y_dos_f
     clock = SystemClock()
     occurred_at = datetime(2026, 2, 1, 12, 0, tzinfo=UTC)
 
+    email_raw_message_id = await insert_raw_message(
+        session_factory, user_id=user.id, channel="email", external_id="email-concurrente"
+    )
+    notification_raw_message_id = await insert_raw_message(
+        session_factory, user_id=user.id, channel="notification", external_id="notif-concurrente"
+    )
     email_cmd = _cmd(
-        user_id=user.id, raw_message_id=uuid4(), occurred_at=occurred_at, channel=Channel.EMAIL
+        user_id=user.id,
+        raw_message_id=email_raw_message_id,
+        occurred_at=occurred_at,
+        channel=Channel.EMAIL,
     )
     notification_cmd = _cmd(
         user_id=user.id,
-        raw_message_id=uuid4(),
+        raw_message_id=notification_raw_message_id,
         occurred_at=occurred_at + timedelta(seconds=40),
         channel=Channel.NOTIFICATION,
     )
