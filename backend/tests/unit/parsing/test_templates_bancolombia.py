@@ -1,7 +1,14 @@
 """Tests unitarios del motor de plantillas contra los fixtures reales de
-Bancolombia (spec 006 §4.1, F2.3). El contenido de `BANCOLOMBIA_CONFIG` debe
-coincidir con `parsing/config/templates/bancolombia.yaml` (verificado tambien
-por `test_config_loader.py`, que carga el YAML real).
+Bancolombia (spec 006 §4.1, F2.3).
+
+La extraccion (`TestTemplateRegistryBancolombia`) corre contra el
+`TemplateRegistry` **realmente cargado** desde
+`parsing/config/templates/bancolombia.yaml` (via `load_parsing_config()`), no
+contra una copia literal del YAML: asi un cambio de regex en el archivo que
+rompa un fixture se detecta aqui (regla de oro, spec 006 §4.1). Los tests de
+config invalida (`TestTemplateRegistryConfigErrors`) si usan dicts literales
+a proposito: ejercitan validaciones de `TemplateRegistry.from_dicts` que no
+tienen forma de disparar con el YAML real (ya valido por definicion).
 """
 
 from datetime import timedelta
@@ -13,46 +20,7 @@ from support.email_fixtures import bancolombia_fixtures
 from finanzia.modules.parsing.domain.errors import TemplateConfigError, TemplateExtractionInvalid
 from finanzia.modules.parsing.domain.excerpt import extract_excerpt
 from finanzia.modules.parsing.domain.templates import TemplateRegistry
-
-BANCOLOMBIA_CONFIG = {
-    "bank": "bancolombia",
-    "version": 1,
-    "relevant_line_prefix": "Bancolombia:",
-    "templates": [
-        {
-            "id": "compra_tdeb",
-            "direction": "debit",
-            "pattern": (
-                r"Bancolombia: Compraste \$(?P<amount>[\d.,]+) en (?P<merchant>.+?) "
-                r"con tu T\.Deb \*(?P<last4>\d{4}), el (?P<date>\d{2}/\d{2}/\d{4}) "
-                r"a las (?P<time>\d{2}:\d{2})"
-            ),
-            "date_format": "%d/%m/%Y",
-        },
-        {
-            "id": "transferencia_llave",
-            "direction": "debit",
-            "pattern": (
-                r"Bancolombia: (?:(?P<holder>[^,]{1,80}), )?transferiste "
-                r"\$(?P<amount>[\d.,]+) a la llave (?P<key>\S+) desde tu cuenta "
-                r"\*(?P<last4>\d{4}) a (?P<merchant>.+?) el (?P<date>\d{2}/\d{2}/\d{2}) "
-                r"a las (?P<time>\d{2}:\d{2})"
-            ),
-            "date_format": "%d/%m/%y",
-        },
-        {
-            "id": "nomina",
-            "direction": "credit",
-            "pattern": (
-                r"Bancolombia: Recibiste un pago de Nomina de (?P<merchant>.+?) "
-                r"por \$(?P<amount>[\d.,]+) en tu cuenta de (?P<account_kind>Ahorros|Corriente) "
-                r"el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})"
-            ),
-            "date_format": "%d/%m/%Y",
-            "suggested_category": "nomina",
-        },
-    ],
-}
+from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
 
 TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb.txt": "compra_tdeb",
@@ -64,7 +32,8 @@ TEMPLATE_ID_BY_FIXTURE = {
 
 @pytest.fixture
 def registry() -> TemplateRegistry:
-    return TemplateRegistry.from_dicts([BANCOLOMBIA_CONFIG])
+    """El `TemplateRegistry` real, cargado desde el YAML empaquetado."""
+    return load_parsing_config().templates
 
 
 @pytest.mark.unit
@@ -111,6 +80,38 @@ class TestTemplateRegistryBancolombia:
         far_received_at = fixture.received_at + timedelta(days=30)
         with pytest.raises(TemplateExtractionInvalid):
             match.to_parsed(far_received_at)
+
+    def test_bank_config_y_known_banks(self, registry: TemplateRegistry) -> None:
+        assert registry.known_banks() == frozenset({"bancolombia"})
+        bank_config = registry.bank_config("bancolombia")
+        assert bank_config is not None
+        assert bank_config.version == 1
+        assert len(bank_config.templates) == 3
+        assert registry.bank_config("nequi") is None
+
+    def test_config_real_tiene_exactamente_las_3_plantillas_esperadas(
+        self, registry: TemplateRegistry
+    ) -> None:
+        """Guarda que `templates/bancolombia.yaml` siga declarando los 3 template
+        ids esperados en version 1 (si alguien borra/renombra uno, este test lo
+        detecta sin depender de que un fixture tambien deje de matchear).
+        """
+        bank_config = registry.bank_config("bancolombia")
+        assert bank_config is not None
+        assert bank_config.version == 1
+        assert {t.id for t in bank_config.templates} == {
+            "compra_tdeb",
+            "transferencia_llave",
+            "nomina",
+        }
+
+
+@pytest.mark.unit
+class TestTemplateRegistryConfigErrors:
+    """Validaciones de `TemplateRegistry.from_dicts` que no se pueden disparar
+    con el YAML real (que ya es valido por definicion): usan dicts literales
+    a proposito.
+    """
 
     def test_regex_invalida_en_config_lanza_template_config_error(self) -> None:
         bad_config = {
@@ -174,11 +175,3 @@ class TestTemplateRegistryBancolombia:
     def test_config_sin_campo_obligatorio_de_banco_lanza_template_config_error(self) -> None:
         with pytest.raises(TemplateConfigError):
             TemplateRegistry.from_dicts([{"bank": "bancolombia", "version": 1}])
-
-    def test_bank_config_y_known_banks(self, registry: TemplateRegistry) -> None:
-        assert registry.known_banks() == frozenset({"bancolombia"})
-        bank_config = registry.bank_config("bancolombia")
-        assert bank_config is not None
-        assert bank_config.version == 1
-        assert len(bank_config.templates) == 3
-        assert registry.bank_config("nequi") is None

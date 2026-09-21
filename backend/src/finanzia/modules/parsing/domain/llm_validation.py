@@ -53,7 +53,12 @@ def _partial_extract(x: LlmExtraction) -> dict[str, str]:
         value = getattr(x, field.name)
         if value is None:
             continue
-        partial[field.name] = value.value if isinstance(value, Direction) else str(value)
+        if isinstance(value, Direction):
+            partial[field.name] = value.value
+        elif isinstance(value, datetime):
+            partial[field.name] = value.isoformat()
+        else:
+            partial[field.name] = str(value)
     return partial
 
 

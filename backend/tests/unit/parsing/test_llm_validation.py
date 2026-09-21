@@ -135,6 +135,18 @@ class TestValidateExtraction:
         assert result.partial["bank"] == "bancolombia"
         assert result.partial["direction"] == "debit"
 
+    def test_partial_extract_serializa_datetime_con_isoformat(self) -> None:
+        occurred_at = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
+        result = validate_extraction(
+            _valid_extraction(is_transaction=False, occurred_at=occurred_at),
+            RECEIVED_AT,
+            KNOWN_BANKS,
+            THRESHOLD,
+        )
+        assert isinstance(result, Rejected)
+        assert result.partial["occurred_at"] == occurred_at.isoformat()
+        assert result.partial["occurred_at"] == "2026-08-05T14:30:00+00:00"
+
 
 @pytest.mark.unit
 class TestValidateExtractionNuFixture:

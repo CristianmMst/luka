@@ -48,6 +48,33 @@ class TestExtractExcerptFallback:
         body = "Compraste $10.000 en TIENDA\nLlamanos al 6045109095 o al 018 000 931 987"
         excerpt = extract_excerpt(body, None)
         assert "6045109095" not in excerpt
+        assert "018 000 931 987" not in excerpt
+
+    def test_fallback_descarta_telefono_punteado(self) -> None:
+        body = "Compraste $10.000 en TIENDA\nLlamanos al 604.510.9095"
+        excerpt = extract_excerpt(body, None)
+        assert "604.510.9095" not in excerpt
+        assert "Compraste $10.000 en TIENDA" in excerpt
+
+    def test_fallback_descarta_telefono_gratuito_espaciado(self) -> None:
+        body = "Compraste $10.000 en TIENDA\nComunicate gratis al 018 000 931 987"
+        excerpt = extract_excerpt(body, None)
+        assert "018 000 931 987" not in excerpt
+        assert "Compraste $10.000 en TIENDA" in excerpt
+
+    def test_fallback_conserva_fechas_y_montos_junto_a_telefonos(self) -> None:
+        body = (
+            "Compraste $53.900,00 en OXXO CALLE 59 con tu T.Deb *1234, "
+            "el 01/05/2026 a las 16:00\n"
+            "Llamanos al 604.510.9095 o al 018 000 931 987\n"
+            "Otra transferencia el 01/05/26 a las 16:28"
+        )
+        excerpt = extract_excerpt(body, None)
+        assert "$53.900,00" in excerpt
+        assert "01/05/2026" in excerpt
+        assert "01/05/26" in excerpt
+        assert "604.510.9095" not in excerpt
+        assert "018 000 931 987" not in excerpt
 
     def test_fallback_descarta_lineas_vacias(self) -> None:
         body = "Compraste $10.000 en TIENDA\n\n\nGracias"
@@ -68,6 +95,8 @@ class TestLooksMonetary:
             "Compraste $10.000 en TIENDA",
             "COP 45.900",
             "el monto es 1.234.567 pesos",
+            "Compraste $53.900,00",
+            "pago de 1.234.567 pesos",
         ],
     )
     def test_positivos(self, text: str) -> None:
@@ -79,6 +108,7 @@ class TestLooksMonetary:
             "Hola, como estas",
             "Visita www.bancolombia.com",
             "Tu clave es 12345",
+            "Llamanos al 604.510.9095",
         ],
     )
     def test_negativos(self, text: str) -> None:
