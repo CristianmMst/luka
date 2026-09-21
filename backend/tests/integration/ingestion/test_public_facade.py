@@ -69,11 +69,19 @@ async def test_ingesta_de_compra_tdeb_bancolombia_inserta_fila_pending_y_publica
     )
 
     try:
-        async with session_factory() as session:
-            outcome = await public.ingest_raw_message(session, bus, clock, input_)
+        with structlog.testing.capture_logs() as captured:
+            async with session_factory() as session:
+                outcome = await public.ingest_raw_message(session, bus, clock, input_)
 
         assert isinstance(outcome, Accepted)
+        assert outcome.bank == "bancolombia"
         assert await _row_count(session_factory, user.id) == 1
+
+        metric_logs = [entry for entry in captured if entry.get("event") == "parsing_metric"]
+        assert len(metric_logs) == 1
+        assert metric_logs[0]["outcome"] == "accepted"
+        assert metric_logs[0]["channel"] == "email"
+        assert metric_logs[0]["bank"] == "bancolombia"
 
         async with session_factory() as session:
             view = await public.get_raw_message_for_parsing(session, outcome.raw_message_id)

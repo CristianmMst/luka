@@ -65,6 +65,10 @@ class IngestRawMessage:
         self._body_max_bytes = body_max_bytes
 
     async def execute(self, input: RawMessageInput) -> IngestOutcome:
+        # El formato de `external_id` se valida antes del filtro de aceptacion a
+        # proposito: un `external_id` malformado es un bug del cliente y debe
+        # surgir como 400 (InvalidExternalId) sin importar si el remitente/paquete
+        # esta soportado o no; en ambos casos, de todas formas, nada se persiste.
         validate_external_id(input.channel, input.external_id)
 
         bank: str | None
@@ -103,7 +107,7 @@ class IngestRawMessage:
 
         await self._uow.commit()
         await self._publish_received(msg.id, msg.user_id, msg.channel, msg.bank, msg.received_at)
-        return Accepted(msg.id)
+        return Accepted(msg.id, bank=msg.bank)
 
     async def _handle_duplicate(self, input: RawMessageInput) -> IngestOutcome:
         existing = await self._repo.get_by_external_id(
@@ -120,8 +124,8 @@ class IngestRawMessage:
             await self._publish_received(
                 existing.id, existing.user_id, existing.channel, existing.bank, existing.received_at
             )
-            return Duplicate(existing.id, republished=True)
-        return Duplicate(existing.id, republished=False)
+            return Duplicate(existing.id, republished=True, bank=existing.bank)
+        return Duplicate(existing.id, republished=False, bank=existing.bank)
 
     async def _publish_received(
         self,

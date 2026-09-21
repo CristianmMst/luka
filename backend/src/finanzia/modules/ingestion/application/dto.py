@@ -41,9 +41,15 @@ class NotificationItemInput:
 
 @dataclass(frozen=True, slots=True)
 class Accepted:
-    """El mensaje se persistio como `pending` y se publico `RawMessageReceived`."""
+    """El mensaje se persistio como `pending` y se publico `RawMessageReceived`.
+
+    `bank` es el banco resuelto por el filtro de remitente/paquete al ingerir; se
+    expone aqui (ademas de en la fila) para que `infrastructure` pueda emitir
+    metricas `parsing_metric` por banco/canal (spec 006 §6) sin una SELECT extra.
+    """
 
     raw_message_id: UUID
+    bank: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,11 +57,13 @@ class Duplicate:
     """`(user_id, channel, external_id)` ya existia (idempotencia de ingesta, AC-5.2).
 
     `republished=True` cuando la fila existente seguia `pending` y se volvio a
-    publicar `RawMessageReceived` (D9, mitiga la falta de outbox).
+    publicar `RawMessageReceived` (D9, mitiga la falta de outbox). `bank` es el de
+    la fila ya existente (spec 006 §6, metricas por banco/canal).
     """
 
     raw_message_id: UUID
     republished: bool
+    bank: str | None
 
 
 @dataclass(frozen=True, slots=True)

@@ -94,6 +94,7 @@ async def test_email_aceptado_inserta_fila_pending_con_purge_after_90d_y_evento_
     outcome = await use_case.execute(input_)
 
     assert isinstance(outcome, Accepted)
+    assert outcome.bank == "bancolombia"
     stored = repo.by_id[outcome.raw_message_id]
     assert stored.status == RawMessageStatus.PENDING
     assert stored.bank == "bancolombia"
@@ -135,7 +136,9 @@ async def test_duplicado_con_fila_pending_republica_el_evento() -> None:
     second = await use_case.execute(input_)
 
     assert isinstance(first, Accepted)
-    assert second == Duplicate(first.raw_message_id, republished=True)
+    assert second == Duplicate(first.raw_message_id, republished=True, bank="bancolombia")
+    assert isinstance(second, Duplicate)
+    assert second.bank == first.bank == "bancolombia"
     assert len(events.events) == 2
 
 
@@ -152,7 +155,7 @@ async def test_duplicado_con_fila_parsed_no_republica_el_evento() -> None:
 
     second = await use_case.execute(input_)
 
-    assert second == Duplicate(first.raw_message_id, republished=False)
+    assert second == Duplicate(first.raw_message_id, republished=False, bank="bancolombia")
     assert events.events == []
 
 
@@ -225,6 +228,7 @@ async def test_sms_de_app_de_mensajes_con_titulo_de_banco_se_acepta_con_banco() 
     outcome = await use_case.execute(input_)
 
     assert isinstance(outcome, Accepted)
+    assert outcome.bank == "bancolombia"
     stored = repo.by_id[outcome.raw_message_id]
     assert stored.bank == "bancolombia"
     assert stored.body == "Bancolombia\n\nCompraste $100"
