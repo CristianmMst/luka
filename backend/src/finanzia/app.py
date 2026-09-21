@@ -18,6 +18,13 @@ from finanzia.modules.identity.infrastructure.google_verifier import (
     FakeGoogleIdTokenVerifier,
     GoogleAuthIdTokenVerifier,
 )
+from finanzia.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
+from finanzia.modules.ingestion.infrastructure.api.router_config import (
+    router as ingestion_config_router,
+)
+from finanzia.modules.ingestion.infrastructure.api.router_ingest import (
+    router as ingestion_ingest_router,
+)
 from finanzia.modules.ledger.infrastructure.api.errors import LEDGER_EXCEPTION_MAP
 from finanzia.modules.ledger.infrastructure.api.router_accounts import (
     router as ledger_accounts_router,
@@ -55,9 +62,17 @@ _REDIS_SOCKET_TIMEOUT_S = 5.0
 
 
 def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
-    """Reglas por defecto (spec 009 SS4, F1.4): `/auth/*` por IP y global por usuario."""
+    """Reglas por defecto (spec 009 SS4, F1.4): `/auth/*` por IP y global por usuario.
+
+    `ingest_user` (spec 009 §4, Task 5/F4.3) va ANTES de la regla global: el orden
+    importa porque `RateLimitMiddleware` evalua todas las reglas que matcheen el
+    path y el primer rechazo responde 429. Un `POST /v1/ingest/notifications`
+    matchea ambas reglas (`/v1/ingest/` y `/v1/`) y consume cupo de las DOS, no
+    solo de la mas especifica.
+    """
     return [
         Rule("/v1/auth/", "ip", settings.rate_limit_auth_per_minute, 60, "auth_ip"),
+        Rule("/v1/ingest/", "user", settings.rate_limit_ingest_per_minute, 60, "ingest_user"),
         Rule("/v1/", "user", settings.rate_limit_user_per_minute, 60, "user_global"),
     ]
 
@@ -148,11 +163,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware, is_prod=resolved_settings.env == "prod")
     app.add_middleware(RequestIdMiddleware)
 
-    install_error_handlers(app, [IDENTITY_EXCEPTION_MAP, LEDGER_EXCEPTION_MAP])
+    install_error_handlers(
+        app, [IDENTITY_EXCEPTION_MAP, LEDGER_EXCEPTION_MAP, INGESTION_EXCEPTION_MAP]
+    )
 
     app.include_router(health_router)
     app.include_router(identity_router, prefix="/v1")
     app.include_router(ledger_transactions_router, prefix="/v1")
     app.include_router(ledger_categories_router, prefix="/v1")
     app.include_router(ledger_accounts_router, prefix="/v1")
+    app.include_router(ingestion_ingest_router, prefix="/v1")
+    app.include_router(ingestion_config_router, prefix="/v1")
     return app

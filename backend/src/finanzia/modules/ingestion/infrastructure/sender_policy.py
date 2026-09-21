@@ -7,6 +7,8 @@ de parsing.
 
 from __future__ import annotations
 
+from typing import Any
+
 from finanzia.modules.ingestion.application.dto import BankDecision
 from finanzia.modules.parsing import public as parsing_public
 
@@ -20,6 +22,10 @@ class ParsingSenderPolicy:
     def bank_for_notification(self, package: str, channel: str, title: str | None) -> BankDecision:
         decision = parsing_public.bank_for_notification(package, channel, title)
         return BankDecision(accepted=decision.accepted, bank=decision.bank)
+
+    def capture_config(self) -> dict[str, Any]:
+        """Config cruda de captura (`GET /v1/config/capture`, spec 006 §3.1, D6)."""
+        return parsing_public.capture_config()
 
 
 __all__ = ["ParsingSenderPolicy"]

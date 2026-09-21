@@ -28,7 +28,12 @@ class SecurityHeadersMiddleware:
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
                 headers.append((b"x-content-type-options", b"nosniff"))
-                headers.append((b"cache-control", b"no-store"))
+                # `no-store` es el default, pero una ruta puede fijar su propio
+                # `Cache-Control` de antemano (p. ej. `GET /v1/config/capture`,
+                # controller ruling 3): si ya hay uno, no se agrega un segundo
+                # valor duplicado para la misma cabecera.
+                if not any(name.lower() == b"cache-control" for name, _ in headers):
+                    headers.append((b"cache-control", b"no-store"))
                 headers.append((b"referrer-policy", b"no-referrer"))
                 if self._is_prod:
                     headers.append((b"strict-transport-security", _HSTS_VALUE))

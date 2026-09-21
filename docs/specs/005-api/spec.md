@@ -72,8 +72,25 @@
 }
 ```
 
-- Respuesta: `{ "accepted": 3, "duplicates": 1 }`.
-- Rate limit específico (spec 009). El dispositivo solo envía notificaciones de paquetes de la lista soportada (AC-3.3); el servidor re-valida contra la misma lista.
+- Respuesta (enmendado, Task 5/F4.3): `{ "accepted": 2, "duplicates": 0, "discarded": 1 }`. `discarded` cuenta los items cuyo paquete/remitente no está en la lista soportada tras la re-validación server-side (AC-3.3); esos items nunca se persisten.
+- Límites (spec 009 §4): 1–50 items por batch; `text` ≤ 64 KB; `title` ≤ 500 caracteres; `client_hash` = sha256 hex en minúsculas, usado como `external_id` de la idempotencia por índice `UNIQUE(user_id, channel, external_id)`. `posted_at` debe incluir zona horaria (naive → 400). Cap duro de 1 MB por request (documentado en 009 §5, ruling del controlador).
+- `Idempotency-Key` es opcional pero soportado (spec 009 §1): reintentar la misma request con la misma clave replica la respuesta original (`Idempotency-Replayed: true`) sin re-ejecutar el batch. Sin ese header, el batch ya es idempotente por índice (`client_hash`), así que reintentar el mismo batch entero también es seguro.
+- Paquetes/remitentes se re-validan en el servidor (AC-3.3): un item con paquete no soportado se descarta sin persistir, aunque el cliente lo haya enviado igual (nada se loguea de su contenido, P1/P8).
+- Rate limit específico (spec 009 §4, regla `ingest_user`): 60/min por usuario, además de la regla global de usuario.
+
+`GET /config/capture` (autenticado, Task 5/F4.3) — config remota de captura para el cliente Android (spec 006 §3.1):
+
+```json
+{
+  "version": 1,
+  "banking_apps": ["com.bancolombia.app", "..."],
+  "messages_apps": ["com.google.android.apps.messaging", "..."],
+  "sms_sender_patterns": ["(?i)bancolombia", "..."],
+  "email_senders": { "bancolombia": ["alertasynotificaciones@an.notificacionesbancolombia.com", "..."] }
+}
+```
+
+- Header `Cache-Control: private, max-age=3600` (excepción documentada a `no-store`: el payload no contiene datos de usuario).
 
 ## 6. Transacciones (ledger)
 
