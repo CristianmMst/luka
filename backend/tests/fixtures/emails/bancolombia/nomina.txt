@@ -1,0 +1,24 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-06-30T16:12:05-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: credit
+  amount: "2910744.00"
+  merchant: "ACME SAS"
+  last4: null
+  occurred_at: 2026-06-30T13:38:00-05:00
+  suggested_category: nomina
+  fiscal_tag: ingreso_laboral
+---
+¡Listo!
+Todo salió bien con tus movimientos
+
+Bancolombia: Recibiste un pago de Nomina de ACME SAS por $2,910,744.00 en tu cuenta de Ahorros el 30/06/2026 a las 13:38. Si tienes dudas, llamanos al 018000931987. A tu lado siempre.
+
+Tus gastos tienen nombre. Asigna una categoría a todos tus movimientos. Ahora puedes hacerlo con Día a Día, en la app Mi Bancolombia. Gestiona tus gastos para organizarte mejor.
+
+DESCUBRIR MÁS
+
+Esto es un mensaje automático. Por favor, no contestes. Estamos para ti en nuestros canales de atención. Gracias por elegirnos.

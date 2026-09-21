@@ -1,0 +1,23 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-09-19T21:52:40-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "53900.00"
+  merchant: "OXXO CALLE 59"
+  last4: "1234"
+  occurred_at: 2026-09-19T21:52:00-05:00
+  channel_hint: T.Deb
+---
+¡Listo!
+Todo salió bien con tus movimientos
+
+Bancolombia: Compraste $53.900,00 en OXXO CALLE 59 con tu T.Deb *1234, el 19/09/2026 a las 21:52. Si tienes dudas, encuentranos aqui: 6045109095 o 018000931987. Estamos cerca.
+
+Controla tu dinero y gestiona tus gastos. Usa Día a Día en la app Bancolombia. Conoce cuánto gastas en compras todos los meses.
+
+DESCUBRIR MÁS
+
+Esto es un mensaje automático. Por favor, no contestes. Estamos para ti en nuestros canales de atención. Gracias por elegirnos.

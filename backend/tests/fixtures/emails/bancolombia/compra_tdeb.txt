@@ -1,0 +1,36 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-05-01T16:00:31-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "176824.00"
+  merchant: "CARBON Y XILVESTRE T"
+  last4: "1234"
+  occurred_at: 2026-05-01T16:00:00-05:00
+  channel_hint: T.Deb
+---
+¡Listo!
+Todo salió bien con tus movimientos
+
+Bancolombia: Compraste $176.824,00 en CARBON Y XILVESTRE T con tu T.Deb *1234, el 01/05/2026 a las 16:00. Si tienes dudas, encuentranos aqui: 6045109095 o 018000931987. Estamos cerca.
+
+Controla tu dinero y gestiona tus gastos. Usa Día a Día en la app Bancolombia. Conoce cuánto gastas en compras todos los meses.
+
+DESCUBRIR MÁS
+
+Esto es un mensaje automático. Por favor, no contestes. Estamos para ti en nuestros canales de atención. Gracias por elegirnos.
+
+Tu seguridad es nuestra prioridad:
+
+• Protege tus datos. No des información confidencial por llamadas o enlaces de correos.
+• Ingresa siempre a la Sucursal Virtual Personas. Escribe www.bancolombia.com directamente en la barra de tu navegador. Evita enlaces antiguos o usados.
+• Cuida tu usuario, clave, número de tarjeta de crédito, fecha de vencimiento y código de seguridad. No los compartas.
+• Cuando compres, no pierdas de vista tu tarjeta. Revisa que si sea la tuya. Márcala para reconocerla con facilidad.
+
+Por tu seguridad, desde Bancolombia nunca te solicitaremos tus datos personales, como usuario y clave; ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos. Ninguno de nuestros agentes te pedirá ni por escrito ni por teléfono este tipo de información. Para comprobar la autenticidad de este correo electrónico o cualquier otra comunicación que recibas de nosotros, reenvíalo a correosospechoso@bancolombia.com.co.
+
+¿Tienes dudas? Llámanos y las resolvemos.
+
+En Bogotá (601) 343 0000, Medellín (604) 510 9000, Cali (602) 554 0505, Barranquilla (605) 361 8888, Bucaramanga (607) 697 2525, Cartagena (605) 693 4400, Resto del país 018000912345. Sede principal Carrera 48 # 26-85 Torre Norte. Medellín - Colombia
