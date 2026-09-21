@@ -1,7 +1,32 @@
 """Composition root del worker arq: misma imagen Docker, proceso separado (spec 003 SS2.4).
 
-Fase 1 (F1.8): un unico observador (`ledger-observer`) que solo loguea que llego un
-`TransactionCaptured`, nunca su monto ni otros datos sensibles (spec 009 SS5, P1).
+Cablea los 4 consumers del pipeline de captura (spec 006 SS4, F2.2/F2.5/F2.6):
+`ingestion.RawMessageReceived` (grupo `parsing`) -> `parsing.TransactionParsed`
+(grupo `ledger`) / `parsing.ParseFailed` (grupo `ledger-review`) -> y el
+observador `ledger.TransactionCaptured` (grupo `ledger-observer`, F1.8: solo
+loguea que llego el evento, nunca su monto ni otros datos sensibles, spec 009
+SS5, P1). Este modulo (D7) solo ensambla: las fabricas finas de cada handler
+viven en `modules/<m>/infrastructure/consumers.py`; `finanzia.worker` no esta
+en la lista de modulos independientes de R4 (import-linter), asi que puede
+importarlas directo.
+
+`parsing`: se importa por su fachada (`finanzia.modules.parsing.public`, que
+ya reexporta `make_raw_message_received_handler`/`build_llm_parser`/etc.), NO
+por `infrastructure.consumers` directo — entrar al modulo por ahi dispara un
+import circular real en produccion (`parsing.infrastructure.consumers` ->
+`parsing.infrastructure.raw_message_gateway` -> `ingestion.public` ->
+`ingestion.infrastructure.sender_policy` -> `parsing.public` ->
+`parsing.infrastructure.consumers`, con este ultimo modulo aun a medio
+inicializar): en la suite de tests nunca se manifiesta porque algo mas
+(`finanzia.app`, u otro test) ya importo `parsing.public` primero, pero en el
+proceso del worker (arq), que no importa `finanzia.app`, es el primer punto de
+entrada al ciclo y revienta con `ImportError: cannot import name ... from
+partially initialized module` (visto en la verificacion Docker de esta tarea).
+`ledger`: `ledger.public` NO exporta `make_transaction_parsed_handler`/
+`make_parse_failed_handler` (ver su `__all__`), asi que esos dos se importan
+desde `finanzia.modules.ledger.infrastructure.consumers` directo (permitido
+para un composition root, controller ruling de esta tarea); ese modulo no
+tiene el mismo ciclo (no importa `ingestion.public`).
 """
 
 from __future__ import annotations
@@ -9,11 +34,20 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import httpx
 import redis.asyncio as redis_asyncio
+import redis.exceptions
 import structlog
 from arq.connections import RedisSettings
 
-from finanzia.events_registry import CONSUMER_GROUPS, build_registry
+from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
+from finanzia.modules.ledger.infrastructure.consumers import (
+    make_parse_failed_handler,
+    make_transaction_parsed_handler,
+)
+from finanzia.modules.parsing import public as parsing_public
+from finanzia.shared.clock import SystemClock
+from finanzia.shared.db.engine import create_engine, create_session_factory
 from finanzia.shared.events.consumer import StreamConsumer
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.logging import configure_logging
@@ -22,13 +56,29 @@ from finanzia.shared.settings import get_settings
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from finanzia.shared.events.port import EventHandler
+
 _logger = structlog.get_logger()
 
 _LEDGER_OBSERVER_EVENT_TYPE = "ledger.TransactionCaptured"
-# Nombre del grupo tomado de `CONSUMER_GROUPS` (F2.2/D10): una unica fuente de
-# verdad, compartida con `ensure_consumer_groups` en el lifespan de la API.
-_LEDGER_OBSERVER_GROUP = dict(CONSUMER_GROUPS)[_LEDGER_OBSERVER_EVENT_TYPE]
 _SUPERVISOR_RESTART_DELAY_S = 1.0
+
+# `ensure_consumer_groups` no debe poder colgar el arranque del worker para siempre
+# (mismo riesgo/mitigacion que el lifespan de la API, ver `app.py`).
+_CONSUMER_GROUPS_TIMEOUT_S = 2.0
+# `socket_connect_timeout` mismo valor que `app.py` (deferred finding Task 2): sin
+# el, un Redis que acepta la conexion TCP pero nunca responde deja al worker
+# colgado para siempre. `socket_timeout`, en cambio, NO puede copiar el de
+# `app.py` (5.0s): a diferencia de la API (sin lecturas bloqueantes), este
+# cliente lo comparte `StreamConsumer`, cuyo `XREADGROUP ... BLOCK 5000` es
+# bloqueante por diseno y ya tiene su propio limite (`_read_new`, `asyncio.
+# wait_for(..., timeout=block_ms/1000 + 1)` = 6s con el `block_ms` por defecto).
+# Un `socket_timeout` de 5.0s competiria con eso y cortaria la lectura en
+# BLOCK antes de que el propio Redis la resuelva, spameando
+# `event_consumer_backend_error` cada ciclo de poll en vacio (visto en la
+# verificacion Docker de esta tarea). 10s deja margen sobre esos 6s.
+_REDIS_CONNECT_TIMEOUT_S = 2.0
+_REDIS_SOCKET_TIMEOUT_S = 10.0
 
 
 async def ping(ctx: dict[str, Any]) -> str:
@@ -88,49 +138,109 @@ async def _supervise(
 
 
 async def on_startup(ctx: dict[str, Any]) -> None:
-    """Configura logging y arranca los consumers de eventos como tareas de fondo."""
+    """Ensambla engine/redis/bus/LLM y arranca los 4 consumers como tareas de fondo."""
     settings = get_settings()
     configure_logging(settings)
 
-    redis = redis_asyncio.from_url(str(settings.redis_url), decode_responses=False)
+    engine = create_engine(settings)
+    session_factory = create_session_factory(engine)
+    # Nombrado `redis_client` (no `redis`, controller ruling): el modulo `redis`
+    # (import de arriba, usado abajo para `redis.exceptions.RedisError`) quedaria
+    # tapado por la variable local en el resto de esta funcion (fix round 1).
+    redis_client = redis_asyncio.from_url(
+        str(settings.redis_url),
+        decode_responses=False,
+        socket_connect_timeout=_REDIS_CONNECT_TIMEOUT_S,
+        socket_timeout=_REDIS_SOCKET_TIMEOUT_S,
+    )
     registry = build_registry()
-    bus = RedisStreamsEventBus(redis, registry)
+    bus = RedisStreamsEventBus(redis_client, registry)
+    try:
+        await asyncio.wait_for(ensure_consumer_groups(bus), timeout=_CONSUMER_GROUPS_TIMEOUT_S)
+    except (redis.exceptions.RedisError, OSError, TimeoutError) as exc:
+        _logger.warning("consumer_groups_not_ensured", error_type=type(exc).__name__)
+
+    clock = SystemClock()
+    http_client = httpx.AsyncClient(timeout=settings.llm_timeout_seconds)
+    llm = parsing_public.build_llm_parser(settings, http_client)
+    budget = parsing_public.RedisLlmBudget(redis_client)
+    metrics = parsing_public.StructlogMetrics()
+    config = parsing_public.load_parsing_config()
+
+    _logger.info(
+        "worker_llm_status", enabled=llm.enabled, model=settings.deepseek_model
+    )  # nunca la api key (P1)
+    if not llm.enabled:
+        _logger.warning("llm_disabled_no_api_key")
+
+    parsing_handler = parsing_public.make_raw_message_received_handler(
+        session_factory=session_factory,
+        event_bus=bus,
+        clock=clock,
+        llm=llm,
+        budget=budget,
+        registry=config.templates,
+        metrics=metrics,
+        settings=settings,
+    )
+    ledger_transaction_handler = make_transaction_parsed_handler(
+        session_factory=session_factory, event_bus=bus, clock=clock
+    )
+    ledger_review_handler = make_parse_failed_handler(session_factory=session_factory, clock=clock)
+
+    handlers_by_event_type: dict[str, EventHandler] = {
+        "ingestion.RawMessageReceived": parsing_handler,
+        "parsing.TransactionParsed": ledger_transaction_handler,
+        "parsing.ParseFailed": ledger_review_handler,
+        _LEDGER_OBSERVER_EVENT_TYPE: log_transaction_captured,
+    }
+
     stop = asyncio.Event()
-    consumer = StreamConsumer(
-        bus,
-        redis,
-        registry,
-        group=_LEDGER_OBSERVER_GROUP,
-        event_type=_LEDGER_OBSERVER_EVENT_TYPE,
-        handler=log_transaction_captured,
-    )
-    task = asyncio.create_task(
-        _supervise(
-            lambda: consumer.run(stop),
-            stop,
-            event_type=_LEDGER_OBSERVER_EVENT_TYPE,
-            group=_LEDGER_OBSERVER_GROUP,
+    tasks: list[asyncio.Task[None]] = []
+    for event_type, group in CONSUMER_GROUPS:
+        consumer = StreamConsumer(
+            bus,
+            redis_client,
+            registry,
+            group=group,
+            event_type=event_type,
+            handler=handlers_by_event_type[event_type],
         )
-    )
+        tasks.append(
+            asyncio.create_task(
+                _supervise(lambda c=consumer: c.run(stop), stop, event_type=event_type, group=group)
+            )
+        )
 
     # Claves propias (no "redis"/"pool"): arq ya usa `ctx["redis"]` para su propio
     # pool de colas; reusar ese nombre pisaria la conexion que arq necesita.
-    ctx["events_redis"] = redis
+    ctx["events_engine"] = engine
+    ctx["events_redis"] = redis_client
+    ctx["events_http_client"] = http_client
     ctx["events_stop"] = stop
-    ctx["events_tasks"] = [task]
+    ctx["events_tasks"] = tasks
 
 
 async def on_shutdown(ctx: dict[str, Any]) -> None:
-    """Detiene los consumers, espera sus tareas y cierra la conexion de eventos."""
+    """Detiene los consumers, espera sus tareas y cierra http/engine/redis."""
     stop: asyncio.Event | None = ctx.get("events_stop")
     if stop is not None:
         stop.set()
     tasks = ctx.get("events_tasks") or []
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)
-    redis = ctx.get("events_redis")
-    if redis is not None:
-        await redis.aclose()
+
+    http_client = ctx.get("events_http_client")
+    if http_client is not None:
+        await http_client.aclose()
+
+    engine = ctx.get("events_engine")
+    if engine is not None:
+        await engine.dispose()
+
+    redis_client = ctx.get("events_redis")
+    if redis_client is not None:
+        await redis_client.aclose()
 
 
 class WorkerSettings:

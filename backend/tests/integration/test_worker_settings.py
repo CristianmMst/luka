@@ -15,8 +15,10 @@ en Linux, donde `worker.py` mantiene los defaults).
 
 import asyncio
 import signal
+from typing import Any
 
 import pytest
+import structlog.testing
 from arq import Worker, create_pool
 
 from finanzia.shared.settings import Settings, get_settings
@@ -147,3 +149,58 @@ async def test_supervise_duerme_si_run_retorna_normal_sin_stop_marcado(
     assert calls["n"] == 2
     assert stop.is_set()
     assert sleep_calls == [worker_settings_module._SUPERVISOR_RESTART_DELAY_S]
+
+
+async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabilitado(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch, redis_clean: None
+) -> None:
+    """Task 9: sin `FINANZIA_DEEPSEEK_API_KEY` (dev/test), el worker arranca los 4
+    consumers igual (`parsing`, `ledger`, `ledger-review`, `ledger-observer`, uno
+    por entrada de `CONSUMER_GROUPS`) con el LLM deshabilitado, y lo deja
+    explicito en el log de arranque (nunca la api key, P1).
+    """
+    del redis_clean
+    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    ctx: dict[str, Any] = {}
+    with structlog.testing.capture_logs() as captured:
+        await worker_settings_module.on_startup(ctx)
+    try:
+        assert len(ctx["events_tasks"]) == 4
+        assert all(isinstance(task, asyncio.Task) for task in ctx["events_tasks"])
+
+        status_logs = [e for e in captured if e.get("event") == "worker_llm_status"]
+        assert len(status_logs) == 1
+        assert status_logs[0]["enabled"] is False
+        assert "deepseek_api_key" not in status_logs[0]
+
+        assert any(e.get("event") == "llm_disabled_no_api_key" for e in captured)
+    finally:
+        await worker_settings_module.on_shutdown(ctx)
+
+
+async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_nada_colgado(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch, redis_clean: None
+) -> None:
+    """Task 9: `on_shutdown` cancela las 4 tareas supervisadas, cierra el
+    `httpx.AsyncClient` compartido y no deja tareas de fondo colgadas.
+    """
+    del redis_clean
+    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    ctx: dict[str, Any] = {}
+    await worker_settings_module.on_startup(ctx)
+
+    await worker_settings_module.on_shutdown(ctx)
+
+    assert ctx["events_http_client"].is_closed
+    assert all(task.done() for task in ctx["events_tasks"])
+
+    lingering = [
+        task
+        for task in asyncio.all_tasks()
+        if task is not asyncio.current_task() and not task.done()
+    ]
+    assert lingering == []
