@@ -1,19 +1,31 @@
 """La app cablea `RedisStreamsEventBus` en `app.state.event_bus` (spec 003 SS2.3/2.4)."""
 
+import asyncio
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+import structlog.testing
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 
+from finanzia import app as app_module
+from finanzia.app import create_app
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
 from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
 from finanzia.modules.ledger.events import TransactionCaptured
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
+from finanzia.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
+
+_LIFESPAN_WAIT_S = 10.0
+
+
+async def _run_lifespan_once(app: FastAPI) -> None:
+    async with LifespanManager(app):
+        pass
 
 
 async def test_lifespan_crea_event_bus_y_publica_en_el_stream_correcto(
@@ -63,3 +75,47 @@ async def test_ensure_consumer_groups_es_idempotente(app: FastAPI, redis_clean: 
     async with LifespanManager(app):
         await ensure_consumer_groups(app.state.event_bus)  # no debe levantar (BUSYGROUP)
         await ensure_consumer_groups(app.state.event_bus)
+
+
+async def test_lifespan_no_bloquea_con_redis_inalcanzable_y_loguea_advertencia(
+    settings: Settings,
+) -> None:
+    """Fix round 1 (finding Important): el arranque de la API sigue terminando
+    (y avisando por log) aunque Redis no responda a `ensure_consumer_groups`.
+    """
+    unreachable_settings = settings.model_copy(update={"redis_url": "redis://localhost:1/1"})
+    app = create_app(unreachable_settings)
+
+    with structlog.testing.capture_logs() as logs:
+        await asyncio.wait_for(_run_lifespan_once(app), timeout=_LIFESPAN_WAIT_S)
+
+    warnings = [entry for entry in logs if entry.get("event") == "consumer_groups_not_ensured"]
+    assert warnings
+
+
+async def test_lifespan_no_bloquea_si_ensure_group_nunca_responde(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A diferencia de un connection-refused (rapido), un Redis que acepta la
+    conexion TCP pero nunca contesta podia colgar el arranque indefinidamente
+    antes de este fix: `asyncio.wait_for` en `app.py` lo corta a los
+    `_CONSUMER_GROUPS_TIMEOUT_S` segundos. Se acorta ese timeout a 0.1s aqui
+    para no alargar la suite, y se cuelga `ensure_group` en vez de tumbar la
+    conexion, para simular ese escenario ("Redis vivo, mudo").
+    """
+    monkeypatch.setattr(app_module, "_CONSUMER_GROUPS_TIMEOUT_S", 0.1)
+
+    async def _hangs_forever(self: RedisStreamsEventBus, stream: str, group: str) -> None:
+        del self, stream, group
+        await asyncio.sleep(100)
+
+    monkeypatch.setattr(RedisStreamsEventBus, "ensure_group", _hangs_forever)
+
+    app = create_app(settings)
+
+    with structlog.testing.capture_logs() as logs:
+        await asyncio.wait_for(_run_lifespan_once(app), timeout=5.0)
+
+    warnings = [entry for entry in logs if entry.get("event") == "consumer_groups_not_ensured"]
+    assert warnings
+    assert warnings[0].get("error_type") == "TimeoutError"

@@ -1,5 +1,6 @@
 """Composition root: `create_app` ensambla la aplicacion FastAPI (spec 003 F0.4)."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -42,6 +43,16 @@ from finanzia.shared.settings import Settings, get_settings
 
 _logger = structlog.get_logger()
 
+# `ensure_consumer_groups` en el lifespan (D10) no debe poder colgar el arranque
+# de la API: un Redis que acepta la conexion TCP pero nunca responde (a
+# diferencia de un connection-refused, que ya falla rapido) dejaria la espera
+# sin cota (fix round 1, finding Important). `socket_connect_timeout`/
+# `socket_timeout` del cliente cubren el resto de usos de `redis_client`
+# (rate limiter, idempotency, bus) fuera de este `await` puntual.
+_CONSUMER_GROUPS_TIMEOUT_S = 2.0
+_REDIS_CONNECT_TIMEOUT_S = 2.0
+_REDIS_SOCKET_TIMEOUT_S = 5.0
+
 
 def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
     """Reglas por defecto (spec 009 SS4, F1.4): `/auth/*` por IP y global por usuario."""
@@ -61,7 +72,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = create_engine(resolved_settings)
         session_factory = create_session_factory(engine)
         redis_client = redis_asyncio.from_url(
-            str(resolved_settings.redis_url), decode_responses=False
+            str(resolved_settings.redis_url),
+            decode_responses=False,
+            socket_connect_timeout=_REDIS_CONNECT_TIMEOUT_S,
+            socket_timeout=_REDIS_SOCKET_TIMEOUT_S,
         )
 
         app.state.settings = resolved_settings
@@ -72,12 +86,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.event_bus = RedisStreamsEventBus(redis_client, build_registry())
         # D10: crea (idempotente) los grupos de consumidores en el arranque de la
         # API, no solo en el worker, para que un evento publicado antes del primer
-        # arranque del worker no se pierda. Fail-soft (igual que el rate limiter):
-        # un Redis caido en el arranque de la API no debe tumbarla.
+        # arranque del worker no se pierda. Fail-soft (igual que el rate limiter)
+        # Y acotado en el tiempo (fix round 1): un Redis que acepta la conexion
+        # TCP pero nunca responde no debe colgar el arranque de la API para
+        # siempre; `asyncio.wait_for` corta la espera a los `_CONSUMER_GROUPS_
+        # TIMEOUT_S` segundos.
         try:
-            await ensure_consumer_groups(app.state.event_bus)
-        except (redis.exceptions.RedisError, OSError):
-            _logger.warning("consumer_groups_not_ensured")
+            await asyncio.wait_for(
+                ensure_consumer_groups(app.state.event_bus), timeout=_CONSUMER_GROUPS_TIMEOUT_S
+            )
+        except (redis.exceptions.RedisError, OSError, TimeoutError) as exc:
+            _logger.warning("consumer_groups_not_ensured", error_type=type(exc).__name__)
         # Construido una unica vez por proceso (no por request): evita recrear la
         # sesion HTTP con cache de claves publicas de Google en cada login (review
         # final, item D). Settings ya prohibe "fake" en env="prod".
