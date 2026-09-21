@@ -2,17 +2,16 @@ from: nu@nu.com.co
 subject: Pagaste en CORREDORES DAVIVIENDA S A COMISIONISTA DE BOLSA con Cuenta Nu
 received_at: 2026-08-01T10:34:50-05:00
 expected:
-  is_transaction: true
-  bank: other
-  direction: debit
-  amount: "16285200.00"
-  merchant: "CORREDORES DAVIVIENDA S A COMISIONISTA DE BOLSA"
-  last4: null
-  occurred_at: 2026-08-01T10:34:50-05:00
-  note: >
-    Nu no esta en el alcance MVP (spec 001), asi que no tiene plantilla y el LLM generico debe
-    resolverlo. Ojo: el comercio menciona DAVIVIENDA; el filtro de remitentes no debe confundirlo
-    con un correo de Davivienda. Incluye una segunda cifra (impuesto 4xmil) que no es la compra.
+  discarded_by_sender_filter: true
+note: >
+  Nu no esta en la lista blanca de remitentes (`parsing/config/senders.yaml`, spec 006 §2.2):
+  el correo se descarta en la ingesta sin persistir el cuerpo (AC-2.4), 0 filas en
+  `raw_messages`. Ojo: el comercio menciona DAVIVIENDA; el filtro de remitentes no debe
+  confundirlo con un correo de Davivienda real (matchea por remitente, nunca por asunto/cuerpo).
+  El cuerpo de este fixture se reutiliza solo como input de un test unitario del
+  `FakeLlmParser`/`validate_extraction` (parsing/domain/llm_validation.py): verifica el mapeo
+  JSON->`ParsedTransaction` con `bank="other"` (fuera del alcance MVP) e incluye una segunda
+  cifra (impuesto 4xmil) que el LLM no debe confundir con el monto de la compra.
 ---
 Pagaste con tu Cuenta de ahorros Nu
 

@@ -1,0 +1,42 @@
+# Lista blanca de remitentes de correo por banco (spec 006 §2.2, D6).
+#
+# `verified: true` significa que el remitente/dominio fue validado contra un
+# fixture real (solo bancolombia, F2.3). Los demas bancos quedan con los
+# dominios documentados en la spec original pero sin fixture que los
+# confirme: el filtro los acepta igual (AC-2.4 solo descarta lo que no
+# matchea ningun patron), pero al no tener plantilla (F2.7, diferido) caen
+# siempre al LLM generico.
+#
+# Matching (parsing/domain/allowlist.py): exacto case-insensitive sobre la
+# direccion (sin display name), o sufijo de dominio si el patron empieza por
+# "@" (matchea el dominio exacto y subdominios, nunca un dominio "hijo" como
+# ataque de phishing: "@bancolombia.com.co" NO matchea
+# "x@bancolombia.com.co.evil.com").
+version: 1
+banks:
+  bancolombia:
+    verified: true
+    senders:
+      - alertasynotificaciones@an.notificacionesbancolombia.com
+      - "@notificacionesbancolombia.com"
+      - "@bancolombia.com.co"
+  nequi:
+    verified: false
+    senders:
+      - "@nequi.com.co"
+  davivienda:
+    verified: false
+    senders:
+      - "@davivienda.com"
+  daviplata:
+    verified: false
+    senders:
+      - "@daviplata.com"
+  bbva:
+    verified: false
+    senders:
+      - "@bbva.com.co"
+  banco_bogota:
+    verified: false
+    senders:
+      - "@bancodebogota.com.co"

@@ -1,0 +1,34 @@
+# Paquetes/apps soportados por el listener de notificaciones Android (spec 006 §3.1).
+# Se sirve tal cual (mas `email_senders`) por `GET /v1/config/capture` (ingestion, D6).
+version: 1
+banking_apps:
+  - package: com.bancolombia.app
+    bank: bancolombia
+  - package: com.nequi.MobileApp
+    bank: nequi
+  - package: com.davivienda.daviviendaapp
+    bank: davivienda
+  - package: com.daviplata.app
+    bank: daviplata
+  - package: com.bbva.bbvacolombia
+    bank: bbva
+  - package: com.bancodebogota.bancamovil
+    bank: banco_bogota
+  - package: com.google.android.apps.walletnfcrel
+    bank: null
+messages_apps:
+  - com.google.android.apps.messaging
+  - com.samsung.android.messaging
+sms_sender_patterns:
+  - pattern: "(?i)bancolombia"
+    bank: bancolombia
+  - pattern: "(?i)nequi"
+    bank: nequi
+  - pattern: "(?i)davivienda"
+    bank: davivienda
+  - pattern: "(?i)daviplata"
+    bank: daviplata
+  - pattern: "(?i)bbva"
+    bank: bbva
+  - pattern: "(?i)bancodebogota|banco de bogota"
+    bank: banco_bogota

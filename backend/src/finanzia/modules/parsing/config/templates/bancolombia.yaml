@@ -1,0 +1,20 @@
+# Plantillas de extraccion Bancolombia (spec 006 §4.1, F2.3).
+# Regla de oro: ninguna plantilla entra sin fixture real anonimizado + test
+# (backend/tests/fixtures/emails/bancolombia/*.txt).
+bank: bancolombia
+version: 1
+relevant_line_prefix: "Bancolombia:" # extracto para plantillas y LLM (RNF-5)
+templates:
+  - id: compra_tdeb # fixtures: compra_tdeb.txt, compra_tdeb_2.txt
+    direction: debit
+    pattern: 'Bancolombia: Compraste \$(?P<amount>[\d.,]+) en (?P<merchant>.+?) con tu T\.Deb \*(?P<last4>\d{4}), el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%Y"
+  - id: transferencia_llave # fixture: transferencia_llave.txt
+    direction: debit
+    pattern: 'Bancolombia: (?:(?P<holder>[^,]{1,80}), )?transferiste \$(?P<amount>[\d.,]+) a la llave (?P<key>\S+) desde tu cuenta \*(?P<last4>\d{4}) a (?P<merchant>.+?) el (?P<date>\d{2}/\d{2}/\d{2}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%y"
+  - id: nomina # fixture: nomina.txt
+    direction: credit
+    pattern: 'Bancolombia: Recibiste un pago de Nomina de (?P<merchant>.+?) por \$(?P<amount>[\d.,]+) en tu cuenta de (?P<account_kind>Ahorros|Corriente) el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%Y"
+    suggested_category: nomina

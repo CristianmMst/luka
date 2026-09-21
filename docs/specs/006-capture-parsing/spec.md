@@ -18,18 +18,30 @@
 3. Push recibido: `history.list(startHistoryId=cursor)` → solo mensajes nuevos → avanza cursor. Si el cursor es muy viejo (404 de Gmail), resync con `messages.list` de los últimos 7 días.
 
 ### 2.2 Filtro de remitentes
-Lista blanca de dominios/remitentes por banco (config versionada, `parsing/config/senders.yaml`):
+Lista blanca de dominios/remitentes por banco (config versionada, `parsing/config/senders.yaml`,
+`version: 1`, un mapa `banks:` con `verified`/`senders` por banco):
 
 ```yaml
-bancolombia:  [alertasynotificaciones@bancolombia.com.co, "@bancolombia.com.co"]
-nequi:        ["@nequi.com.co"]
-davivienda:   ["@davivienda.com"]
-daviplata:    ["@daviplata.com"]
-bbva:         ["@bbva.com.co"]
-banco_bogota: ["@bancodebogota.com.co"]
+version: 1
+banks:
+  bancolombia:  # verified: true — validado con fixture real (F2.3)
+    verified: true
+    senders: [alertasynotificaciones@an.notificacionesbancolombia.com,
+              "@notificacionesbancolombia.com", "@bancolombia.com.co"]
+  nequi:        {verified: false, senders: ["@nequi.com.co"]}
+  davivienda:   {verified: false, senders: ["@davivienda.com"]}
+  daviplata:    {verified: false, senders: ["@daviplata.com"]}
+  bbva:         {verified: false, senders: ["@bbva.com.co"]}
+  banco_bogota: {verified: false, senders: ["@bancodebogota.com.co"]}
 ```
 
-Un correo cuyo `From` no matchea ningún patrón se descarta sin persistir el cuerpo (AC-2.4). El matching exacto de remitentes reales se valida con fixtures al implementar cada banco.
+Un correo cuyo `From` no matchea ningún patrón se descarta sin persistir el cuerpo (AC-2.4).
+Matching (`parsing/domain/allowlist.py`): exacto case-insensitive sobre la dirección (sin el
+display name), o sufijo de dominio si el patrón empieza por `@` (matchea el dominio exacto y
+subdominios, nunca un dominio "hijo": `@bancolombia.com.co` NO matchea
+`x@bancolombia.com.co.evil.com`). Solo Bancolombia está `verified: true` (fixture real, F2.3); los
+otros cinco bancos quedan **sin verificar con fixture** — el filtro los acepta igual, pero al no
+tener plantilla (F2.7, diferido) siempre caen al LLM genérico.
 
 ### 2.3 Extracción del cuerpo
 - Preferir `text/plain`; si solo hay HTML, convertir a texto (strip de tags, conservar tablas como líneas).
@@ -38,9 +50,12 @@ Un correo cuyo `From` no matchea ningún patrón se descarta sin persistir el cu
 ## 3. Notificaciones Android (app)
 
 ### 3.1 Paquetes soportados (config remota)
-La lista de paquetes se descarga del backend (`/config/capture`) para poder ampliarla sin release:
+La lista de paquetes se descarga del backend (`/config/capture`) para poder ampliarla sin release.
+Vive en `parsing/config/capture.yaml` (`version: 1`, D6) y se sirve tal cual (más un mapa
+`email_senders` derivado de `senders.yaml`) por `GET /v1/config/capture` (ingestion):
 
 ```yaml
+version: 1
 banking_apps:
   - com.bancolombia.app          # Bancolombia
   - com.nequi.MobileApp          # Nequi
@@ -81,8 +96,27 @@ flowchart LR
 
 ### 4.1 Plantillas por banco
 - Una plantilla = regex nombrada + post-proceso (`parsing/config/templates/<banco>.yaml`), con: patrón, campos capturados (`amount`, `merchant`, `last4`, `datetime`, `direction`), formato de fecha y reglas de normalización de monto (`$1.234.567,89` → `1234567.89`).
-- Cada plantilla se versiona y referencia en `parsed_by` (`rule:bancolombia:compra_tc_v2`).
+- Cada plantilla se versiona y referencia en `parsed_by` (`rule:<banco>:<template_id>:v<version>`, p. ej. `rule:bancolombia:compra_tdeb:v1`).
 - **Regla de oro**: ninguna plantilla entra sin fixture de mensaje real anonimizado + test.
+- Esquema del YAML de plantillas de un banco (`parsing/config/templates/<banco>.yaml`):
+
+```yaml
+bank: <banco>              # str, debe coincidir con una clave de senders.yaml
+version: 1                 # int, referenciado en parsed_by
+relevant_line_prefix: "Bancolombia:"  # str | null — prefijo de la(s) linea(s) util(es)
+                                       # del cuerpo (extracto para plantillas y LLM, RNF-5)
+templates:
+  - id: compra_tdeb         # str, unico dentro del banco
+    direction: debit        # debit | credit
+    pattern: '...'          # regex con grupos nombrados (amount, date, time obligatorios;
+                             # merchant, last4 segun el mensaje)
+    date_format: "%d/%m/%Y" # formato strptime de <date>; <time> siempre es %H:%M
+    suggested_category: nomina  # opcional
+```
+
+- `relevant_line_prefix` reduce el cuerpo a las líneas que empiezan por ese prefijo antes de
+  matchear plantillas o llamar al LLM (`extract_excerpt`, `parsing/domain/excerpt.py`); sin
+  match cae a un fallback (líneas no vacías sin URLs/teléfonos, truncado a 1500 caracteres).
 
 ### 4.2 Fallback LLM — contrato DeepSeek
 
@@ -113,7 +147,7 @@ flowchart LR
 **Control de costos (RNF-5)**: contador mensual de tokens por usuario en Redis; superado el presupuesto → directo a review_queue con motivo `llm_budget_exceeded`.
 
 ### 4.3 Normalización
-- Comercio: uppercase → strip de sufijos de pasarela (`*`, códigos), colapso de espacios; se usa para `merchant_rules`.
+- Comercio: uppercase → strip de sufijos de pasarela (`*`, códigos), colapso de espacios; se usa para `merchant_rules`. Esta normalización completa vive en **ledger** (`_resolve_category`, F1); `parsing` solo limpia el texto capturado por la plantilla (`clean_text`: strip, colapso de espacios, quita puntuación final) — no duplica el normalizador de comercio (D3).
 - Categoría automática: 1º regla del usuario (`merchant_rules`), 2º sugerencia del parser/LLM, 3º `sin_categoria`.
 
 ### 4.4 Dedupe e idempotencia
