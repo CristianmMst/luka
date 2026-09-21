@@ -2,7 +2,7 @@
 
 Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md).
 
-Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) implementadas en la rama `CristianmMst/backend-architecture-setup`. Pendiente: app Flutter (F0.6, F1.9) y Fases 2+ (parsing, Gmail, fiscal, producción).
+Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) implementada en la rama `CristianmMst/fase2-parsing`, pendiente de integración a `main`. Pendiente: app Flutter (F0.6, F1.9), F2.7 (bancos restantes, diferido) y Fases 3+ (Gmail, fiscal, producción).
 
 ## 1. Prerrequisitos
 
@@ -60,10 +60,10 @@ uv run lint-imports            # fronteras entre modulos (import-linter, 6 contr
 uv run pytest -q               # toda la suite (unit + integration + ci)
 ```
 
-Gate de cobertura de dominio (≥90 %, exigido en CI para `ledger.domain` e `identity.domain`):
+Gate de cobertura de dominio (≥90 %, exigido en CI para `ledger.domain`, `identity.domain`, `parsing.domain` e `ingestion.domain`):
 
 ```sh
-uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov-fail-under=90
+uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain --cov-fail-under=90
 ```
 
 También disponibles como recetas de [`just`](../justfile) desde la raíz del repo: `just lint`, `just test`, `just test-unit`, `just coverage-domain`, `just ci` (= `lint` + `test` + `coverage-domain`), `just migrate`, `just revision <nombre>`, `just up`/`down`, `just dev`, `just worker`.
@@ -73,10 +73,12 @@ También disponibles como recetas de [`just`](../justfile) desde la raíz del re
 ```
 tests/
 ├── conftest.py       # fixtures compartidas (session/function scope)
-├── support/          # helpers (AuthedUser, factories)
+├── support/          # helpers (AuthedUser, factories, email_fixtures.py, pipeline.py)
+├── fixtures/emails/   # correos bancarios reales anonimizados (ver §11.4)
 ├── unit/<modulo>/     # dominio puro + fakes; marker `unit`, sin Docker
 ├── integration/<modulo>/  # contra Postgres/Redis reales; marker `integration`
-└── ci/                # contratos de pipeline (workflow, import-linter); marker `ci`
+│   └── pipeline/        # F2.9: pipeline e2e ingestion→parsing→ledger sobre Redis Streams reales
+└── ci/                # contratos de pipeline (workflow, import-linter, higiene de logs); marker `ci`
 ```
 
 Markers (`pyproject.toml`, `--strict-markers`): `unit` (sin infraestructura), `integration` (requiere DB/Redis), `ci` (verifica el propio pipeline). `pytest-asyncio` en modo `auto`, loop de fixtures y de tests con scope `session`.
@@ -123,7 +125,7 @@ Import-linter (`uv run lint-imports`) verifica 6 contratos (`pyproject.toml`, se
 2. **R2** — `application` importa solo `domain`, sus propios `ports` y el `events.py` de su propio módulo.
 3. **R3a** — `events.py` es puro (solo stdlib).
 4. **R3b** — capas hexagonales por módulo: `infrastructure` → `application` → `domain` (nunca al revés).
-5. **R4** — los módulos son independientes entre sí salvo por `public.py`/`events.py` (hoy el único cruce real es `ledger.infrastructure.api.deps` → `identity.public`).
+5. **R4** — los módulos son independientes entre sí salvo por `public.py`/`events.py`; cada cruce concreto está listado explícitamente en `ignore_imports` (`pyproject.toml`), p. ej. `ledger.infrastructure.api.deps` → `identity.public`, `ingestion.infrastructure.sender_policy` → `parsing.public` (allowlists de captura, D6), `parsing.infrastructure.raw_message_gateway` → `ingestion.public` (leer el cuerpo de un `raw_message`, D2), `ledger.infrastructure.raw_messages_gateway` → `ingestion.public` (resolver `/review`, D1) y `ledger.infrastructure.consumers` → `parsing.events` (consumir `TransactionParsed`/`ParseFailed`).
 6. **Kernel** — `shared` nunca importa `modules` ni los composition roots (`app`, `main`, `worker`, `events_registry`).
 
 ## 7. Login local sin GCP (verificador fake)
@@ -188,11 +190,23 @@ Ver §11 de este README para una corrida real con las respuestas efectivamente o
 Redis Streams como bus interno (spec 003 §2.3), implementado en `shared/events/`:
 
 - Cada tipo de evento se publica en su propio stream: `finanzia:events:<event_type>` (p. ej. `finanzia:events:ledger.TransactionCaptured`).
-- Los consumers usan grupos de consumidores (`XREADGROUP`); el grupo del observador de Fase 1 es `ledger-observer`. Mensajes pendientes de un consumidor caído se reclaman con `XAUTOCLAIM`.
+- Los consumers usan grupos de consumidores (`XREADGROUP`). Mensajes pendientes de un consumidor caído se reclaman con `XAUTOCLAIM`.
 - Mensajes que superan el máximo de reintentos van a la DLQ `finanzia:events:dlq`.
 - Todo handler pasa por un wrapper idempotente que marca `event_id` procesado por grupo en Redis con un TTL de 7 días (evita reprocesar reentregas at-least-once).
 - Los consumers corren dentro del proceso worker arq (`uv run arq finanzia.worker.WorkerSettings`), cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada.
-- Publicación post-commit sin outbox transaccional en el MVP (riesgo aceptado, ver spec 003 §2.3 y roadmap §6).
+- Publicación post-commit sin outbox transaccional en el MVP (riesgo aceptado, ver spec 003 §2.3 y §12.5 de este README).
+- Los grupos se crean (idempotente, `XGROUP CREATE ... $ MKSTREAM`) tanto al arrancar la API como el worker, para que un evento publicado antes del primer arranque del worker no se pierda.
+
+Eventos y grupos de consumidores (Fase 1 + Fase 2):
+
+| Evento | Publica | Grupo consumidor | Consume | Efecto |
+|---|---|---|---|---|
+| `ledger.TransactionCaptured` | ledger | `ledger-observer` | worker (observador) | solo loguea metadatos (F1.8) |
+| `ingestion.RawMessageReceived` | ingestion | `parsing` | worker (parsing) | dispara `ParseRawMessage` (F2.2) |
+| `parsing.TransactionParsed` | parsing | `ledger` | worker (ledger) | dedupe + inserta transacción (F2.5) |
+| `parsing.ParseFailed` | parsing | `ledger-review` | worker (ledger) | encola en `review_queue` (F2.6) |
+
+El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación evento/grupo de la tabla, salvo `ledger-observer` que ya existía en Fase 1) más 2 cron jobs: `purge_raw_message_bodies` (diario 03:00) y `requeue_pending_raw_messages` (cada 15 min) — ver §12.
 
 ## 10. Variables de entorno (`.env`)
 
@@ -217,12 +231,243 @@ Ver [`.env.example`](.env.example) — todas tienen el prefijo `FINANZIA_`:
 | `FINANZIA_MAX_BODY_BYTES` | Tamaño máximo aceptado del body de una request, en bytes |
 | `FINANZIA_DB_POOL_SIZE` | Tamaño del pool de conexiones a la base de datos |
 | `FINANZIA_DB_ECHO` | Loguear las sentencias SQL ejecutadas (nunca `true` en prod) |
+| `FINANZIA_RATE_LIMIT_INGEST_PER_MINUTE` | Límite de requests/min por usuario para `/v1/ingest/*` (regla `ingest_user`, F2.1, spec 009 §4), además del límite global |
+| `FINANZIA_DEEPSEEK_API_KEY` | API key de DeepSeek (LLM de parsing). Vacía → adapter `DisabledLlmParser`, todo mensaje sin plantilla cae a revisión con `reason=llm_disabled` (legítimo también en prod) |
+| `FINANZIA_DEEPSEEK_BASE_URL` | URL base de la API de DeepSeek (compatible OpenAI) |
+| `FINANZIA_DEEPSEEK_MODEL` | Modelo usado para el parseo por LLM (`deepseek-v4-flash`) |
+| `FINANZIA_LLM_TIMEOUT_SECONDS` | Timeout, en segundos, de las llamadas HTTP a DeepSeek |
+| `FINANZIA_LLM_MONTHLY_TOKEN_BUDGET_PER_USER` | Presupuesto mensual de tokens LLM por usuario (Redis, clave `llm:budget:{user_id}:{YYYYMM}`, spec 006 §4.2) |
+| `FINANZIA_LLM_CONFIDENCE_THRESHOLD` | Umbral mínimo de `confidence` del LLM para aceptar una extracción (0, 1] |
+| `FINANZIA_RAW_MESSAGE_RETENTION_DAYS` | Días de retención del cuerpo de un mensaje crudo antes de que el cron de purga lo anule (spec 004 §6) |
+| `FINANZIA_RAW_MESSAGE_BODY_MAX_BYTES` | Tamaño máximo, en bytes, del cuerpo persistido de un mensaje crudo (spec 006 §2.3) |
 
-## 11. Verificación (corrida real)
+## 11. Recorrido de la API (curl) — Fase 2: ingesta, parsing y revisión
 
-La suite completa se corrió y pasó en verde en la última verificación de cierre de F0/F1: 417 tests
-(`uv run pytest -q`), los 6 contratos de `import-linter` en KEPT (`uv run lint-imports`), cobertura de
-dominio ≥ 98 % (`ledger.domain` + `identity.domain`, `--cov-fail-under=90` real), `alembic check` sin
-diferencias pendientes contra el modelo, y `docker build`/`docker run` sirviendo la imagen correctamente.
-El recorrido de curl completo contra una instancia local está documentado y es reproducible en la
-sección "8. Recorrido de la API (curl)" de este mismo README.
+Continuación de §8 (misma sesión, mismo `$TOKEN`). Requiere el worker corriendo (§12.2) además de
+la API, porque el parseo ocurre de forma asíncrona en el proceso worker.
+
+```sh
+# 8. Ingerir una notificación bancaria de Bancolombia (compra con tarjeta débito)
+curl -s -X POST http://localhost:8000/v1/ingest/notifications \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "items": [{
+      "package": "com.bancolombia.app",
+      "channel": "notification",
+      "posted_at": "2026-09-20T16:00:00-05:00",
+      "title": "Compra aprobada",
+      "text": "Bancolombia: Compraste $176.824,00 en CARBON Y XILVESTRE T con tu T.Deb *1234, el 20/09/2026 a las 16:00",
+      "client_hash": "'"$(echo -n demo-compra-1 | sha256sum | cut -d' ' -f1)"'"
+    }]
+  }'
+# -> {"accepted": 1, "duplicates": 0, "discarded": 0}
+
+# 9. Esperar a que el worker la procese (regex de plantilla, sin LLM) y consultarla
+curl -s "http://localhost:8000/v1/transactions?limit=5" -H "Authorization: Bearer $TOKEN"
+# -> la transacción aparece con parsed_by: "rule:bancolombia:compra_tdeb:v1"
+
+# 10. Config remota de captura para el cliente Android (F4.3, backend ya hecho)
+curl -s http://localhost:8000/v1/config/capture -H "Authorization: Bearer $TOKEN"
+
+# 11. Cola de revisión (vacía si todo se parseó por regla)
+curl -s http://localhost:8000/v1/review -H "Authorization: Bearer $TOKEN"
+
+# 12. Ingerir un texto monetario que NINGUNA plantilla reconoce -> cae al LLM
+#     (llm_disabled en dev sin FINANZIA_DEEPSEEK_API_KEY) -> review_queue
+curl -s -X POST http://localhost:8000/v1/ingest/notifications \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "items": [{
+      "package": "com.bancolombia.app",
+      "channel": "notification",
+      "posted_at": "2026-09-20T16:05:00-05:00",
+      "title": "Movimiento",
+      "text": "Bancolombia: recibiste un giro internacional por $500.000,00 el 20/09/2026",
+      "client_hash": "'"$(echo -n demo-review-1 | sha256sum | cut -d' ' -f1)"'"
+    }]
+  }'
+
+curl -s http://localhost:8000/v1/review -H "Authorization: Bearer $TOKEN"
+# -> item con reason: "llm_disabled" (guarda el raw_message_id de la respuesta)
+
+# 13. Convertir el item de revisión en una transacción manual
+curl -s -X POST http://localhost:8000/v1/review/<raw_message_id>/convert \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"amount": "500000.00", "direction": "credit", "occurred_at": "2026-09-20T16:05:00-05:00", "merchant": "Giro internacional"}'
+# -> 201, parsed_by: "manual", sources[0].raw_message_id = el mensaje crudo
+```
+
+Ver §14 para una corrida real de este recorrido con las respuestas efectivamente obtenidas.
+
+## 12. Pipeline de captura y parsing (Fase 2)
+
+Implementa spec 006 (captura y parsing) para el canal `POST /v1/ingest/notifications` (correo Gmail
+llega en Fase 3). Solo Bancolombia tiene plantillas con fixture real (F2.3); los otros 5 bancos de
+`senders.yaml` se aceptan en la ingesta pero, al no tener plantilla, siempre caen al LLM/revisión.
+
+### 12.1 Módulos y flujo
+
+- **`ingestion`**: filtra remitente/paquete (`parsing.public.bank_for_*`), persiste `raw_messages`
+  (`pending`) y publica `RawMessageReceived`. Dueño de `POST /v1/ingest/notifications` y
+  `GET /v1/config/capture`.
+- **`parsing`**: consume `RawMessageReceived`, intenta una plantilla regex por banco
+  (`parsing/config/templates/<banco>.yaml`) y, si no matchea, cae al LLM (DeepSeek, adapter en
+  `parsing/infrastructure/llm/`). Publica `TransactionParsed` o `ParseFailed`. Ver spec 006 §4.
+- **`ledger`**: consume `TransactionParsed` (dedupe + inserta, grupo `ledger`) y `ParseFailed`
+  (inserta en `review_queue`, grupo `ledger-review`). Dueño de `GET /v1/review`,
+  `POST /v1/review/{id}/convert` y `POST /v1/review/{id}/discard`.
+
+### 12.2 Correr el worker y leer sus logs de arranque
+
+```sh
+uv run arq finanzia.worker.WorkerSettings
+```
+
+El `on_startup` del worker (composition root, `worker.py`) crea su propio engine de DB, cliente
+`httpx.AsyncClient` y cliente Redis, arranca los 4 consumers de eventos bajo supervisor y registra
+los 2 cron jobs. Logs de arranque relevantes:
+
+- `worker_llm_status` (`enabled=<bool>`, `model=<modelo>`) — qué adapter de LLM quedó activo; nunca
+  incluye la API key.
+- `llm_disabled_no_api_key` (warning) — solo aparece si `FINANZIA_DEEPSEEK_API_KEY` está vacía: el
+  adapter activo es `DisabledLlmParser` y todo mensaje sin plantilla regex terminará en
+  `review_queue` con `reason=llm_disabled` (comportamiento esperado en dev/CI sin credenciales).
+- `consumer_groups_not_ensured` (warning) — Redis no respondió a `ensure_consumer_groups` dentro del
+  timeout; el worker sigue arrancando igual (fail-soft).
+
+### 12.3 Fixtures y cómo añadir una plantilla de banco nueva
+
+Fixtures de correos/notificaciones reales anonimizados en
+[`tests/fixtures/emails/`](tests/fixtures/emails/README.md) (contrato del encabezado YAML, tabla de
+fixtures existentes y sus patrones). **Regla de oro (spec 006 §4.1): ninguna plantilla entra sin un
+fixture de mensaje real anonimizado.** Para añadir un banco/plantilla nuevos:
+
+1. Conseguir un mensaje real del banco, anonimizarlo (montos, últimos dígitos, nombres) preservando
+   comercio/remitente/estructura/formato de fecha y monto.
+2. Agregarlo como fixture en `tests/fixtures/emails/<banco>/<caso>.txt` (encabezado YAML + `---` +
+   cuerpo), con su bloque `expected`.
+3. Si el banco no está en `parsing/config/senders.yaml`, agregarlo (`verified: true` solo si hay
+   fixture real que lo confirme).
+4. Agregar/editar la entrada en `parsing/config/templates/<banco>.yaml` (patrón regex con grupos
+   nombrados, `date_format`, `direction`, `suggested_category` opcional) siguiendo el esquema de
+   spec 006 §4.1.
+5. Test unitario en `tests/unit/parsing/test_templates_<banco>.py` que verifique la extracción
+   contra el fixture, más el test de integración de pipeline
+   (`tests/integration/pipeline/test_email_fixtures_to_transaction.py`) si aplica.
+6. Documentar el fixture en `tests/fixtures/emails/README.md`.
+
+### 12.4 Métrica del pipeline
+
+Un evento de log estructurado `parsing_metric` por resultado (nunca datos crudos del mensaje, P1):
+desde `parsing` con claves `outcome, bank, channel, template_id, reason, llm_tokens`
+(`outcome ∈ {parsed_by_rule, parsed_by_llm, sent_to_review, discarded}`); desde `ingestion` con
+`outcome ∈ {accepted, duplicate, discarded}` + `channel, bank, reason, republished`. Ver spec 006 §6.
+No hay agregación en base de datos ni dashboard en Fase 2 — los contadores se calculan agregando
+logs.
+
+### 12.5 Riesgos conocidos (heredados del plan de Fase 2, §4)
+
+- **Sin outbox transaccional**: el evento de salida se publica antes del commit del estado del
+  `raw_message` (D8, `event_id` determinista absorbe reentregas); el hueco "commit del estado ok,
+  publish falla" lo cierra el cron `requeue_pending_raw_messages` (cada 15 min, filas `pending` con
+  más de 10 min sin tocar). No hay outbox transaccional real; propuesto para una fase futura si un
+  caso de uso lo exige.
+- **`llm_error` → revisión inmediata** (D11): una caída de DeepSeek de minutos manda mensajes a
+  revisión en vez de usar el reintento del consumer de Redis Streams. Elegido visibilidad sobre
+  latencia; revisar con métricas tras Fase 3.
+- **Cap de body de 1 MB por request** (`FINANZIA_MAX_BODY_BYTES`) en `/v1/ingest/notifications`:
+  documentado como límite duro (spec 009 §4); un cliente con batches muy grandes debe paginar sus
+  envíos.
+
+## 13. Pendientes / deuda conocida (Fase 2)
+
+Hallazgos menores identificados en revisiones de código de Fase 2 y diferidos a propósito (no
+bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue tracker externo):
+
+- **Falta un índice `(status, updated_at)` en `raw_messages`** para la query global del cron
+  `requeue_pending_raw_messages` (hoy solo existen `ix_raw_messages_user_id_status` e
+  `ix_raw_messages_purge_after`); a añadir antes de que el volumen de filas `pending` lo justifique
+  (candidato natural: junto con F3, cuando entre el volumen real de Gmail).
+- **`response.json()` sin guardar** en el adapter DeepSeek
+  (`parsing/infrastructure/llm/deepseek.py`): un 200 con envelope malformado (no JSON válido)
+  propagaría `json.JSONDecodeError` sin capturar, en vez de convertirse en `LlmInvalidOutput`.
+- **Asimetría de fallback banco/canal en los consumers de ledger**
+  (`ledger/infrastructure/consumers.py`): `Bank(event.bank)` cae a `Bank.OTHER` si el valor no está
+  en el enum, pero `Channel(event.channel)` no tiene fallback equivalente (lanzaría `ValueError` si
+  llegara un canal desconocido). Intencional por ahora — `channel` lo produce el propio backend, no
+  un tercero — pero documentado como asimetría a revisar si `Channel` alguna vez se alimenta de un
+  valor externo.
+- **Fakes duplicados**: `FakeLlmParser`/`InMemoryBudget` existen tanto en `tests/unit/parsing/fakes.py`
+  como (duplicados) en `tests/support/pipeline.py`, porque `tests/integration/pipeline` no comparte
+  `sys.path` con `tests/unit` al correr en aislamiento — importar desde ahí rompería esa
+  verificación. Se podría resolver moviendo los fakes compartidos a un paquete común instalable,
+  pero no se justificaba solo por esto en F2.
+
+Riesgos abiertos del plan de Fase 2 (§4 del plan de implementación, ver detalle en §12.5 arriba):
+sin outbox transaccional (mitigado por D8/D9/D10 + el cron de requeue), `llm_error` → revisión
+inmediata en vez de reintento del consumer (D11), y el cap duro de 1 MB por request de ingesta.
+
+## 14. Verificación (corrida real, cierre de Fase 2 — 2026-09-21)
+
+Todo corrido desde `backend/` contra la rama `CristianmMst/fase2-parsing`:
+
+```sh
+uv run ruff check .          # All checks passed!
+uv run ruff format --check . # 330 files already formatted
+uv run pyright                # 0 errors, 0 warnings, 0 informations
+uv run lint-imports            # Contracts: 6 kept, 0 broken (R1, R2, R3a, R3b, R4, Kernel)
+uv run pytest -q               # 780 passed, 1 warning (DeprecationWarning preexistente de arq) in 64.81s
+uv run pytest tests/unit -m unit \
+  --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain \
+  --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain \
+  --cov-fail-under=90
+  # Required test coverage of 90% reached. Total coverage: 98.87% — 524 passed in 4.30s
+uv run alembic upgrade head && uv run alembic check
+  # No new upgrade operations detected.
+grep -rn TBD docs/
+  # solo docs/constitution.md:56 (la frase de la regla P8 en sí misma)
+```
+
+Recorrido en vivo (Docker Compose, perfil `app`):
+
+```sh
+docker compose -f docker-compose.dev.yml --profile app up -d --build
+curl -f localhost:8000/health/ready
+# {"status":"ok","checks":{"database":"ok","redis":"ok"}}
+```
+
+Logs de arranque del worker (`docker logs backend-worker-1`):
+
+```
+Starting worker for 3 functions: ping, cron:purge_raw_message_bodies, cron:requeue_pending_raw_messages
+worker_llm_status              enabled=False model=deepseek-v4-flash
+llm_disabled_no_api_key
+```
+
+Recorrido curl de §11 contra la instancia levantada (`FINANZIA_GOOGLE_VERIFIER=fake`, `.env` ya
+existente):
+
+1. **Login** → `POST /v1/auth/google` con `fake:demo11:demo11@example.com` → 200, `access_token`
+   emitido.
+2. **Crear cuenta** `(bancolombia, 1234)` → `POST /v1/accounts` → 200,
+   `{"bank":"bancolombia","kind":"savings","last4":"1234","alias":"Ahorros"}`.
+3. **Ingesta Bancolombia (compra_tdeb)** → `POST /v1/ingest/notifications` con
+   `"Bancolombia: Compraste $176.824,00 en CARBON Y XILVESTRE T con tu T.Deb *1234, el 20/09/2026 a las 16:00"`
+   → `{"accepted":1,"duplicates":0,"discarded":0}`.
+4. **Poll `GET /v1/transactions`** → aparece en el primer intento (worker ya corriendo):
+   `amount:"176824.00", direction:"debit", merchant:"CARBON Y XILVESTRE T", bank:"bancolombia",
+   parsed_by:"rule:bancolombia:compra_tdeb:v1"`.
+5. **`GET /v1/review`** → `{"items":[],"next_cursor":null}` (vacía, como se esperaba).
+6. **`GET /v1/config/capture`** → 200, `version:1` + `banking_apps`/`messages_apps`/
+   `sms_sender_patterns`/`email_senders` completos (7 apps bancarias, 6 bancos en `email_senders`).
+7. **Ingesta de texto monetario sin plantilla** → `POST /v1/ingest/notifications` con
+   `"Bancolombia: recibiste un giro internacional por $500.000,00 el 20/09/2026"` →
+   `{"accepted":1,"duplicates":0,"discarded":0}`.
+8. **`GET /v1/review`** → aparece con `"reason":"llm_disabled"`, `partial_extract:{}`, `text` con
+   el cuerpo completo (`título\n\ntexto`).
+9. **`POST /v1/review/{id}/convert`** con `{"amount":"500000.00","direction":"credit",
+   "occurred_at":"2026-09-20T16:05:00-05:00","merchant":"Giro internacional"}` → **201**,
+   `parsed_by:"manual"`, `sources:[{"channel":"notification","raw_message_id":"<id>", ...}]`.
+
+Tras la verificación: `docker compose -f docker-compose.dev.yml stop api worker` (postgres/redis
+quedaron corriendo).

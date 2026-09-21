@@ -1,6 +1,6 @@
 # Roadmap de implementación
 
-> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (PR pendiente). Pendientes: F0.6 y F1.9 (app Flutter) y las fases 2 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
+> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing`, pendiente de integración a `main`. Pendientes: F0.6, F1.9 (app Flutter), F2.7 (bancos restantes, diferido) y las fases 3 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
 
 Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
@@ -31,15 +31,15 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
 ## Fase 2 — Pipeline de parsing (RF-2 parcial, RF-5, RF-8)
 
-| ID | Tarea | Specs | Deps |
-|---|---|---|---|
-| F2.1 | Migraciones: raw_messages (+unique idempotencia), review_queue | 004 §2.7, 2.10 | F1.5 |
-| F2.2 | Workers arq + wiring de eventos RawMessageReceived→parsing→ledger | 003 §2.4 | F1.8 |
-| F2.3 | Motor de plantillas regex (YAML) + normalizadores de monto/fecha/comercio; plantillas Bancolombia + Nequi con fixtures reales anonimizados | 006 §4.1, 4.3 | F2.2 |
-| F2.4 | Adapter DeepSeek (`LlmParserPort`): JSON mode, validación Pydantic, reintento, presupuesto por usuario en Redis | 006 §4.2 | F2.2 |
-| F2.5 | Flujo dedupe end-to-end: ON CONFLICT + adjuntar fuente + test de doble procesamiento (AC-5.1/5.2) | 004 §3 | F2.3, F1.6 |
-| F2.6 | Review queue: endpoints convert/discard + partial_extract | 005 §7 | F2.1 |
-| F2.7 | Plantillas Davivienda, Daviplata, BBVA, Banco de Bogotá (con fixtures) | 006 §4.1 | F2.3 |
+| ID | Tarea | Specs | Deps | Estado |
+|---|---|---|---|---|
+| F2.1 | Migraciones: raw_messages (+unique idempotencia), review_queue | 004 §2.7, 2.10 | F1.5 | ✅ |
+| F2.2 | Workers arq + wiring de eventos RawMessageReceived→parsing→ledger | 003 §2.4 | F1.8 | ✅ |
+| F2.3 | Motor de plantillas regex (YAML) + normalizadores de monto/fecha/comercio; plantillas Bancolombia + Nequi con fixtures reales anonimizados | 006 §4.1, 4.3 | F2.2 | ✅ solo Bancolombia; Nequi diferido a F2.7 (sin fixture real) |
+| F2.4 | Adapter DeepSeek (`LlmParserPort`): JSON mode, validación Pydantic, reintento, presupuesto por usuario en Redis | 006 §4.2 | F2.2 | ✅ |
+| F2.5 | Flujo dedupe end-to-end: ON CONFLICT + adjuntar fuente + test de doble procesamiento (AC-5.1/5.2) | 004 §3 | F2.3, F1.6 | ✅ |
+| F2.6 | Review queue: endpoints convert/discard + partial_extract | 005 §7 | F2.1 | ✅ |
+| F2.7 | Plantillas Davivienda, Daviplata, BBVA, Banco de Bogotá (con fixtures) | 006 §4.1 | F2.3 | diferido: sin fixtures reales (Nequi, Davivienda, Daviplata, BBVA, Banco de Bogotá) |
 
 ## Fase 3 — Gmail (RF-2 completo)
 
@@ -51,7 +51,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F3.4 | Webhook `/webhooks/gmail`: verificación OIDC + history.list + filtro remitentes + encolar; tests con payloads simulados | 005 §4, 006 §2 | F3.3, F2.2 |
 | F3.5 | Cron renovación de watches + resync tras cursor inválido | 006 §2.1 | F3.4 |
 | F3.6 | App: paso de onboarding Gmail con autorización incremental + estado en Ajustes | 008 §3.1 | F1.9, F3.3 |
-| F3.7 | Job de purga de raw_messages a 90 días | 004 §6 | ✅ adelantado en F2 (Task 10) |
+| F3.7 | Job de purga de raw_messages a 90 días (✅ adelantado en F2, Task 10) | 004 §6 | F2.1 |
 
 ## Fase 4 — App completa (RF-3, RF-4, RF-9)
 
@@ -59,7 +59,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 |---|---|---|---|
 | F4.1 | Esquema Drift completo + SyncCoordinator (pull incremental + outbox push) + tests de conflicto | 004 §5, 005 §9, 008 §5 | F1.9 |
 | F4.2 | Feature transactions: lista, filtros, detalle con fuentes, edición de categoría (+merchant_rule prompt), marcar transfer | 008 §3.3 | F4.1 |
-| F4.3 | Feature capture Android: NotificationCaptureService (config remota de paquetes, filtros, outbox, batch a /ingest) + endpoint `/ingest/notifications` | 006 §3, 005 §5 | F4.1, F2.5 |
+| F4.3 | Feature capture Android: NotificationCaptureService (config remota de paquetes, filtros, outbox, batch a /ingest) — backend hecho en F2 (`POST /ingest/notifications`, `GET /config/capture`); falta la app | 006 §3, 005 §5 | F4.1, F2.5 |
 | F4.4 | Onboarding completo (4 pasos) + detección de permiso revocado | 008 §3.1 | F3.6, F4.3 |
 | F4.5 | Feature capture NFC: lectura/escritura de tags, deep link quick-add, formulario rápido offline | 006 §5, 008 §3.4 | F4.1 |
 | F4.6 | Dashboard (insights endpoint + pantalla con gráficos) | 005 §8, 008 §3.2 | F4.2 |

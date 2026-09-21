@@ -41,9 +41,9 @@ migrate:
 revision name:
 	cd backend && uv run alembic revision --autogenerate -m "{{name}}"
 
-# Gate de cobertura de dominio (ledger.domain + identity.domain >= 90%).
+# Gate de cobertura de dominio (ledger/identity/parsing/ingestion .domain >= 90%).
 coverage-domain:
-	cd backend && uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov-fail-under=90
+	cd backend && uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain --cov-fail-under=90
 
 # Pipeline de CI: lint + tests + cobertura de dominio.
 ci: lint test coverage-domain

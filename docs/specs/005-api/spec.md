@@ -73,7 +73,7 @@
 ```
 
 - Respuesta (enmendado, Task 5/F4.3): `{ "accepted": 2, "duplicates": 0, "discarded": 1 }`. `discarded` cuenta los items cuyo paquete/remitente no está en la lista soportada tras la re-validación server-side (AC-3.3); esos items nunca se persisten.
-- Límites (spec 009 §4): 1–50 items por batch; `text` ≤ 64 KB; `title` ≤ 500 caracteres; `client_hash` = sha256 hex en minúsculas, usado como `external_id` de la idempotencia por índice `UNIQUE(user_id, channel, external_id)`. `posted_at` debe incluir zona horaria (naive → 400). Cap duro de 1 MB por request (documentado en 009 §5, ruling del controlador).
+- Límites (spec 009 §4): 1–50 items por batch; `text` ≤ 64 KB; `title` ≤ 500 caracteres; `client_hash` = sha256 hex en minúsculas, usado como `external_id` de la idempotencia por índice `UNIQUE(user_id, channel, external_id)`. `posted_at` debe incluir zona horaria (naive → 400). Cap duro de 1 MB por request (documentado en 009 §4, ruling del controlador).
 - `Idempotency-Key` es opcional pero soportado (spec 009 §1): reintentar la misma request con la misma clave replica la respuesta original (`Idempotency-Replayed: true`) sin re-ejecutar el batch. Sin ese header, el batch ya es idempotente por índice (`client_hash`), así que reintentar el mismo batch entero también es seguro.
 - Paquetes/remitentes se re-validan en el servidor (AC-3.3): un item con paquete no soportado se descarta sin persistir, aunque el cliente lo haya enviado igual (nada se loguea de su contenido, P1/P8).
 - Rate limit específico (spec 009 §4, regla `ingest_user`): 60/min por usuario, además de la regla global de usuario.

@@ -110,6 +110,7 @@ La implementación del bus vive en `shared/events/`: un codec de eventos (serial
 
 - **API (request path)**: solo validar, persistir, encolar y responder. Nada de LLM ni parsing inline.
 - **Workers (arq)**: parsing, llamadas a DeepSeek, generación de reportes Excel, purgas programadas, renovación de watches. Misma imagen Docker, proceso distinto → se escalan por separado.
+- **Composition root** (`worker.py`, F2.2/F2.5/F2.9): el `on_startup` del worker arq ensambla y posee su propio engine SQLAlchemy (`session_factory`), su propio cliente `httpx.AsyncClient` (usado por el adapter DeepSeek) y su propio cliente Redis; nada de esto se comparte con el proceso API. Sobre esa base arranca 4 consumers de streams como tareas de fondo, cada uno bajo un supervisor que lo reinicia ante cualquier excepción inesperada (`_supervise`, delay fijo entre reinicios): `ingestion.RawMessageReceived` (grupo `parsing`) → `parsing.TransactionParsed` (grupo `ledger`) → `parsing.ParseFailed` (grupo `ledger-review`) → `ledger.TransactionCaptured` (grupo `ledger-observer`, F1.8, solo observa). Además registra 2 cron jobs arq: `purge_raw_message_bodies` (diario 03:00, spec 004 §6) y `requeue_pending_raw_messages` (cada 15 min, §2.3 arriba / spec 006 §4.4, riesgo 4). `on_shutdown` cierra engine/httpx/redis y espera las 4 tareas de consumer con una cota dura (fail-soft: loguea y continúa si alguna no responde a tiempo).
 
 ### 2.5 Escalabilidad — camino de crecimiento
 

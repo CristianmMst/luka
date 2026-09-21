@@ -123,6 +123,13 @@ templates:
 
 - Modelo: `deepseek-v4-flash`, API OpenAI-compatible, `response_format: json_object`, `temperature: 0`.
 - El adapter implementa `LlmParserPort` (cambiar de proveedor = nuevo adapter).
+- Sin `deepseek_api_key` configurada, el puerto se resuelve al adapter `DisabledLlmParser`
+  (`enabled = False`) y todo mensaje que llegue al LLM se marca `llm_disabled` sin llamada de red
+  (arranque típico de dev; el worker loguea `worker_llm_status` con el adapter elegido).
+- Al LLM solo se le envía el **extracto** (`relevant_line_prefix`/fallback de §4.1, recortado a
+  `max_excerpt_chars`) y la **fecha de recepción** (`received_on`, solo fecha, no hora): nunca
+  `user_id`, remitente, `raw_message_id` ni el cuerpo completo (P1, spec 009 §1). El system prompt
+  es fijo y cacheable (no lleva datos variables por request, control de costo).
 
 **System prompt (fijo, cacheable)**: instruye extraer campos de mensajes de bancos colombianos; formato de montos colombiano; devolver `null` en campos ausentes; nunca inventar.
 
@@ -143,9 +150,30 @@ templates:
 }
 ```
 
-**Validación post-LLM (Pydantic)**: monto > 0, fecha plausible (±7 días del recibido), banco en enum, `is_transaction=false` → descartar, JSON inválido → 1 reintento → review_queue.
+**Validación post-LLM**: monto > 0, fecha plausible (±7 días del recibido), banco en el enum de
+`senders.yaml`, `confidence ≥ 0.8` (umbral configurable), `is_transaction=false` → descartar (no es
+error, ver `_discard`); JSON inválido o esquema inválido → **un solo reintento** (misma llamada, sin
+backoff) → si el segundo intento también falla, `review_queue` con motivo `llm_invalid_json`; la
+validación semántica que sí produjo JSON pero no pasa las reglas anteriores (monto ≤ 0, fecha fuera
+de rango, banco desconocido) usa el motivo separado `llm_invalid_output` (D12).
 
-**Control de costos (RNF-5)**: contador mensual de tokens por usuario en Redis; superado el presupuesto → directo a review_queue con motivo `llm_budget_exceeded`.
+**Lista cerrada de motivos** (`ParseFailureReason`, `parsing/domain/enums.py`, 8 valores, sin
+comodín — un motivo nuevo exige un ruling explícito): `no_template` (el extracto no contiene ni
+siquiera un monto, no se gasta LLM), `llm_disabled` (sin API key configurada), `llm_budget_exceeded`,
+`llm_invalid_json` (JSON/esquema inválido tras el reintento), `llm_invalid_output` (JSON válido pero
+la validación semántica falla), `llm_low_confidence` (`confidence` bajo umbral), `llm_error`
+(`LlmUnavailable`: timeout/5xx/red — se manda **directo** a revisión, D11, sin usar el reintento del
+consumer de Redis Streams, para mantener visibilidad sobre latencia; una caída corta de DeepSeek
+manda mensajes a revisión, riesgo aceptado — revisar con métricas tras Fase 3), `body_purged`
+(el cuerpo ya fue purgado por retención antes de procesarse).
+
+**Control de costos (RNF-5)**: contador mensual de tokens por usuario en Redis, clave
+`llm:budget:{user_id}:{YYYYMM}` (mes en curso), incrementado tras cada llamada (incluida la del
+reintento) con `EXPIRE ... NX` a 40 días (para no extender artificialmente un mes ya vencido si el
+proceso reintenta tarde). El presupuesto se comprueba (`used < limit`) **antes** de llamar al LLM y
+se suma **después**: una sola llamada puede exceder el límite en hasta ~1K tokens (aceptable para
+MVP, riesgo §4.8 del plan). Superado el presupuesto → directo a `review_queue` con motivo
+`llm_budget_exceeded`, sin llamar al LLM.
 
 ### 4.3 Normalización
 - Comercio: uppercase → strip de sufijos de pasarela (`*`, códigos), colapso de espacios; se usa para `merchant_rules`. Esta normalización completa vive en **ledger** (`_resolve_category`, F1); `parsing` solo limpia el texto capturado por la plantilla (`clean_text`: strip, colapso de espacios, quita puntuación final) — no duplica el normalizador de comercio (D3).
@@ -155,6 +183,7 @@ templates:
 - Idempotencia de ingesta: `UNIQUE(user_id, channel, external_id)` en `raw_messages` — el mismo push/notificación repetido no reprocesa (AC-5.2).
 - Si la ingesta encuentra un duplicado (`INSERT … ON CONFLICT DO NOTHING` no insertó) cuya fila sigue `pending`, re-publica `RawMessageReceived` (D9): mitiga la falta de outbox cuando el publish original falló tras el commit.
 - Vocabulario de resultado de una ingesta: `accepted` (fila nueva, evento publicado), `duplicate` (fila ya existía; republica el evento solo si seguía `pending`) o `discarded` (remitente/paquete no soportado, nada se persiste, AC-2.4).
+- Orden publish/commit en parsing (D8): el resultado (`TransactionParsed`/`ParseFailed`) se **publica antes** del commit que marca el `raw_message` como `parsed`/`failed`/`discarded`. Si el commit del estado falla, el mensaje sigue `pending` y se reprocesa; el reproceso produce un segundo evento con el **mismo `event_id`** (determinista: `uuid5(NAMESPACE_URL, f"finanzia:parsing:{outcome}:{raw_message_id}")`, `parsing/events.py::deterministic_event_id`), así que `IdempotentHandler` aguas abajo (ledger) lo absorbe aunque llegue en una entrada de stream distinta. El caso inverso (commit del estado ok, publish falla) se cierra con el cron de abajo.
 - Dedupe de transacciones: huella de spec 004 §3 con `ON CONFLICT DO NOTHING`; si conflicto → adjuntar `transaction_source` a la existente (AC-5.1).
 - El matcher de transferencias corre tras cada inserción (spec 004 §4).
 - Mitigación adicional a la falta de outbox (riesgo 4, F3.7 adelantado en F2 — Task 10): el cron `requeue_pending_raw_messages` corre cada 15 min (`minute={0,15,30,45}`) y republica `RawMessageReceived` para toda fila `raw_messages` que siga `status='pending'` con `updated_at` de más de 10 min (cubre el caso "commit ok, publish falló" incluso sin una ingesta duplicada que lo dispare). Cada fila reencolada se "toca" (`updated_at = now()`) para no volver a republicarse en la misma ventana. Es idempotente: `ParseRawMessage` (F2.2) descarta con `Skipped(not_pending)` cualquier evento cuyo `raw_message_id` ya no esté `pending` al momento de procesarlo, así que una reentrega tras un procesamiento exitoso no duplica nada.
@@ -168,4 +197,19 @@ templates:
 
 ## 6. Métricas del pipeline (observabilidad)
 
-Contadores por banco/canal exportados a logs estructurados: `parsed_by_rule`, `parsed_by_llm`, `sent_to_review`, `discarded`, `dedupe_hits`, `llm_cost_tokens`. Meta de salud: ≥ 80% de mensajes de bancos soportados parseados por regla (las reglas son gratis; el LLM es la red de seguridad).
+Un único evento de log estructurado (`structlog`) `parsing_metric` por resultado, nunca con datos
+crudos del mensaje (P1/P6). Se emite desde dos módulos con formas distintas del mismo nombre:
+
+- **`parsing`** (`parsing/infrastructure/metrics.py::StructlogMetrics`, implementa `MetricsPort`):
+  `parsing_metric outcome=<parsed_by_rule|parsed_by_llm|sent_to_review|discarded> bank=<banco|None>
+  channel=<canal> template_id=<id|None> reason=<ParseFailureReason|None> llm_tokens=<int|None>`.
+  `template_id` solo se rellena en `parsed_by_rule`; `llm_tokens` solo cuando hubo llamada al LLM;
+  `reason` solo en `sent_to_review`.
+- **`ingestion`** (`ingestion/infrastructure/logging.py::log_ingest_outcome`):
+  `parsing_metric outcome=<accepted|duplicate|discarded> channel=<canal> bank=<banco|None>
+  reason=<motivo de descarte|None> republished=<bool, solo en duplicate>`. `bank` está presente en
+  `accepted`/`duplicate` y ausente en `discarded` (el mensaje se descartó antes de resolver banco).
+
+Meta de salud: ≥ 80% de mensajes de bancos soportados parseados por regla (`parsed_by_rule`; las
+reglas son gratis, el LLM es la red de seguridad). No hay agregación en base de datos ni dashboard
+en Fase 2: los contadores se calculan por grep/agregación de logs (deuda conocida, ver README).

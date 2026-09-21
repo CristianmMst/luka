@@ -132,12 +132,13 @@ name = "R4 - modulos independientes salvo public.py y events.py"
 type = "independence"
 modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
   "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
-# Pares explicitos que existen hoy (Task 13/F1.7): ledger.infrastructure.api.deps es el
-# unico punto que cruza a otro modulo, y lo hace via `identity.public` (nunca a
-# internals de identity). Ningun modulo importa todavia los `events.py` de otro (ese
-# cruce llegara con el consumidor de eventos de un modulo distinto al productor), asi
-# que no hay patron de `events.py` que ignorar aun: agregar uno sin uso real volveria a
-# disparar "No matches for ignored import" con la alerta por defecto ("error").
+# Pares explicitos que existen hoy: cada cruce entre modulos pasa por la fachada
+# publica del modulo destino (`<modulo>.public`) o por sus eventos de dominio
+# (`<modulo>.events`), nunca por internals (domain/application/infrastructure
+# de otro modulo) — R2 ya lo impide para `application`, esto documenta los
+# adapters concretos de `infrastructure` que sí cruzan. Cada entrada nueva
+# necesita uso real: import-linter dispara "No matches for ignored import" con
+# la alerta por defecto ("error") si una lista aqui pero nada la ejercita.
 ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.modules.identity.public",
   "finanzia.modules.ingestion.infrastructure.sender_policy -> finanzia.modules.parsing.public",
   "finanzia.modules.ingestion.infrastructure.api.deps -> finanzia.modules.identity.public",
