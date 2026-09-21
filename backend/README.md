@@ -388,9 +388,12 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   `requeue_pending_raw_messages` (hoy solo existen `ix_raw_messages_user_id_status` e
   `ix_raw_messages_purge_after`); a añadir antes de que el volumen de filas `pending` lo justifique
   (candidato natural: junto con F3, cuando entre el volumen real de Gmail).
-- **`response.json()` sin guardar** en el adapter DeepSeek
+- **`response.json()` sin guardar y `httpx.RequestError` incompleto** en el adapter DeepSeek
   (`parsing/infrastructure/llm/deepseek.py`): un 200 con envelope malformado (no JSON válido)
-  propagaría `json.JSONDecodeError` sin capturar, en vez de convertirse en `LlmInvalidOutput`.
+  propagaría `json.JSONDecodeError` sin capturar, en vez de convertirse en `LlmInvalidOutput`. Además
+  el `except httpx.TransportError` solo cubre ese subárbol; otras subclases de `httpx.RequestError`
+  como `DecodingError` o `TooManyRedirects` no están mapeadas a `LlmUnavailable` y se propagarían sin
+  capturar.
 - **Asimetría de fallback banco/canal en los consumers de ledger**
   (`ledger/infrastructure/consumers.py`): `Bank(event.bank)` cae a `Bank.OTHER` si el valor no está
   en el enum, pero `Channel(event.channel)` no tiene fallback equivalente (lanzaría `ValueError` si
@@ -402,10 +405,47 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   `sys.path` con `tests/unit` al correr en aislamiento — importar desde ahí rompería esa
   verificación. Se podría resolver moviendo los fakes compartidos a un paquete común instalable,
   pero no se justificaba solo por esto en F2.
+- **El presenter de `/review` descarta en silencio items cuyo `raw_message` desapareció**
+  (`ledger/infrastructure/api/presenters.py::review_entry_response` devuelve `None` si
+  `entry.source is None`): caso defensivo (el FK es `CASCADE`, no debería ocurrir en la práctica),
+  pero hoy no deja rastro en logs; falta un log de advertencia para poder detectarlo si llega a
+  pasar.
+- **`worker.on_shutdown` no cancela las tareas de consumer que sobreviven al timeout de 15 s**: si
+  `asyncio.wait_for(asyncio.gather(*tasks), timeout=_SHUTDOWN_TASKS_TIMEOUT_S)` expira, se loguea
+  `event_consumer_shutdown_timed_out` con el conteo de tareas vivas pero esas tareas siguen
+  corriendo sin `cancel()` — intencional (cancelar un consumer a medio `XACK`/commit podría dejar
+  estado a medias), pero no debería pasar nunca en producción (cada consumer responde a `stop` en
+  ≤ `block_ms/1000 + 1s`); revisar si alguna vez se observa en logs reales.
+- **`tests/support/raw_messages.py` hardcodea la retención en 90 días** (`_RETENTION_DAYS = 90`) en
+  vez de leerla de `Settings.raw_message_retention_days`: si `FINANZIA_RAW_MESSAGE_RETENTION_DAYS`
+  cambia de valor, este helper de test queda desincronizado con el comportamiento real.
+- **`_BANK_VALUES` duplicado en 3 lugares**: `ingestion/infrastructure/orm.py`,
+  `ledger/infrastructure/orm.py` y la migración `0003_raw_messages_review.py` (más
+  `0002_ledger_core.py`) repiten la misma lista de bancos para sus `CHECK`/enums de columna. Forzado
+  por R4 (un módulo no puede importar la lista de otro); hay que mantenerlas sincronizadas a mano al
+  agregar un banco nuevo.
+- **El test del cron de requeue asume ejecución serial**: `tests/integration/ingestion/test_requeue_job.py`
+  afirma `count == 1` sobre una query global (todas las filas `pending` huérfanas, no filtradas por
+  usuario/test), lo que depende de que ningún otro test dentro de la misma sesión de `pytest` haya
+  dejado una fila `pending` sin limpiar (`db_clean` la protege hoy, pero un test futuro que no use
+  `db_clean` podría romperlo sin aviso claro).
 
 Riesgos abiertos del plan de Fase 2 (§4 del plan de implementación, ver detalle en §12.5 arriba):
-sin outbox transaccional (mitigado por D8/D9/D10 + el cron de requeue), `llm_error` → revisión
-inmediata en vez de reintento del consumer (D11), y el cap duro de 1 MB por request de ingesta.
+
+- Sin outbox transaccional (mitigado por D8/D9/D10 + el cron de requeue).
+- `llm_error` → revisión inmediata en vez de reintento del consumer (D11).
+- Cap duro de 1 MB por request de ingesta.
+- **Riesgo 7 — `client_hash` no se recomputa en el servidor**: el bucket de `posted_at` que entra en
+  el hash lo calcula la app, así que la idempotencia de ingesta depende de que el cliente sea
+  honesto. Aceptado: solo afecta los propios datos del usuario autenticado, y el dedupe de
+  transacciones en `ledger` (spec 004 §3) es la garantía final (P2).
+- **Riesgo 8 — presupuesto LLM comprobado antes / sumado después**: `used < limit` se verifica
+  antes de llamar al LLM y los tokens se suman después de la respuesta, así que una sola llamada
+  puede exceder el presupuesto mensual en hasta ~1K tokens. Aceptable para MVP.
+- **Riesgo 11 — prefiltro monetario de `no_template` puede saltarse mensajes raros**: un mensaje
+  bancario real sin ningún `$`/monto con separador de miles no llega al LLM (se descarta como
+  `no_template` sin gastar tokens); son casos raros, pero requieren revisión con métricas reales de
+  producción para confirmar que no se está perdiendo señal.
 
 ## 14. Verificación (corrida real, cierre de Fase 2 — 2026-09-21)
 
