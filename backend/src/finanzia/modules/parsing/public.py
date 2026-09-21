@@ -1,7 +1,9 @@
 """API publica de parsing: unico punto de entrada para otros modulos.
 
-Facha minima (D6) para que `ingestion` consuma los allowlists/config de
-captura de parsing sin importar sus internals (R4).
+Facha para que `ingestion` consuma los allowlists/config de captura de
+parsing (D6) y para que el worker (composition root) arme el consumer de
+`ingestion.RawMessageReceived` (D7, Task 7) sin importar internals de
+parsing (R4).
 """
 
 from __future__ import annotations
@@ -10,14 +12,26 @@ from typing import Any
 
 from finanzia.modules.parsing.domain.allowlist import NotificationDecision
 from finanzia.modules.parsing.domain.errors import ParsingError
+from finanzia.modules.parsing.events import ParseFailed, TransactionParsed
 from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
+from finanzia.modules.parsing.infrastructure.consumers import make_raw_message_received_handler
+from finanzia.modules.parsing.infrastructure.llm import build_llm_parser
+from finanzia.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
+from finanzia.modules.parsing.infrastructure.metrics import StructlogMetrics
 
 __all__ = [
     "NotificationDecision",
+    "ParseFailed",
     "ParsingError",
+    "RedisLlmBudget",
+    "StructlogMetrics",
+    "TransactionParsed",
     "bank_for_email_sender",
     "bank_for_notification",
+    "build_llm_parser",
     "capture_config",
+    "load_parsing_config",
+    "make_raw_message_received_handler",
 ]
 
 
