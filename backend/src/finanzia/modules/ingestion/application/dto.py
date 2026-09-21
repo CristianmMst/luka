@@ -1,0 +1,122 @@
+"""DTOs de entrada/salida de los casos de uso de ingestion (frozen, stdlib puro)."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID
+
+from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+
+# --- Entrada -------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class RawMessageInput:
+    """Comando de entrada de `IngestRawMessage` (spec 006 §2.2-2.3, §3.2)."""
+
+    user_id: UUID
+    channel: Channel
+    external_id: str
+    sender: str
+    title: str | None
+    text: str
+    received_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class NotificationItemInput:
+    """Un item de un batch de `POST /v1/ingest/notifications` (spec 006 §3.2, F4.3)."""
+
+    package: str
+    channel: Channel
+    posted_at: datetime
+    title: str | None
+    text: str
+    client_hash: str
+
+
+# --- Resultado de `IngestRawMessage` (spec 006 §4.4, D9) ----------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Accepted:
+    """El mensaje se persistio como `pending` y se publico `RawMessageReceived`."""
+
+    raw_message_id: UUID
+
+
+@dataclass(frozen=True, slots=True)
+class Duplicate:
+    """`(user_id, channel, external_id)` ya existia (idempotencia de ingesta, AC-5.2).
+
+    `republished=True` cuando la fila existente seguia `pending` y se volvio a
+    publicar `RawMessageReceived` (D9, mitiga la falta de outbox).
+    """
+
+    raw_message_id: UUID
+    republished: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Discarded:
+    """El remitente/paquete no esta soportado: nada se persistio (AC-2.4).
+
+    `reason` es `"unsupported_sender"` (email) o `"unsupported_package"`
+    (notification/sms_notification).
+    """
+
+    reason: str
+
+
+IngestOutcome = Accepted | Duplicate | Discarded
+
+
+@dataclass(frozen=True, slots=True)
+class BatchResult:
+    """Resultado agregado de `IngestNotificationsBatch`."""
+
+    accepted: int
+    duplicates: int
+    discarded: int
+
+
+# --- Lectura (fachada, Fase 3) -------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class RawMessageView:
+    """Proyeccion de solo lectura de un `raw_message`, expuesta via `public.py`."""
+
+    id: UUID
+    user_id: UUID
+    channel: Channel
+    bank: str | None
+    sender: str
+    body: str | None
+    status: RawMessageStatus
+    received_at: datetime
+
+
+# --- Puertos: allowlists (D6) ---------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class BankDecision:
+    """Resultado de `SenderPolicyPort.bank_for_notification` (spec 006 §3.2)."""
+
+    accepted: bool
+    bank: str | None
+
+
+__all__ = [
+    "Accepted",
+    "BankDecision",
+    "BatchResult",
+    "Discarded",
+    "Duplicate",
+    "IngestOutcome",
+    "NotificationItemInput",
+    "RawMessageInput",
+    "RawMessageView",
+]

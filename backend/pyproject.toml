@@ -138,7 +138,8 @@ modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.mo
 # cruce llegara con el consumidor de eventos de un modulo distinto al productor), asi
 # que no hay patron de `events.py` que ignorar aun: agregar uno sin uso real volveria a
 # disparar "No matches for ignored import" con la alerta por defecto ("error").
-ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.modules.identity.public"]
+ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.modules.identity.public",
+  "finanzia.modules.ingestion.infrastructure.sender_policy -> finanzia.modules.parsing.public"]
 
 [[tool.importlinter.contracts]]  # Kernel
 name = "Kernel - shared nunca importa modulos ni composition roots"

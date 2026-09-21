@@ -1,1 +1,183 @@
-"""API publica de ingestion: unico punto de entrada para otros modulos."""
+"""API publica de ingestion: unico punto de entrada para otros modulos.
+
+`ingest_raw_message`/`ingest_notifications_batch` son la fachada que usaran el
+webhook de Gmail y `POST /v1/ingest/notifications` (Fase 3/F4.3) sin conocer los
+adapters SQLAlchemy de ingestion. `get_raw_message_for_parsing` es como `parsing`
+lee el cuerpo de un mensaje ya persistido (D2: el evento `RawMessageReceived`
+solo lleva ids).
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from uuid import UUID
+
+from finanzia.modules.ingestion.application.dto import (
+    Accepted,
+    BatchResult,
+    Discarded,
+    Duplicate,
+    IngestOutcome,
+    NotificationItemInput,
+    RawMessageInput,
+    RawMessageView,
+)
+from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch import (
+    IngestNotificationsBatch,
+)
+from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
+from finanzia.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
+from finanzia.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
+from finanzia.modules.ingestion.domain.entities import RawMessage
+from finanzia.modules.ingestion.domain.enums import RawMessageStatus
+from finanzia.modules.ingestion.events import RawMessageReceived
+from finanzia.modules.ingestion.infrastructure.event_publisher import BusEventPublisher
+from finanzia.modules.ingestion.infrastructure.id_generator import SecretsIdGenerator
+from finanzia.modules.ingestion.infrastructure.logging import log_ingest_outcome
+from finanzia.modules.ingestion.infrastructure.repositories import SqlAlchemyRawMessageRepository
+from finanzia.modules.ingestion.infrastructure.sender_policy import ParsingSenderPolicy
+from finanzia.modules.ingestion.infrastructure.uow import SqlAlchemyUnitOfWork
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from datetime import datetime
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from finanzia.modules.ingestion.application.ports import ClockPort
+    from finanzia.shared.events.port import EventBusPort
+
+__all__ = [
+    "Accepted",
+    "BatchResult",
+    "Discarded",
+    "Duplicate",
+    "IngestOutcome",
+    "NotificationItemInput",
+    "RawMessageInput",
+    "RawMessageReceived",
+    "RawMessageView",
+    "get_raw_message_for_parsing",
+    "ingest_notifications_batch",
+    "ingest_raw_message",
+    "load_raw_messages_for_review",
+    "mark_raw_message",
+    "purge_expired_bodies",
+]
+
+_RETENTION_DAYS_DEFAULT = 90
+_BODY_MAX_BYTES_DEFAULT = 8192
+
+
+def _view(msg: RawMessage) -> RawMessageView:
+    return RawMessageView(
+        id=msg.id,
+        user_id=msg.user_id,
+        channel=msg.channel,
+        bank=msg.bank,
+        sender=msg.sender,
+        body=msg.body,
+        status=msg.status,
+        received_at=msg.received_at,
+    )
+
+
+def _build_ingest(
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    *,
+    retention_days: int,
+    body_max_bytes: int,
+) -> IngestRawMessage:
+    return IngestRawMessage(
+        repo=SqlAlchemyRawMessageRepository(session),
+        policy=ParsingSenderPolicy(),
+        events=BusEventPublisher(event_bus),
+        clock=clock,
+        ids=SecretsIdGenerator(),
+        uow=SqlAlchemyUnitOfWork(session),
+        retention_days=retention_days,
+        body_max_bytes=body_max_bytes,
+    )
+
+
+async def ingest_raw_message(  # noqa: PLR0913 - un parametro por dependencia externa + config
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    input: RawMessageInput,
+    *,
+    retention_days: int = _RETENTION_DAYS_DEFAULT,
+    body_max_bytes: int = _BODY_MAX_BYTES_DEFAULT,
+) -> IngestOutcome:
+    """Ingesta un mensaje crudo sobre `session` (spec 006 §2.2-2.3, §4.4, D9).
+
+    El llamador controla el ciclo de vida de `session` (scope, cierre), igual
+    que las demas fachadas de modulo. Registra una metrica de resultado
+    (`parsing_metric`, infra) sin loguear datos crudos del mensaje (P1/P6).
+    """
+    use_case = _build_ingest(
+        session, event_bus, clock, retention_days=retention_days, body_max_bytes=body_max_bytes
+    )
+    outcome = await use_case.execute(input)
+    log_ingest_outcome(outcome, input.channel.value)
+    return outcome
+
+
+async def ingest_notifications_batch(  # noqa: PLR0913 - un parametro por dependencia externa + config
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    user_id: UUID,
+    items: Sequence[NotificationItemInput],
+    *,
+    retention_days: int = _RETENTION_DAYS_DEFAULT,
+    body_max_bytes: int = _BODY_MAX_BYTES_DEFAULT,
+) -> BatchResult:
+    """Ingesta un batch de notificaciones/SMS (spec 006 §3.2, F4.3): un item
+    invalido no anula el resto (commit por item, dentro de `IngestRawMessage`).
+    """
+    ingest = _build_ingest(
+        session, event_bus, clock, retention_days=retention_days, body_max_bytes=body_max_bytes
+    )
+    batch = IngestNotificationsBatch(ingest=ingest)
+    return await batch.execute(user_id, items)
+
+
+async def get_raw_message_for_parsing(
+    session: AsyncSession, raw_message_id: UUID
+) -> RawMessageView | None:
+    """El mensaje crudo (con su cuerpo, si aun no fue purgado) que `parsing` lee
+    tras recibir `RawMessageReceived` (D2).
+    """
+    repo = SqlAlchemyRawMessageRepository(session)
+    msg = await repo.get(raw_message_id)
+    return _view(msg) if msg is not None else None
+
+
+async def mark_raw_message(
+    session: AsyncSession, raw_message_id: UUID, status: str, now: datetime
+) -> bool:
+    """Actualiza el estado de un mensaje crudo; no comitea (el llamador controla
+    la transaccion, D8).
+    """
+    use_case = MarkRawMessage(repo=SqlAlchemyRawMessageRepository(session))
+    return await use_case.execute(raw_message_id, RawMessageStatus(status), now)
+
+
+async def load_raw_messages_for_review(
+    session: AsyncSession, user_id: UUID, ids: Sequence[UUID]
+) -> dict[UUID, RawMessageView]:
+    """Vistas de mensajes crudos propios del usuario, indexadas por id (spec 004 §2.10)."""
+    repo = SqlAlchemyRawMessageRepository(session)
+    messages = await repo.get_many_for_user(user_id, ids)
+    return {msg.id: _view(msg) for msg in messages}
+
+
+async def purge_expired_bodies(session: AsyncSession, now: datetime) -> int:
+    """Pone `body=NULL` en las filas vencidas; comitea (job de purga, F3.7)."""
+    use_case = PurgeExpiredBodies(
+        repo=SqlAlchemyRawMessageRepository(session), uow=SqlAlchemyUnitOfWork(session)
+    )
+    return await use_case.execute(now)
