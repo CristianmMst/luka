@@ -163,6 +163,34 @@ class TestDeepSeekLlmParserRequest:
         assert isinstance(result, LlmInvalidOutput)
         assert result.tokens == 123
 
+    async def test_cuerpo_200_que_no_es_json_lanza_llm_unavailable(self) -> None:
+        """Un 200 con HTML de un proxy/WAF no es una respuesta del modelo: antes
+        propagaba `json.JSONDecodeError` fuera de `parse()` (nadie la capturaba
+        aguas arriba) en vez de mapear a `LlmUnavailable`.
+        """
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            del request
+            return httpx.Response(200, text="<html>503 Service Unavailable</html>")
+
+        parser = _make_parser(handler)
+
+        with pytest.raises(LlmUnavailable):
+            await parser.parse(_EXCERPT, _RECEIVED_ON)
+
+    async def test_decoding_error_lanza_llm_unavailable(self) -> None:
+        """`httpx.DecodingError` es `RequestError` pero NO `TransportError`, asi que
+        se escapaba del mapeo (igual que `TooManyRedirects`).
+        """
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.DecodingError("contenido ilegible", request=request)
+
+        parser = _make_parser(handler)
+
+        with pytest.raises(LlmUnavailable):
+            await parser.parse(_EXCERPT, _RECEIVED_ON)
+
     async def test_http_500_lanza_llm_unavailable(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request

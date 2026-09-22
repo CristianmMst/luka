@@ -77,9 +77,11 @@ class DeepSeekLlmParser:
         except httpx.HTTPStatusError as exc:
             self._log_request(status_code, start, tokens=None)
             raise LlmUnavailable(str(status_code)) from exc
-        except httpx.TransportError as exc:
-            # `httpx.TimeoutException` es subclase de `TransportError`: cubre
-            # timeouts y errores de red/conexion con una sola rama.
+        except httpx.RequestError as exc:
+            # `httpx.RequestError` (no `TransportError`) es la raiz correcta: cubre
+            # timeouts y errores de red/conexion (`TransportError`) y ademas
+            # `DecodingError`/`TooManyRedirects`, que son hermanas de
+            # `TransportError` y antes se escapaban sin mapear a `LlmUnavailable`.
             self._log_request(status_code, start, tokens=None)
             raise LlmUnavailable(type(exc).__name__) from exc
 
@@ -88,7 +90,19 @@ class DeepSeekLlmParser:
     def _parse_response(
         self, response: httpx.Response, status_code: int | None, start: float
     ) -> LlmResult:
-        payload: dict[str, Any] = response.json()
+        try:
+            payload: dict[str, Any] = response.json()
+        except ValueError as exc:  # `json.JSONDecodeError`/`UnicodeDecodeError`
+            # Un 200 cuyo cuerpo ni siquiera es JSON (HTML de un proxy/WAF, cuerpo
+            # truncado) no es una respuesta del modelo: es el endpoint que no esta
+            # disponible, asi que se mapea a `LlmUnavailable` (revision por
+            # `llm_error`) en vez de propagar el `JSONDecodeError` fuera de
+            # `parse()`, que nadie captura y terminaba en DLQ con la fila `pending`.
+            # Un JSON valido pero con envelope/contenido invalido es otra cosa y
+            # sigue devolviendo `LlmInvalidOutput` (abajo).
+            self._log_request(status_code, start, tokens=None)
+            raise LlmUnavailable("invalid_json_body") from exc
+
         usage = payload.get("usage") or {}
         tokens = int(usage.get("total_tokens") or 0)
         self._log_request(status_code, start, tokens=tokens)
