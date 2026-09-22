@@ -481,27 +481,6 @@ Riesgos abiertos del plan de Fase 2 (§4 del plan de implementación, ver detall
   `no_template` sin gastar tokens); son casos raros, pero requieren revisión con métricas reales de
   producción para confirmar que no se está perdiendo señal.
 
-## 14bis. Re-verificación (ola de fixes de cierre — 2026-09-22)
-
-Tras la ola de fixes de la revisión final de rama (A1, A2, A3, A5, A10, B-I1..B-I3, B-M1, B-M2,
-B-M4, B-M5), todo desde `backend/`:
-
-```sh
-uv run ruff check .          # All checks passed!
-uv run ruff format --check . # 333 files already formatted
-uv run pyright               # 0 errors, 0 warnings, 0 informations
-uv run lint-imports          # Contracts: 6 kept, 0 broken
-uv run pytest -q             # 794 passed, 1 warning (DeprecationWarning preexistente de arq) in 67.36s
-uv run pytest tests/unit -m unit   --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain   --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain   --cov-fail-under=90
-  # Required test coverage of 90% reached. Total coverage: 98.87% — 534 passed
-uv run alembic upgrade head && uv run alembic check
-  # 0003 -> 0004 (raw_messages_requeue_attempts); No new upgrade operations detected.
-```
-
-El recorrido en vivo de §14 no se repitió en esta ola (no cambió ningún endpoint); sí cambió el
-esquema (migración `0004`, columna `raw_messages.requeue_attempts`) y el horario del cron de purga
-(08:00 UTC = 03:00 en Colombia).
-
 ## 14. Verificación (corrida real, cierre de Fase 2 — 2026-09-21)
 
 Todo corrido desde `backend/` contra la rama `CristianmMst/fase2-parsing`:
@@ -566,3 +545,25 @@ existente):
 
 Tras la verificación: `docker compose -f docker-compose.dev.yml stop api worker` (postgres/redis
 quedaron corriendo).
+
+
+## 15. Re-verificación (ola de fixes de cierre — 2026-09-22)
+
+Tras la ola de fixes de la revisión final de rama (A1, A2, A3, A5, A10, B-I1..B-I3, B-M1, B-M2,
+B-M4, B-M5), todo desde `backend/`:
+
+```sh
+uv run ruff check .          # All checks passed!
+uv run ruff format --check . # 333 files already formatted
+uv run pyright               # 0 errors, 0 warnings, 0 informations
+uv run lint-imports          # Contracts: 6 kept, 0 broken
+uv run pytest -q             # 794 passed, 1 warning (DeprecationWarning preexistente de arq) in 67.36s
+uv run pytest tests/unit -m unit   --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain   --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain   --cov-fail-under=90
+  # Required test coverage of 90% reached. Total coverage: 98.87% — 534 passed
+uv run alembic upgrade head && uv run alembic check
+  # 0003 -> 0004 (raw_messages_requeue_attempts); No new upgrade operations detected.
+```
+
+El recorrido en vivo de §14 no se repitió en esta ola (no cambió ningún endpoint); sí cambió el
+esquema (migración `0004`, columna `raw_messages.requeue_attempts`) y el horario del cron de purga
+(08:00 UTC = 03:00 en Colombia).

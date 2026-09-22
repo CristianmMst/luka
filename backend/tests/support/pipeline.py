@@ -93,14 +93,15 @@ class PipelineHarness:
         de cualquier publish del test (evita perder el primer evento por la
         ventana `$` de `XGROUP CREATE`).
         """
+        parsing_config = parsing_public.load_parsing_config()
         parsing_handler = parsing_public.make_raw_message_received_handler(
             session_factory=session_factory,
             event_bus=bus,
             clock=clock,
             llm=llm,
             budget=budget,
-            registry=parsing_public.load_parsing_config().templates,
-            known_banks=parsing_public.load_parsing_config().senders.known_banks(),
+            registry=parsing_config.templates,
+            known_banks=parsing_config.senders.known_banks(),
             metrics=parsing_public.StructlogMetrics(),
             settings=settings,
         )

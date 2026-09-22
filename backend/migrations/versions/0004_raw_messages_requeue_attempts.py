@@ -9,7 +9,7 @@ republicaba `RawMessageReceived` para toda fila `pending` vencida, sin limite.
 Un mensaje que falla siempre (p. ej. un cuerpo que revienta el handler) se
 reintentaba 5 veces por entrega, iba a la DLQ, quedaba `pending` y el cron lo
 volvia a publicar cada ~15 min para siempre. Este contador acota ese ciclo: a
-partir de `_MAX_REQUEUE_ATTEMPTS` republicaciones la fila pasa a `failed`.
+partir de `_MAX_ATTEMPTS_DEFAULT` republicaciones la fila pasa a `failed`.
 """
 
 from collections.abc import Sequence
