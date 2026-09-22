@@ -31,6 +31,10 @@ class BusEventPublisher:
         self._bus = bus
 
     async def publish(self, event: object) -> None:
+        # Sin `try/except`: D8 (publicar ANTES de marcar/comitear) solo garantiza
+        # "nunca se pierde el evento" mientras esta excepcion se propague. Tragarla
+        # aqui convertiria el fallo de publish en una perdida silenciosa y
+        # permanente del evento, con la fila ya marcada `parsed`/`failed`.
         await self._bus.publish(event)
 
 

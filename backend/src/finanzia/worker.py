@@ -126,12 +126,18 @@ async def log_transaction_captured(event: object) -> None:
 
 
 async def purge_raw_message_bodies(ctx: dict[str, Any]) -> None:
-    """Cron diario 03:00: anula `raw_messages.body` vencido (spec 004 §6, riesgo P6).
+    """Cron diario 08:00 UTC = 03:00 Bogota: anula `raw_messages.body` vencido
+    (spec 004 §6, riesgo P6).
 
     Nunca loguea el cuerpo purgado ni ningun otro dato crudo del mensaje, solo el
     conteo de filas afectadas.
     """
-    session_factory = ctx["events_session_factory"]
+    session_factory = ctx.get("events_session_factory")
+    if session_factory is None:
+        # `on_startup` no llego a poblar `ctx` (p. ej. murio a mitad): mejor
+        # loguear y salir que reventar el job con un `KeyError`.
+        _logger.warning("cron_sin_contexto", job="purge_raw_message_bodies")
+        return
     clock = SystemClock()
     async with session_factory() as session:
         count = await ingestion_public.purge_expired_bodies(session, clock.now())
@@ -142,8 +148,11 @@ async def requeue_pending_raw_messages(ctx: dict[str, Any]) -> None:
     """Cron cada 15 min: republica `RawMessageReceived` para `raw_messages` `pending`
     huerfanos (riesgo 4 / D9, mitiga la falta de outbox sin outbox).
     """
-    session_factory = ctx["events_session_factory"]
-    bus = ctx["events_bus"]
+    session_factory = ctx.get("events_session_factory")
+    bus = ctx.get("events_bus")
+    if session_factory is None or bus is None:
+        _logger.warning("cron_sin_contexto", job="requeue_pending_raw_messages")
+        return
     clock = SystemClock()
     async with session_factory() as session:
         summary = await ingestion_public.requeue_pending_raw_messages(session, bus, clock)
@@ -332,10 +341,17 @@ class WorkerSettings:
     """Configuracion de arq (spec 003 SS2.4): mismo Docker image, proceso separado."""
 
     functions: ClassVar[list[Any]] = [ping]
-    # Task 10 (F3.7 adelantado, riesgo 4): purga diaria de cuerpos (03:00, spec 004
-    # §6) y reencolado de `raw_messages` `pending` huerfanos (cada 15 min, D9).
+    # Task 10 (F3.7 adelantado, riesgo 4): purga diaria de cuerpos (spec 004 §6) y
+    # reencolado de `raw_messages` `pending` huerfanos (cada 15 min, D9).
+    #
+    # `arq.cron` agenda contra el reloj del PROCESO, y la imagen slim no define
+    # `TZ`, asi que el contenedor corre en UTC: `hour=8` = 03:00 en Colombia
+    # (America/Bogota, UTC-5 fijo, sin horario de verano), la hora tranquila que
+    # documenta la spec. Con `hour=3` la purga caia a las 22:00 de Bogota, en
+    # plena franja de uso. No se usa un cron con zona horaria (arq no lo soporta):
+    # el offset de Colombia es constante, asi que la conversion fija alcanza.
     cron_jobs: ClassVar[list[Any]] = [
-        cron(purge_raw_message_bodies, hour=3, minute=0, run_at_startup=False),
+        cron(purge_raw_message_bodies, hour=8, minute=0, run_at_startup=False),
         cron(requeue_pending_raw_messages, minute={0, 15, 30, 45}, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))

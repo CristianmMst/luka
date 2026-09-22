@@ -246,8 +246,9 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
 
 
 def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_settings_module) -> None:
-    """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 03:00 y reencolado cada 15
-    min (`minute={0,15,30,45}`), ninguno corre al arrancar (`run_at_startup=False`).
+    """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 08:00 UTC (= 03:00 en
+    Bogota, el contenedor corre en UTC) y reencolado cada 15 min
+    (`minute={0,15,30,45}`); ninguno corre al arrancar (`run_at_startup=False`).
     """
     cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
     assert len(cron_jobs) == 2
@@ -256,13 +257,28 @@ def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_setting
     assert set(by_name) == {"cron:purge_raw_message_bodies", "cron:requeue_pending_raw_messages"}
 
     purge_job = by_name["cron:purge_raw_message_bodies"]
-    assert purge_job.hour == 3
+    assert purge_job.hour == 8  # UTC = 03:00 America/Bogota (UTC-5 fijo)
     assert purge_job.minute == 0
     assert purge_job.run_at_startup is False
 
     requeue_job = by_name["cron:requeue_pending_raw_messages"]
     assert requeue_job.minute == {0, 15, 30, 45}
     assert requeue_job.run_at_startup is False
+
+
+@pytest.mark.parametrize("job_name", ["purge_raw_message_bodies", "requeue_pending_raw_messages"])
+async def test_crons_con_ctx_vacio_loguean_y_no_revientan(worker_settings_module, job_name) -> None:
+    """Si `on_startup` murio a mitad, `ctx` no trae las claves de eventos: los crons
+    salen temprano con un warning en vez de un `KeyError` (review final A10).
+    """
+    job = getattr(worker_settings_module, job_name)
+
+    with structlog.testing.capture_logs() as captured:
+        await job({})
+
+    logs = [e for e in captured if e.get("event") == "cron_sin_contexto"]
+    assert len(logs) == 1
+    assert logs[0]["job"] == job_name
 
 
 async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(  # noqa: PLR0913, PLR0917 - un parametro por fixture inyectada (patron pytest)

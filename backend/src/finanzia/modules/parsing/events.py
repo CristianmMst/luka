@@ -63,10 +63,13 @@ class ParseFailed:
 def deterministic_event_id(outcome: str, raw_message_id: UUID) -> UUID:
     """`event_id` determinista por resultado + `raw_message_id` (D8).
 
-    Un reproceso del mismo `raw_message_id` con el mismo `outcome` (p. ej.
-    "transaction_parsed" o el `reason` de un `ParseFailed`) produce el mismo
-    `event_id`, asi que el `IdempotentHandler` absorbe la reentrega aunque el
-    evento haya llegado en una entrada de stream distinta.
+    `outcome` es SOLO el literal `"parsed"` o `"failed"` (ver `ParseRawMessage`):
+    el `reason` del `ParseFailed` NO entra en el id a proposito. Reprocesar el
+    mismo `raw_message_id` produce asi el mismo `event_id` aunque el motivo de
+    fallo cambie entre corridas (p. ej. `llm_error` y despues `llm_budget_
+    exceeded`), y el `IdempotentHandler` del grupo `ledger-review` absorbe la
+    reentrega: un mensaje crudo genera como mucho UNA fila de revision, que es
+    justo el invariante que se quiere (D12).
     """
     return uuid5(NAMESPACE_URL, f"finanzia:parsing:{outcome}:{raw_message_id}")
 
