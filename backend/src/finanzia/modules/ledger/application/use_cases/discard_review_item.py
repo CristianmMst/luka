@@ -38,7 +38,12 @@ class DiscardReviewItem:
             raise ReviewAlreadyResolved
 
         now = self._clock.now()
-        await self._review_queue.resolve(user_id, raw_message_id, ReviewResolution.DISCARDED, now)
+        # Mismo guard optimista que `ConvertReviewItem`: `resolve` devuelve `False`
+        # si otra transaccion resolvio el item entre el `get` y este UPDATE.
+        if not await self._review_queue.resolve(
+            user_id, raw_message_id, ReviewResolution.DISCARDED, now
+        ):
+            raise ReviewAlreadyResolved
         await self._review_source.mark_status(raw_message_id, "discarded", now)
         await self._uow.commit()
 

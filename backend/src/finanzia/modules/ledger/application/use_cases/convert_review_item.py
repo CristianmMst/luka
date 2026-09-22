@@ -87,9 +87,17 @@ class ConvertReviewItem:
         tx = await self._create_manual.create(manual_cmd, source_override=source_override)
 
         now = self._clock.now()
-        await self._review_queue.resolve(
+        # Guard optimista: `resolve` es un UPDATE condicional (`WHERE resolved_at IS
+        # NULL`) y devuelve `False` si otra transaccion resolvio el item primero. El
+        # `item.is_open` de arriba solo mira el estado leido al entrar, asi que dos
+        # converts concurrentes lo pasan los dos y, sin este chequeo, ambos comitean
+        # (dos transacciones para un unico item de revision). Al lanzar antes del
+        # commit, la sesion del perdedor se descarta sin persistir la transaccion
+        # manual que `create_manual.create` dejo pendiente, y la API responde 409.
+        if not await self._review_queue.resolve(
             cmd.user_id, cmd.raw_message_id, ReviewResolution.CONVERTED, now
-        )
+        ):
+            raise ReviewAlreadyResolved
         await self._review_source.mark_status(cmd.raw_message_id, "reviewed", now)
 
         await self._uow.commit()

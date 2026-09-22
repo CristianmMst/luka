@@ -1,5 +1,6 @@
 """Tests de integracion de `/v1/review` (spec 005 SS7, D1, F2.5/F2.6)."""
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
@@ -137,6 +138,70 @@ async def test_convert_via_api_crea_transaccion_y_marca_reviewed(
         f"/v1/review/{raw_message_id}/convert", json=_convert_body(), headers=user.headers
     )
     assert second.status_code == 409
+
+
+async def test_dos_converts_concurrentes_crean_una_sola_transaccion(
+    client: AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """Dos POST /convert a la vez: uno gana (201) y el otro es 409, nunca dos transacciones.
+
+    El chequeo `item.is_open` en memoria no basta (los dos lo pasan antes de que
+    ninguno comitee); la garantia real es el UPDATE condicional
+    (`WHERE resolved_at IS NULL`) del repositorio, cuyo `rowcount` el caso de uso
+    tiene que mirar antes de comitear.
+    """
+    user = await user_factory()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id, body=_BODY)
+    await _enqueue_via_parse_failed(session_factory, user_id=user.id, raw_message_id=raw_message_id)
+
+    async def _convert() -> int:
+        response = await client.post(
+            f"/v1/review/{raw_message_id}/convert", json=_convert_body(), headers=user.headers
+        )
+        return response.status_code
+
+    statuses = sorted(await asyncio.gather(_convert(), _convert()))
+
+    assert statuses == [201, 409]
+
+    async with session_factory() as session:
+        transacciones = (
+            await session.execute(
+                text("SELECT count(*) FROM transactions WHERE user_id = :u"), {"u": str(user.id)}
+            )
+        ).scalar_one()
+        resueltos = (
+            await session.execute(
+                text(
+                    "SELECT count(*) FROM review_queue "
+                    "WHERE raw_message_id = :i AND resolved_at IS NOT NULL"
+                ),
+                {"i": str(raw_message_id)},
+            )
+        ).scalar_one()
+    assert transacciones == 1
+    assert resueltos == 1
+
+
+async def test_dos_discards_concurrentes_resuelven_una_sola_vez(
+    client: AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """Mismo guard optimista en `discard` (un 200 y un 409)."""
+    user = await user_factory()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id, body=_BODY)
+    await _enqueue_via_parse_failed(session_factory, user_id=user.id, raw_message_id=raw_message_id)
+
+    async def _discard() -> int:
+        response = await client.post(f"/v1/review/{raw_message_id}/discard", headers=user.headers)
+        return response.status_code
+
+    statuses = sorted(await asyncio.gather(_discard(), _discard()))
+
+    assert statuses == [200, 409]
 
 
 async def test_convert_item_inexistente_es_404(
