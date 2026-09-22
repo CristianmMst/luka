@@ -22,6 +22,7 @@ from finanzia.modules.ingestion.application.dto import (
     NotificationItemInput,
     RawMessageInput,
     RawMessageView,
+    RequeueSummary,
 )
 from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch import (
     IngestNotificationsBatch,
@@ -61,6 +62,7 @@ __all__ = [
     "RawMessageInput",
     "RawMessageReceived",
     "RawMessageView",
+    "RequeueSummary",
     "get_raw_message_for_parsing",
     "ingest_notifications_batch",
     "ingest_raw_message",
@@ -197,9 +199,12 @@ async def requeue_pending_raw_messages(
     *,
     older_than: timedelta = _REQUEUE_OLDER_THAN_DEFAULT,
     limit: int = _REQUEUE_LIMIT_DEFAULT,
-) -> int:
+) -> RequeueSummary:
     """Republica `RawMessageReceived` para filas `pending` huerfanas (riesgo 4, D9);
     comitea (job cron cada 15 min).
+
+    Las filas que ya se republicaron demasiadas veces pasan a `failed` en vez de
+    reencolarse otra vez (ver `RequeuePendingRawMessages`).
     """
     use_case = RequeuePendingRawMessages(
         repo=SqlAlchemyRawMessageRepository(session),

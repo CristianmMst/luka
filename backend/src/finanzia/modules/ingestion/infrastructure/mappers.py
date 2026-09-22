@@ -20,6 +20,7 @@ def raw_message_row_to_entity(row: RawMessageRow) -> RawMessage:
         status=RawMessageStatus(row.status),
         received_at=row.received_at,
         purge_after=row.purge_after,
+        requeue_attempts=row.requeue_attempts,
     )
 
 
@@ -36,6 +37,7 @@ def raw_message_entity_to_values(msg: RawMessage) -> dict[str, Any]:
         "status": msg.status.value,
         "received_at": msg.received_at,
         "purge_after": msg.purge_after,
+        "requeue_attempts": msg.requeue_attempts,
     }
 
 

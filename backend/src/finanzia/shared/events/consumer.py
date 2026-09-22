@@ -183,7 +183,14 @@ class StreamConsumer:
         dlq_fields[b"reason"] = reason.encode()
         # `FieldT`/`EncodableT` (alias concretos, no TypeVars): se castea al tipo
         # exacto que espera `xadd` para esquivar la invariancia de `Dict`.
-        await self._redis.xadd(self._bus.dlq_stream, cast("dict[FieldT, EncodableT]", dlq_fields))
+        # Mismo `MAXLEN ~` que los streams principales (`RedisStreamsEventBus.publish`):
+        # la DLQ tambien tiene que estar acotada o crece sin limite.
+        await self._redis.xadd(
+            self._bus.dlq_stream,
+            cast("dict[FieldT, EncodableT]", dlq_fields),
+            maxlen=self._bus.maxlen,
+            approximate=True,
+        )
 
 
 __all__ = ["StreamConsumer"]

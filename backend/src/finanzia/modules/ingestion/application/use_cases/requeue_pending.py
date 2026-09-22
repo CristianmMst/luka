@@ -6,7 +6,11 @@ worker antes de procesarla), la fila queda `pending` para siempre sin este cron.
 Republica el evento para toda fila `pending` cuyo `updated_at` sea mas viejo que
 `older_than` (10 min por defecto le da margen al camino feliz: ingesta -> publish
 -> consumo por `parsing` antes de considerarla huerfana) y le actualiza
-`updated_at` (`touch`) para no volver a republicarla en la misma ventana.
+`updated_at` (`mark_requeued`) para no volver a republicarla en la misma ventana.
+
+El reencolado esta acotado (`max_attempts`): una fila que ya se republico
+`max_attempts` veces pasa a `failed` en vez de volver al stream, cerrando el
+ciclo infinito cron -> 5 entregas -> DLQ -> sigue `pending` -> cron ...
 """
 
 from __future__ import annotations
@@ -14,6 +18,8 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from finanzia.modules.ingestion.application.dto import RequeueSummary
+from finanzia.modules.ingestion.domain.enums import RawMessageStatus
 from finanzia.modules.ingestion.events import RawMessageReceived
 
 if TYPE_CHECKING:
@@ -27,6 +33,13 @@ if TYPE_CHECKING:
 
 _OLDER_THAN_DEFAULT = timedelta(minutes=10)
 _LIMIT_DEFAULT = 500
+#: Republicaciones permitidas por fila antes de darla por perdida (riesgo 4 / D9).
+#: Sin esta cota, un mensaje que falla siempre queda en un ciclo infinito: el
+#: consumer lo reintenta `max_deliveries` veces, lo manda a la DLQ y lo ACKea,
+#: pero la fila sigue `pending` y este cron la republica cada ~15 min para
+#: siempre. Con la cota, a la republicacion numero 6 la fila pasa a `failed`
+#: (5 x 5 entregas = 25 intentos reales de parseo antes de rendirse).
+_MAX_ATTEMPTS_DEFAULT = 5
 
 
 class RequeuePendingRawMessages:
@@ -52,12 +65,25 @@ class RequeuePendingRawMessages:
         *,
         older_than: timedelta = _OLDER_THAN_DEFAULT,
         limit: int = _LIMIT_DEFAULT,
-    ) -> int:
+        max_attempts: int = _MAX_ATTEMPTS_DEFAULT,
+    ) -> RequeueSummary:
+        """Republica las filas huerfanas y agota las que ya se republicaron de mas.
+
+        Devuelve cuantas se republicaron y cuantas pasaron a `failed` por superar
+        `max_attempts` (esas ultimas ya no las vuelve a tomar el cron: dejan de
+        estar `pending`). Comitea una sola vez al final.
+        """
         now = self._clock.now()
         before = now - older_than
         rows = await self._repo.list_pending_older_than(before, limit)
 
+        requeued = 0
+        exhausted = 0
         for row in rows:
+            if row.requeue_attempts >= max_attempts:
+                await self._repo.set_status(row.id, RawMessageStatus.FAILED, now)
+                exhausted += 1
+                continue
             await self._events.publish(
                 RawMessageReceived(
                     event_id=self._ids.new_id(),
@@ -69,10 +95,11 @@ class RequeuePendingRawMessages:
                     received_at=row.received_at,
                 )
             )
-            await self._repo.touch(row.id, now)
+            await self._repo.mark_requeued(row.id, now)
+            requeued += 1
 
         await self._uow.commit()
-        return len(rows)
+        return RequeueSummary(requeued=requeued, exhausted=exhausted)
 
 
-__all__ = ["RequeuePendingRawMessages"]
+__all__ = ["RequeuePendingRawMessages", "RequeueSummary"]

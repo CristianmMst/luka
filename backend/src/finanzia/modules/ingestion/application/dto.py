@@ -89,6 +89,18 @@ class BatchResult:
     discarded: int
 
 
+@dataclass(frozen=True, slots=True)
+class RequeueSummary:
+    """Resultado de una corrida de `RequeuePendingRawMessages` (riesgo 4 / D9).
+
+    `exhausted` son las filas que superaron el maximo de republicaciones y
+    pasaron a `failed`: dejan de estar `pending`, asi que el cron ya no las toma.
+    """
+
+    requeued: int
+    exhausted: int
+
+
 # --- Lectura (fachada, Fase 3) -------------------------------------------------------
 
 
@@ -127,4 +139,5 @@ __all__ = [
     "NotificationItemInput",
     "RawMessageInput",
     "RawMessageView",
+    "RequeueSummary",
 ]

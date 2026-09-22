@@ -29,9 +29,9 @@ class InMemoryRawMessageRepo:
     external_id)` como `insert_if_absent` idempotente.
     """
 
-    #: sentinel `updated_at` para filas nunca "tocadas" (`touch`): muy en el pasado,
-    #: asi que por defecto siempre cuentan como huerfanas en `list_pending_older_than`
-    #: hasta que un test llame `touch` explicito.
+    #: sentinel `updated_at` para filas nunca reencoladas (`mark_requeued`): muy en
+    #: el pasado, asi que por defecto siempre cuentan como huerfanas en
+    #: `list_pending_older_than` hasta que un test llame `mark_requeued` explicito.
     _SENTINEL_UPDATED_AT = datetime.min.replace(tzinfo=UTC)
 
     def __init__(self) -> None:
@@ -87,8 +87,11 @@ class InMemoryRawMessageRepo:
         pending.sort(key=lambda msg: self.updated_at.get(msg.id, self._SENTINEL_UPDATED_AT))
         return pending[:limit]
 
-    async def touch(self, id: UUID, now: datetime) -> None:
+    async def mark_requeued(self, id: UUID, now: datetime) -> None:
         self.updated_at[id] = now
+        msg = self.by_id.get(id)
+        if msg is not None:
+            self.by_id[id] = replace(msg, requeue_attempts=msg.requeue_attempts + 1)
 
 
 class FakeSenderPolicy:

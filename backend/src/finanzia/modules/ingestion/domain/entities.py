@@ -27,6 +27,9 @@ class RawMessage:
     status: RawMessageStatus
     received_at: datetime
     purge_after: datetime
+    #: Republicaciones hechas por el cron de reencolado (riesgo 4 / D9); a partir de
+    #: `RequeuePendingRawMessages.max_attempts` la fila deja de reencolarse.
+    requeue_attempts: int = 0
 
     def __post_init__(self) -> None:
         _require_aware(self.received_at)

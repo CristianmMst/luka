@@ -50,9 +50,12 @@ class RawMessageRepositoryPort(Protocol):
         """
         ...
 
-    async def touch(self, id: UUID, now: datetime) -> None:
-        """Actualiza `updated_at` sin tocar `status` (evita republicar la misma fila
-        en cada corrida del cron dentro de la misma ventana).
+    async def mark_requeued(self, id: UUID, now: datetime) -> None:
+        """Actualiza `updated_at` (sin tocar `status`) e incrementa `requeue_attempts`.
+
+        Lo primero evita republicar la misma fila en cada corrida del cron dentro
+        de la misma ventana; lo segundo acota cuantas veces se republica en total
+        (riesgo 4 / D9).
         """
         ...
 

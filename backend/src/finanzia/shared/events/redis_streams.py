@@ -30,7 +30,9 @@ class RedisStreamsEventBus:
         self._redis = redis
         self._registry = registry
         self._prefix = prefix
-        self._maxlen = maxlen
+        # Publico: `StreamConsumer._to_dlq` recorta la DLQ con el MISMO limite que
+        # los streams principales (sin el, la DLQ crece sin cota).
+        self.maxlen = maxlen
         self.dlq_stream = f"{prefix}:dlq"
 
     def stream_name(self, event_type: str) -> str:
@@ -43,7 +45,7 @@ class RedisStreamsEventBus:
         # `dict[str, str]` no es asignable directo por la invariancia de `Dict`,
         # de ahi el `cast` al tipo exacto que espera `xadd`.
         payload = cast("dict[FieldT, EncodableT]", fields)
-        await self._redis.xadd(stream, payload, maxlen=self._maxlen, approximate=True)
+        await self._redis.xadd(stream, payload, maxlen=self.maxlen, approximate=True)
 
     async def ensure_group(self, stream: str, group: str) -> None:
         """`XGROUP CREATE stream group $ MKSTREAM`; ignora `BUSYGROUP` (ya existia)."""

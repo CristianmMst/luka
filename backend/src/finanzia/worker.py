@@ -146,8 +146,8 @@ async def requeue_pending_raw_messages(ctx: dict[str, Any]) -> None:
     bus = ctx["events_bus"]
     clock = SystemClock()
     async with session_factory() as session:
-        count = await ingestion_public.requeue_pending_raw_messages(session, bus, clock)
-    _logger.info("raw_messages_requeued", count=count)
+        summary = await ingestion_public.requeue_pending_raw_messages(session, bus, clock)
+    _logger.info("raw_messages_requeued", count=summary.requeued, exhausted=summary.exhausted)
 
 
 async def _supervise(

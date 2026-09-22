@@ -174,13 +174,25 @@ async def test_mismo_event_id_no_reejecuta_pero_hace_ack(
 
 
 async def test_handler_que_falla_termina_en_dlq_tras_max_deliveries(
-    redis_client, registry: EventRegistry
+    redis_client, registry: EventRegistry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     bus = _bus(redis_client, registry)
     stream = bus.stream_name(_EVENT_TYPE)
     await bus.ensure_group(stream, "g1")
     event = _make_event()
     attempts: list[object] = []
+    # Espia del `XADD` a la DLQ: el recorte de la DLQ no se puede observar por
+    # `XLEN` (MAXLEN ~ es aproximado y no recorta streams chicos), asi que se
+    # verifica que el consumer pase el limite.
+    dlq_xadd_kwargs: list[dict[str, object]] = []
+    original_xadd = redis_client.xadd
+
+    async def recording_xadd(name: str, fields: object, **kwargs: object) -> object:
+        if name == bus.dlq_stream:
+            dlq_xadd_kwargs.append(kwargs)
+        return await original_xadd(name, fields, **kwargs)
+
+    monkeypatch.setattr(redis_client, "xadd", recording_xadd)
 
     async def failing_handler(event: object) -> None:
         attempts.append(event)
@@ -220,6 +232,7 @@ async def test_handler_que_falla_termina_en_dlq_tras_max_deliveries(
     dlq_entries = await redis_client.xrange(bus.dlq_stream)
     assert len(dlq_entries) == 1
     _dlq_id, dlq_fields = dlq_entries[0]
+    assert dlq_xadd_kwargs == [{"maxlen": bus.maxlen, "approximate": True}]
     assert dlq_fields[b"failed_group"] == b"g1"
     assert dlq_fields[b"event_id"] == str(event.event_id).encode()
     # max_deliveries=2 cuenta INTENTOS de handler: se intenta 2 veces (delivery_count

@@ -5,7 +5,16 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from finanzia.shared.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -45,3 +54,6 @@ class RawMessageRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'pending'"))
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     purge_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Veces que el cron de reencolado republico `RawMessageReceived` para esta fila
+    # (riesgo 4 / D9): acota el ciclo cron -> DLQ -> sigue `pending` -> cron ...
+    requeue_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
