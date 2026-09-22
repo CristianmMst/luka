@@ -206,7 +206,7 @@ Eventos y grupos de consumidores (Fase 1 + Fase 2):
 | `parsing.TransactionParsed` | parsing | `ledger` | worker (ledger) | dedupe + inserta transacción (F2.5) |
 | `parsing.ParseFailed` | parsing | `ledger-review` | worker (ledger) | encola en `review_queue` (F2.6) |
 
-El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación evento/grupo de la tabla, salvo `ledger-observer` que ya existía en Fase 1) más 2 cron jobs: `purge_raw_message_bodies` (diario 03:00) y `requeue_pending_raw_messages` (cada 15 min) — ver §12.
+El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación evento/grupo de la tabla, salvo `ledger-observer` que ya existía en Fase 1) más 2 cron jobs: `purge_raw_message_bodies` (diario 08:00 UTC = 03:00 en Colombia; `arq` agenda contra el reloj del proceso y el contenedor corre en UTC) y `requeue_pending_raw_messages` (cada 15 min) — ver §12.
 
 ## 10. Variables de entorno (`.env`)
 
@@ -370,8 +370,10 @@ logs.
 - **Sin outbox transaccional**: el evento de salida se publica antes del commit del estado del
   `raw_message` (D8, `event_id` determinista absorbe reentregas); el hueco "commit del estado ok,
   publish falla" lo cierra el cron `requeue_pending_raw_messages` (cada 15 min, filas `pending` con
-  más de 10 min sin tocar). No hay outbox transaccional real; propuesto para una fase futura si un
-  caso de uso lo exige.
+  más de 10 min sin tocar). El reencolado está acotado: `raw_messages.requeue_attempts` cuenta las
+  republicaciones y a la sexta la fila pasa a `failed` en vez de volver al stream, para que un
+  mensaje que falla siempre no rebote entre el cron y la DLQ para siempre. No hay outbox
+  transaccional real; propuesto para una fase futura si un caso de uso lo exige.
 - **`llm_error` → revisión inmediata** (D11): una caída de DeepSeek de minutos manda mensajes a
   revisión en vez de usar el reintento del consumer de Redis Streams. Elegido visibilidad sobre
   latencia; revisar con métricas tras Fase 3.
@@ -388,12 +390,43 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   `requeue_pending_raw_messages` (hoy solo existen `ix_raw_messages_user_id_status` e
   `ix_raw_messages_purge_after`); a añadir antes de que el volumen de filas `pending` lo justifique
   (candidato natural: junto con F3, cuando entre el volumen real de Gmail).
-- **`response.json()` sin guardar y `httpx.RequestError` incompleto** en el adapter DeepSeek
-  (`parsing/infrastructure/llm/deepseek.py`): un 200 con envelope malformado (no JSON válido)
-  propagaría `json.JSONDecodeError` sin capturar, en vez de convertirse en `LlmInvalidOutput`. Además
-  el `except httpx.TransportError` solo cubre ese subárbol; otras subclases de `httpx.RequestError`
-  como `DecodingError` o `TooManyRedirects` no están mapeadas a `LlmUnavailable` y se propagarían sin
-  capturar.
+- **El camino HTTP real de DeepSeek nunca se ejercitó contra un endpoint vivo**: toda la cobertura
+  de `parsing/infrastructure/llm/deepseek.py` usa `httpx.MockTransport`, y el recorrido de §14 corrió
+  con el LLM deshabilitado (`enabled=False`, sin `FINANZIA_DEEPSEEK_API_KEY`). Lo verificado es la
+  forma del request/respuesta y el mapeo de errores, no la interoperabilidad real con la API de
+  DeepSeek (auth, `response_format: json_object`, límites de rate). Pendiente: una corrida manual con
+  API key antes de habilitarlo en producción.
+- **Retención de los streams de Redis**: los 90 días del job de purga solo aplican a
+  `raw_messages.body` en Postgres. Los eventos `parsing.TransactionParsed`/`parsing.ParseFailed`
+  llevan datos derivados (monto, comercio, `last4`, `partial_extract`) y sus streams —igual que la
+  DLQ— solo se acotan por `MAXLEN ~100000`, no por tiempo: al volumen actual, en la práctica se
+  conservan indefinidamente. El recorte por tiempo (`XTRIM ... MINID`) queda para Fase 3 (documentado
+  en spec 004 §6).
+- **Presupuesto mensual del LLM con clave de mes en UTC** (`parse_raw_message.py`, `now.strftime
+  ("%Y%m")` sobre un reloj UTC): las últimas 5 horas de cada mes colombiano caen en el bucket del mes
+  siguiente. Inocuo con el presupuesto actual; si alguna vez importa, usar `ZoneInfo
+  ("America/Bogota")` para calcular la clave.
+- **`_PHONE_RE` del extractor borra cualquier corrida de 10 dígitos** (`parsing/domain/excerpt.py`):
+  con separadores opcionales, un número de referencia largo puede borrar la única línea con monto en
+  la rama de fallback (sin `relevant_line_prefix`). No afecta a Bancolombia por email (tiene prefijo);
+  a revisar cuando entren las plantillas de los demás bancos (F2.7).
+- **`IngestNotificationsBatch` no aísla los items inválidos**: su docstring dice que un item malo no
+  anula el resto, pero `validate_external_id` lanza desde `execute` y abortaría el batch. Hoy es
+  inalcanzable vía API (el schema Pydantic valida antes), así que queda como docstring optimista a
+  suavizar o a convertir en captura por item.
+- **`POST /v1/ingest/notifications` consume dos cubetas de rate limit** (`ingest_user` 60/min y la
+  global `user_global`): la interacción entre ambas no está documentada en spec 009 §4, así que el
+  límite efectivo puede sorprender al cliente Android cuando suba un batch grande tras estar offline.
+- **`parse_amount` interpreta `"45,9"` como `459.00`** (regla determinista heredada del plan: la coma
+  es separador de miles en los formatos bancarios colombianos). Correcto para los fixtures reales,
+  pero es una trampa si alguna vez llega un mensaje con coma decimal.
+- **Minucias heredadas de las revisiones por tarea (T2/T4/T5/T7), sin efecto observable y diferidas
+  en bloque**: conteo de campos en un reporte de tarea; el orden en que `IngestRawMessage` aplica
+  `validate_external_id` respecto del filtro de remitente (un `external_id` inválido de un remitente
+  no soportado hoy responde 400 en vez de descartarse); la aserción de la rama de carrera de
+  `record_captured_transaction`, que comprueba el resultado agregado y no que se haya tomado esa
+  rama; y nombres poco descriptivos (nombre de la dependencia de parsing en `pyproject.toml`, logger
+  de `parsing/infrastructure/llm`).
 - **Asimetría de fallback banco/canal en los consumers de ledger**
   (`ledger/infrastructure/consumers.py`): `Bank(event.bank)` cae a `Bank.OTHER` si el valor no está
   en el enum, pero `Channel(event.channel)` no tiene fallback equivalente (lanzaría `ValueError` si
@@ -423,9 +456,10 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   `ledger/infrastructure/orm.py` y la migración `0003_raw_messages_review.py` (más
   `0002_ledger_core.py`) repiten la misma lista de bancos para sus `CHECK`/enums de columna. Forzado
   por R4 (un módulo no puede importar la lista de otro); hay que mantenerlas sincronizadas a mano al
-  agregar un banco nuevo.
+  agregar un banco nuevo. Mitigado (no eliminado) por `tests/unit/test_enum_check_parity.py`, que
+  falla si las cuatro copias dejan de coincidir.
 - **El test del cron de requeue asume ejecución serial**: `tests/integration/ingestion/test_requeue_job.py`
-  afirma `count == 1` sobre una query global (todas las filas `pending` huérfanas, no filtradas por
+  afirma `summary.requeued == 1` sobre una query global (todas las filas `pending` huérfanas, no filtradas por
   usuario/test), lo que depende de que ningún otro test dentro de la misma sesión de `pytest` haya
   dejado una fila `pending` sin limpiar (`db_clean` la protege hoy, pero un test futuro que no use
   `db_clean` podría romperlo sin aviso claro).
@@ -446,6 +480,27 @@ Riesgos abiertos del plan de Fase 2 (§4 del plan de implementación, ver detall
   bancario real sin ningún `$`/monto con separador de miles no llega al LLM (se descarta como
   `no_template` sin gastar tokens); son casos raros, pero requieren revisión con métricas reales de
   producción para confirmar que no se está perdiendo señal.
+
+## 14bis. Re-verificación (ola de fixes de cierre — 2026-09-22)
+
+Tras la ola de fixes de la revisión final de rama (A1, A2, A3, A5, A10, B-I1..B-I3, B-M1, B-M2,
+B-M4, B-M5), todo desde `backend/`:
+
+```sh
+uv run ruff check .          # All checks passed!
+uv run ruff format --check . # 333 files already formatted
+uv run pyright               # 0 errors, 0 warnings, 0 informations
+uv run lint-imports          # Contracts: 6 kept, 0 broken
+uv run pytest -q             # 794 passed, 1 warning (DeprecationWarning preexistente de arq) in 67.36s
+uv run pytest tests/unit -m unit   --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain   --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain   --cov-fail-under=90
+  # Required test coverage of 90% reached. Total coverage: 98.87% — 534 passed
+uv run alembic upgrade head && uv run alembic check
+  # 0003 -> 0004 (raw_messages_requeue_attempts); No new upgrade operations detected.
+```
+
+El recorrido en vivo de §14 no se repitió en esta ola (no cambió ningún endpoint); sí cambió el
+esquema (migración `0004`, columna `raw_messages.requeue_attempts`) y el horario del cron de purga
+(08:00 UTC = 03:00 en Colombia).
 
 ## 14. Verificación (corrida real, cierre de Fase 2 — 2026-09-21)
 

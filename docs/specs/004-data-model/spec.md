@@ -130,6 +130,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | status | TEXT | `pending` / `parsed` / `failed` / `discarded` / `reviewed` |
 | received_at | TIMESTAMPTZ | |
 | purge_after | TIMESTAMPTZ | `received_at + 90 días`; job de purga pone `body` en NULL |
+| requeue_attempts | INT NOT NULL DEFAULT 0 | veces que el cron de reencolado republicó `RawMessageReceived` para esta fila; al superar 5 la fila pasa a `failed` en vez de volver a encolarse (corta el ciclo cron → DLQ → sigue `pending` → cron) |
 | Índices | `(user_id, status)`; `(purge_after) WHERE body IS NOT NULL` | el segundo es parcial: solo filas con `body` aún presente |
 
 ### 2.8 `categories` (ledger)
@@ -261,10 +262,24 @@ Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usua
 | Cuenta borrada | purga total ≤ 72 h | evento `UserDeleted` + CASCADE + job de verificación |
 | Backups | 30 días | rotación de backups cifrados |
 
-El job de purga (`purge_raw_message_bodies`, cron arq diario a las 03:00, F3.7
-adelantado en F2 — Task 10) anula `raw_messages.body` (`UPDATE ... SET body =
+El job de purga (`purge_raw_message_bodies`, cron arq diario a las **08:00 UTC =
+03:00 en Colombia**, F3.7 adelantado en F2 — Task 10) anula `raw_messages.body` (`UPDATE ... SET body =
 NULL, updated_at = now()`) de las filas con `purge_after < now()` y `body`
 aún no nulo; solo toca `body` y `updated_at` — `status` y el resto de columnas
 quedan intactos —, y no loguea el cuerpo purgado (P6). Si una fila purgada ya está en
 `review_queue` (revisión pendiente sin resolver, spec 005 §7), `GET /v1/review`
 la sigue listando pero con `text: null` (la app muestra "contenido expirado").
+
+`arq` agenda los crons contra el reloj del proceso y la imagen no define `TZ`, así
+que el contenedor corre en UTC: la hora del cron se escribe convertida
+(America/Bogotá es UTC−5 fijo, sin horario de verano).
+
+**Los streams de Redis NO están cubiertos por esta retención.** Los eventos
+`parsing.TransactionParsed` y `parsing.ParseFailed` llevan datos derivados del
+mensaje (monto, comercio, `last4`, y en `partial_extract` lo que el LLM alcanzó a
+extraer), y sus streams —igual que la DLQ— solo se acotan por `MAXLEN ~100000`
+entradas, no por tiempo: al volumen actual eso equivale a conservarlos
+indefinidamente. El job de purga solo toca `raw_messages.body` en Postgres. El
+recorte por tiempo (`XTRIM ... MINID`) alineado con los 90 días queda para Fase 3;
+mientras tanto, la mitigación es que Redis corre en la misma VPS cifrada y sin
+exposición pública (spec 009 §1).

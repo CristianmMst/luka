@@ -52,26 +52,44 @@ tener plantilla (F2.7, diferido) siempre caen al LLM genérico.
 
 ### 3.1 Paquetes soportados (config remota)
 La lista de paquetes se descarga del backend (`/config/capture`) para poder ampliarla sin release.
-Vive en `parsing/config/capture.yaml` (`version: 1`, D6) y se sirve tal cual (más un mapa
-`email_senders` derivado de `senders.yaml`) por `GET /v1/config/capture` (ingestion):
+Vive en `parsing/config/capture.yaml` (`version: 1`, D6) y la sirve `GET /v1/config/capture`
+(ingestion), más un mapa `email_senders` derivado de `senders.yaml`.
+
+Cada entrada de `banking_apps`/`sms_sender_patterns` lleva el banco que le corresponde, porque el
+backend necesita ese `bank` al ingerir (queda en `raw_messages.bank`):
 
 ```yaml
 version: 1
 banking_apps:
-  - com.bancolombia.app          # Bancolombia
-  - com.nequi.MobileApp          # Nequi
-  - com.davivienda.daviviendaapp # Davivienda
-  - com.daviplata.app            # DaviPlata
-  - com.bbva.bbvacolombia        # BBVA CO
-  - com.bancodebogota.bancamovil # Banco de Bogotá
-  - com.google.android.apps.walletnfcrel  # Google Wallet
+  - package: com.bancolombia.app
+    bank: bancolombia
+  - package: com.nequi.MobileApp
+    bank: nequi
+  - package: com.davivienda.daviviendaapp
+    bank: davivienda
+  - package: com.daviplata.app
+    bank: daviplata
+  - package: com.bbva.bbvacolombia
+    bank: bbva
+  - package: com.bancodebogota.bancamovil
+    bank: banco_bogota
+  - package: com.google.android.apps.walletnfcrel   # Google Wallet: sin banco asociado
+    bank: null
 messages_apps:                    # para SMS-vía-notificación
   - com.google.android.apps.messaging
   - com.samsung.android.messaging
 sms_sender_patterns:              # aplicados al título de la notificación de Mensajes
-  - "^(87400|85540|891888|...)$"  # códigos cortos bancarios (se completan con fixtures)
-  - "(?i)bancolombia|nequi|davivienda|bbva"
+  - pattern: "(?i)bancolombia"
+    bank: bancolombia
+  - pattern: "(?i)nequi"
+    bank: nequi
 ```
+
+La respuesta de la API es una **proyección aplanada** de ese YAML, no el YAML tal cual:
+`banking_apps` y `sms_sender_patterns` se sirven como listas de strings (paquetes y patrones) y el
+`bank` de cada entrada se omite a propósito — el cliente Android no lo necesita (lo resuelve el
+backend) y exponerlo obligaría a `ingestion` a importar `ledger.domain.enums.Bank`, que R4 prohíbe.
+Ver el ejemplo de respuesta real en spec 005 §5.
 
 ### 3.2 Comportamiento del listener
 1. Notificación posted → ¿paquete en `banking_apps`? → capturar `title+text+bigText`.
