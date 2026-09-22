@@ -25,6 +25,7 @@ import asyncio
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+import redis.exceptions as redis_exceptions
 from sqlalchemy import text
 
 from finanzia.modules.ledger.infrastructure.consumers import (
@@ -219,6 +220,43 @@ async def stream_len(redis: redis_asyncio.Redis, stream: str) -> int:
     return await redis.xlen(stream)
 
 
+def _as_str(value: object) -> str:
+    return value.decode() if isinstance(value, bytes) else str(value)
+
+
+async def group_drained(redis_client: redis_asyncio.Redis, stream: str, group: str) -> bool:
+    """`True` cuando `group` ya leyo TODO `stream` y no le queda nada sin ACK.
+
+    Evidencia POSITIVA de que la ultima entrada publicada fue consumida (`lag == 0`
+    y `pending == 0`), a diferencia de un predicado sobre el estado final del
+    sistema, que puede ser cierto simplemente porque el consumer todavia no hizo
+    nada. Si el handler falla, la entrada queda en el PEL (`pending > 0`) y esto
+    nunca da `True`.
+    """
+    try:
+        groups = await redis_client.xinfo_groups(stream)
+    except redis_exceptions.ResponseError:  # el stream todavia no existe
+        return False
+    entry = next((g for g in groups if _as_str(g["name"]) == group), None)
+    if entry is None or int(entry["pending"]) != 0:
+        return False
+    lag = entry.get("lag")
+    if lag is not None:
+        return int(lag) == 0
+    # `lag` es `None` cuando Redis no puede calcularlo (stream recortado): se cae
+    # al ultimo id entregado vs el ultimo id generado.
+    info = await redis_client.xinfo_stream(stream)
+    return _as_str(entry["last-delivered-id"]) == _as_str(info["last-generated-id"])
+
+
+async def pipeline_drained(redis_client: redis_asyncio.Redis, bus: RedisStreamsEventBus) -> bool:
+    """`group_drained` para los 3 grupos que cablea el harness."""
+    for event_type, group in _WIRED_GROUPS:
+        if not await group_drained(redis_client, bus.stream_name(event_type), group):
+            return False
+    return True
+
+
 async def fetch_transaction(session_factory: async_sessionmaker[AsyncSession], user_id: UUID):
     """La (unica) transaccion de `user_id`, con su categoria, para los asserts e2e.
 
@@ -290,6 +328,8 @@ __all__ = [
     "count_sources",
     "count_transactions",
     "fetch_transaction",
+    "group_drained",
+    "pipeline_drained",
     "raw_status",
     "review_reason",
     "stream_len",

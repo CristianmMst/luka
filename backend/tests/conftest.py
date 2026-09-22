@@ -14,9 +14,9 @@ from alembic.config import Config
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from support.auth import AuthedUser
+from support.db import clean_user_tables
 
 from finanzia.app import create_app
 from finanzia.shared.security import encode_access_token
@@ -119,24 +119,11 @@ async def redis_clean(settings: Settings) -> AsyncGenerator[None, None]:
 async def db_clean(session_factory: async_sessionmaker[AsyncSession]) -> None:
     """Vacia las tablas de usuario antes de cada test (no autouse global).
 
-    Orden: hijos del ledger antes que sus padres, `raw_messages` (ingestion)
-    antes que `users` (spec 004 SS2.1-2.10, Task 9/F1.5, F2.1). `review_queue`
-    referencia `raw_messages` por PK/FK CASCADE, pero se borra explicito primero
-    por claridad. `categories` nunca se trunca completa: solo se borran las
-    categorias de usuario (`user_id IS NOT NULL`) para preservar el seed de las
-    24 categorias del sistema.
+    El cuerpo vive en `support.db.clean_user_tables` para que un test pueda
+    ejercitar la misma limpieza sin depender del orden de ejecucion (spec 004
+    SS2.1-2.10, Task 9/F1.5, F2.1).
     """
-    async with session_factory() as session:
-        await session.execute(text("DELETE FROM review_queue"))
-        await session.execute(text("DELETE FROM merchant_rules"))
-        await session.execute(text("DELETE FROM transaction_sources"))
-        await session.execute(text("DELETE FROM transactions"))
-        await session.execute(text("DELETE FROM linked_accounts"))
-        await session.execute(text("DELETE FROM categories WHERE user_id IS NOT NULL"))
-        await session.execute(text("DELETE FROM raw_messages"))
-        await session.execute(text("DELETE FROM refresh_tokens"))
-        await session.execute(text("DELETE FROM users"))
-        await session.commit()
+    await clean_user_tables(session_factory)
 
 
 @pytest.fixture

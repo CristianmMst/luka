@@ -12,6 +12,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from support.db import clean_user_tables
 from support.raw_messages import insert_raw_message
 
 pytestmark = pytest.mark.integration
@@ -148,10 +149,14 @@ async def test_catalogo_de_constraints_e_indices_de_raw_messages(
     assert "WHERE (body IS NOT NULL)" in indices["ix_raw_messages_purge_after"]
 
 
-async def test_db_clean_setup_inserta_una_fila_en_raw_messages(
+async def test_db_clean_vacia_raw_messages(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
-    """Precondicion del siguiente test: `db_clean` debe dejar `raw_messages` vacia."""
+    """La limpieza entre tests (`db_clean`) borra `raw_messages` (Task 1/F2.1).
+
+    Un solo test: antes eran dos acoplados por orden ("inserta" + "quedo vacia"),
+    y el segundo pasaba vacuamente al correrlo aislado.
+    """
     async with session_factory() as session:
         user_id = await _insert_user(
             session, sub="sub-raw-db-clean", email="raw-db-clean@example.com"
@@ -161,16 +166,11 @@ async def test_db_clean_setup_inserta_una_fila_en_raw_messages(
     await insert_raw_message(session_factory, user_id=user_id)
 
     async with session_factory() as session:
-        cantidad = (await session.execute(text("SELECT count(*) FROM raw_messages"))).scalar_one()
+        antes = (await session.execute(text("SELECT count(*) FROM raw_messages"))).scalar_one()
+    assert antes == 1
 
-    assert cantidad == 1
+    await clean_user_tables(session_factory)
 
-
-async def test_db_clean_dejo_raw_messages_vacia(
-    session_factory: async_sessionmaker[AsyncSession],
-) -> None:
-    """`_tablas_limpias` (autouse) corrio antes de este test (Task 1/F2.1)."""
     async with session_factory() as session:
-        cantidad = (await session.execute(text("SELECT count(*) FROM raw_messages"))).scalar_one()
-
-    assert cantidad == 0
+        despues = (await session.execute(text("SELECT count(*) FROM raw_messages"))).scalar_one()
+    assert despues == 0

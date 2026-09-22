@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncGenerator, Callable
 from datetime import date
 from typing import Any
 from uuid import uuid4
@@ -63,21 +64,38 @@ def _settings(**overrides: Any) -> Settings:
     )
 
 
-def _make_parser(handler: Any, *, model: str = "deepseek-v4-flash") -> DeepSeekLlmParser:
-    transport = httpx.MockTransport(handler)
-    client = httpx.AsyncClient(transport=transport)
-    return DeepSeekLlmParser(
-        client,
-        api_key="sk-test-key",
-        model=model,
-        base_url="https://api.deepseek.com",
-        timeout_s=5.0,
-    )
+ParserFactory = Callable[..., DeepSeekLlmParser]
+
+
+@pytest.fixture
+async def make_parser() -> AsyncGenerator[ParserFactory, None]:
+    """Fabrica de `DeepSeekLlmParser` sobre `MockTransport` que ADEMAS cierra los
+    `httpx.AsyncClient` que crea (antes se construian y no se cerraban nunca).
+    """
+    clients: list[httpx.AsyncClient] = []
+
+    def factory(handler: Any, *, model: str = "deepseek-v4-flash") -> DeepSeekLlmParser:
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        clients.append(client)
+        return DeepSeekLlmParser(
+            client,
+            api_key="sk-test-key",
+            model=model,
+            base_url="https://api.deepseek.com",
+            timeout_s=5.0,
+        )
+
+    yield factory
+
+    for client in clients:
+        await client.aclose()
 
 
 @pytest.mark.unit
 class TestDeepSeekLlmParserRequest:
-    async def test_request_tiene_forma_esperada_y_no_filtra_ids_ni_email(self) -> None:
+    async def test_request_tiene_forma_esperada_y_no_filtra_ids_ni_email(
+        self, make_parser: ParserFactory
+    ) -> None:
         captured: dict[str, Any] = {}
 
         def handler(request: httpx.Request) -> httpx.Response:
@@ -86,7 +104,7 @@ class TestDeepSeekLlmParserRequest:
             captured["body"] = json.loads(request.content)
             return httpx.Response(200, json=_response_body(_valid_content()))
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         result = await parser.parse(_EXCERPT, _RECEIVED_ON)
 
@@ -111,59 +129,67 @@ class TestDeepSeekLlmParserRequest:
         assert result.tokens == 123
         assert result.extraction.bank == "bancolombia"
 
-    async def test_respuesta_valida_produce_llm_output_con_tokens_de_usage(self) -> None:
+    async def test_respuesta_valida_produce_llm_output_con_tokens_de_usage(
+        self, make_parser: ParserFactory
+    ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             return httpx.Response(200, json=_response_body(_valid_content(), total_tokens=42))
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         result = await parser.parse(_EXCERPT, _RECEIVED_ON)
 
         assert isinstance(result, LlmOutput)
         assert result.tokens == 42
 
-    async def test_usage_faltante_produce_tokens_cero(self) -> None:
+    async def test_usage_faltante_produce_tokens_cero(self, make_parser: ParserFactory) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             return httpx.Response(
                 200, json={"choices": [{"message": {"content": _valid_content()}}]}
             )
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         result = await parser.parse(_EXCERPT, _RECEIVED_ON)
 
         assert isinstance(result, LlmOutput)
         assert result.tokens == 0
 
-    async def test_content_no_json_produce_llm_invalid_output(self) -> None:
+    async def test_content_no_json_produce_llm_invalid_output(
+        self, make_parser: ParserFactory
+    ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             return httpx.Response(200, json=_response_body("esto no es json"))
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         result = await parser.parse(_EXCERPT, _RECEIVED_ON)
 
         assert isinstance(result, LlmInvalidOutput)
         assert result.tokens == 123
 
-    async def test_json_invalido_contra_esquema_produce_llm_invalid_output(self) -> None:
+    async def test_json_invalido_contra_esquema_produce_llm_invalid_output(
+        self, make_parser: ParserFactory
+    ) -> None:
         content = json.dumps({"is_transaction": True, "confidence": 1.5})
 
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             return httpx.Response(200, json=_response_body(content))
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         result = await parser.parse(_EXCERPT, _RECEIVED_ON)
 
         assert isinstance(result, LlmInvalidOutput)
         assert result.tokens == 123
 
-    async def test_cuerpo_200_que_no_es_json_lanza_llm_unavailable(self) -> None:
+    async def test_cuerpo_200_que_no_es_json_lanza_llm_unavailable(
+        self, make_parser: ParserFactory
+    ) -> None:
         """Un 200 con HTML de un proxy/WAF no es una respuesta del modelo: antes
         propagaba `json.JSONDecodeError` fuera de `parse()` (nadie la capturaba
         aguas arriba) en vez de mapear a `LlmUnavailable`.
@@ -173,12 +199,12 @@ class TestDeepSeekLlmParserRequest:
             del request
             return httpx.Response(200, text="<html>503 Service Unavailable</html>")
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         with pytest.raises(LlmUnavailable):
             await parser.parse(_EXCERPT, _RECEIVED_ON)
 
-    async def test_decoding_error_lanza_llm_unavailable(self) -> None:
+    async def test_decoding_error_lanza_llm_unavailable(self, make_parser: ParserFactory) -> None:
         """`httpx.DecodingError` es `RequestError` pero NO `TransportError`, asi que
         se escapaba del mapeo (igual que `TooManyRedirects`).
         """
@@ -186,33 +212,33 @@ class TestDeepSeekLlmParserRequest:
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.DecodingError("contenido ilegible", request=request)
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         with pytest.raises(LlmUnavailable):
             await parser.parse(_EXCERPT, _RECEIVED_ON)
 
-    async def test_http_500_lanza_llm_unavailable(self) -> None:
+    async def test_http_500_lanza_llm_unavailable(self, make_parser: ParserFactory) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             return httpx.Response(500, json={"error": "boom"})
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         with pytest.raises(LlmUnavailable):
             await parser.parse(_EXCERPT, _RECEIVED_ON)
 
-    async def test_timeout_lanza_llm_unavailable(self) -> None:
+    async def test_timeout_lanza_llm_unavailable(self, make_parser: ParserFactory) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
             del request
             raise httpx.ReadTimeout("timed out")
 
-        parser = _make_parser(handler)
+        parser = make_parser(handler)
 
         with pytest.raises(LlmUnavailable):
             await parser.parse(_EXCERPT, _RECEIVED_ON)
 
-    def test_enabled_es_true(self) -> None:
-        parser = _make_parser(lambda request: httpx.Response(200, json={}))
+    async def test_enabled_es_true(self, make_parser: ParserFactory) -> None:
+        parser = make_parser(lambda request: httpx.Response(200, json={}))
         assert parser.enabled is True
 
 
@@ -233,11 +259,12 @@ class TestBuildLlmParser:
 
         assert isinstance(parser, DisabledLlmParser)
 
-    def test_con_api_key_devuelve_deepseek_parser(self) -> None:
+    async def test_con_api_key_devuelve_deepseek_parser(self) -> None:
         settings = _settings(deepseek_api_key="sk-real")
-        client = httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(200)))
+        transport = httpx.MockTransport(lambda r: httpx.Response(200))
 
-        parser = build_llm_parser(settings, client=client)
+        async with httpx.AsyncClient(transport=transport) as client:
+            parser = build_llm_parser(settings, client=client)
 
-        assert isinstance(parser, DeepSeekLlmParser)
-        assert parser.enabled is True
+            assert isinstance(parser, DeepSeekLlmParser)
+            assert parser.enabled is True

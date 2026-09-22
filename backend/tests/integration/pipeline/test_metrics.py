@@ -13,7 +13,13 @@ import pytest
 import structlog.testing
 from support.clock import FixedClock
 from support.email_fixtures import bancolombia_fixtures
-from support.pipeline import InMemoryBudget, PipelineHarness, count_transactions, review_reason
+from support.pipeline import (
+    InMemoryBudget,
+    PipelineHarness,
+    count_transactions,
+    pipeline_drained,
+    review_reason,
+)
 from support.raw_messages import insert_raw_message
 
 from finanzia.modules.ingestion.application.dto import RawMessageInput
@@ -145,10 +151,15 @@ async def test_parsing_metric_no_filtra_datos_y_tiene_claves_cerradas(  # noqa: 
                 )
             )
 
-            async def still_one_transaction() -> bool:
-                return await count_transactions(session_factory, user.id) == 1
+            # Evidencia positiva de consumo antes de asertar: "sigue habiendo 1
+            # transaccion" ya es cierto ANTES de que el consumer lea el evento, asi
+            # que por si solo el wait retornaria en el primer poll (mismo agujero
+            # que AC-5.2 en `test_notification_dedupe.py`).
+            async def second_message_consumed() -> bool:
+                return await pipeline_drained(redis_client, bus)
 
-            assert await harness.wait_for(still_one_transaction)
+            assert await harness.wait_for(second_message_consumed)
+            assert await count_transactions(session_factory, user.id) == 1
 
             # 3) un mensaje que va a revision (outcome=sent_to_review, LLM deshabilitado).
             third_raw_message_id = await insert_raw_message(

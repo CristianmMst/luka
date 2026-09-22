@@ -12,7 +12,13 @@ import structlog.testing
 from sqlalchemy import text
 from support.clock import FixedClock
 from support.email_fixtures import bancolombia_fixtures
-from support.pipeline import InMemoryBudget, PipelineHarness, count_sources, count_transactions
+from support.pipeline import (
+    InMemoryBudget,
+    PipelineHarness,
+    count_sources,
+    count_transactions,
+    pipeline_drained,
+)
 
 from finanzia.modules.ingestion.application.dto import RawMessageInput
 from finanzia.modules.ingestion.domain.enums import Channel
@@ -109,8 +115,9 @@ async def test_ac52_reingesta_y_reentrega_del_mismo_correo_no_duplica(  # noqa: 
         assert second.republished is False
 
         # Reentrega manual a nivel de stream: una copia del mismo `RawMessageReceived`
-        # (mismos campos) via `XADD`. El `raw_message` ya no esta `pending`, asi que
-        # el handler de parsing la absorbe sin publicar nada nuevo (D8 idempotencia).
+        # (mismos campos, `event_id` nuevo) via `XADD`. El `raw_message` ya no esta
+        # `pending`, asi que el handler de parsing la absorbe sin publicar nada
+        # nuevo (D8 idempotencia).
         redelivery = RawMessageReceived(
             event_id=uuid4(),
             occurred_at=SystemClock().now(),
@@ -120,16 +127,35 @@ async def test_ac52_reingesta_y_reentrega_del_mismo_correo_no_duplica(  # noqa: 
             bank="bancolombia",
             received_at=_COMPRA_TDEB.received_at,
         )
-        await bus.publish(redelivery)
 
-        async def still_one_transaction_and_one_source() -> bool:
-            tx_id = await _tx_id_for(session_factory, user.id)
-            return (
-                await count_transactions(session_factory, user.id) == 1
-                and await count_sources(session_factory, tx_id) == 1
+        # `capture_logs` + espera a que los 3 grupos queden drenados: NO se puede
+        # asertar solo "sigue habiendo 1 transaccion" (eso ya es cierto antes de que
+        # el consumer lea la reentrega, asi que el wait retornaba en el primer poll
+        # y la mitad "la reentrega se absorbe" quedaba sin probar).
+        with structlog.testing.capture_logs() as captured:
+            await bus.publish(redelivery)
+
+            async def redelivery_consumed() -> bool:
+                return await pipeline_drained(redis_client, bus)
+
+            assert await harness.wait_for(redelivery_consumed), (
+                "la reentrega nunca fue consumida por el grupo `parsing`"
             )
 
-        assert await harness.wait_for(still_one_transaction_and_one_source)
+        # Evidencia directa del resultado del handler sobre la reentrega: `Skipped`
+        # (la fila ya no esta `pending`). Si el guard de idempotencia se rompiera,
+        # aqui aparecerian `Parsed`/`Failed` en vez de `Skipped`.
+        outcomes = [
+            e
+            for e in captured
+            if e.get("event") == "parsing_outcome"
+            and e.get("raw_message_id") == str(raw_message_id)
+        ]
+        assert [e["outcome"] for e in outcomes] == ["Skipped"]
+
+        tx_id = await _tx_id_for(session_factory, user.id)
+        assert await count_transactions(session_factory, user.id) == 1
+        assert await count_sources(session_factory, tx_id) == 1
     finally:
         await harness.stop()
 
