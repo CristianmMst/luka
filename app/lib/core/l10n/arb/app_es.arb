@@ -1,0 +1,53 @@
+{
+  "@@locale": "es",
+  "appName": "finanzia",
+  "splashRestoring": "Restaurando tu sesión",
+  "loginHeadline": "Tus gastos se anotan solos.",
+  "loginBody": "finanzia lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.",
+  "loginContinueWithGoogle": "Continuar con Google",
+  "loginConnecting": "Conectando con Google…",
+  "loginRetryWithGoogle": "Reintentar con Google",
+  "loginLegalPrefix": "Al continuar aceptas los ",
+  "loginLegalTerms": "Términos",
+  "loginLegalJoin": " y la ",
+  "loginLegalPrivacy": "Política de tratamiento de datos",
+  "loginLegalSuffix": ".",
+  "tickerNotificationSource": "NOTIFICACIÓN · BANCOLOMBIA",
+  "tickerNotificationText": "Compra en La Espiga",
+  "tickerEmailSource": "CORREO · BANCOLOMBIA",
+  "tickerEmailText": "Compraste en La Espiga",
+  "tickerResultTitle": "1 registro",
+  "tickerResultSubtitle": "Mercado · sin duplicados",
+  "tickerSemantics": "Ejemplo: una notificación y un correo de la misma compra de {amount} quedan como un solo registro.",
+  "@tickerSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNetwork": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
+  "errorRateLimited": "Hiciste muchos intentos seguidos. Podrás volver a intentarlo en {countdown}.",
+  "@errorRateLimited": {
+    "placeholders": {
+      "countdown": {
+        "type": "String"
+      }
+    }
+  },
+  "errorRateLimitedNoWait": "Hiciste muchos intentos seguidos. Espera un momento y vuelve a intentarlo.",
+  "errorRejected": "Google no confirmó tu cuenta. Inténtalo de nuevo o usa otra cuenta.",
+  "errorMisconfigured": "El inicio de sesión con Google no está configurado en esta versión de la app.",
+  "errorUnexpected": "No pudimos iniciar sesión. Inténtalo de nuevo en unos minutos.",
+  "sessionExpiredNotice": "Tu sesión se cerró para proteger tu cuenta. Inicia sesión de nuevo para seguir.",
+  "homeGreeting": "Hola, {name}",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homePlaceholderBody": "Ya iniciaste sesión. El resumen de tus gastos llega en la siguiente fase.",
+  "homeSignOut": "Cerrar sesión"
+}
