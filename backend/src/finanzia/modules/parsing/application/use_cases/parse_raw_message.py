@@ -58,10 +58,20 @@ class ParseRawMessage:
         events: EventPublisherPort,
         clock: ClockPort,
         uow: UnitOfWorkPort,
+        known_banks: frozenset[str],
         llm_budget_limit: int,
         confidence_threshold: float,
         max_excerpt_chars: int = 1500,
     ) -> None:
+        """`known_banks` son los bancos ACEPTABLES en la salida del LLM: el
+        allowlist de remitentes (`SenderAllowlist.known_banks()`, 6 bancos), no
+        los bancos con plantilla (`TemplateRegistryPort.known_banks()`, hoy solo
+        `bancolombia`). El prompt le pide al modelo esos 6 slugs y el CHECK de
+        `raw_messages.bank`/`transactions.bank` los acepta; validar contra las
+        plantillas rechazaria como `llm_invalid_output` todo lo que no sea
+        Bancolombia. Lo inyecta el composition root (`infrastructure/consumers.py`)
+        para no acoplar la application al loader de config (R2).
+        """
         self._gateway = gateway
         self._llm = llm
         self._budget = budget
@@ -70,6 +80,7 @@ class ParseRawMessage:
         self._events = events
         self._clock = clock
         self._uow = uow
+        self._known_banks = known_banks
         self._llm_budget_limit = llm_budget_limit
         self._confidence_threshold = confidence_threshold
         self._max_excerpt_chars = max_excerpt_chars
@@ -143,7 +154,7 @@ class ParseRawMessage:
         validated = validate_extraction(
             result.extraction,
             view.received_at,
-            self._registry.known_banks(),
+            self._known_banks,
             self._confidence_threshold,
         )
         if isinstance(validated, Rejected):

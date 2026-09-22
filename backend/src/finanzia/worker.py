@@ -233,6 +233,7 @@ async def on_startup(ctx: dict[str, Any]) -> None:
         llm=llm,
         budget=budget,
         registry=config.templates,
+        known_banks=config.senders.known_banks(),
         metrics=metrics,
         settings=settings,
     )

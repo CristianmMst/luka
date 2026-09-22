@@ -488,13 +488,37 @@ async def test_llm_fecha_30_dias_falla_invalid_output() -> None:
 async def test_llm_banco_desconocido_falla_invalid_output() -> None:
     view = _view()
     gateway = FakeGateway({view.id: view})
-    unknown_bank = replace(_VALID_EXTRACTION, bank="nequi")
+    unknown_bank = replace(_VALID_EXTRACTION, bank="banco_inventado")
     llm = FakeLlmParser([LlmOutput(extraction=unknown_bank, tokens=80)])
     use_case = make_use_case(gateway=gateway, llm=llm, clock=FixedClock(NOW))
 
     outcome = await use_case.execute(view.id)
 
     assert outcome == Failed(ParseFailureReason.LLM_INVALID_OUTPUT)
+
+
+async def test_llm_banco_del_allowlist_sin_plantilla_se_acepta() -> None:
+    """Los 6 bancos del allowlist de remitentes son validos en la salida del LLM.
+
+    Solo `bancolombia` tiene plantilla (F2.7 diferido), pero el prompt le pide al
+    modelo justamente esos slugs y el CHECK de la tabla los acepta: validar contra
+    los bancos CON PLANTILLA rechazaria como `llm_invalid_output` toda extraccion
+    de Nequi/Davivienda/DaviPlata/BBVA/Banco de Bogota.
+    """
+    view = _view(bank="nequi")
+    gateway = FakeGateway({view.id: view})
+    extraction = replace(_VALID_EXTRACTION, bank="nequi")
+    llm = FakeLlmParser([LlmOutput(extraction=extraction, tokens=80)])
+    events = RecordingPublisher()
+    use_case = make_use_case(gateway=gateway, llm=llm, events=events, clock=FixedClock(NOW))
+
+    outcome = await use_case.execute(view.id)
+
+    assert isinstance(outcome, Parsed)
+    assert outcome.parsed_by == "llm"
+    published = events.events[0]
+    assert isinstance(published, TransactionParsed)
+    assert published.bank == "nequi"
 
 
 async def test_llm_is_transaction_false_descarta_sin_eventos() -> None:

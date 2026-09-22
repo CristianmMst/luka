@@ -44,10 +44,16 @@ def make_raw_message_received_handler(  # noqa: PLR0913 - un parametro por depen
     llm: LlmParserPort,
     budget: LlmBudgetPort,
     registry: TemplateRegistryPort,
+    known_banks: frozenset[str],
     metrics: MetricsPort,
     settings: Settings,
 ) -> EventHandler:
     """`EventHandler` para el grupo `parsing` de `ingestion.RawMessageReceived`.
+
+    `known_banks` son los bancos validos en la salida del LLM: el allowlist de
+    remitentes (`ParsingConfig.senders.known_banks()`, 6 bancos), NO los bancos
+    con plantilla (`registry.known_banks()`, hoy solo `bancolombia`); ver el
+    docstring de `ParseRawMessage.__init__`.
 
     Cada evento abre su propia `AsyncSession` (una transaccion por mensaje).
     Excepciones inesperadas de `ParseRawMessage.execute` (p. ej. el publish al
@@ -71,6 +77,7 @@ def make_raw_message_received_handler(  # noqa: PLR0913 - un parametro por depen
                 events=BusEventPublisher(event_bus),
                 clock=clock,
                 uow=SqlAlchemyUnitOfWork(session),
+                known_banks=known_banks,
                 llm_budget_limit=settings.llm_monthly_token_budget_per_user,
                 confidence_threshold=settings.llm_confidence_threshold,
             )

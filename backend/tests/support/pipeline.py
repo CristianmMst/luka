@@ -99,6 +99,7 @@ class PipelineHarness:
             llm=llm,
             budget=budget,
             registry=parsing_public.load_parsing_config().templates,
+            known_banks=parsing_public.load_parsing_config().senders.known_banks(),
             metrics=parsing_public.StructlogMetrics(),
             settings=settings,
         )

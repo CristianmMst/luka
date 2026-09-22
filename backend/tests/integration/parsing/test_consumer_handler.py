@@ -91,6 +91,7 @@ def _handler(
         llm=DisabledLlmParser(),
         budget=RedisLlmBudget(redis_client),
         registry=load_parsing_config().templates,
+        known_banks=load_parsing_config().senders.known_banks(),
         metrics=StructlogMetrics(),
         settings=settings,
     )

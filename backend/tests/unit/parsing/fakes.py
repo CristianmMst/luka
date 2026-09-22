@@ -194,6 +194,7 @@ def make_use_case(  # noqa: PLR0913 - un override por dependencia del caso de us
     llm: LlmParserPort | None = None,
     budget: LlmBudgetPort | None = None,
     registry: TemplateRegistryPort | None = None,
+    known_banks: frozenset[str] | None = None,
     metrics: MetricsPort | None = None,
     events: EventPublisherPort | None = None,
     clock: ClockPort | None = None,
@@ -210,6 +211,9 @@ def make_use_case(  # noqa: PLR0913 - un override por dependencia del caso de us
         llm=llm if llm is not None else FakeLlmParser([]),
         budget=budget if budget is not None else InMemoryBudget(),
         registry=registry if registry is not None else load_parsing_config().templates,
+        known_banks=(
+            known_banks if known_banks is not None else load_parsing_config().senders.known_banks()
+        ),
         metrics=metrics if metrics is not None else RecordingMetrics(),
         events=events if events is not None else RecordingPublisher(),
         clock=clock if clock is not None else FixedClock(datetime(2026, 9, 21, 12, 0, tzinfo=UTC)),
