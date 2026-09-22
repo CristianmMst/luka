@@ -47,3 +47,35 @@ coverage-domain:
 
 # Pipeline de CI: lint + tests + cobertura de dominio.
 ci: lint test coverage-domain
+
+# --- App Flutter (app/, spec 008) ---
+
+# Regenera codigo (freezed, json_serializable, drift) y textos l10n.
+app-gen:
+	cd app && dart run build_runner build --delete-conflicting-outputs
+	cd app && flutter gen-l10n
+
+# Corre la app contra el backend local con login fake (emulador Android).
+app-run:
+	cd app && flutter run --dart-define=AUTH_MODE=fake --dart-define=API_BASE_URL=http://10.0.2.2:8000
+
+# Tests de la app (sin goldens ni contrato con el backend).
+app-test:
+	cd app && flutter test --coverage --exclude-tags golden,backend
+	cd app && dart run tool/coverage_gate.dart
+
+# Formato + analisis estatico de la app.
+app-lint:
+	cd app && dart format --output=none --set-exit-if-changed lib test tool
+	cd app && flutter analyze --fatal-infos --fatal-warnings
+
+# Regenera los goldens visuales del login (revisar el diff de imagenes).
+app-goldens:
+	cd app && flutter test --tags golden --update-goldens
+
+# Contrato de auth contra la API local (requiere `just up` y `just dev`).
+app-contract:
+	cd app && FINANZIA_API_URL=http://localhost:8000 flutter test --tags backend
+
+# Pipeline de CI de la app.
+app-ci: app-lint app-test

@@ -16,3 +16,6 @@ trim_trailing_whitespace = false
 
 [Makefile]
 indent_style = tab
+
+[*.dart]
+indent_size = 2
