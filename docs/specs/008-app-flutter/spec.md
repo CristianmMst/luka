@@ -2,7 +2,7 @@
 
 ## 1. Estructura y stack
 
-Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod`/`riverpod_annotation`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `fl_chart` (dashboard), `intl` (formato COP).
+Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `fl_chart` (dashboard), `intl` (formato COP).
 
 ## 2. Mapa de navegación
 
@@ -91,9 +91,39 @@ flowchart TD
 
 ## 7. UX/UI
 
-- Material 3, tema claro/oscuro del sistema; español (Colombia) único idioma MVP (arquitectura lista para i18n con `intl`).
-- Formato de moneda: `$1.234.567` COP sin decimales en listas, con decimales en detalle.
+- Material 3, tema claro/oscuro del sistema; español (Colombia) único idioma MVP (arquitectura lista para i18n con `intl`; textos en `app/lib/core/l10n/arb/app_es.arb`).
+- Formato de moneda: `$1.234.567` COP sin decimales en listas, con decimales en detalle. Los montos se manejan como centavos enteros (`Cop`), nunca `double`. Gasto `−$42.900` (U+2212), ingreso `+$3.500.000`, transferencia propia sin signo.
 - Accesibilidad: targets ≥ 48dp, semántica en widgets custom, contraste AA.
+
+### 7.1 Sistema de diseño "Esmeralda andina"
+
+Canvas de referencia (logins claro/oscuro, estados, splash, sistema): https://claude.ai/artifact/ELvKWCWzSaaoVooC6dVZcZ. Se eligió la composición de login **A "Veta esmeralda"**. Los tokens viven en `app/lib/core/theme/` (`ColorScheme` explícito, sin `fromSeed`, más la extensión `FinanziaColors`).
+
+| Rol | Claro | Oscuro | Uso |
+|---|---|---|---|
+| primary (esmeralda) | `#0E4D3F` | `#7FD1B4` | botones, enlaces, marca |
+| primaryContainer | `#CDE8DC` | `#0E4D3F` | chip activo, botón tonal |
+| oro de marca | `#C9A227` | `#C9A227` | **solo** registro confirmado y relevancia fiscal; relleno o texto ≥ 24 px |
+| surface | `#EEF5F1` | `#0C1512` | fondo |
+| onSurface | `#10201B` | `#DCE7E1` | texto |
+| expense | `#B4432B` | `#FF9A80` | montos de salida |
+| income | `#17774E` | `#7BD8A6` | montos de entrada |
+| transfer | `#45617A` | `#9DB8D3` | entre cuentas propias |
+
+- Todo par texto/fondo cumple ≥ 4.5:1 y los bordes ≥ 3:1 (verificado al definir la paleta).
+- Tipografía empaquetada en `assets/fonts` (sin descarga en runtime, P4; licencias OFL registradas en `LicenseRegistry`): Bricolage Grotesque para display (marca, titulares, saldos), Manrope para texto, IBM Plex Mono tabular para montos y Roboto Medium solo en el botón de Google.
+- Espaciado de base 4. Radios: 8 chips, 12 filas, 16 avisos, 24 tarjetas y píldora en botones.
+- Los bancos se nombran solo en texto, nunca con sus colores de marca.
+- **Login** (F1.9): bloque hero esmeralda con el "ticker de captura" (una notificación y un correo de la misma compra se funden en **1 registro**; queda quieto con "reducir movimiento"), titular y botón "Continuar con Google" con la guía de marca de Google. Estados: cargando (botón bloqueado), sin conexión (reintentar), cancelado (sin aviso), 429 (cuenta regresiva con `Retry-After`) y sesión cerrada por seguridad.
+
+### 7.2 Configuración de compilación (`--dart-define`)
+
+| Variable | Default | Uso |
+|---|---|---|
+| `API_BASE_URL` | `http://10.0.2.2:8000` | base de la API (10.0.2.2 = host desde el emulador Android) |
+| `AUTH_MODE` | `google` | `fake` genera `id_token` `fake:<sub>:<email>`, que el backend acepta con `FINANZIA_GOOGLE_VERIFIER=fake` (solo dev) |
+| `FAKE_USER_EMAIL` | `dev@finanzia.local` | email del usuario en modo fake |
+| `GOOGLE_SERVER_CLIENT_ID` | — | client ID web de Google Cloud (audiencia del `id_token`); obligatorio con `AUTH_MODE=google` |
 
 ## 8. Criterios de aceptación específicos de la app
 

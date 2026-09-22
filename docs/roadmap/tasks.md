@@ -1,6 +1,6 @@
 # Roadmap de implementación
 
-> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing`, pendiente de integración a `main`. Pendientes: F0.6, F1.9 (app Flutter), F2.7 (bancos restantes, diferido) y las fases 3 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
+> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing` (mergeada a `main` el 2026-09-22). App Flutter F0.6 (scaffold) y F1.9 (auth) completadas el 2026-09-22 en la rama `CristianmMst/app-login`. Pendientes: F2.7 (bancos restantes, diferido) y las fases 3 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
 
 Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
@@ -13,7 +13,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F0.3 | Tooling backend: ruff, pyright, pytest, import-linter con las 4 reglas de dependencia | 003 §2.2 | F0.2 | ✅ |
 | F0.4 | docker-compose dev: Postgres 16 + Redis 7; settings con pydantic-settings | 003 §5 | F0.2 | ✅ |
 | F0.5 | CI GitHub Actions: lint + tests + import-linter + pip-audit + gitleaks | 009 §8, RNF-7 | F0.3 | ✅ |
-| F0.6 | App scaffold: `flutter create`, estructura feature-first vacía, riverpod/drift/dio/go_router configurados, flutter analyze/test en CI | 003 §3, 008 §1 | F0.1 | pendiente |
+| F0.6 | App scaffold: `flutter create`, estructura feature-first vacía, riverpod/drift/dio/go_router configurados, flutter analyze/test en CI | 003 §3, 008 §1 | F0.1 | ✅ riverpod sin codegen (spec 003 §3); Drift configurado con base vacía hasta F4.1 |
 
 ## Fase 1 — Identity + Ledger básico (RF-1, RF-7 parcial)
 
@@ -27,7 +27,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F1.6 | `ledger`: dominio puro — dedupe_key + tests; matcher transferencias + tests (incl. ambigüedad y exclusiones) | 004 §3–4, RF-5/6 | F1.5 | ✅ |
 | F1.7 | `ledger`: repos SQLAlchemy + API transacciones/categorías/cuentas (CRUD, filtros, paginación cursor, Idempotency-Key) | 005 §6–7 | F1.6 | ✅ |
 | F1.8 | Bus de eventos sobre Redis Streams en `shared` + consumers idempotentes | 003 §2.3 | F0.4 | ✅ |
-| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 | pendiente |
+| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 | ✅ con salvedad: el login real con Google no se probó (no hay proyecto GCP); el flujo se verificó con `AUTH_MODE=fake` contra la API local (`just app-contract`) |
 
 ## Fase 2 — Pipeline de parsing (RF-2 parcial, RF-5, RF-8)
 

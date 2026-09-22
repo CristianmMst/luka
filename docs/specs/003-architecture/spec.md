@@ -125,8 +125,10 @@ La implementación del bus vive en `shared/events/`: un codec de eventos (serial
 
 ```
 app/lib/
-├── core/                    # router (go_router), http (dio + interceptores JWT/refresh),
-│                            # tema, errores, utilidades, db Drift compartida
+├── app/                     # MaterialApp, router (go_router + session gate) y
+│                            # raíz de composición (overrides de providers)
+├── core/                    # config, http (dio + interceptor JWT/refresh), tema,
+│                            # l10n, formato COP, db Drift compartida; no conoce features
 └── features/
     ├── auth/
     ├── transactions/
@@ -142,7 +144,9 @@ app/lib/
 ```
 
 - **Offline-first (P4)**: la UI observa streams de Drift; los repositorios sincronizan contra la API (pull incremental por `updated_at` + push de operaciones pendientes en outbox local). Conflictos: gana el más reciente (`updated_at`), con excepción de correcciones manuales del usuario, que siempre ganan sobre datos automáticos.
-- **Riverpod 3** provee estado e inyección de dependencias (repos como providers → mockeables en tests).
+- **Riverpod 3** provee estado e inyección de dependencias (repos como providers → mockeables en tests). Los providers se escriben a mano (`Notifier`/`AsyncNotifier`), sin `riverpod_generator`: con Flutter 3.35 ninguna versión del generador resuelve junto a Riverpod 3.3 (conflicto de `meta`/`analyzer`).
+- **Reglas de capas** (verificadas por `app/test/architecture_test.dart`, equivalente a import-linter): `domain` es Dart puro (sin Flutter, dio, Drift ni Riverpod); `application` no importa `data` ni `presentation`; `presentation` no importa `data`; `core` no importa features ni `app`. `application` declara sus puertos como providers que fallan si no se sobrescriben, y `lib/app/composition.dart` es el único lugar que los conecta con las implementaciones de `data`.
+- **Red**: dos clientes dio. El público (`/v1/auth/*`) no tiene interceptor, así un refresh nunca dispara otro refresh. El autenticado usa `AuthInterceptor`, que añade el Bearer y, ante `401 token_expired`, hace un refresh single-flight y reintenta una vez. `core` define el puerto `SessionBridge` y la feature `auth` lo implementa (`SessionManager`).
 - El código de plataforma (notification listener, NFC) vive detrás de interfaces de `capture/domain`; el resto de la app no distingue el origen de una transacción.
 - iOS compila la misma app: `capture` expone `NotificationCaptureService` con implementación no-op en iOS.
 
