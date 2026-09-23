@@ -68,6 +68,7 @@ void main() {
       () => store.complete(any(), any()),
       () => store.reject(any(), any()),
       () => store.recordAttempt(any(), any()),
+      () => store.markSending(any()),
       () => store.applyTransactions(any(), cursor: any(named: 'cursor')),
       () => store.replaceCategories(any()),
       () => store.replaceAccounts(any()),
@@ -102,6 +103,78 @@ void main() {
       ]);
     },
   );
+
+  test(
+    'relee el outbox tras cada operación: el canje de id llega al envío',
+    () async {
+      final create = entry(
+        1,
+        OutboxOperation.createTransaction(localId: 'l1', data: newTx()),
+      );
+      const patch = TransactionPatch(categoryId: 'c2');
+      final stalePatch = entry(
+        2,
+        const OutboxOperation.patchTransaction(id: 'l1', patch: patch),
+      );
+      final swappedPatch = entry(
+        2,
+        const OutboxOperation.patchTransaction(id: 'srv-1', patch: patch),
+      );
+      final reads = [
+        [create, stalePatch],
+        [swappedPatch],
+        <OutboxEntry>[],
+      ];
+      when(
+        () => store.pendingOutbox(),
+      ).thenAnswer((_) async => reads.removeAt(0));
+      when(() => remote.send(create)).thenAnswer((_) async => tx('srv-1', now));
+      when(
+        () => remote.send(swappedPatch),
+      ).thenAnswer((_) async => tx('srv-1', now));
+
+      final result = await engine.run();
+
+      expect(result, SyncRunResult.synced);
+      verify(() => remote.send(swappedPatch)).called(1);
+      verifyNever(() => remote.send(stalePatch));
+    },
+  );
+
+  test('una operación cancelada durante el ciclo no se envía', () async {
+    final e1 = entry(1, const OutboxOperation.deleteTransaction(id: 'a'));
+    final e2 = entry(2, const OutboxOperation.deleteTransaction(id: 'b'));
+    final reads = [
+      [e1, e2],
+      <OutboxEntry>[],
+    ];
+    when(
+      () => store.pendingOutbox(),
+    ).thenAnswer((_) async => reads.removeAt(0));
+    when(() => remote.send(e1)).thenAnswer((_) async => null);
+
+    await engine.run();
+
+    verify(() => remote.send(e1)).called(1);
+    verifyNever(() => remote.send(e2));
+  });
+
+  test('marca el envío antes de mandar la operación', () async {
+    final e1 = entry(
+      1,
+      OutboxOperation.createTransaction(localId: 'l1', data: newTx()),
+    );
+    when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+    when(() => remote.send(e1)).thenThrow(const RemoteFailure.network());
+
+    await engine.run();
+
+    verifyInOrder([
+      () => store.markSending(e1),
+      () => remote.send(e1),
+      () => store.recordAttempt(e1, 'network'),
+    ]);
+  });
 
   test(
     'sin red: registra intento, no envía lo siguiente y devuelve offline',

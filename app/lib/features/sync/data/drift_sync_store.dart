@@ -200,16 +200,19 @@ class DriftSyncStore implements SyncStore {
   }
 
   @override
+  Future<void> markSending(OutboxEntry entry) => _db.transaction(() async {
+    await (_db.update(
+      _db.outbox,
+    )..where((o) => o.seq.equals(entry.seq))).write(
+      OutboxCompanion.custom(attempts: _db.outbox.attempts + const Constant(1)),
+    );
+  });
+
+  @override
   Future<void> recordAttempt(OutboxEntry entry, String reason) =>
       _db.transaction(() async {
-        await (_db.update(
-          _db.outbox,
-        )..where((o) => o.seq.equals(entry.seq))).write(
-          OutboxCompanion.custom(
-            attempts: _db.outbox.attempts + const Constant(1),
-            lastError: Variable.withString(reason),
-          ),
-        );
+        await (_db.update(_db.outbox)..where((o) => o.seq.equals(entry.seq)))
+            .write(OutboxCompanion(lastError: Value(reason)));
       });
 
   @override
@@ -460,14 +463,16 @@ class DriftSyncStore implements SyncStore {
   }
 
   /// Si [id] se creó en local y el servidor no puede tenerlo (nunca se
-  /// intentó enviar, o fue rechazado), borra todas sus operaciones y
-  /// devuelve `true`: el borrado no se envía.
+  /// envió, o fue rechazado), borra todas sus operaciones y devuelve
+  /// `true`: el borrado no se envía.
   ///
   /// También borra las operaciones que lo usan como pareja y limpia el
   /// `transfer_pair_id` que lo referencia.
   ///
-  /// Con intentos fallidos el servidor pudo haberlo creado, así que el
-  /// borrado se encola detrás (el canje de id lo reescribe).
+  /// `attempts` cuenta envíos y se marca antes de enviar ([markSending]):
+  /// si ya se envió (aunque siga en vuelo o la app muriera durante el
+  /// request) el servidor pudo haberlo creado, así que el borrado se encola
+  /// detrás (el canje de id lo reescribe).
   Future<bool> _cancelUnsentCreate(String id) async {
     final ops = await (_db.select(
       _db.outbox,

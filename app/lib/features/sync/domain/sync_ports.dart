@@ -55,6 +55,12 @@ abstract interface class SyncStore {
   /// Saca la operación del outbox. Si hay [server], la guarda y, si la
   /// operación creó un id local, lo canjea por el del servidor.
   Future<void> complete(OutboxEntry entry, SyncedTransaction? server);
+
+  /// Cuenta un envío (`attempts`) antes de mandar la operación: con
+  /// `attempts > 0` el servidor pudo haberla recibido.
+  Future<void> markSending(OutboxEntry entry);
+
+  /// Guarda el motivo del último fallo reintentable.
   Future<void> recordAttempt(OutboxEntry entry, String reason);
   Future<void> reject(OutboxEntry entry, String reason);
 

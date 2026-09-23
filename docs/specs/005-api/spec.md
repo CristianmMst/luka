@@ -154,7 +154,7 @@
 Cada ciclo va **push antes que pull**, para que el pull traiga ya el estado que el servidor confirmó en el push.
 
 1. **Pull**: `GET /transactions?updated_since=<cursor>` es incremental — filtra `updated_at >= cursor`, por lo que es idempotente ante reintentos — y el cursor avanza al mayor `updated_at` recibido (primer pull: época `1970-01-01`). Categorías, cuentas y revisión no tienen cursor: cada sync trae la lista completa (`GET /categories`, `/accounts`, `/review`) y reemplaza la copia local entera.
-2. **Push**: la app drena su `outbox` FIFO contra los endpoints normales. Solo los `POST` (creaciones) llevan `Idempotency-Key`, y un reintento repite el mismo cuerpo. Según la respuesta:
+2. **Push**: la app drena su `outbox` FIFO contra los endpoints normales. Solo los `POST` (creaciones) llevan `Idempotency-Key`, y un reintento repite el mismo cuerpo. El outbox se relee antes de cada operación, así que las siguientes ya llevan el id del servidor que dejó el canje de una creación y no se envía lo que el usuario canceló durante el ciclo. Cada envío se cuenta (`attempts`) **antes** de salir: borrar una creación la cancela en local solo si nunca se envió; si ya se envió (aunque siga en vuelo o la app muriera durante el request), el servidor pudo haberla guardado y el borrado se encola detrás. Según la respuesta:
    - Red caída, `5xx`, `429` o `409` con `Retry-After` (spec 005 §1) → se reintenta más tarde; el drenado se detiene ahí, sin saltar al siguiente ítem.
    - `401` → termina el ciclo (sesión cerrada).
    - `404` al borrar y `409` al descartar una revisión → cuentan como hechos (el efecto ya existía o ya no aplica).

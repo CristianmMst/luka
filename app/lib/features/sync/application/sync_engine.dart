@@ -36,15 +36,24 @@ class SyncEngine {
   }
 
   /// Devuelve `done`, o el resultado que detuvo el drenado.
+  ///
+  /// Relee el outbox antes de cada operación: completar una creación canjea
+  /// su id local en las operaciones que siguen, y el usuario puede cancelar
+  /// operaciones mientras el ciclo corre.
   Future<PushOutcome> _push() async {
     final rejected = await _store.rejectedCreates();
-    for (final entry in await _store.pendingOutbox()) {
+    var lastSeq = -1;
+    while (true) {
+      final entry = await _nextPending(after: lastSeq);
+      if (entry == null) break;
+      lastSeq = entry.seq;
       final op = entry.op;
       if (rejected.contains(op.targetId) || rejected.contains(op.relatedId)) {
         await _store.reject(entry, 'dependency_rejected');
         continue;
       }
       try {
+        await _store.markSending(entry);
         await _store.complete(entry, await _remote.send(entry));
       } on RemoteFailure catch (failure) {
         switch (classifyPushFailure(op, failure)) {
@@ -62,6 +71,13 @@ class SyncEngine {
       }
     }
     return PushOutcome.done;
+  }
+
+  Future<OutboxEntry?> _nextPending({required int after}) async {
+    for (final entry in await _store.pendingOutbox()) {
+      if (entry.seq > after) return entry;
+    }
+    return null;
   }
 
   Future<void> _pull() async {
