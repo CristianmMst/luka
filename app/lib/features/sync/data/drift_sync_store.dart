@@ -16,10 +16,15 @@ import 'package:uuid/uuid.dart';
 /// local por el del servidor es reescribir esas columnas.
 class DriftSyncStore implements SyncStore {
   DriftSyncStore(this._db, {DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+    : _clock = now ?? DateTime.now;
 
   final AppDatabase _db;
-  final DateTime Function() _now;
+  final DateTime Function() _clock;
+
+  /// Toda fecha se guarda en UTC: las columnas son texto ISO y
+  /// `ORDER BY occurred_at` compara el texto, así que mezclar zonas
+  /// desordenaría la lista.
+  DateTime _now() => _clock().toUtc();
 
   static const _pending = 'pending';
   static const _rejected = 'rejected';
@@ -240,11 +245,56 @@ class DriftSyncStore implements SyncStore {
       _db.transaction(() async {
         if (await _hasPendingOps(id)) return;
         if (server == null) {
+          await _unlinkPartnersOf(id);
           await _deleteLocalTransaction(id);
         } else {
           await _upsertServer(server);
         }
       });
+
+  @override
+  Future<void> retryRejected(String id) => _db.transaction(() async {
+    final rows = await _rejectedTouching(id);
+    await (_db.update(_db.outbox)
+          ..where((o) => o.seq.isIn([for (final row in rows) row.seq])))
+        .write(const OutboxCompanion(status: Value(_pending)));
+    for (final other in _idsOf(rows)) {
+      await _refreshPendingPush(other);
+    }
+  });
+
+  @override
+  Future<List<OutboxOperation>> discardRejected(String id) =>
+      _db.transaction(() async {
+        final rows = await _rejectedTouching(id);
+        final ops = [for (final row in rows) _decode(row)];
+        await (_db.delete(
+          _db.outbox,
+        )..where((o) => o.seq.isIn([for (final row in rows) row.seq]))).go();
+        for (final op in ops) {
+          if (op.createsRecord) await _dropLocalRecord(op.targetId);
+        }
+        for (final other in _idsOf(rows)) {
+          await _refreshPendingPush(other);
+        }
+        return ops;
+      });
+
+  /// Operaciones rechazadas que tocan [id], como objetivo o como pareja,
+  /// en orden.
+  Future<List<OutboxRow>> _rejectedTouching(String id) =>
+      (_db.select(_db.outbox)
+            ..where(
+              (o) =>
+                  o.status.equals(_rejected) &
+                  (o.targetId.equals(id) | o.relatedId.equals(id)),
+            )
+            ..orderBy([(o) => OrderingTerm.asc(o.seq)]))
+          .get();
+
+  static Set<String> _idsOf(List<OutboxRow> rows) => {
+    for (final row in rows) ...[row.targetId, ?row.relatedId],
+  };
 
   // ----------------------------------------------------------------- pull
 
@@ -338,11 +388,11 @@ class DriftSyncStore implements SyncStore {
                   channel: r.channel,
                   bank: Value(r.bank),
                   sender: r.sender,
-                  receivedAt: r.receivedAt,
+                  receivedAt: r.receivedAt.toUtc(),
                   reason: r.reason,
                   partialExtract: jsonEncode(r.partialExtract),
                   messageText: Value(r.text),
-                  createdAt: r.createdAt,
+                  createdAt: r.createdAt.toUtc(),
                 ),
           ]);
         });
@@ -417,7 +467,7 @@ class DriftSyncStore implements SyncStore {
             currency: 'COP',
             direction: data.direction.name,
             kind: kind.name,
-            occurredAt: data.occurredAt,
+            occurredAt: data.occurredAt.toUtc(),
             merchant: Value(data.merchant),
             description: Value(data.description),
             accountId: Value(data.accountId),
@@ -519,15 +569,7 @@ class DriftSyncStore implements SyncStore {
     await (_db.delete(
       _db.outbox,
     )..where((o) => o.targetId.equals(id) | o.relatedId.equals(id))).go();
-    await _db.customUpdate(
-      'UPDATE local_transactions SET transfer_pair_id = NULL, '
-      "kind = CASE WHEN kind = 'transfer' THEN "
-      "CASE direction WHEN 'debit' THEN 'expense' ELSE 'income' END "
-      'ELSE kind END '
-      'WHERE transfer_pair_id = ?1',
-      variables: [Variable.withString(id)],
-      updates: {_db.localTransactions},
-    );
+    await _unlinkPartnersOf(id);
     await _deleteLocalTransaction(id);
     final affected = {
       for (final row in dependentOps) row.targetId,
@@ -538,6 +580,19 @@ class DriftSyncStore implements SyncStore {
     }
   }
 
+  /// Las filas que tenían a [id] de pareja la pierden y, si quedaron como
+  /// transferencia, vuelven al tipo por dirección (débito → gasto,
+  /// crédito → ingreso).
+  Future<void> _unlinkPartnersOf(String id) => _db.customUpdate(
+    'UPDATE local_transactions SET transfer_pair_id = NULL, '
+    "kind = CASE WHEN kind = 'transfer' THEN "
+    "CASE direction WHEN 'debit' THEN 'expense' ELSE 'income' END "
+    'ELSE kind END '
+    'WHERE transfer_pair_id = ?1',
+    variables: [Variable.withString(id)],
+    updates: {_db.localTransactions},
+  );
+
   Future<void> _upsertServer(SyncedTransaction t) => _db
       .into(_db.localTransactions)
       .insertOnConflictUpdate(
@@ -547,7 +602,7 @@ class DriftSyncStore implements SyncStore {
           currency: t.currency,
           direction: t.direction.name,
           kind: t.kind.name,
-          occurredAt: t.occurredAt,
+          occurredAt: t.occurredAt.toUtc(),
           merchant: Value(t.merchant),
           description: Value(t.description),
           bank: Value(t.bank),
@@ -559,8 +614,8 @@ class DriftSyncStore implements SyncStore {
           parsedBy: t.parsedBy,
           confidence: Value(t.confidence),
           notes: Value(t.notes),
-          createdAt: t.createdAt,
-          updatedAt: t.updatedAt,
+          createdAt: t.createdAt.toUtc(),
+          updatedAt: t.updatedAt.toUtc(),
           pendingPush: const Value(false),
           channels: Value(jsonEncode(t.channels)),
         ),

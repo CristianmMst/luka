@@ -81,34 +81,15 @@ class SyncEngine {
     return PushOutcome.done;
   }
 
-  /// Tras rechazar [op], deja como las tiene el servidor las transacciones
-  /// que su efecto optimista cambió, para que no quede para siempre (p. ej.
-  /// un borrado rechazado que oculta la fila). Crear y convertir no se
-  /// tocan: la fila local es dato del usuario. Los ids de creaciones
-  /// rechazadas no existen en el servidor. Un fallo al consultar no afecta
-  /// el ciclo.
   Future<void> _restoreAfterReject(
     OutboxOperation op,
     Set<String> rejectedCreates,
-  ) async {
-    final ids = switch (op) {
-      PatchTransactionOp(:final id) ||
-      UnsetTransferPairOp(:final id) ||
-      DeleteTransactionOp(:final id) => [id],
-      SetTransferPairOp(:final id, :final pairId) => [id, pairId],
-      CreateTransactionOp() ||
-      ConvertReviewOp() ||
-      DiscardReviewOp() => const <String>[],
-    };
-    for (final id in ids) {
-      if (rejectedCreates.contains(id)) continue;
-      try {
-        await _store.restoreFromServer(id, await _remote.fetchTransaction(id));
-      } on RemoteFailure {
-        // Sin red o sin sesión: la fila queda con el efecto optimista.
-      }
-    }
-  }
+  ) => restoreAfterReject(
+    store: _store,
+    remote: _remote,
+    op: op,
+    rejectedCreates: rejectedCreates,
+  );
 
   Future<OutboxEntry?> _nextPending({required int after}) async {
     for (final entry in await _store.pendingOutbox()) {
@@ -137,5 +118,51 @@ class SyncEngine {
     await _store.replaceCategories(await _remote.categories());
     await _store.replaceAccounts(await _remote.accounts());
     await _store.replaceReview(await _remote.openReview());
+  }
+}
+
+/// Tras rechazar (o descartar) [op], deja como las tiene el servidor las
+/// transacciones que su efecto optimista cambió, para que no quede para
+/// siempre (p. ej. un borrado rechazado que oculta la fila). Crear y
+/// convertir no se tocan: la fila local es dato del usuario. Los ids de
+/// [rejectedCreates] no existen en el servidor.
+///
+/// Desemparejar limpió también a la pareja, que la operación no nombra: se
+/// restaura la pareja que el servidor conserva.
+///
+/// Sin red (o sin sesión) la fila queda con el efecto optimista; el fallo
+/// no se propaga.
+Future<void> restoreAfterReject({
+  required SyncStore store,
+  required SyncRemote remote,
+  required OutboxOperation op,
+  required Set<String> rejectedCreates,
+}) async {
+  final ids = switch (op) {
+    PatchTransactionOp(:final id) ||
+    UnsetTransferPairOp(:final id) ||
+    DeleteTransactionOp(:final id) => [id],
+    SetTransferPairOp(:final id, :final pairId) => [id, pairId],
+    CreateTransactionOp() ||
+    ConvertReviewOp() ||
+    DiscardReviewOp() => const <String>[],
+  };
+  for (final id in ids) {
+    if (rejectedCreates.contains(id)) continue;
+    try {
+      final server = await remote.fetchTransaction(id);
+      await store.restoreFromServer(id, server);
+      final partner = server?.transferPairId;
+      if (op is UnsetTransferPairOp &&
+          partner != null &&
+          !rejectedCreates.contains(partner)) {
+        await store.restoreFromServer(
+          partner,
+          await remote.fetchTransaction(partner),
+        );
+      }
+    } on RemoteFailure {
+      // Sin red o sin sesión: la fila queda con el efecto optimista.
+    }
   }
 }

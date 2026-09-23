@@ -190,6 +190,34 @@ class SyncCoordinator extends Notifier<SyncStatus> {
     if (ref.mounted) unawaited(sync());
   }
 
+  /// Reenvía las operaciones rechazadas que tocan [id].
+  Future<void> retryRejected(String id) async {
+    await _store.retryRejected(id);
+    if (ref.mounted) unawaited(sync());
+  }
+
+  /// Descarta las operaciones rechazadas que tocan [id] y deja sus filas
+  /// como las tiene el servidor. Sin red quedan como están.
+  Future<void> discardRejected(String id) async {
+    final discarded = await _store.discardRejected(id);
+    // Ni las creaciones descartadas (ya quitadas en local) ni las que
+    // siguen rechazadas existen en el servidor.
+    final localOnly = {
+      for (final op in discarded)
+        if (op.createsRecord) op.targetId,
+      ...await _store.rejectedCreates(),
+    };
+    final remote = ref.read(syncRemoteProvider);
+    for (final op in discarded) {
+      await restoreAfterReject(
+        store: _store,
+        remote: remote,
+        op: op,
+        rejectedCreates: localOnly,
+      );
+    }
+  }
+
   String newLocalId() => const Uuid().v4();
 }
 

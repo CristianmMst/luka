@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/auth_repository.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
@@ -7,6 +8,8 @@ import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/application/sync_engine.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
+import 'package:finanzia/features/sync/domain/sync_rules.dart';
+import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -19,6 +22,21 @@ class _MockRemote extends Mock implements SyncRemote {}
 
 class _Engine extends Mock implements SyncEngine {}
 
+SyncedTransaction _server(String id) => SyncedTransaction(
+  id: id,
+  amount: Cop.pesos(1000),
+  currency: 'COP',
+  direction: TxDirection.debit,
+  kind: TxKind.expense,
+  occurredAt: DateTime.utc(2026, 9, 23),
+  categoryId: 'c',
+  fiscalTag: 'no_deducible',
+  transferAuto: false,
+  parsedBy: 'manual',
+  createdAt: DateTime.utc(2026, 9, 23),
+  updatedAt: DateTime.utc(2026, 9, 23),
+);
+
 const _ana = User(
   id: 'u-1',
   email: 'ana@example.com',
@@ -29,6 +47,7 @@ const _ana = User(
 void main() {
   late _MockRepository repository;
   late _MockStore store;
+  late _MockRemote remote;
   late _Engine engine;
   late StreamController<void> expired;
   late StreamController<SyncCounters> counters;
@@ -38,11 +57,13 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const OutboxOperation.deleteTransaction(id: 'f'));
+    registerFallbackValue(_server('fallback'));
   });
 
   setUp(() {
     repository = _MockRepository();
     store = _MockStore();
+    remote = _MockRemote();
     engine = _Engine();
     expired = StreamController<void>.broadcast();
     counters = StreamController<SyncCounters>.broadcast();
@@ -56,13 +77,16 @@ void main() {
     when(() => store.claimFor(any())).thenAnswer((_) async {});
     when(() => store.clearAll()).thenAnswer((_) async {});
     when(() => store.enqueue(any())).thenAnswer((_) async {});
+    when(() => store.retryRejected(any())).thenAnswer((_) async {});
+    when(() => store.rejectedCreates()).thenAnswer((_) async => {});
+    when(() => store.restoreFromServer(any(), any())).thenAnswer((_) async {});
     when(() => engine.run()).thenAnswer((_) async => SyncRunResult.synced);
 
     container = ProviderContainer(
       overrides: [
         authRepositoryProvider.overrideWithValue(repository),
         syncStoreProvider.overrideWithValue(store),
-        syncRemoteProvider.overrideWithValue(_MockRemote()),
+        syncRemoteProvider.overrideWithValue(remote),
         syncEngineProvider.overrideWithValue(engine),
         connectivityProvider.overrideWithValue(connectivity.stream),
         foregroundTicksProvider.overrideWithValue(ticks.stream),
@@ -357,11 +381,113 @@ void main() {
     );
   });
 
+  group('operaciones rechazadas', () {
+    const patch = OutboxOperation.patchTransaction(
+      id: 't1',
+      patch: TransactionPatch(categoryId: 'c2'),
+    );
+
+    test('retryRejected las vuelve a encolar y dispara sync', () async {
+      await start(user: _ana);
+      clearInteractions(engine);
+
+      await coordinator().retryRejected('t1');
+      await pumpEventQueue();
+
+      verifyInOrder([
+        () => store.retryRejected('t1'),
+        () => engine.run(),
+      ]);
+    });
+
+    test('discardRejected borra y restaura la verdad del servidor', () async {
+      await start(user: _ana);
+      when(
+        () => store.discardRejected('t1'),
+      ).thenAnswer((_) async => [patch]);
+      when(
+        () => remote.fetchTransaction('t1'),
+      ).thenAnswer((_) async => _server('t1'));
+
+      await coordinator().discardRejected('t1');
+
+      verifyInOrder([
+        () => store.discardRejected('t1'),
+        () => remote.fetchTransaction('t1'),
+        () => store.restoreFromServer('t1', _server('t1')),
+      ]);
+    });
+
+    test('sin red, descartar deja la fila como está', () async {
+      await start(user: _ana);
+      when(
+        () => store.discardRejected('t1'),
+      ).thenAnswer((_) async => [patch]);
+      when(
+        () => remote.fetchTransaction('t1'),
+      ).thenThrow(const RemoteFailure.network());
+
+      await coordinator().discardRejected('t1');
+
+      verify(() => store.discardRejected('t1')).called(1);
+      verifyNever(() => store.restoreFromServer(any(), any()));
+    });
+
+    test(
+      'descartar una creación no consulta el servidor (el store la quitó)',
+      () async {
+        await start(user: _ana);
+        when(() => store.discardRejected('l1')).thenAnswer(
+          (_) async => [
+            OutboxOperation.createTransaction(
+              localId: 'l1',
+              data: NewTransaction(
+                amount: Cop.pesos(1000),
+                direction: TxDirection.debit,
+                occurredAt: DateTime.utc(2026, 9, 23),
+              ),
+            ),
+            const OutboxOperation.setTransferPair(id: 'l1', pairId: 'b'),
+          ],
+        );
+        when(
+          () => remote.fetchTransaction('b'),
+        ).thenAnswer((_) async => _server('b'));
+
+        await coordinator().discardRejected('l1');
+
+        verifyNever(() => remote.fetchTransaction('l1'));
+        verify(() => store.restoreFromServer('b', _server('b'))).called(1);
+      },
+    );
+
+    test(
+      'descartar no restaura una pareja que es creación rechazada',
+      () async {
+        await start(user: _ana);
+        when(() => store.discardRejected('a')).thenAnswer(
+          (_) async => [
+            const OutboxOperation.setTransferPair(id: 'a', pairId: 'l9'),
+          ],
+        );
+        when(() => store.rejectedCreates()).thenAnswer((_) async => {'l9'});
+        when(
+          () => remote.fetchTransaction('a'),
+        ).thenAnswer((_) async => _server('a'));
+
+        await coordinator().discardRejected('a');
+
+        verify(() => store.restoreFromServer('a', _server('a'))).called(1);
+        verifyNever(() => remote.fetchTransaction('l9'));
+      },
+    );
+  });
+
   test('syncEngineProvider arma el motor con los puertos', () {
     final c = ProviderContainer(
       overrides: [
         syncStoreProvider.overrideWithValue(store),
-        syncRemoteProvider.overrideWithValue(_MockRemote()),
+        syncRemoteProvider.overrideWithValue(remote),
       ],
     );
     addTearDown(c.dispose);

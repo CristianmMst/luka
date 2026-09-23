@@ -82,7 +82,20 @@ abstract interface class SyncStore {
   /// Tras un rechazo, deja [id] como lo tiene el servidor: upsert de
   /// [server], o borra la fila local si es `null`. No toca nada si quedan
   /// operaciones pendientes para [id].
+  ///
+  /// Con `null`, las filas locales que tenían a [id] de pareja la pierden y,
+  /// si quedaron como transferencia, vuelven al tipo por dirección.
   Future<void> restoreFromServer(String id, SyncedTransaction? server);
+
+  /// Devuelve a `pending`, en su orden original, las operaciones
+  /// rechazadas que tocan [id] (como objetivo o como pareja), para que el
+  /// próximo ciclo las reenvíe.
+  Future<void> retryRejected(String id);
+
+  /// Borra las operaciones rechazadas que tocan [id] (como objetivo o como
+  /// pareja) y las devuelve, para restaurar la verdad del servidor. Una
+  /// creación descartada se quita en local: el servidor no la tiene.
+  Future<List<OutboxOperation>> discardRejected(String id);
 
   Future<DateTime?> transactionsCursor();
 

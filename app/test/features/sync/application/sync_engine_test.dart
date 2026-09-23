@@ -394,6 +394,41 @@ void main() {
       },
     );
 
+    test('desemparejar rechazado restaura también la pareja', () async {
+      final e1 = entry(1, const OutboxOperation.unsetTransferPair(id: 'a'));
+      final a = tx('a', now).copyWith(transferPairId: 'b');
+      when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+      when(() => remote.send(e1)).thenThrow(forbidden);
+      when(() => remote.fetchTransaction('a')).thenAnswer((_) async => a);
+      when(
+        () => remote.fetchTransaction('b'),
+      ).thenAnswer((_) async => tx('b', now));
+
+      await engine.run();
+
+      verifyInOrder([
+        () => store.restoreFromServer('a', a),
+        () => store.restoreFromServer('b', tx('b', now)),
+      ]);
+    });
+
+    test(
+      'desemparejar rechazado no consulta una pareja creada y rechazada',
+      () async {
+        final e1 = entry(1, const OutboxOperation.unsetTransferPair(id: 'a'));
+        final a = tx('a', now).copyWith(transferPairId: 'l1');
+        when(() => store.rejectedCreates()).thenAnswer((_) async => {'l1'});
+        when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+        when(() => remote.send(e1)).thenThrow(forbidden);
+        when(() => remote.fetchTransaction('a')).thenAnswer((_) async => a);
+
+        await engine.run();
+
+        verify(() => store.restoreFromServer('a', a)).called(1);
+        verifyNever(() => remote.fetchTransaction('l1'));
+      },
+    );
+
     test('un fallo al traer la transacción no rompe el ciclo', () async {
       final e1 = entry(1, const OutboxOperation.unsetTransferPair(id: 'a'));
       final e2 = entry(2, const OutboxOperation.deleteTransaction(id: 'b'));
