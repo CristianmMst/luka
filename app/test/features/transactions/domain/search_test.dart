@@ -64,16 +64,20 @@ void main() {
       expect(matchesText(tx, 'walmart'), isFalse);
     });
 
-    test('tambien busca en categoria, banco y notas', () {
+    test('tambien busca en categoria y notas', () {
       expect(
         matchesText(_tx(categoryName: 'Transporte'), 'transporte'),
         isTrue,
       );
-      expect(matchesText(_tx(bank: 'Bancolombia'), 'bancolombia'), isTrue);
       expect(
         matchesText(_tx(notes: 'Almuerzo con el equipo'), 'almuerzo'),
         isTrue,
       );
+    });
+
+    test('el banco no se busca aqui: tiene su propio filtro', () {
+      final tx = _tx(bank: 'Bancolombia');
+      expect(matchesText(tx, 'bancolombia'), isFalse);
     });
   });
 }

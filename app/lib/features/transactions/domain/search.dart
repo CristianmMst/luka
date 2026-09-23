@@ -36,13 +36,14 @@ String normalizeForSearch(String s) {
   return buffer.toString();
 }
 
-/// `true` si [query] aparece (normalizada) en el comercio, la categoría, el
-/// banco o las notas de [t]. Una búsqueda vacía siempre coincide.
+/// `true` si [query] aparece (normalizada) en el comercio, la categoría o
+/// las notas de [t]. El banco no se busca aquí: tiene su propio filtro.
+/// Una búsqueda vacía siempre coincide.
 bool matchesText(TransactionView t, String query) {
   final needle = normalizeForSearch(query.trim());
   if (needle.isEmpty) return true;
   final haystack = normalizeForSearch(
-    [t.merchant, t.categoryName, t.bank, t.notes].whereType<String>().join(' '),
+    [t.merchant, t.categoryName, t.notes].whereType<String>().join(' '),
   );
   return haystack.contains(needle);
 }
