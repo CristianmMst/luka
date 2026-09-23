@@ -113,4 +113,8 @@ abstract interface class SyncStore {
   Future<void> replaceReview(List<SyncedReviewItem> items);
   Future<void> markSynced(DateTime at);
   Stream<SyncCounters> watchCounters();
+
+  /// Cantidad de ítems abiertos en la cola de revisión (badge de la barra de
+  /// navegación, spec 008 §7).
+  Stream<int> watchOpenReviewCount();
 }

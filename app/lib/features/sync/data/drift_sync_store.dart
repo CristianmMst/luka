@@ -436,6 +436,15 @@ class DriftSyncStore implements SyncStore {
         );
       });
 
+  @override
+  Stream<int> watchOpenReviewCount() => _db
+      .customSelect(
+        'SELECT COUNT(*) AS c FROM local_review',
+        readsFrom: {_db.localReview},
+      )
+      .watchSingle()
+      .map((row) => row.read<int>('c'));
+
   // ------------------------------------------------ transacciones locales
 
   Future<LocalTransaction?> _findLocalTransaction(String id) => (_db.select(

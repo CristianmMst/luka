@@ -46,6 +46,12 @@ final syncEngineProvider = Provider<SyncEngine>(
   ),
 );
 
+/// Ítems abiertos de la cola de revisión, para el badge de "Revisión" en la
+/// barra de navegación (spec 008 §7).
+final openReviewCountProvider = StreamProvider<int>(
+  (ref) => ref.watch(syncStoreProvider).watchOpenReviewCount(),
+);
+
 @freezed
 abstract class SyncStatus with _$SyncStatus {
   const factory SyncStatus({

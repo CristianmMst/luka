@@ -56,12 +56,6 @@ class DashboardPlaceholderPage extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () =>
-                    ref.read(authControllerProvider.notifier).signOut(),
-                child: Text(l10n.homeSignOut),
-              ),
             ],
           ),
         ),

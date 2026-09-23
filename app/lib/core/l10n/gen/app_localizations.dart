@@ -297,6 +297,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{rejected, plural, =1{1 cambio no se pudo enviar} other{{rejected} cambios no se pudieron enviar}}'**
   String syncStatusRejected(int rejected);
+
+  /// No description provided for @navHomeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio'**
+  String get navHomeLabel;
+
+  /// No description provided for @navTransactionsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimientos'**
+  String get navTransactionsLabel;
+
+  /// No description provided for @navRegisterLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar'**
+  String get navRegisterLabel;
+
+  /// No description provided for @navReviewLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión'**
+  String get navReviewLabel;
+
+  /// No description provided for @navSettingsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get navSettingsLabel;
+
+  /// No description provided for @reviewBadgeSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 por revisar} other{{count} por revisar}}'**
+  String reviewBadgeSemantics(int count);
+
+  /// No description provided for @shellComingSoonBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Llega pronto'**
+  String get shellComingSoonBody;
+
+  /// No description provided for @transactionDetailPlaceholderBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalle del movimiento'**
+  String get transactionDetailPlaceholderBody;
 }
 
 class _AppLocalizationsDelegate

@@ -141,4 +141,36 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get navHomeLabel => 'Inicio';
+
+  @override
+  String get navTransactionsLabel => 'Movimientos';
+
+  @override
+  String get navRegisterLabel => 'Registrar';
+
+  @override
+  String get navReviewLabel => 'Revisión';
+
+  @override
+  String get navSettingsLabel => 'Ajustes';
+
+  @override
+  String reviewBadgeSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count por revisar',
+      one: '1 por revisar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shellComingSoonBody => 'Llega pronto';
+
+  @override
+  String get transactionDetailPlaceholderBody => 'Detalle del movimiento';
 }

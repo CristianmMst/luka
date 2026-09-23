@@ -2,6 +2,12 @@ import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
 import 'package:finanzia/features/dashboard/presentation/dashboard_placeholder_page.dart';
+import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
+import 'package:finanzia/features/shell/presentation/home_shell.dart';
+import 'package:finanzia/features/shell/presentation/registrar_page.dart';
+import 'package:finanzia/features/shell/presentation/revision_page.dart';
+import 'package:finanzia/features/transactions/presentation/transaction_detail_page.dart';
+import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +16,10 @@ abstract final class Routes {
   static const splash = '/splash';
   static const login = '/login';
   static const home = '/';
+  static const transactions = '/movimientos';
+  static const register = '/registrar';
+  static const review = '/revision';
+  static const settings = '/ajustes';
   // Reservadas: /onboarding/* (F3.6, F4.4).
 }
 
@@ -49,9 +59,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.login,
         builder: (context, state) => const LoginPage(),
       ),
-      GoRoute(
-        path: Routes.home,
-        builder: (context, state) => const DashboardPlaceholderPage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            HomeShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.home,
+                builder: (context, state) => const DashboardPlaceholderPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.transactions,
+                builder: (context, state) => const TransactionsPage(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => TransactionDetailPage(
+                      id: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.register,
+                builder: (context, state) => const RegistrarPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.review,
+                builder: (context, state) => const RevisionPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.settings,
+                builder: (context, state) => const AjustesPage(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );

@@ -68,5 +68,20 @@
         "type": "int"
       }
     }
-  }
+  },
+  "navHomeLabel": "Inicio",
+  "navTransactionsLabel": "Movimientos",
+  "navRegisterLabel": "Registrar",
+  "navReviewLabel": "Revisión",
+  "navSettingsLabel": "Ajustes",
+  "reviewBadgeSemantics": "{count, plural, one{1 por revisar} other{{count} por revisar}}",
+  "@reviewBadgeSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shellComingSoonBody": "Llega pronto",
+  "transactionDetailPlaceholderBody": "Detalle del movimiento"
 }

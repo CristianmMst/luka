@@ -24,6 +24,17 @@ void main() {
       Routes.home,
       Routes.login,
     ),
+    // Las rutas del shell (F4.2) piden sesión igual que /.
+    (signedOut, Routes.transactions, Routes.login),
+    (signedOut, '${Routes.transactions}/tx1', Routes.login),
+    (signedOut, Routes.register, Routes.login),
+    (signedOut, Routes.review, Routes.login),
+    (signedOut, Routes.settings, Routes.login),
+    (signedIn, Routes.transactions, null),
+    (signedIn, '${Routes.transactions}/tx1', null),
+    (signedIn, Routes.register, null),
+    (signedIn, Routes.review, null),
+    (signedIn, Routes.settings, null),
   ];
 
   for (final (auth, location, expected) in table) {
