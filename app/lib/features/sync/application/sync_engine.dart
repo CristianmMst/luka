@@ -17,6 +17,11 @@ class SyncEngine {
 
   static final _epoch = DateTime.utc(1970);
 
+  /// Solape del pull incremental: una fila que commitea tarde con un
+  /// `updated_at` anterior al cursor no se pierde. Es seguro porque el
+  /// filtro es `>=` y aplicar dos veces la misma fila no cambia nada.
+  static const _pullOverlap = Duration(minutes: 5);
+
   final SyncStore _store;
   final SyncRemote _remote;
   final DateTime Function() _now;
@@ -113,18 +118,22 @@ class SyncEngine {
   }
 
   Future<void> _pull() async {
-    final since = await _store.transactionsCursor() ?? _epoch;
-    String? cursor;
+    final cursor = await _store.transactionsCursor();
+    final overlapped = cursor?.subtract(_pullOverlap);
+    final since = overlapped == null || overlapped.isBefore(_epoch)
+        ? _epoch
+        : overlapped;
+    String? pageCursor;
     do {
-      final page = await _remote.transactionsSince(since, cursor: cursor);
+      final page = await _remote.transactionsSince(since, cursor: pageCursor);
       if (page.items.isNotEmpty) {
         final newest = page.items
             .map((t) => t.updatedAt)
             .reduce((a, b) => a.isAfter(b) ? a : b);
         await _store.applyTransactions(page.items, cursor: newest);
       }
-      cursor = page.nextCursor;
-    } while (cursor != null);
+      pageCursor = page.nextCursor;
+    } while (pageCursor != null);
     await _store.replaceCategories(await _remote.categories());
     await _store.replaceAccounts(await _remote.accounts());
     await _store.replaceReview(await _remote.openReview());

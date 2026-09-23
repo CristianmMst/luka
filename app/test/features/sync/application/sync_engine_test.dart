@@ -304,6 +304,28 @@ void main() {
     verify(() => remote.transactionsSince(epoch)).called(1);
   });
 
+  test(
+    'pull incremental se solapa 5 min con el cursor, sin bajar de epoch',
+    () async {
+      final cursor = DateTime.utc(2026, 9, 23, 11, 3);
+      when(() => store.transactionsCursor()).thenAnswer((_) async => cursor);
+
+      await engine.run();
+
+      verify(
+        () => remote.transactionsSince(DateTime.utc(2026, 9, 23, 10, 58)),
+      ).called(1);
+
+      when(
+        () => store.transactionsCursor(),
+      ).thenAnswer((_) async => DateTime.utc(1970, 1, 1, 0, 2));
+
+      await engine.run();
+
+      verify(() => remote.transactionsSince(epoch)).called(1);
+    },
+  );
+
   test('fallo de red en el pull devuelve offline sin markSynced', () async {
     when(
       () => remote.transactionsSince(any(), cursor: any(named: 'cursor')),
