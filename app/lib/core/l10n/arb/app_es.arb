@@ -361,5 +361,9 @@
     }
   },
   "detailNotes": "Notas",
-  "detailNotesHint": "Agrega una nota para ti"
+  "detailNotesHint": "Agrega una nota para ti",
+  "emptyPeriodTitle": "Sin movimientos este mes",
+  "emptyPeriodBody": "Tus movimientos anteriores siguen guardados. Revisa el mes pasado o cambia los filtros.",
+  "emptyPeriodLastMonth": "Ver mes pasado",
+  "emptyPeriodFilters": "Cambiar filtros"
 }

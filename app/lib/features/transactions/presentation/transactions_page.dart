@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:finanzia/app/router.dart';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
+import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
@@ -155,8 +155,19 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
     }
     if (groups.isEmpty) {
       if (firstSync) return const TransactionsSkeleton(firstSync: true);
-      if (state.filter == const TransactionFilter()) {
+      final hasAny = ref.watch(hasAnyTransactionsProvider).value;
+      if (hasAny == null) return const TransactionsSkeleton();
+      if (!hasAny) {
         return EmptyTransactions(onRegister: () => context.go(Routes.register));
+      }
+      final filter = state.filter;
+      if (filter.activeCount == 0 && filter.text.trim().isEmpty) {
+        return EmptyPeriod(
+          onLastMonth: () => _controller.setFilter(
+            filter.copyWith(period: PeriodPreset.lastMonth),
+          ),
+          onFilters: () => unawaited(_openFilters(filter)),
+        );
       }
       return NoResults(
         text: state.filter.text,

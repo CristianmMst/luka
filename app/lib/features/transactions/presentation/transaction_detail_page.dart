@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:finanzia/app/router.dart';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
+import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/theme/tokens/type_tokens.dart';

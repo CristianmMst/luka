@@ -72,6 +72,37 @@ void main() {
     ).called(1);
   });
 
+  group('hasAnyTransactionsProvider', () {
+    final everything = TransactionFilter(
+      period: PeriodPreset.custom,
+      from: DateTime.utc(2000),
+      to: DateTime.utc(3000),
+    );
+
+    test('es true si hay al menos un movimiento en cualquier fecha', () async {
+      when(
+        () => repository.watch(any(), limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value([_tx('a')]));
+
+      container.listen(hasAnyTransactionsProvider, (_, _) {});
+      final hasAny = await container.read(hasAnyTransactionsProvider.future);
+
+      expect(hasAny, isTrue);
+      verify(() => repository.watch(everything, limit: 1)).called(1);
+    });
+
+    test('es false sin movimientos', () async {
+      when(
+        () => repository.watch(any(), limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value(const []));
+
+      container.listen(hasAnyTransactionsProvider, (_, _) {});
+      final hasAny = await container.read(hasAnyTransactionsProvider.future);
+
+      expect(hasAny, isFalse);
+    });
+  });
+
   test('la otra parte de una transferencia sale del repositorio', () async {
     final pair = _tx('pair');
     when(

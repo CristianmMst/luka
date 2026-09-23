@@ -21,6 +21,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     required this.heroChip,
     required this.card,
     required this.tile,
+    required this.gem,
   });
 
   static const light = FinanziaColors(
@@ -39,6 +40,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     heroChip: LightTokens.heroChip,
     card: LightTokens.card,
     tile: LightTokens.tile,
+    gem: LightTokens.gem,
   );
 
   static const dark = FinanziaColors(
@@ -57,6 +59,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     heroChip: DarkTokens.heroChip,
     card: DarkTokens.card,
     tile: DarkTokens.tile,
+    gem: DarkTokens.gem,
   );
 
   final Color expense;
@@ -82,6 +85,9 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   /// Opciones en rejilla dentro de una hoja (p. ej. las categorías).
   final Color tile;
 
+  /// Relleno de la gema de marca en ilustraciones (p. ej. el estado vacío).
+  final Color gem;
+
   @override
   FinanziaColors copyWith({
     Color? expense,
@@ -99,6 +105,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     Color? heroChip,
     Color? card,
     Color? tile,
+    Color? gem,
   }) {
     return FinanziaColors(
       expense: expense ?? this.expense,
@@ -116,6 +123,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       heroChip: heroChip ?? this.heroChip,
       card: card ?? this.card,
       tile: tile ?? this.tile,
+      gem: gem ?? this.gem,
     );
   }
 
@@ -146,6 +154,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       heroChip: Color.lerp(heroChip, other.heroChip, t)!,
       card: Color.lerp(card, other.card, t)!,
       tile: Color.lerp(tile, other.tile, t)!,
+      gem: Color.lerp(gem, other.gem, t)!,
     );
   }
 }

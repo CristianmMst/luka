@@ -1,3 +1,4 @@
+import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
@@ -12,16 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-abstract final class Routes {
-  static const splash = '/splash';
-  static const login = '/login';
-  static const home = '/';
-  static const transactions = '/movimientos';
-  static const register = '/registrar';
-  static const review = '/revision';
-  static const settings = '/ajustes';
-  // Reservadas: /onboarding/* (F3.6, F4.4).
-}
+export 'package:finanzia/core/routing/routes.dart';
 
 /// Session gate (spec 008 §2): decide a dónde ir según el estado de la
 /// sesión. Función pura para poder probarla sin widgets.

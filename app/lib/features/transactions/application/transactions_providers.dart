@@ -44,3 +44,20 @@ final StreamProviderFamily<TransactionView?, String> transactionByIdProvider =
     StreamProvider.autoDispose.family<TransactionView?, String>(
       (ref, id) => ref.watch(transactionsRepositoryProvider).watchOne(id),
     );
+
+/// Si hay al menos un movimiento guardado, en cualquier fecha: separa el
+/// estado "Aún no hay movimientos" de "nada en este periodo".
+final StreamProvider<bool> hasAnyTransactionsProvider =
+    StreamProvider.autoDispose<bool>(
+      (ref) => ref
+          .watch(transactionsRepositoryProvider)
+          .watch(
+            TransactionFilter(
+              period: PeriodPreset.custom,
+              from: DateTime.utc(2000),
+              to: DateTime.utc(3000),
+            ),
+            limit: 1,
+          )
+          .map((rows) => rows.isNotEmpty),
+    );

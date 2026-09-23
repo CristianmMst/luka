@@ -1,4 +1,5 @@
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
+import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +16,13 @@ class EmptyTransactions extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
+    final gem = context.finanziaColors.gem;
+
     return _CenteredState(
       // La gema de marca, como en el login y el splash.
-      art: const BrandMark(
-        gemColor: Color(0xFF1F6B55),
-        textColor: Color(0xFF1F6B55),
+      art: BrandMark(
+        gemColor: gem,
+        textColor: gem,
         size: 51,
         showWordmark: false,
       ),
@@ -68,6 +71,52 @@ class NoResults extends StatelessWidget {
         onPressed: onClear,
         style: OutlinedButton.styleFrom(foregroundColor: scheme.onSurface),
         child: Text(l10n.noResultsClear),
+      ),
+    );
+  }
+}
+
+/// El mes en curso está vacío pero hay movimientos anteriores (sin
+/// filtros activos): "Ver mes pasado" o "Cambiar filtros".
+class EmptyPeriod extends StatelessWidget {
+  const EmptyPeriod({
+    required this.onLastMonth,
+    required this.onFilters,
+    super.key,
+  });
+
+  final VoidCallback onLastMonth;
+  final VoidCallback onFilters;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    return _CenteredState(
+      art: ExcludeSemantics(
+        child: Icon(
+          Icons.event_busy_outlined,
+          size: 40,
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+      title: l10n.emptyPeriodTitle,
+      titleSize: 20,
+      body: l10n.emptyPeriodBody,
+      action: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: Space.xs,
+        children: [
+          FilledButton(
+            onPressed: onLastMonth,
+            child: Text(l10n.emptyPeriodLastMonth),
+          ),
+          TextButton(
+            onPressed: onFilters,
+            child: Text(l10n.emptyPeriodFilters),
+          ),
+        ],
       ),
     );
   }

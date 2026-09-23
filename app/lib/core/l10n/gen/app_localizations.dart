@@ -981,6 +981,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Agrega una nota para ti'**
   String get detailNotesHint;
+
+  /// No description provided for @emptyPeriodTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin movimientos este mes'**
+  String get emptyPeriodTitle;
+
+  /// No description provided for @emptyPeriodBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus movimientos anteriores siguen guardados. Revisa el mes pasado o cambia los filtros.'**
+  String get emptyPeriodBody;
+
+  /// No description provided for @emptyPeriodLastMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mes pasado'**
+  String get emptyPeriodLastMonth;
+
+  /// No description provided for @emptyPeriodFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar filtros'**
+  String get emptyPeriodFilters;
 }
 
 class _AppLocalizationsDelegate

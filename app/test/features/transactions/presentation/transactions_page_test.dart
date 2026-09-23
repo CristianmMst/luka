@@ -421,6 +421,47 @@ void main() {
     expect(find.text('detalle exito'), findsOneWidget);
   });
 
+  group('mes vacío con movimientos anteriores', () {
+    // Solo la consulta de "hay alguno" (periodo propio, 2000-3000) trae filas.
+    List<TransactionView> onlyOlder(TransactionFilter filter) =>
+        filter.period == PeriodPreset.custom ? _sample() : [];
+
+    testWidgets('no dice que no hay movimientos', (tester) async {
+      rows = onlyOlder;
+      await pumpPage(tester);
+
+      expect(find.text('Aún no hay movimientos'), findsNothing);
+      expect(find.text('Sin movimientos este mes'), findsOneWidget);
+      expect(find.text('Quitar filtros'), findsNothing);
+    });
+
+    testWidgets('"Ver mes pasado" cambia el periodo', (tester) async {
+      rows = onlyOlder;
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Ver mes pasado'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.watch(
+          const TransactionFilter(period: PeriodPreset.lastMonth),
+          limit: 50,
+        ),
+      ).called(1);
+      expect(find.text('Agosto 2026'), findsOneWidget);
+    });
+
+    testWidgets('"Cambiar filtros" abre la hoja de filtros', (tester) async {
+      rows = onlyOlder;
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Cambiar filtros'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Limpiar'), findsOneWidget);
+    });
+  });
+
   testWidgets('una búsqueda sin resultados ofrece quitar filtros', (
     tester,
   ) async {

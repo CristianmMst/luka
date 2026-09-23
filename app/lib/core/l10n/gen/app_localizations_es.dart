@@ -579,4 +579,17 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get detailNotesHint => 'Agrega una nota para ti';
+
+  @override
+  String get emptyPeriodTitle => 'Sin movimientos este mes';
+
+  @override
+  String get emptyPeriodBody =>
+      'Tus movimientos anteriores siguen guardados. Revisa el mes pasado o cambia los filtros.';
+
+  @override
+  String get emptyPeriodLastMonth => 'Ver mes pasado';
+
+  @override
+  String get emptyPeriodFilters => 'Cambiar filtros';
 }
