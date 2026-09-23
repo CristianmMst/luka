@@ -245,11 +245,11 @@ Espejo simplificado para offline-first; el servidor es la fuente de verdad.
 | Tabla local | Contenido | Sync |
 |---|---|---|
 | `local_transactions` | proyección de transactions + flag `pending_push` | pull incremental por `updated_at`; push de cambios locales (outbox) |
-| `local_categories` | categorías sistema+usuario | pull |
-| `local_accounts` | linked_accounts | pull/push |
-| `local_review` | cola de revisión | pull/push de resoluciones |
-| `outbox` | operaciones offline pendientes (crear manual, corregir categoría, marcar transfer) | push FIFO con reintentos |
-| `sync_state` | cursores `updated_at` por tabla | — |
+| `local_categories` | categorías sistema+usuario | snapshot completo en cada sync |
+| `local_accounts` | linked_accounts | snapshot completo en cada sync |
+| `local_review` | cola de revisión | snapshot completo en cada sync; los ítems con una conversión o descarte aún pendiente en el outbox quedan fuera del reemplazo |
+| `outbox` | operaciones offline pendientes (crear manual, corregir categoría, marcar transfer); guarda los ids en `target_id`/`related_id`, así que canjear un id local por el que asigna el servidor es reescribir esas columnas | push FIFO con reintentos; estado `pending` o `rejected` (fallo no reintentable, resolución manual) |
+| `sync_state` | cursor de transacciones (`transactions_cursor`), `last_synced_at` y `owner_user_id` (usuario dueño de la copia local) | — |
 
 Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usuario, que siempre ganan sobre cambios automáticos del servidor (spec 003 §3).
 

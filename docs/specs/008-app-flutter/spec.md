@@ -74,10 +74,12 @@ flowchart TD
 
 ## 5. Sincronización offline (P4, contrato en spec 005 §9)
 
-- `SyncCoordinator` (provider) dispara: al abrir la app, al reconectar (connectivity_plus), tras push del outbox y cada 15 min en foreground.
-- Pull incremental por `updated_since` por tabla → upsert en Drift. Push: drena outbox FIFO con `Idempotency-Key`.
-- Conflictos: gana `updated_at` más reciente, salvo ediciones manuales del usuario que prevalecen (spec 003 §3).
-- Indicador global de estado de sync en Ajustes (última sincronización, ítems pendientes).
+- `SyncCoordinator` (provider, single-flight: un ciclo a la vez; si llega otra petición mientras uno corre, encadena otro al terminar) dispara sync al autenticarse, al reconectar (connectivity_plus), al encolar una operación, al volver a primer plano y cada 15 min mientras la app sigue en primer plano.
+- Cada ciclo va **push antes que pull**: primero drena el outbox FIFO (creaciones con `Idempotency-Key`; reglas de reintento/rechazo en spec 005 §9) para que el pull traiga el estado ya confirmado por el servidor. Pull: incremental por `updated_since` en transacciones; categorías, cuentas y revisión se traen completas cada vez → upsert en Drift.
+- Ids locales: una creación offline nace con un UUID local; al confirmarse en el servidor, ese id se canjea en `local_transactions` y en `target_id`/`related_id` del outbox (spec 004 §5).
+- Conflictos: gana `updated_at` más reciente, salvo que la fila tenga una edición local aún sin enviar (outbox pendiente), que siempre prevalece sobre el pull (spec 003 §3).
+- Privacidad: la base local se borra por completo (incluido el outbox sin enviar, P6) solo cuando la sesión pasa de autenticada a cerrada por el propio usuario en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. `claimFor` también la borra si el usuario que inicia sesión es distinto al que la dejó. Antes de borrar o de reclamar la base para un usuario nuevo, el coordinador espera a que termine cualquier ciclo de sync en curso, para que no se crucen escrituras tardías entre usuarios.
+- Indicador de estado de sync: línea provisional en el placeholder del dashboard ("sincronizando…" / "sin conexión" / "al día", con el conteo de pendientes); se traslada a Ajustes en F4.8.
 
 ## 6. Permisos y plataforma
 
