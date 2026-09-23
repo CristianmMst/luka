@@ -141,9 +141,7 @@ class DriftTransactionsRepository implements TransactionsRepository {
   // --------------------------------------------------------------- fuentes
 
   @override
-  Future<List<({TxChannel channel, DateTime receivedAt})>?> fetchSources(
-    String id,
-  ) async {
+  Future<List<TxSource>?> fetchSources(String id) async {
     final TransactionDetail? detail;
     try {
       detail = await _remote.fetchTransactionDetail(id);
