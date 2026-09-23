@@ -4,5 +4,5 @@ useDefault = true
 [allowlist]
 paths = [
   '''backend/\.env\.example''',
-  '''backend/tests/.*/fixtures/.*''',
+  '''backend/tests/fixtures/.*''',
 ]
