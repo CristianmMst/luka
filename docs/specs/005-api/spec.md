@@ -22,7 +22,7 @@
 | 429 | `rate_limited` | header `Retry-After` |
 | 500 | `internal` | sin detalles internos |
 
-- Idempotencia en mutaciones de la app: header `Idempotency-Key: <uuid>`, solo en `POST` (el outbox offline reintenta sin duplicar). Clave en Redis: `(user_id, key)`, TTL 24 h. La misma clave con el mismo cuerpo (hash) reproduce la respuesta original (status, `content-type`, body) agregando `Idempotency-Replayed: true`; la misma clave con un cuerpo distinto, o mientras la primera solicitud sigue en vuelo, responde 409. Solo se persisten respuestas con status < 500.
+- Idempotencia en mutaciones de la app: header `Idempotency-Key: <uuid>`, solo en `POST` (el outbox offline reintenta sin duplicar). Clave en Redis: `(user_id, key)`, TTL 24 h. La misma clave con el mismo cuerpo (hash) reproduce la respuesta original (status, `content-type`, body) agregando `Idempotency-Replayed: true`; la misma clave con un cuerpo distinto responde 409 `conflict` (conflicto real, sin `Retry-After`); mientras la primera solicitud con esa clave sigue en vuelo (candado de 30 s), responde 409 `conflict` con `Retry-After: 1` y el cliente reintenta con la misma key. Solo se persisten respuestas con status < 500.
 - Paginación por cursor: el cursor es opaco (`base64url(json)`); orden por defecto `(occurred_at DESC, id DESC)`; con `updated_since`, orden `(updated_at ASC, id ASC)`. `limit` entre 1 y 200 (default 50). Un cursor inválido, vencido o del orden equivocado responde 400 `validation_error` con `field: "cursor"`.
 - `GET /health` y `GET /health/ready` son públicos, no llevan el prefijo `/v1` y están exentos de rate limiting.
 

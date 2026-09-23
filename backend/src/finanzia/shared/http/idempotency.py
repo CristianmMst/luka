@@ -114,7 +114,11 @@ class IdempotencyMiddleware:
 
         if not acquired:
             await _send_app_error(
-                send, ConflictError(message="Solicitud en curso con la misma Idempotency-Key")
+                send,
+                ConflictError(
+                    message="Solicitud en curso con la misma Idempotency-Key",
+                    headers={"Retry-After": "1"},
+                ),
             )
             return
 

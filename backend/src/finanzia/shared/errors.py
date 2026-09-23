@@ -66,10 +66,19 @@ class NotFoundError(AppError):
 
 
 class ConflictError(AppError):
-    """409 - conflicto (p. ej. duplicado)."""
+    """409 - conflicto (p. ej. duplicado).
 
-    def __init__(self, message: str = "Conflicto", field: str | None = None) -> None:
-        super().__init__(409, "conflict", message, field=field)
+    `headers` es opcional: lo usa el candado de idempotencia en curso para sumar
+    `Retry-After: 1` (spec 005 SS1) sin afectar el resto de los conflictos.
+    """
+
+    def __init__(
+        self,
+        message: str = "Conflicto",
+        field: str | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(409, "conflict", message, field=field, headers=headers)
 
 
 class RateLimitedError(AppError):

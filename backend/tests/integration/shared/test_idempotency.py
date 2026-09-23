@@ -151,6 +151,7 @@ async def test_mismo_key_con_body_distinto_devuelve_409(
     error = second.json()["error"]
     assert error["code"] == "conflict"
     assert error["field"] == "Idempotency-Key"
+    assert "retry-after" not in second.headers
     assert counters[str(user.id)] == 1
 
 
@@ -312,6 +313,7 @@ async def test_lock_ocupado_devuelve_409(
         )
 
     assert response.status_code == 409
+    assert response.headers["retry-after"] == "1"
     error = response.json()["error"]
     assert error["code"] == "conflict"
     assert "field" not in error
