@@ -44,6 +44,8 @@ PushOutcome classifyPushFailure(OutboxOperation op, RemoteFailure failure) {
     (409, _) when failure.retryAfter != null => PushOutcome.retryLater,
     (404, DeleteTransactionOp()) => PushOutcome.done,
     (409, DiscardReviewOp()) => PushOutcome.done,
+    // Ya resuelta en otro dispositivo o vencida: el pull trae lo que haya.
+    (409 || 404, ConvertReviewOp()) => PushOutcome.done,
     _ => PushOutcome.rejected,
   };
 }

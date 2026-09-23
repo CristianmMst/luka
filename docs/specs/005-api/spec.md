@@ -158,6 +158,7 @@ Cada ciclo va **push antes que pull**, para que el pull traiga ya el estado que 
    - Red caída, `5xx`, `429` o `409` con `Retry-After` (spec 005 §1) → se reintenta más tarde; el drenado se detiene ahí, sin saltar al siguiente ítem.
    - `401` → termina el ciclo (sesión cerrada).
    - `404` al borrar y `409` al descartar una revisión → cuentan como hechos (el efecto ya existía o ya no aplica).
+   - `409` o `404` al convertir una revisión (resuelta en otro dispositivo, vencida o ya convertida por un intento cuya respuesta se perdió) → cuenta como hecho: la app quita la fila optimista con id local, y sus operaciones dependientes, y el pull trae la copia real si existe. Si esa fila era pareja de otra, la otra pierde la pareja y, si quedó como `transfer`, vuelve al tipo según su dirección (lo mismo al cancelar en local una creación nunca enviada).
    - Cualquier otro `4xx` → el ítem queda `rejected` (resolución manual); si era una creación, las operaciones que dependen de su id (p. ej. marcar transfer) también quedan `rejected` sin intentarse.
 3. El servidor nunca asume que la app está al día: toda respuesta de mutación devuelve el recurso completo actualizado (excepto los `204` sin cuerpo, como `DELETE /accounts/{id}` o `logout`, donde no aplica).
 4. **Deuda conocida**: los borrados hechos desde otro dispositivo u otro cliente no se propagan al pull — Postgres borra en duro y no hay tombstones —, así que una copia local que no vio ese borrado directo puede seguir mostrando la fila hasta que la toque ella misma.

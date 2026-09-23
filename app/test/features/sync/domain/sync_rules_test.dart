@@ -1,5 +1,7 @@
+import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/sync_rules.dart';
+import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -99,6 +101,31 @@ void main() {
         expect(
           classifyPushFailure(discard, const RemoteFailure(statusCode: 409)),
           PushOutcome.done,
+        );
+      },
+    );
+    test(
+      'convertir una revisión ya resuelta (409) o inexistente (404) cuenta '
+      'como hecho',
+      () {
+        final convert = OutboxOperation.convertReview(
+          rawMessageId: 'r',
+          localId: 'l',
+          data: NewTransaction(
+            amount: Cop.pesos(1000),
+            direction: TxDirection.debit,
+            occurredAt: t0,
+          ),
+        );
+        for (final status in [404, 409]) {
+          expect(
+            classifyPushFailure(convert, RemoteFailure(statusCode: status)),
+            PushOutcome.done,
+          );
+        }
+        expect(
+          classifyPushFailure(convert, const RemoteFailure(statusCode: 422)),
+          PushOutcome.rejected,
         );
       },
     );

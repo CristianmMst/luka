@@ -137,6 +137,14 @@ class DriftSyncStore implements SyncStore {
         )..where((o) => o.seq.equals(entry.seq))).go();
         if (removed == 0) return _completeStale(op, server);
 
+        // Una creación sin respuesta (p. ej. convertir ya resuelto en otro
+        // dispositivo) no existe en el servidor con este id: se quita la
+        // fila optimista y el pull trae la copia real, si la hay.
+        if (server == null && op.createsRecord) {
+          await _dropLocalRecord(op.targetId);
+          return;
+        }
+
         var finalId = op.targetId;
         if (server != null && op.createsRecord && server.id != op.targetId) {
           finalId = server.id;
@@ -483,7 +491,15 @@ class DriftSyncStore implements SyncStore {
           (row.status == _rejected || row.attempts == 0),
     );
     if (!unsent) return false;
-    // Filas que apuntan a [id] como pareja: pierden la referencia.
+    await _dropLocalRecord(id);
+    return true;
+  }
+
+  /// Quita el registro local [id] que el servidor no tiene: su fila, sus
+  /// operaciones y las que lo usan como pareja. Las filas que lo tenían de
+  /// pareja la pierden y, si quedaron como transferencia, vuelven al tipo
+  /// por dirección (débito → gasto, crédito → ingreso).
+  Future<void> _dropLocalRecord(String id) async {
     final dependentOps = await (_db.select(
       _db.outbox,
     )..where((o) => o.relatedId.equals(id))).get();
@@ -494,11 +510,15 @@ class DriftSyncStore implements SyncStore {
       _db.outbox,
     )..where((o) => o.targetId.equals(id) | o.relatedId.equals(id))).go();
     await _db.customUpdate(
-      'UPDATE local_transactions SET transfer_pair_id = NULL '
+      'UPDATE local_transactions SET transfer_pair_id = NULL, '
+      "kind = CASE WHEN kind = 'transfer' THEN "
+      "CASE direction WHEN 'debit' THEN 'expense' ELSE 'income' END "
+      'ELSE kind END '
       'WHERE transfer_pair_id = ?1',
       variables: [Variable.withString(id)],
       updates: {_db.localTransactions},
     );
+    await _deleteLocalTransaction(id);
     final affected = {
       for (final row in dependentOps) row.targetId,
       for (final row in pairedRows) row.id,
@@ -506,7 +526,6 @@ class DriftSyncStore implements SyncStore {
     for (final other in affected) {
       await _refreshPendingPush(other);
     }
-    return true;
   }
 
   Future<void> _upsertServer(SyncedTransaction t) => _db
