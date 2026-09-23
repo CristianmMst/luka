@@ -1,5 +1,6 @@
 """Repositorio SQLAlchemy de fuentes de transaccion (spec 004 SS2.6; controller ruling 1)."""
 
+from collections.abc import Sequence
 from typing import cast
 from uuid import UUID
 
@@ -8,6 +9,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.ledger.domain.entities import TransactionSource
+from finanzia.modules.ledger.domain.enums import Channel
 from finanzia.modules.ledger.infrastructure.mappers import (
     source_entity_to_values,
     source_row_to_entity,
@@ -47,3 +49,17 @@ class SqlAlchemyTransactionSourceRepository:
         )
         result = await self._session.execute(stmt)
         return [source_row_to_entity(row) for row in result.scalars()]
+
+    async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
+        if not ids:
+            return {}
+        stmt = (
+            select(TransactionSourceRow.transaction_id, TransactionSourceRow.channel)
+            .where(TransactionSourceRow.transaction_id.in_(ids))
+            .group_by(TransactionSourceRow.transaction_id, TransactionSourceRow.channel)
+        )
+        result = await self._session.execute(stmt)
+        channels_by_tx: dict[UUID, list[Channel]] = {}
+        for transaction_id, channel in result.all():
+            channels_by_tx.setdefault(transaction_id, []).append(Channel(channel))
+        return channels_by_tx

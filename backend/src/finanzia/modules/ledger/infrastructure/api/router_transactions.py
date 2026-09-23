@@ -110,7 +110,7 @@ async def list_transactions(  # noqa: PLR0913, PLR0917 - un parametro por filtro
         updated_since=updated_since,
     )
     result = await use_case.execute(user_id, filters, cursor, page.limit)
-    items = [transaction_list_item(tx) for tx in result.items]
+    items = [transaction_list_item(tx, result.channels.get(tx.id, [])) for tx in result.items]
     next_cursor = None
     if result.next_cursor is not None:
         next_cursor = encode_cursor(

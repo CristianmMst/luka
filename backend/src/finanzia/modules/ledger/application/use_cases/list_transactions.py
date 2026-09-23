@@ -3,14 +3,20 @@
 from uuid import UUID
 
 from finanzia.modules.ledger.application.dto import Cursor, Filters, Page
-from finanzia.modules.ledger.application.ports import TransactionRepositoryPort
+from finanzia.modules.ledger.application.ports import (
+    TransactionRepositoryPort,
+    TransactionSourceRepositoryPort,
+)
 
 
 class ListTransactions:
     """Pagina transacciones propias segun `filters`, pidiendo `limit + 1` filas."""
 
-    def __init__(self, *, transactions: TransactionRepositoryPort) -> None:
+    def __init__(
+        self, *, transactions: TransactionRepositoryPort, sources: TransactionSourceRepositoryPort
+    ) -> None:
         self._transactions = transactions
+        self._sources = sources
 
     async def execute(
         self, user_id: UUID, filters: Filters, cursor: Cursor | None, limit: int
@@ -26,4 +32,6 @@ class ListTransactions:
             sort_key = last.updated_at if filters.updated_since is not None else last.occurred_at
             next_cursor = Cursor(sort_key=sort_key, id=last.id)
 
-        return Page(items=items, next_cursor=next_cursor)
+        channels = await self._sources.channels_for([tx.id for tx in items]) if items else {}
+
+        return Page(items=items, next_cursor=next_cursor, channels=channels)

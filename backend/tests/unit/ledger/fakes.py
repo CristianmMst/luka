@@ -19,7 +19,7 @@ from finanzia.modules.ledger.domain.entities import (
     Transaction,
     TransactionSource,
 )
-from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag, Kind
+from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
 from finanzia.modules.ledger.domain.review import ReviewItem, ReviewResolution
 from finanzia.modules.ledger.domain.system_categories import SYSTEM_CATEGORIES
 
@@ -58,6 +58,16 @@ class InMemoryTransactionSourceRepo:
 
     async def list_for(self, transaction_id: UUID) -> list[TransactionSource]:
         return list(self._by_tx.get(transaction_id, []))
+
+    async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
+        id_set = set(ids)
+        result: dict[UUID, list[Channel]] = {}
+        for transaction_id, sources in self._by_tx.items():
+            if transaction_id in id_set:
+                unique = {s.channel for s in sources}
+                if unique:
+                    result[transaction_id] = list(unique)
+        return result
 
 
 def _matches_query(tx: Transaction, query: str | None) -> bool:

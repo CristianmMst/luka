@@ -1,5 +1,6 @@
 """Caso de uso: registrar una transaccion capturada (spec 004 SS3, AC-5.1/5.2/5.3)."""
 
+from dataclasses import replace
 from uuid import UUID
 
 from finanzia.modules.ledger.application.dto import CapturedTransactionCommand, Recorded
@@ -70,6 +71,9 @@ class RecordCapturedTransaction:
         if existing:
             target = min(existing, key=lambda t: t.created_at)
             attached = await self._attach_source(target.id, cmd)
+            if attached:
+                target = replace(target, updated_at=self._clock.now())
+                await self._transactions.update(target)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
@@ -105,6 +109,9 @@ class RecordCapturedTransaction:
                 raise LedgerError("carrera de insercion sin fila resultante")
             target = reread[0]
             attached = await self._attach_source(target.id, cmd)
+            if attached:
+                target = replace(target, updated_at=self._clock.now())
+                await self._transactions.update(target)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 

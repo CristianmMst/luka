@@ -16,7 +16,7 @@ from finanzia.modules.ledger.domain.entities import (
     Transaction,
     TransactionSource,
 )
-from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag
+from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag
 from finanzia.modules.ledger.domain.review import ReviewItem, ReviewResolution
 
 # --- Transacciones -----------------------------------------------------------------
@@ -96,6 +96,13 @@ class TransactionSourceRepositoryPort(Protocol):
 
     async def list_for(self, transaction_id: UUID) -> list[TransactionSource]:
         """Todas las fuentes adjuntas a una transaccion."""
+        ...
+
+    async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
+        """Canales unicos por transaccion, para armar el listado sin N+1 (spec 005 SS6).
+
+        Una transaccion sin fuentes (o que no este en `ids`) no aparece como llave.
+        """
         ...
 
 

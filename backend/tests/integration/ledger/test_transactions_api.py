@@ -1,7 +1,8 @@
 """Tests de integracion de `/v1/transactions` (spec 005 SS6, SS9.3, F1.7)."""
 
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -438,3 +439,67 @@ async def test_post_manual_con_event_bus_caido_devuelve_201_igual(
             )
         ).scalar_one()
     assert count == 1
+
+
+async def test_listado_trae_channels_email_y_notificacion_en_orden_estable(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+) -> None:
+    """F4.2: una tx capturada por email y luego notificada trae `channels` ordenados
+    segun el enum `Channel` (`email` antes que `notification`), sin importar el orden
+    de llegada de las fuentes.
+    """
+    user = await user_factory()
+    raw_message_email = await insert_raw_message(session_factory, user_id=user.id)
+    raw_message_notification = await insert_raw_message(session_factory, user_id=user.id)
+    redis_client = redis_asyncio.from_url(str(settings.redis_url))
+    bus = RedisStreamsEventBus(redis_client, build_registry())
+    occurred_at = datetime(2026, 1, 5, tzinfo=UTC)
+    try:
+        cmd = CapturedTransactionCommand(
+            user_id=user.id,
+            bank=Bank.BANCOLOMBIA,
+            amount=Decimal("20000.00"),
+            direction=Direction.DEBIT,
+            occurred_at=occurred_at,
+            last4="1234",
+            merchant="Exito",
+            description=None,
+            suggested_category_slug=None,
+            parsed_by="rule:bancolombia:x",
+            confidence=0.8,
+            source=SourceInput(
+                channel=Channel.EMAIL,
+                raw_message_id=raw_message_email,
+                received_at=occurred_at,
+            ),
+        )
+        async with session_factory() as session:
+            await record_captured_transaction(session, bus, SystemClock(), cmd)
+
+        later = occurred_at + timedelta(seconds=40)
+        cmd_notification = replace(
+            cmd,
+            occurred_at=later,
+            source=SourceInput(
+                channel=Channel.NOTIFICATION,
+                raw_message_id=raw_message_notification,
+                received_at=later,
+            ),
+        )
+        async with session_factory() as session:
+            recorded = await record_captured_transaction(
+                session, bus, SystemClock(), cmd_notification
+            )
+    finally:
+        await redis_client.aclose()
+
+    assert recorded.created is False  # misma captura: solo se adjunta la segunda fuente
+
+    response = await client.get("/v1/transactions", headers=user.headers)
+    assert response.status_code == 200, response.text
+    items = response.json()["items"]
+    assert len(items) == 1
+    assert items[0]["channels"] == ["email", "notification"]

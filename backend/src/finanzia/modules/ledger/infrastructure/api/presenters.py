@@ -4,11 +4,13 @@ Separado de `schemas.py` (que solo declara los modelos Pydantic) para mantener e
 modulo por debajo de ~200 lineas (guia de organizacion de codigo de la tarea).
 """
 
+from collections.abc import Iterable
 from decimal import Decimal
 from typing import Any
 
 from finanzia.modules.ledger.application.dto import ReviewEntry, TransactionDetail
 from finanzia.modules.ledger.domain.entities import Category, LinkedAccount, Transaction
+from finanzia.modules.ledger.domain.enums import Channel
 from finanzia.modules.ledger.domain.review import ReviewItem
 from finanzia.modules.ledger.infrastructure.api.schemas import (
     AccountResponse,
@@ -27,6 +29,13 @@ _CENTS = Decimal("0.01")
 def _amount_str(amount: Decimal) -> str:
     """Formatea un monto como cadena decimal con exactamente 2 decimales."""
     return str(amount.quantize(_CENTS))
+
+
+def _sorted_channels(channels: Iterable[Channel]) -> list[str]:
+    """Valores unicos de `channels`, en el orden estable del enum `Channel`."""
+    order = list(Channel)
+    unique = sorted(set(channels), key=order.index)
+    return [c.value for c in unique]
 
 
 def _list_item_fields(tx: Transaction) -> dict[str, Any]:
@@ -54,13 +63,14 @@ def _list_item_fields(tx: Transaction) -> dict[str, Any]:
     }
 
 
-def transaction_list_item(tx: Transaction) -> TransactionListItem:
+def transaction_list_item(tx: Transaction, channels: Iterable[Channel]) -> TransactionListItem:
     """Item de `GET /transactions`: sin `sources`/`pair` (spec 005 SS6, RNF-3).
 
     Se construye directo desde la entidad devuelta por `ListTransactions`, sin
-    ninguna consulta adicional (nada de `sources`/pareja por fila).
+    ninguna consulta adicional por fila (nada de `sources`/pareja); `channels` viene
+    de la unica consulta agrupada de `ListTransactions` (`channels_for`, F4.2).
     """
-    return TransactionListItem(**_list_item_fields(tx))
+    return TransactionListItem(**_list_item_fields(tx), channels=_sorted_channels(channels))
 
 
 def transaction_summary(tx: Transaction) -> TransactionSummary:
@@ -84,6 +94,7 @@ def transaction_response(detail: TransactionDetail) -> TransactionResponse:
     tx = detail.transaction
     return TransactionResponse(
         **_list_item_fields(tx),
+        channels=_sorted_channels(source.channel for source in detail.sources),
         sources=[
             TransactionSourceResponse(
                 id=source.id,

@@ -104,7 +104,10 @@ def get_get_transaction_use_case(
 def get_list_transactions_use_case(
     session: AsyncSession = Depends(get_session),
 ) -> ListTransactions:
-    return ListTransactions(transactions=SqlAlchemyTransactionRepository(session))
+    return ListTransactions(
+        transactions=SqlAlchemyTransactionRepository(session),
+        sources=SqlAlchemyTransactionSourceRepository(session),
+    )
 
 
 def get_update_transaction_use_case(

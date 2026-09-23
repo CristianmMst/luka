@@ -80,6 +80,7 @@ class Page:
 
     items: tuple[Transaction, ...]
     next_cursor: Cursor | None
+    channels: Mapping[UUID, list[Channel]]
 
 
 # --- Captura de transacciones (spec 004 SS3, spec 006) ----------------------------

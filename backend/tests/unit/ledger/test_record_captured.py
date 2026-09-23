@@ -10,7 +10,12 @@ from finanzia.modules.ledger.application.dto import CapturedTransactionCommand, 
 from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
-from finanzia.modules.ledger.domain.entities import Category, LinkedAccount, MerchantRule
+from finanzia.modules.ledger.domain.entities import (
+    Category,
+    LinkedAccount,
+    MerchantRule,
+    Transaction,
+)
 from finanzia.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
@@ -58,7 +63,9 @@ def _cmd(  # noqa: PLR0913 - builder de comando con un default por campo
     )
 
 
-def _make_use_case(repos, *, transactions=None) -> RecordCapturedTransaction:
+def _make_use_case(
+    repos, *, transactions=None, clock: FixedClock | None = None
+) -> RecordCapturedTransaction:
     return RecordCapturedTransaction(
         transactions=transactions or repos.transactions,
         sources=repos.sources,
@@ -66,10 +73,22 @@ def _make_use_case(repos, *, transactions=None) -> RecordCapturedTransaction:
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
         events=repos.events,
-        clock=FixedClock(NOW),
+        clock=clock or FixedClock(NOW),
         ids=repos.ids,
         uow=repos.uow,
     )
+
+
+class _RecordingTransactionRepo(InMemoryTransactionRepo):
+    """Doble que registra cada llamada a `update` (verifica el touch de `updated_at`)."""
+
+    def __init__(self, sources) -> None:
+        super().__init__(sources=sources)
+        self.update_calls: list[Transaction] = []
+
+    async def update(self, tx: Transaction) -> None:
+        self.update_calls.append(tx)
+        await super().update(tx)
 
 
 @pytest.mark.unit
@@ -112,6 +131,45 @@ async def test_email_y_notificacion_de_la_misma_compra_agregan_una_segunda_fuent
     sources = await repos.sources.list_for(first.transaction.id)
     assert len(sources) == 2
     assert len(repos.events.events) == 1
+
+
+@pytest.mark.unit
+async def test_adjuntar_fuente_a_transaccion_existente_actualiza_updated_at() -> None:
+    """Al adjuntar una segunda fuente a una tx existente, se toca `updated_at` (sync 005 SS9)."""
+    repos = await build_ledger_repos()
+    recording_repo = _RecordingTransactionRepo(repos.sources)
+    clock = FixedClock(NOW)
+    use_case = _make_use_case(repos, transactions=recording_repo, clock=clock)
+    first = await use_case.execute(_cmd(source=SourceInput(Channel.EMAIL, uuid4(), NOW)))
+
+    clock.advance(timedelta(seconds=40))
+    later = NOW + timedelta(seconds=40)
+    second = await use_case.execute(
+        _cmd(occurred_at=later, source=SourceInput(Channel.NOTIFICATION, uuid4(), later))
+    )
+
+    assert second.source_attached is True
+    assert len(recording_repo.update_calls) == 1
+    updated = recording_repo.update_calls[0]
+    assert updated.id == first.transaction.id
+    assert updated.updated_at == clock.now()
+
+
+@pytest.mark.unit
+async def test_fuente_duplicada_en_transaccion_existente_no_toca_updated_at() -> None:
+    """Reintentar el mismo `raw_message_id` no adjunta nada (`attached=False`): sin `update`."""
+    repos = await build_ledger_repos()
+    recording_repo = _RecordingTransactionRepo(repos.sources)
+    clock = FixedClock(NOW)
+    use_case = _make_use_case(repos, transactions=recording_repo, clock=clock)
+    cmd = _cmd()
+
+    await use_case.execute(cmd)
+    clock.advance(timedelta(seconds=40))
+    second = await use_case.execute(cmd)
+
+    assert second.source_attached is False
+    assert recording_repo.update_calls == []
 
 
 @pytest.mark.unit

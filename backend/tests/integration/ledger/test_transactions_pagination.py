@@ -70,16 +70,18 @@ async def test_ciento_veinte_transacciones_limit_cincuenta_da_tres_paginas_sin_s
         assert "pair" not in item
         assert "transfer_pair_id" in item
         assert "transfer_auto" in item
+        assert item["channels"] == ["manual"]  # F4.2: alta manual via POST /transactions
 
 
 async def test_list_no_hace_n_mas_1_consultas(
     client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]], app: FastAPI
 ) -> None:
-    """El listado arma toda la pagina con una sola consulta al repositorio (RNF-3).
+    """El listado arma toda la pagina con una consulta al repositorio + una de canales (F4.2).
 
     Antes del fix round 1, cada fila recargaba fuentes/pareja via `GetTransaction`
     (N+1). Se cuentan los `SELECT` ejecutados en el engine sincrono subyacente
-    durante una unica `GET /transactions?limit=50` sobre 120 filas.
+    durante una unica `GET /transactions?limit=50` sobre 120 filas: 1 para la pagina
+    de transacciones + 1 para `channels_for` (agrupada, no por fila).
     """
     user = await user_factory()
     await _create_many(client, user.headers, _TOTAL)
@@ -104,7 +106,7 @@ async def test_list_no_hace_n_mas_1_consultas(
     assert len(response.json()["items"]) == _LIMIT
 
     select_statements = [s for s in statements if s.strip().upper().startswith("SELECT")]
-    assert len(select_statements) <= 3, select_statements
+    assert len(select_statements) == 2, select_statements
 
 
 async def test_updated_since_devuelve_solo_modificadas_en_orden_ascendente(

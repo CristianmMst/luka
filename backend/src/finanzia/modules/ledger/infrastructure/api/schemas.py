@@ -184,6 +184,9 @@ class TransactionListItem(BaseModel):
     `sources` solo se expone en `GET /transactions/{id}` (RNF-3 p95 < 300 ms: cargarlas
     por fila haria del listado una consulta N+1). Comparte todos los demas campos con
     `TransactionResponse`, que hereda de esta clase y agrega `sources`/`pair`.
+    `channels` son los valores unicos de `Channel` de sus fuentes, en el orden estable
+    del enum (`email`, `notification`, `sms_notification`, `manual`, `nfc`); `[]` si la
+    transaccion no tiene fuentes (F4.2).
     """
 
     id: UUID
@@ -205,6 +208,7 @@ class TransactionListItem(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+    channels: list[str]
 
 
 class TransactionResponse(TransactionListItem):

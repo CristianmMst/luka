@@ -11,7 +11,7 @@ from finanzia.modules.ledger.application.use_cases.create_manual_transaction imp
     CreateManualTransaction,
 )
 from finanzia.modules.ledger.application.use_cases.list_transactions import ListTransactions
-from finanzia.modules.ledger.domain.enums import Bank, Direction, Kind
+from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction, Kind
 from ledger.fakes import FixedClock, build_ledger_repos
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
@@ -59,7 +59,7 @@ async def test_limit_2_sobre_5_transacciones_recorre_tres_paginas_sin_solapes() 
     created = []
     for i in range(5):
         created.append(await _create_manual(repos, occurred_at=NOW + timedelta(minutes=i)))
-    use_case = ListTransactions(transactions=repos.transactions)
+    use_case = ListTransactions(transactions=repos.transactions, sources=repos.sources)
 
     seen_ids = []
     cursor = None
@@ -87,7 +87,7 @@ async def test_updated_since_pagina_en_orden_ascendente() -> None:
     second = await _create_manual(
         repos, occurred_at=NOW + timedelta(minutes=1), now=NOW + timedelta(minutes=1)
     )
-    use_case = ListTransactions(transactions=repos.transactions)
+    use_case = ListTransactions(transactions=repos.transactions, sources=repos.sources)
 
     page = await use_case.execute(
         USER, Filters(updated_since=NOW - timedelta(seconds=1)), None, limit=10
@@ -117,7 +117,7 @@ async def test_filtra_por_kind_categoria_banco_y_texto() -> None:
         direction=Direction.CREDIT,
         category_id=nomina.id,
     )
-    use_case = ListTransactions(transactions=repos.transactions)
+    use_case = ListTransactions(transactions=repos.transactions, sources=repos.sources)
 
     by_kind = await use_case.execute(USER, Filters(kind=Kind.INCOME), None, limit=10)
     assert [t.id for t in by_kind.items] == [income.id]
@@ -133,3 +133,15 @@ async def test_filtra_por_kind_categoria_banco_y_texto() -> None:
 
     by_text = await use_case.execute(USER, Filters(q="panaderia"), None, limit=10)
     assert [t.id for t in by_text.items] == [expense.id]
+
+
+@pytest.mark.unit
+async def test_page_trae_los_canales_de_cada_transaccion() -> None:
+    """`ListTransactions` adjunta `channels` por id, junto a la pagina (spec 005 SS6)."""
+    repos = await build_ledger_repos()
+    tx = await _create_manual(repos, occurred_at=NOW)
+    use_case = ListTransactions(transactions=repos.transactions, sources=repos.sources)
+
+    page = await use_case.execute(USER, Filters(), None, limit=10)
+
+    assert page.channels[tx.id] == [Channel.MANUAL]
