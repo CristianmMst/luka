@@ -3380,6 +3380,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalReviewTable localReview = $LocalReviewTable(this);
   late final $OutboxTable outbox = $OutboxTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
+  late final Index outboxTargetId = Index(
+    'outbox_target_id',
+    'CREATE INDEX outbox_target_id ON outbox (target_id)',
+  );
+  late final Index outboxRelatedId = Index(
+    'outbox_related_id',
+    'CREATE INDEX outbox_related_id ON outbox (related_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3391,6 +3399,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localReview,
     outbox,
     syncState,
+    outboxTargetId,
+    outboxRelatedId,
   ];
   @override
   DriftDatabaseOptions get options =>

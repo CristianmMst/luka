@@ -12,7 +12,7 @@ part of 'sync_coordinator.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$SyncStatus {
+mixin _$SyncStatus implements DiagnosticableTreeMixin {
 
  bool get running; bool get offline; int get pending; int get rejected; DateTime? get lastSyncedAt;
 /// Create a copy of SyncStatus
@@ -22,6 +22,12 @@ mixin _$SyncStatus {
 $SyncStatusCopyWith<SyncStatus> get copyWith => _$SyncStatusCopyWithImpl<SyncStatus>(this as SyncStatus, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SyncStatus'))
+    ..add(DiagnosticsProperty('running', running))..add(DiagnosticsProperty('offline', offline))..add(DiagnosticsProperty('pending', pending))..add(DiagnosticsProperty('rejected', rejected))..add(DiagnosticsProperty('lastSyncedAt', lastSyncedAt));
+}
 
 @override
 bool operator ==(Object other) {
@@ -33,7 +39,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,running,offline,pending,rejected,lastSyncedAt);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SyncStatus(running: $running, offline: $offline, pending: $pending, rejected: $rejected, lastSyncedAt: $lastSyncedAt)';
 }
 
@@ -209,7 +215,7 @@ return $default(_that.running,_that.offline,_that.pending,_that.rejected,_that.l
 /// @nodoc
 
 
-class _SyncStatus implements SyncStatus {
+class _SyncStatus with DiagnosticableTreeMixin implements SyncStatus {
   const _SyncStatus({this.running = false, this.offline = false, this.pending = 0, this.rejected = 0, this.lastSyncedAt});
   
 
@@ -226,6 +232,12 @@ class _SyncStatus implements SyncStatus {
 _$SyncStatusCopyWith<_SyncStatus> get copyWith => __$SyncStatusCopyWithImpl<_SyncStatus>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SyncStatus'))
+    ..add(DiagnosticsProperty('running', running))..add(DiagnosticsProperty('offline', offline))..add(DiagnosticsProperty('pending', pending))..add(DiagnosticsProperty('rejected', rejected))..add(DiagnosticsProperty('lastSyncedAt', lastSyncedAt));
+}
 
 @override
 bool operator ==(Object other) {
@@ -237,7 +249,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,running,offline,pending,rejected,lastSyncedAt);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SyncStatus(running: $running, offline: $offline, pending: $pending, rejected: $rejected, lastSyncedAt: $lastSyncedAt)';
 }
 

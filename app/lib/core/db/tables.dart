@@ -75,7 +75,11 @@ class LocalReview extends Table {
 }
 
 /// Operaciones hechas sin red, en orden FIFO por `seq` (spec 005 §9).
+/// Los índices sirven al canje de ids y a buscar las operaciones de una
+/// fila.
 @DataClassName('OutboxRow')
+@TableIndex(name: 'outbox_target_id', columns: {#targetId})
+@TableIndex(name: 'outbox_related_id', columns: {#relatedId})
 class Outbox extends Table {
   IntColumn get seq => integer().autoIncrement()();
   TextColumn get kind => text()();
