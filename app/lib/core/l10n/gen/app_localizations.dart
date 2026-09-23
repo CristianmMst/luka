@@ -285,6 +285,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sincronizando…'**
   String get syncStatusRunning;
+
+  /// No description provided for @syncStatusNever.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no sincronizado'**
+  String get syncStatusNever;
+
+  /// No description provided for @syncStatusRejected.
+  ///
+  /// In es, this message translates to:
+  /// **'{rejected, plural, =1{1 cambio no se pudo enviar} other{{rejected} cambios no se pudieron enviar}}'**
+  String syncStatusRejected(int rejected);
 }
 
 class _AppLocalizationsDelegate

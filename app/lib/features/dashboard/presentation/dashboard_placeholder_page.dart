@@ -21,6 +21,10 @@ class DashboardPlaceholderPage extends ConsumerWidget {
     final syncLine = switch (sync) {
       SyncStatus(running: true) => l10n.syncStatusRunning,
       SyncStatus(offline: true) => l10n.syncStatusOffline,
+      SyncStatus(:final rejected) when rejected > 0 => l10n.syncStatusRejected(
+        rejected,
+      ),
+      SyncStatus(lastSyncedAt: null) => l10n.syncStatusNever,
       SyncStatus(:final pending) => l10n.syncStatusSynced(pending),
     };
 

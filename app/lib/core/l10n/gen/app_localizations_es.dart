@@ -127,4 +127,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get syncStatusRunning => 'Sincronizando…';
+
+  @override
+  String get syncStatusNever => 'Aún no sincronizado';
+
+  @override
+  String syncStatusRejected(int rejected) {
+    String _temp0 = intl.Intl.pluralLogic(
+      rejected,
+      locale: localeName,
+      other: '$rejected cambios no se pudieron enviar',
+      one: '1 cambio no se pudo enviar',
+    );
+    return '$_temp0';
+  }
 }

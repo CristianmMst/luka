@@ -248,7 +248,7 @@ Espejo simplificado para offline-first; el servidor es la fuente de verdad.
 | `local_categories` | categorías sistema+usuario | snapshot completo en cada sync |
 | `local_accounts` | linked_accounts | snapshot completo en cada sync |
 | `local_review` | cola de revisión | snapshot completo en cada sync; los ítems con una conversión o descarte aún pendiente en el outbox quedan fuera del reemplazo |
-| `outbox` | operaciones offline pendientes (crear manual, corregir categoría, marcar transfer); guarda los ids en `target_id`/`related_id`, así que canjear un id local por el que asigna el servidor es reescribir esas columnas | push FIFO con reintentos; estado `pending` o `rejected` (fallo no reintentable, resolución manual) |
+| `outbox` | operaciones offline: crear transacción, patch (categoría, tipo, notas, comercio), emparejar y desemparejar transferencia, borrar, convertir y descartar una revisión; guarda los ids en `target_id`/`related_id`, así que canjear un id local por el que asigna el servidor es reescribir esas columnas; `attempts` cuenta envíos y se marca antes de enviar | push FIFO con reintentos, releyendo la cola tras cada operación; estado `pending` o `rejected` (fallo no reintentable: se conserva para resolución manual, no cuenta como pendiente ni bloquea el pull de sus filas, y el `pending_push` de `local_transactions` solo refleja operaciones `pending`) |
 | `sync_state` | cursor de transacciones (`transactions_cursor`), `last_synced_at` y `owner_user_id` (usuario dueño de la copia local) | — |
 
 Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usuario, que siempre ganan sobre cambios automáticos del servidor (spec 003 §3).

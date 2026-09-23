@@ -59,5 +59,14 @@
     }
   },
   "syncStatusOffline": "Sin conexión · los cambios se enviarán al volver",
-  "syncStatusRunning": "Sincronizando…"
+  "syncStatusRunning": "Sincronizando…",
+  "syncStatusNever": "Aún no sincronizado",
+  "syncStatusRejected": "{rejected, plural, =1{1 cambio no se pudo enviar} other{{rejected} cambios no se pudieron enviar}}",
+  "@syncStatusRejected": {
+    "placeholders": {
+      "rejected": {
+        "type": "int"
+      }
+    }
+  }
 }

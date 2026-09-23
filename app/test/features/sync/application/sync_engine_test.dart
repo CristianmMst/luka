@@ -69,6 +69,7 @@ void main() {
       () => store.reject(any(), any()),
       () => store.recordAttempt(any(), any()),
       () => store.markSending(any()),
+      () => store.restoreFromServer(any(), any()),
       () => store.applyTransactions(any(), cursor: any(named: 'cursor')),
       () => store.replaceCategories(any()),
       () => store.replaceAccounts(any()),
@@ -312,5 +313,128 @@ void main() {
 
     expect(result, SyncRunResult.offline);
     verifyNever(() => store.markSynced(any()));
+  });
+
+  group('rechazo: restaura la verdad del servidor', () {
+    const forbidden = RemoteFailure(statusCode: 403, code: 'forbidden');
+
+    test('patch rechazado trae y restaura la transacción objetivo', () async {
+      final e1 = entry(
+        1,
+        const OutboxOperation.patchTransaction(
+          id: 't1',
+          patch: TransactionPatch(categoryId: 'c2'),
+        ),
+      );
+      final server = tx('t1', now);
+      when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+      when(() => remote.send(e1)).thenThrow(forbidden);
+      when(() => remote.fetchTransaction('t1')).thenAnswer((_) async => server);
+
+      final result = await engine.run();
+
+      expect(result, SyncRunResult.synced);
+      verifyInOrder([
+        () => store.reject(e1, 'forbidden'),
+        () => remote.fetchTransaction('t1'),
+        () => store.restoreFromServer('t1', server),
+      ]);
+    });
+
+    test('emparejar rechazado restaura las dos transacciones', () async {
+      final e1 = entry(
+        1,
+        const OutboxOperation.setTransferPair(id: 'a', pairId: 'b'),
+      );
+      when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+      when(() => remote.send(e1)).thenThrow(forbidden);
+      when(
+        () => remote.fetchTransaction(any()),
+      ).thenAnswer((i) async => tx(i.positionalArguments.first as String, now));
+
+      await engine.run();
+
+      verify(() => store.restoreFromServer('a', tx('a', now))).called(1);
+      verify(() => store.restoreFromServer('b', tx('b', now))).called(1);
+    });
+
+    test(
+      'borrado rechazado que el servidor ya no tiene restaura null',
+      () async {
+        final e1 = entry(1, const OutboxOperation.deleteTransaction(id: 'a'));
+        when(() => store.pendingOutbox()).thenAnswer((_) async => [e1]);
+        when(() => remote.send(e1)).thenThrow(forbidden);
+        when(() => remote.fetchTransaction('a')).thenAnswer((_) async => null);
+
+        await engine.run();
+
+        verify(() => store.restoreFromServer('a', null)).called(1);
+      },
+    );
+
+    test('un fallo al traer la transacción no rompe el ciclo', () async {
+      final e1 = entry(1, const OutboxOperation.unsetTransferPair(id: 'a'));
+      final e2 = entry(2, const OutboxOperation.deleteTransaction(id: 'b'));
+      when(() => store.pendingOutbox()).thenAnswer((_) async => [e1, e2]);
+      when(() => remote.send(e1)).thenThrow(forbidden);
+      when(() => remote.send(e2)).thenAnswer((_) async => null);
+      when(
+        () => remote.fetchTransaction('a'),
+      ).thenThrow(const RemoteFailure.network());
+
+      final result = await engine.run();
+
+      expect(result, SyncRunResult.synced);
+      verifyNever(() => store.restoreFromServer(any(), any()));
+      verify(() => remote.send(e2)).called(1);
+      verify(() => store.markSynced(now)).called(1);
+    });
+
+    test(
+      'dependiente de una creación rechazada restaura solo los ids del '
+      'servidor',
+      () async {
+        final e2 = entry(
+          2,
+          const OutboxOperation.setTransferPair(id: 'srv', pairId: 'l1'),
+        );
+        when(() => store.rejectedCreates()).thenAnswer((_) async => {'l1'});
+        when(() => store.pendingOutbox()).thenAnswer((_) async => [e2]);
+        when(
+          () => remote.fetchTransaction('srv'),
+        ).thenAnswer((_) async => tx('srv', now));
+
+        await engine.run();
+
+        verify(() => store.reject(e2, 'dependency_rejected')).called(1);
+        verify(() => store.restoreFromServer('srv', tx('srv', now))).called(1);
+        verifyNever(() => remote.fetchTransaction('l1'));
+      },
+    );
+
+    test('crear o convertir rechazado no consulta el servidor', () async {
+      final e1 = entry(
+        1,
+        OutboxOperation.createTransaction(localId: 'l1', data: newTx()),
+      );
+      final e2 = entry(
+        2,
+        OutboxOperation.convertReview(
+          rawMessageId: 'r1',
+          localId: 'l2',
+          data: newTx(),
+        ),
+      );
+      when(() => store.pendingOutbox()).thenAnswer((_) async => [e1, e2]);
+      when(() => remote.send(any())).thenThrow(
+        const RemoteFailure(statusCode: 422, code: 'invalid'),
+      );
+
+      final result = await engine.run();
+
+      expect(result, SyncRunResult.synced);
+      verifyNever(() => remote.fetchTransaction(any()));
+      verifyNever(() => store.restoreFromServer(any(), any()));
+    });
   });
 }

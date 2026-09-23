@@ -145,21 +145,17 @@ class DriftSyncStore implements SyncStore {
           return;
         }
 
-        var finalId = op.targetId;
         if (server != null && op.createsRecord && server.id != op.targetId) {
-          finalId = server.id;
           await _swapId(from: op.targetId, to: server.id);
         }
 
-        if (server != null && !await _hasOps(server.id)) {
+        if (server != null && !await _hasPendingOps(server.id)) {
           await _upsertServer(server);
         }
 
-        await _refreshPendingPush(op.targetId);
-        if (finalId != op.targetId) await _refreshPendingPush(finalId);
-        // La pareja de un emparejamiento también quedó marcada.
-        final related = op.relatedId;
-        if (related != null) await _refreshPendingPush(related);
+        // Todas las marcadas: desemparejar también marcó a la pareja, que
+        // la operación no nombra.
+        await _refreshAllPendingPush();
       });
 
   /// La operación ya no estaba en el outbox: se canceló o se borró todo
@@ -195,7 +191,7 @@ class DriftSyncStore implements SyncStore {
       variables: ids,
       updates: {_db.localTransactions},
     );
-    if (await _hasOps(to)) {
+    if (await _hasPendingOps(to)) {
       await _deleteLocalTransaction(to);
       await _db.customUpdate(
         'UPDATE local_transactions SET id = ?2 WHERE id = ?1',
@@ -234,6 +230,20 @@ class DriftSyncStore implements SyncStore {
             lastError: Value(reason),
           ),
         );
+        // Lo rechazado no cuenta como pendiente: el pull vuelve a tocar
+        // esas filas.
+        await _refreshAllPendingPush();
+      });
+
+  @override
+  Future<void> restoreFromServer(String id, SyncedTransaction? server) =>
+      _db.transaction(() async {
+        if (await _hasPendingOps(id)) return;
+        if (server == null) {
+          await _deleteLocalTransaction(id);
+        } else {
+          await _upsertServer(server);
+        }
       });
 
   // ----------------------------------------------------------------- pull
@@ -260,7 +270,7 @@ class DriftSyncStore implements SyncStore {
   Future<bool> _remoteWins(SyncedTransaction item) async {
     final local = await _findLocalTransaction(item.id);
     // Sin fila pero con operaciones: un borrado local pendiente. No revive.
-    if (local == null && await _hasOps(item.id)) return false;
+    if (local == null && await _hasPendingOps(item.id)) return false;
     return shouldApplyRemote(
       local: local == null
           ? null
@@ -555,23 +565,38 @@ class DriftSyncStore implements SyncStore {
         ),
       );
 
-  /// Hay operaciones (pendientes o rechazadas) que tocan [id], como
-  /// objetivo o como pareja.
-  Future<bool> _hasOps(String id) async {
+  /// Hay operaciones pendientes que tocan [id], como objetivo o como
+  /// pareja. Las rechazadas no cuentan: no bloquean el pull.
+  Future<bool> _hasPendingOps(String id) async {
     final row =
         await (_db.select(_db.outbox)
-              ..where((o) => o.targetId.equals(id) | o.relatedId.equals(id))
+              ..where(
+                (o) =>
+                    o.status.equals(_pending) &
+                    (o.targetId.equals(id) | o.relatedId.equals(id)),
+              )
               ..limit(1))
             .getSingleOrNull();
     return row != null;
   }
 
-  /// `pending_push` queda en `true` solo mientras haya operaciones para [id].
+  /// `pending_push` queda en `true` solo mientras haya operaciones
+  /// pendientes para la fila.
+  static const _pendingPushSql =
+      'UPDATE local_transactions SET pending_push = EXISTS ( '
+      "SELECT 1 FROM outbox WHERE status = 'pending' AND ( "
+      'target_id = local_transactions.id OR '
+      'related_id = local_transactions.id)) WHERE ';
+
   Future<void> _refreshPendingPush(String id) => _db.customUpdate(
-    'UPDATE local_transactions SET pending_push = EXISTS ( '
-    'SELECT 1 FROM outbox WHERE target_id = ?1 OR related_id = ?1 '
-    ') WHERE id = ?1',
+    '${_pendingPushSql}id = ?1',
     variables: [Variable.withString(id)],
+    updates: {_db.localTransactions},
+  );
+
+  /// Para todas las filas marcadas.
+  Future<void> _refreshAllPendingPush() => _db.customUpdate(
+    '${_pendingPushSql}pending_push = 1',
     updates: {_db.localTransactions},
   );
 

@@ -1,3 +1,4 @@
+import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:finanzia/features/sync/domain/sync_rules.dart';
 
@@ -50,6 +51,7 @@ class SyncEngine {
       final op = entry.op;
       if (rejected.contains(op.targetId) || rejected.contains(op.relatedId)) {
         await _store.reject(entry, 'dependency_rejected');
+        await _restoreAfterReject(op, rejected);
         continue;
       }
       try {
@@ -62,6 +64,7 @@ class SyncEngine {
           case PushOutcome.rejected:
             await _store.reject(entry, failure.code ?? '${failure.statusCode}');
             if (op.createsRecord) rejected.add(op.targetId);
+            await _restoreAfterReject(op, rejected);
           case PushOutcome.retryLater:
             await _store.recordAttempt(entry, failure.code ?? 'network');
             return PushOutcome.retryLater;
@@ -71,6 +74,35 @@ class SyncEngine {
       }
     }
     return PushOutcome.done;
+  }
+
+  /// Tras rechazar [op], deja como las tiene el servidor las transacciones
+  /// que su efecto optimista cambió, para que no quede para siempre (p. ej.
+  /// un borrado rechazado que oculta la fila). Crear y convertir no se
+  /// tocan: la fila local es dato del usuario. Los ids de creaciones
+  /// rechazadas no existen en el servidor. Un fallo al consultar no afecta
+  /// el ciclo.
+  Future<void> _restoreAfterReject(
+    OutboxOperation op,
+    Set<String> rejectedCreates,
+  ) async {
+    final ids = switch (op) {
+      PatchTransactionOp(:final id) ||
+      UnsetTransferPairOp(:final id) ||
+      DeleteTransactionOp(:final id) => [id],
+      SetTransferPairOp(:final id, :final pairId) => [id, pairId],
+      CreateTransactionOp() ||
+      ConvertReviewOp() ||
+      DiscardReviewOp() => const <String>[],
+    };
+    for (final id in ids) {
+      if (rejectedCreates.contains(id)) continue;
+      try {
+        await _store.restoreFromServer(id, await _remote.fetchTransaction(id));
+      } on RemoteFailure {
+        // Sin red o sin sesión: la fila queda con el efecto optimista.
+      }
+    }
   }
 
   Future<OutboxEntry?> _nextPending({required int after}) async {

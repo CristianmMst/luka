@@ -226,4 +226,41 @@ void main() {
     expect(categories.single.id, 'c1');
     expect(accounts.single.id, 'a1');
   });
+
+  group('fetchTransaction', () {
+    test('200 devuelve la transacción del servidor', () async {
+      final backend = StubBackend(
+        (_) => StubResponse(200, transactionJson(id: 't1')),
+      );
+      final api = SyncApi(stubDio(backend));
+
+      final fetched = await api.fetchTransaction('t1');
+
+      expect(fetched!.id, 't1');
+      final request = backend.requests.single;
+      expect(request.method, 'GET');
+      expect(request.path, '/v1/transactions/t1');
+    });
+
+    test('404 (no existe o es de otro usuario) devuelve null', () async {
+      final backend = StubBackend(
+        (_) => StubResponse.error(404, 'transaction_not_found'),
+      );
+      final api = SyncApi(stubDio(backend));
+
+      expect(await api.fetchTransaction('t1'), isNull);
+    });
+
+    test('sin red falla con RemoteFailure.network', () async {
+      final backend = StubBackend((r) => throw connectionError(r));
+      final api = SyncApi(stubDio(backend));
+
+      await expectLater(
+        api.fetchTransaction('t1'),
+        throwsA(
+          isA<RemoteFailure>().having((f) => f.isNetwork, 'network', isTrue),
+        ),
+      );
+    });
+  });
 }

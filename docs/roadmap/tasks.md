@@ -58,13 +58,13 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | ID | Tarea | Specs | Deps | Estado |
 |---|---|---|---|---|
 | F4.1 | Esquema Drift completo + SyncCoordinator (pull incremental + outbox push) + tests de conflicto | 004 §5, 005 §9, 008 §5 | F1.9 | ✅ sin tombstones de borrado entre dispositivos |
-| F4.2 | Feature transactions: lista, filtros, detalle con fuentes, edición de categoría (+merchant_rule prompt), marcar transfer | 008 §3.3 | F4.1 | |
+| F4.2 | Feature transactions: lista, filtros, detalle con fuentes, edición de categoría (+merchant_rule prompt), marcar transfer | 008 §3.3 | F4.1 | incluye resolución manual de operaciones rechazadas del outbox (reintentar o descartar) sobre la transacción afectada |
 | F4.3 | Feature capture Android: NotificationCaptureService (config remota de paquetes, filtros, outbox, batch a /ingest) — backend hecho en F2 (`POST /ingest/notifications`, `GET /config/capture`); falta la app | 006 §3, 005 §5 | F4.1, F2.5 | |
 | F4.4 | Onboarding completo (4 pasos) + detección de permiso revocado | 008 §3.1 | F3.6, F4.3 | |
 | F4.5 | Feature capture NFC: lectura/escritura de tags, deep link quick-add, formulario rápido offline | 006 §5, 008 §3.4 | F4.1 | |
 | F4.6 | Dashboard (insights endpoint + pantalla con gráficos) | 005 §8, 008 §3.2 | F4.2 | |
 | F4.7 | Feature review (pantalla + badge) | 008 §3.5 | F2.6, F4.1 | |
-| F4.8 | Ajustes: cuentas, categorías, privacidad (exportar/borrar), estado conexiones | 008 §3.7, RF-11 | F4.2 | |
+| F4.8 | Ajustes: cuentas, categorías, privacidad (exportar/borrar), estado conexiones | 008 §3.7, RF-11 | F4.2 | incluye el estado de sync y la resolución manual de operaciones rechazadas (lista del outbox `rejected`) |
 
 ## Fase 5 — Motor fiscal (RF-10)
 

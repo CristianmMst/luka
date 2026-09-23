@@ -28,6 +28,9 @@ abstract interface class SyncRemote {
   /// endpoint la retorna (crear, patch, emparejar, convertir).
   Future<SyncedTransaction?> send(OutboxEntry entry);
 
+  /// `GET /transactions/{id}`; `null` si no existe (o no es del usuario).
+  Future<SyncedTransaction?> fetchTransaction(String id);
+
   /// `GET /transactions?updated_since=` (orden `updated_at` ascendente).
   Future<TransactionsPage> transactionsSince(DateTime since, {String? cursor});
   Future<List<SyncedCategory>> categories();
@@ -62,7 +65,15 @@ abstract interface class SyncStore {
 
   /// Guarda el motivo del último fallo reintentable.
   Future<void> recordAttempt(OutboxEntry entry, String reason);
+
+  /// Marca la operación `rejected`: queda para resolución manual, sin
+  /// bloquear el pull ni contar como pendiente.
   Future<void> reject(OutboxEntry entry, String reason);
+
+  /// Tras un rechazo, deja [id] como lo tiene el servidor: upsert de
+  /// [server], o borra la fila local si es `null`. No toca nada si quedan
+  /// operaciones pendientes para [id].
+  Future<void> restoreFromServer(String id, SyncedTransaction? server);
 
   Future<DateTime?> transactionsCursor();
 
