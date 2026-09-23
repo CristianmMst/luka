@@ -83,5 +83,198 @@
     }
   },
   "shellComingSoonBody": "Llega pronto",
-  "transactionDetailPlaceholderBody": "Detalle del movimiento"
+  "transactionDetailPlaceholderBody": "Detalle del movimiento",
+  "transactionsSearchHint": "Buscar comercio, categoría o nota",
+  "transactionsFilters": "Filtros",
+  "transactionsFiltersSemantics": "{count, plural, =0{Filtros} =1{Filtros, 1 activo} other{Filtros, {count} activos}}",
+  "@transactionsFiltersSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transactionsPeriodRange": "{from} – {to}",
+  "@transactionsPeriodRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionsLoadError": "No pudimos cargar tus movimientos.",
+  "transactionsRetry": "Reintentar",
+  "filterPeriod": "Periodo",
+  "filterPeriodThisMonth": "Este mes",
+  "filterPeriodLastMonth": "Mes pasado",
+  "filterPeriodThisYear": "Este año",
+  "filterPeriodCustom": "Elegir fechas",
+  "filterKind": "Tipo",
+  "filterKindExpense": "Gastos",
+  "filterKindIncome": "Ingresos",
+  "filterKindTransfer": "Transferencias",
+  "filterOnlyExpenses": "Solo gastos",
+  "filterOnlyIncome": "Solo ingresos",
+  "filterOnlyTransfers": "Solo transferencias",
+  "filterBank": "Banco",
+  "filterSource": "Fuente",
+  "filterCategory": "Categoría",
+  "filterCategoryAll": "Todas",
+  "filterClear": "Limpiar",
+  "filterApply": "{count, plural, =1{Ver 1 movimiento} other{Ver {count} movimientos}}",
+  "@filterApply": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filterApplyUncounted": "Ver movimientos",
+  "bankBancolombia": "Bancolombia",
+  "bankNequi": "Nequi",
+  "bankDavivienda": "Davivienda",
+  "bankDaviplata": "Daviplata",
+  "bankBbva": "BBVA",
+  "bankBancoBogota": "Banco de Bogotá",
+  "bankOther": "Otro",
+  "channelNotification": "Notificación",
+  "channelSms": "SMS",
+  "channelEmail": "Correo",
+  "channelManual": "Manual",
+  "channelNfc": "NFC",
+  "channelsSemantics": "Fuentes: {channels}",
+  "@channelsSemantics": {
+    "placeholders": {
+      "channels": {
+        "type": "String"
+      }
+    }
+  },
+  "dayToday": "Hoy",
+  "dayYesterday": "Ayer",
+  "dayHeaderSemantics": "{day}, {date}",
+  "@dayHeaderSemantics": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dayExpensesSemantics": "gastos del día: {amount} pesos",
+  "@dayExpensesSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "amountExpenseSemantics": "gasto de {amount} pesos",
+  "@amountExpenseSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "amountIncomeSemantics": "ingreso de {amount} pesos",
+  "@amountIncomeSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "amountTransferSemantics": "transferencia de {amount} pesos",
+  "@amountTransferSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "txNoMerchant": "Sin comercio",
+  "txNoCategory": "Sin categoría",
+  "txChangeCategorySemantics": "Cambiar categoría: {category}",
+  "@txChangeCategorySemantics": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "txSyncPending": "Por enviar",
+  "txSyncRejected": "No enviado",
+  "categorySheetTitle": "Categoría",
+  "categorySheetSubtitle": "{merchant} · {amount}",
+  "@categorySheetSubtitle": {
+    "placeholders": {
+      "merchant": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "categorySheetAll": "Todas",
+  "categorySheetNew": "+ Nueva categoría",
+  "merchantRuleTitle": "¿Aplicar siempre a {merchant}?",
+  "@merchantRuleTitle": {
+    "placeholders": {
+      "merchant": {
+        "type": "String"
+      }
+    }
+  },
+  "merchantRuleBodyBefore": "Los próximos movimientos de este comercio quedarán en ",
+  "merchantRuleBodyAfter": ". Puedes cambiarlo cuando quieras.",
+  "merchantRuleAlways": "Siempre para {merchant}",
+  "@merchantRuleAlways": {
+    "placeholders": {
+      "merchant": {
+        "type": "String"
+      }
+    }
+  },
+  "merchantRuleOnce": "Solo este movimiento",
+  "offlineBanner": "Sin conexión · ves tus datos guardados",
+  "rejectedTitle": "No se guardó un cambio",
+  "rejectedBody": "{merchant} no quedó así en tu cuenta. Puedes intentarlo otra vez o dejarlo como estaba.",
+  "@rejectedBody": {
+    "placeholders": {
+      "merchant": {
+        "type": "String"
+      }
+    }
+  },
+  "rejectedDiscard": "Dejar como estaba",
+  "rejectedRetry": "Reintentar",
+  "emptyTitle": "Aún no hay movimientos",
+  "emptyBody": "Cuando llegue una notificación o un correo de tu banco, lo verás aquí. También puedes anotar un gasto a mano.",
+  "emptyCta": "Registrar un gasto",
+  "noResultsTitle": "Ningún movimiento coincide",
+  "noResultsTitleText": "Nada coincide con “{text}”",
+  "@noResultsTitleText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "noResultsBody": "Con los filtros: {summary}.",
+  "@noResultsBody": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "noResultsClear": "Quitar filtros",
+  "firstSyncLoading": "Trayendo tus movimientos…"
 }

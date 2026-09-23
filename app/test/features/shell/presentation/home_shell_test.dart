@@ -4,12 +4,18 @@ import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
+import 'package:finanzia/features/transactions/application/transactions_providers.dart';
+import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
+import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockSyncStore extends Mock implements SyncStore {}
+
+class _MockTransactionsRepository extends Mock
+    implements TransactionsRepository {}
 
 class _FixedAuthController extends AuthController {
   _FixedAuthController(this._state);
@@ -32,9 +38,16 @@ class _FixedCoordinator extends SyncCoordinator {
 void main() {
   const user = User(id: 'u', email: 'a@b.co', status: UserStatus.active);
   late _MockSyncStore store;
+  late _MockTransactionsRepository transactions;
+
+  setUpAll(() => registerFallbackValue(const TransactionFilter()));
 
   setUp(() {
     store = _MockSyncStore();
+    transactions = _MockTransactionsRepository();
+    when(
+      () => transactions.watch(any(), limit: any(named: 'limit')),
+    ).thenAnswer((_) => Stream.value(const []));
   });
 
   ProviderContainer buildContainer({
@@ -51,6 +64,7 @@ void main() {
           () => _FixedCoordinator(const SyncStatus()),
         ),
         syncStoreProvider.overrideWithValue(store),
+        transactionsRepositoryProvider.overrideWithValue(transactions),
       ],
     );
     addTearDown(container.dispose);
@@ -97,14 +111,14 @@ void main() {
     expect(find.text('Cerrar sesión'), findsOneWidget);
   });
 
-  testWidgets('tocar Movimientos muestra su marcador', (tester) async {
+  testWidgets('tocar Movimientos muestra la lista', (tester) async {
     await pumpShell(tester, buildContainer());
 
     await tester.tap(find.text('Movimientos'));
     await tester.pumpAndSettle();
 
     expect(find.text('Llega pronto'), findsNothing);
-    expect(find.text('Movimientos'), findsWidgets);
+    expect(find.text('Aún no hay movimientos'), findsOneWidget);
   });
 
   testWidgets(

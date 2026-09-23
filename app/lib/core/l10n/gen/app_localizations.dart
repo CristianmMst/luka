@@ -345,6 +345,438 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Detalle del movimiento'**
   String get transactionDetailPlaceholderBody;
+
+  /// No description provided for @transactionsSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar comercio, categoría o nota'**
+  String get transactionsSearchHint;
+
+  /// No description provided for @transactionsFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtros'**
+  String get transactionsFilters;
+
+  /// No description provided for @transactionsFiltersSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Filtros} =1{Filtros, 1 activo} other{Filtros, {count} activos}}'**
+  String transactionsFiltersSemantics(int count);
+
+  /// No description provided for @transactionsPeriodRange.
+  ///
+  /// In es, this message translates to:
+  /// **'{from} – {to}'**
+  String transactionsPeriodRange(String from, String to);
+
+  /// No description provided for @transactionsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus movimientos.'**
+  String get transactionsLoadError;
+
+  /// No description provided for @transactionsRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get transactionsRetry;
+
+  /// No description provided for @filterPeriod.
+  ///
+  /// In es, this message translates to:
+  /// **'Periodo'**
+  String get filterPeriod;
+
+  /// No description provided for @filterPeriodThisMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Este mes'**
+  String get filterPeriodThisMonth;
+
+  /// No description provided for @filterPeriodLastMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes pasado'**
+  String get filterPeriodLastMonth;
+
+  /// No description provided for @filterPeriodThisYear.
+  ///
+  /// In es, this message translates to:
+  /// **'Este año'**
+  String get filterPeriodThisYear;
+
+  /// No description provided for @filterPeriodCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir fechas'**
+  String get filterPeriodCustom;
+
+  /// No description provided for @filterKind.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get filterKind;
+
+  /// No description provided for @filterKindExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos'**
+  String get filterKindExpense;
+
+  /// No description provided for @filterKindIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresos'**
+  String get filterKindIncome;
+
+  /// No description provided for @filterKindTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'Transferencias'**
+  String get filterKindTransfer;
+
+  /// No description provided for @filterOnlyExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo gastos'**
+  String get filterOnlyExpenses;
+
+  /// No description provided for @filterOnlyIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo ingresos'**
+  String get filterOnlyIncome;
+
+  /// No description provided for @filterOnlyTransfers.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo transferencias'**
+  String get filterOnlyTransfers;
+
+  /// No description provided for @filterBank.
+  ///
+  /// In es, this message translates to:
+  /// **'Banco'**
+  String get filterBank;
+
+  /// No description provided for @filterSource.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuente'**
+  String get filterSource;
+
+  /// No description provided for @filterCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get filterCategory;
+
+  /// No description provided for @filterCategoryAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get filterCategoryAll;
+
+  /// No description provided for @filterClear.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar'**
+  String get filterClear;
+
+  /// No description provided for @filterApply.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Ver 1 movimiento} other{Ver {count} movimientos}}'**
+  String filterApply(int count);
+
+  /// No description provided for @filterApplyUncounted.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver movimientos'**
+  String get filterApplyUncounted;
+
+  /// No description provided for @bankBancolombia.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancolombia'**
+  String get bankBancolombia;
+
+  /// No description provided for @bankNequi.
+  ///
+  /// In es, this message translates to:
+  /// **'Nequi'**
+  String get bankNequi;
+
+  /// No description provided for @bankDavivienda.
+  ///
+  /// In es, this message translates to:
+  /// **'Davivienda'**
+  String get bankDavivienda;
+
+  /// No description provided for @bankDaviplata.
+  ///
+  /// In es, this message translates to:
+  /// **'Daviplata'**
+  String get bankDaviplata;
+
+  /// No description provided for @bankBbva.
+  ///
+  /// In es, this message translates to:
+  /// **'BBVA'**
+  String get bankBbva;
+
+  /// No description provided for @bankBancoBogota.
+  ///
+  /// In es, this message translates to:
+  /// **'Banco de Bogotá'**
+  String get bankBancoBogota;
+
+  /// No description provided for @bankOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro'**
+  String get bankOther;
+
+  /// No description provided for @channelNotification.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificación'**
+  String get channelNotification;
+
+  /// No description provided for @channelSms.
+  ///
+  /// In es, this message translates to:
+  /// **'SMS'**
+  String get channelSms;
+
+  /// No description provided for @channelEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo'**
+  String get channelEmail;
+
+  /// No description provided for @channelManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Manual'**
+  String get channelManual;
+
+  /// No description provided for @channelNfc.
+  ///
+  /// In es, this message translates to:
+  /// **'NFC'**
+  String get channelNfc;
+
+  /// No description provided for @channelsSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuentes: {channels}'**
+  String channelsSemantics(String channels);
+
+  /// No description provided for @dayToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get dayToday;
+
+  /// No description provided for @dayYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get dayYesterday;
+
+  /// No description provided for @dayHeaderSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{day}, {date}'**
+  String dayHeaderSemantics(String day, String date);
+
+  /// No description provided for @dayExpensesSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'gastos del día: {amount} pesos'**
+  String dayExpensesSemantics(String amount);
+
+  /// No description provided for @amountExpenseSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'gasto de {amount} pesos'**
+  String amountExpenseSemantics(String amount);
+
+  /// No description provided for @amountIncomeSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'ingreso de {amount} pesos'**
+  String amountIncomeSemantics(String amount);
+
+  /// No description provided for @amountTransferSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'transferencia de {amount} pesos'**
+  String amountTransferSemantics(String amount);
+
+  /// No description provided for @txNoMerchant.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin comercio'**
+  String get txNoMerchant;
+
+  /// No description provided for @txNoCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin categoría'**
+  String get txNoCategory;
+
+  /// No description provided for @txChangeCategorySemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar categoría: {category}'**
+  String txChangeCategorySemantics(String category);
+
+  /// No description provided for @txSyncPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Por enviar'**
+  String get txSyncPending;
+
+  /// No description provided for @txSyncRejected.
+  ///
+  /// In es, this message translates to:
+  /// **'No enviado'**
+  String get txSyncRejected;
+
+  /// No description provided for @categorySheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get categorySheetTitle;
+
+  /// No description provided for @categorySheetSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{merchant} · {amount}'**
+  String categorySheetSubtitle(String merchant, String amount);
+
+  /// No description provided for @categorySheetAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get categorySheetAll;
+
+  /// No description provided for @categorySheetNew.
+  ///
+  /// In es, this message translates to:
+  /// **'+ Nueva categoría'**
+  String get categorySheetNew;
+
+  /// No description provided for @merchantRuleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Aplicar siempre a {merchant}?'**
+  String merchantRuleTitle(String merchant);
+
+  /// No description provided for @merchantRuleBodyBefore.
+  ///
+  /// In es, this message translates to:
+  /// **'Los próximos movimientos de este comercio quedarán en '**
+  String get merchantRuleBodyBefore;
+
+  /// No description provided for @merchantRuleBodyAfter.
+  ///
+  /// In es, this message translates to:
+  /// **'. Puedes cambiarlo cuando quieras.'**
+  String get merchantRuleBodyAfter;
+
+  /// No description provided for @merchantRuleAlways.
+  ///
+  /// In es, this message translates to:
+  /// **'Siempre para {merchant}'**
+  String merchantRuleAlways(String merchant);
+
+  /// No description provided for @merchantRuleOnce.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo este movimiento'**
+  String get merchantRuleOnce;
+
+  /// No description provided for @offlineBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión · ves tus datos guardados'**
+  String get offlineBanner;
+
+  /// No description provided for @rejectedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No se guardó un cambio'**
+  String get rejectedTitle;
+
+  /// No description provided for @rejectedBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{merchant} no quedó así en tu cuenta. Puedes intentarlo otra vez o dejarlo como estaba.'**
+  String rejectedBody(String merchant);
+
+  /// No description provided for @rejectedDiscard.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejar como estaba'**
+  String get rejectedDiscard;
+
+  /// No description provided for @rejectedRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get rejectedRetry;
+
+  /// No description provided for @emptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay movimientos'**
+  String get emptyTitle;
+
+  /// No description provided for @emptyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando llegue una notificación o un correo de tu banco, lo verás aquí. También puedes anotar un gasto a mano.'**
+  String get emptyBody;
+
+  /// No description provided for @emptyCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar un gasto'**
+  String get emptyCta;
+
+  /// No description provided for @noResultsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ningún movimiento coincide'**
+  String get noResultsTitle;
+
+  /// No description provided for @noResultsTitleText.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada coincide con “{text}”'**
+  String noResultsTitleText(String text);
+
+  /// No description provided for @noResultsBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Con los filtros: {summary}.'**
+  String noResultsBody(String summary);
+
+  /// No description provided for @noResultsClear.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar filtros'**
+  String get noResultsClear;
+
+  /// No description provided for @firstSyncLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Trayendo tus movimientos…'**
+  String get firstSyncLoading;
 }
 
 class _AppLocalizationsDelegate

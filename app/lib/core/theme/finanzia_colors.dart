@@ -18,6 +18,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     required this.onHero,
     required this.heroCard,
     required this.heroChip,
+    required this.card,
+    required this.tile,
   });
 
   static const light = FinanziaColors(
@@ -33,6 +35,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     onHero: LightTokens.onHero,
     heroCard: LightTokens.heroCard,
     heroChip: LightTokens.heroChip,
+    card: LightTokens.card,
+    tile: LightTokens.tile,
   );
 
   static const dark = FinanziaColors(
@@ -48,6 +52,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     onHero: DarkTokens.onHero,
     heroCard: DarkTokens.heroCard,
     heroChip: DarkTokens.heroChip,
+    card: DarkTokens.card,
+    tile: DarkTokens.tile,
   );
 
   final Color expense;
@@ -63,6 +69,12 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   final Color heroCard;
   final Color heroChip;
 
+  /// Tarjetas de la lista (por día) y hojas modales.
+  final Color card;
+
+  /// Opciones en rejilla dentro de una hoja (p. ej. las categorías).
+  final Color tile;
+
   @override
   FinanziaColors copyWith({
     Color? expense,
@@ -77,6 +89,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     Color? onHero,
     Color? heroCard,
     Color? heroChip,
+    Color? card,
+    Color? tile,
   }) {
     return FinanziaColors(
       expense: expense ?? this.expense,
@@ -91,6 +105,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       onHero: onHero ?? this.onHero,
       heroCard: heroCard ?? this.heroCard,
       heroChip: heroChip ?? this.heroChip,
+      card: card ?? this.card,
+      tile: tile ?? this.tile,
     );
   }
 
@@ -118,6 +134,8 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       onHero: Color.lerp(onHero, other.onHero, t)!,
       heroCard: Color.lerp(heroCard, other.heroCard, t)!,
       heroChip: Color.lerp(heroChip, other.heroChip, t)!,
+      card: Color.lerp(card, other.card, t)!,
+      tile: Color.lerp(tile, other.tile, t)!,
     );
   }
 }

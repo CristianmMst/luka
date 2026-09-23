@@ -41,7 +41,8 @@ flowchart TD
 
 ### 3.3 Transacciones (RF-9)
 - Lista infinita (paginada de Drift), agrupada por día; cada ítem: comercio, categoría (chip editable inline), monto con signo/color, íconos de fuente (correo/notif/SMS/manual/NFC) y badge `transfer`.
-- Filtros: rango de fechas, banco, cuenta, categoría, tipo, texto.
+- Lista (diseño B "Tarjetas por día"): una tarjeta por día con el total de gastos; chip de categoría que abre la hoja de categorías y, si hay comercio, pregunta "¿Aplicar siempre a {comercio}?"; sello "Por enviar"/"No enviado" según el outbox, con aviso para reintentar o dejar como estaba un cambio rechazado. Estados: vacío (CTA a Registrar), sin resultados ("Quitar filtros"), sin conexión y primera sincronización (esqueleto).
+- Filtros: periodo (este mes, mes pasado, este año o rango de fechas), tipo, banco, fuente, categoría y texto (comercio, categoría o nota).
 - Detalle: todos los campos + fuentes con texto original (AC-9.3) + par de transferencia navegable + acciones (editar categoría → pregunta "¿aplicar siempre a este comercio?" = merchant_rule AC-7.2; marcar/desmarcar transfer; notas).
 
 ### 3.4 Registrar (RF-4)
