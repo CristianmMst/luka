@@ -43,4 +43,13 @@ void main() {
       );
     });
   });
+
+  group('Cop.toWire', () {
+    test('dos decimales, ida y vuelta con parse', () {
+      expect(const Cop(4290000).toWire(), '42900.00');
+      expect(const Cop(4290005).toWire(), '42900.05');
+      expect(const Cop(0).toWire(), '0.00');
+      expect(Cop.parse(const Cop(123456705).toWire()), const Cop(123456705));
+    });
+  });
 }

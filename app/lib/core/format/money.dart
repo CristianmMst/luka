@@ -16,6 +16,10 @@ extension type const Cop(int cents) {
 
   factory Cop.pesos(int pesos) => Cop(pesos * 100);
 
+  /// Formato del backend: `42900.05` (spec 005 §1).
+  String toWire() =>
+      '${cents ~/ 100}.${(cents % 100).toString().padLeft(2, '0')}';
+
   static final _wire = RegExp(r'^(\d{1,12})(?:\.(\d{1,2}))?$');
 }
 
