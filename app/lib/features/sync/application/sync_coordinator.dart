@@ -63,6 +63,13 @@ class SyncCoordinator extends Notifier<SyncStatus> {
   Future<SyncRunResult>? _inflight;
   var _again = false;
 
+  /// Hubo sesión en este proceso: solo entonces una salida voluntaria borra
+  /// la base (al arrancar sin sesión se conserva, p. ej. tras expirar).
+  var _signedIn = false;
+
+  /// Serializa los cambios de sesión para que un cambio no pise al anterior.
+  Future<void> _authQueue = Future.value();
+
   SyncStore get _store => ref.read(syncStoreProvider);
 
   @override
@@ -90,7 +97,9 @@ class SyncCoordinator extends Notifier<SyncStatus> {
       ..listen(
         authControllerProvider,
         // Microtask: no tocar `state` antes de que build() devuelva.
-        (_, next) => Future.microtask(() => _onAuth(next)),
+        (_, next) => Future.microtask(
+          () => _authQueue = _authQueue.then((_) => _onAuth(next)),
+        ),
         fireImmediately: true,
       );
     return const SyncStatus();
@@ -100,16 +109,34 @@ class SyncCoordinator extends Notifier<SyncStatus> {
     if (!ref.mounted) return;
     switch (auth) {
       case AsyncData(value: Authenticated(:final user)):
-        _userId = user.id;
+        _userId = null;
+        // Un ciclo del usuario anterior no debe escribir tras el claim.
+        await _settleInflight();
+        if (!ref.mounted) return;
         await _store.claimFor(user.id);
-        if (ref.mounted) await sync();
+        if (!ref.mounted) return;
+        _userId = user.id;
+        _signedIn = true;
+        await sync();
       case AsyncData(value: Unauthenticated(:final sessionExpired)):
         _userId = null;
+        await _settleInflight();
+        if (!ref.mounted) return;
         // Salida voluntaria: no dejar datos en el teléfono (P6). Si la
-        // sesión expiró se conservan; claimFor borra si entra otro usuario.
-        if (!sessionExpired) await _store.clearAll();
+        // sesión expiró, o la app arrancó sin sesión, se conservan; claimFor
+        // borra si entra otro usuario.
+        if (_signedIn && !sessionExpired) await _store.clearAll();
+        _signedIn = false;
       default:
         break;
+    }
+  }
+
+  /// Espera el ciclo en curso, si hay, sin propagar su error.
+  Future<void> _settleInflight() async {
+    final inflight = _inflight;
+    if (inflight != null) {
+      await inflight.catchError((Object _) => SyncRunResult.skipped);
     }
   }
 

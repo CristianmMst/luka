@@ -127,6 +127,72 @@ void main() {
     verifyNever(() => engine.run());
   });
 
+  test('arrancar sin sesión no borra la base', () async {
+    await start();
+
+    verifyNever(() => store.clearAll());
+  });
+
+  test(
+    'signOut con un ciclo en curso espera a que termine para borrar',
+    () async {
+      await start(user: _ana);
+      final cycle = Completer<SyncRunResult>();
+      when(() => engine.run()).thenAnswer((_) => cycle.future);
+      final inflight = coordinator().sync();
+
+      await container.read(authControllerProvider.notifier).signOut();
+      await pumpEventQueue();
+      verifyNever(() => store.clearAll());
+
+      cycle.complete(SyncRunResult.synced);
+      await inflight;
+      await pumpEventQueue();
+      verify(() => store.clearAll()).called(1);
+    },
+  );
+
+  test('otro usuario entra tras el ciclo en curso y el borrado', () async {
+    const bea = User(
+      id: 'u-2',
+      email: 'bea@example.com',
+      status: UserStatus.active,
+    );
+    await start(user: _ana);
+    final cycle = Completer<SyncRunResult>();
+    when(() => engine.run()).thenAnswer((_) => cycle.future);
+    unawaited(coordinator().sync());
+
+    await container.read(authControllerProvider.notifier).signOut();
+    container.read(authControllerProvider.notifier).signedIn(bea);
+    await pumpEventQueue();
+    verifyNever(() => store.claimFor('u-2'));
+
+    when(() => engine.run()).thenAnswer((_) async => SyncRunResult.synced);
+    cycle.complete(SyncRunResult.synced);
+    await pumpEventQueue();
+    verifyInOrder([
+      () => store.clearAll(),
+      () => store.claimFor('u-2'),
+      () => engine.run(),
+    ]);
+  });
+
+  test('un ciclo fallido no bloquea el cambio de sesión', () async {
+    await start(user: _ana);
+    final cycle = Completer<SyncRunResult>();
+    when(() => engine.run()).thenAnswer((_) => cycle.future);
+    unawaited(
+      coordinator().sync().catchError((Object _) => SyncRunResult.skipped),
+    );
+
+    await container.read(authControllerProvider.notifier).signOut();
+    cycle.completeError(StateError('fallo'));
+    await pumpEventQueue();
+
+    verify(() => store.clearAll()).called(1);
+  });
+
   test('sesión expirada conserva la base y deja de sincronizar', () async {
     await start(user: _ana);
 
