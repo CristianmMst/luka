@@ -1,9 +1,13 @@
 # Controller scratch dir (no es parte del repo)
 .superpowers/
 
+# Secretos: cualquier .env y sus variantes, salvo las plantillas
+.env
+.env.*
+!.env.example
+
 # Backend (Python)
 backend/.venv/
-backend/.env
 backend/.pytest_cache/
 backend/.ruff_cache/
 backend/.import_linter_cache/
@@ -14,12 +18,14 @@ backend/*.egg-info/
 **/__pycache__/
 *.pyc
 
-# App (Flutter) — placeholder hasta F0.6
+# App (Flutter); app/.gitignore y app/android/.gitignore cubren el resto
 app/.dart_tool/
 app/.flutter-plugins
 app/.flutter-plugins-dependencies
 app/build/
 app/.packages
+# Imágenes de diferencia que deja un golden fallido
+app/test/**/failures/
 
 # Editor / OS
 .vscode/
