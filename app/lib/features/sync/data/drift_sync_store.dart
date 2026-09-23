@@ -150,6 +150,15 @@ class DriftSyncStore implements SyncStore {
           return;
         }
 
+        // El servidor ya no la tiene (204, o 404 tomado como hecho). La
+        // fila local suele estar borrada desde el encolado, pero no si el
+        // borrado se reintentó tras un rechazo que la restauró; sin
+        // tombstones el pull nunca la quitaría. Idempotente.
+        if (op case DeleteTransactionOp(:final id)) {
+          await _unlinkPartnersOf(id);
+          await _deleteLocalTransaction(id);
+        }
+
         if (server != null && op.createsRecord && server.id != op.targetId) {
           await _swapId(from: op.targetId, to: server.id);
         }

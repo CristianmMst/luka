@@ -53,12 +53,16 @@ class TransactionDetailController extends Notifier<TransactionDetailState> {
   }
 
   /// Vuelve a pedir las fuentes (p. ej. al recuperar la red).
-  Future<void> refreshSources() {
+  Future<void> refreshSources() async {
+    if (!ref.mounted) return;
     state = state.copyWith(sources: const SourcesState.loading());
     return _loadSources();
   }
 
+  /// Puede correr después de que el provider (autoDispose) se liberó: sin
+  /// el chequeo, `ref.read` lanzaría "Ref used after dispose".
   Future<void> _loadSources() async {
+    if (!ref.mounted) return;
     final sources = await ref
         .read(transactionsRepositoryProvider)
         .fetchSources(id);

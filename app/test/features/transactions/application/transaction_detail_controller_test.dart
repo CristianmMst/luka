@@ -120,4 +120,22 @@ void main() {
 
     expect(state().sources, SourcesState.loaded(sources));
   });
+
+  test('liberar el detalle antes de pedir las fuentes no falla', () async {
+    when(() => repository.fetchSources('t1')).thenAnswer((_) async => []);
+    final disposable = ProviderContainer(
+      overrides: [transactionsRepositoryProvider.overrideWithValue(repository)],
+    );
+    final controller = disposable.read(
+      transactionDetailControllerProvider('t1').notifier,
+    );
+
+    // Se libera antes de que corra la microtarea de build().
+    disposable.dispose();
+    await pumpEventQueue();
+
+    verifyNever(() => repository.fetchSources('t1'));
+    await expectLater(controller.refreshSources(), completes);
+    verifyNever(() => repository.fetchSources('t1'));
+  });
 }
