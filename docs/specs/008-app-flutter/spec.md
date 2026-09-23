@@ -120,10 +120,8 @@ Canvas de referencia (logins claro/oscuro, estados, splash, sistema): https://cl
 
 | Variable | Default | Uso |
 |---|---|---|
-| `API_BASE_URL` | `http://10.0.2.2:8000` | base de la API (10.0.2.2 = host desde el emulador Android) |
-| `AUTH_MODE` | `google` | `fake` genera `id_token` `fake:<sub>:<email>`, que el backend acepta con `FINANZIA_GOOGLE_VERIFIER=fake` (solo dev) |
-| `FAKE_USER_EMAIL` | `dev@finanzia.local` | email del usuario en modo fake |
-| `GOOGLE_SERVER_CLIENT_ID` | — | client ID web de Google Cloud (audiencia del `id_token`); obligatorio con `AUTH_MODE=google` |
+| `API_BASE_URL` | `http://localhost:8000` | base de la API; con `adb reverse tcp:8000 tcp:8000` llega al backend local desde teléfono o emulador |
+| `GOOGLE_SERVER_CLIENT_ID` | client ID web del proyecto de desarrollo `finanzia-509500` | audiencia del `id_token`; otros entornos lo sobrescriben |
 
 ## 8. Criterios de aceptación específicos de la app
 

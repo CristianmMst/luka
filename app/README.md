@@ -5,7 +5,8 @@ App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con 
 ## Requisitos
 
 - Flutter 3.35.7 (Dart 3.9). CI fija la misma versión.
-- Para correrla contra el backend local: `just up` y `just dev` desde la raíz, con `FINANZIA_GOOGLE_VERIFIER=fake` (ver `backend/.env.example`).
+- Para correrla contra el backend local: `just up` y `just dev` desde la raíz, con `backend/.env` creado a partir de `backend/.env.example`.
+- Un teléfono Android por USB (o un emulador) con depuración USB activa.
 
 ## Comandos
 
@@ -13,29 +14,36 @@ Desde la raíz del repo:
 
 | Receta | Qué hace |
 |---|---|
-| `just app-run` | Corre la app en el emulador Android con `AUTH_MODE=fake` contra `http://10.0.2.2:8000` |
+| `just app-run` | `adb reverse tcp:8000 tcp:8000` + `flutter run` |
 | `just app-gen` | Regenera freezed/json_serializable/drift (`build_runner`) y los textos l10n |
 | `just app-lint` | `dart format` + `flutter analyze --fatal-infos` |
-| `just app-test` | Tests (sin goldens ni contrato) + gate de cobertura de `domain`+`application` ≥ 90 % |
+| `just app-test` | Tests (sin goldens) + gate de cobertura de `domain`+`application` ≥ 90 % |
 | `just app-goldens` | Regenera los goldens visuales del login (claro y oscuro) |
-| `just app-contract` | Corre el flujo de auth real contra la API local (`FINANZIA_API_URL`) |
 | `just app-ci` | Lo mismo que corre `App CI` en GitHub Actions |
 
 El código generado (`*.g.dart`, `*.freezed.dart`, `lib/core/l10n/gen/`) se versiona. CI lo regenera y falla si cambia.
 
-## Configuración (`--dart-define`)
+## Configuración
+
+No hay que pasar nada para desarrollo: `flutter run` (o Run en el IDE) usa los valores por defecto. Solo existen dos `--dart-define`, pensados para builds de otros entornos:
 
 | Variable | Default | Uso |
 |---|---|---|
-| `API_BASE_URL` | `http://10.0.2.2:8000` | Base de la API. En el simulador de iOS o en Chrome usa `http://localhost:8000` |
-| `AUTH_MODE` | `google` | `fake`: login sin Google, con `id_token` `fake:<sub>:<email>` |
-| `FAKE_USER_EMAIL` | `dev@finanzia.local` | Usuario del modo fake |
-| `GOOGLE_SERVER_CLIENT_ID` | — | Client ID **web** de Google Cloud; obligatorio con `AUTH_MODE=google` |
+| `API_BASE_URL` | `http://localhost:8000` | Base de la API; con `adb reverse tcp:8000 tcp:8000` llega al backend local desde teléfono o emulador |
+| `GOOGLE_SERVER_CLIENT_ID` | client ID web de `finanzia-509500` | Audiencia del `id_token` que verifica el backend |
 
-El login real con Google está pendiente de crear el proyecto GCP. Cuando exista hay que:
-- registrar el SHA-1 de la app Android,
-- añadir `GIDClientID` y el URL scheme en `ios/Runner/Info.plist`,
-- pasar `GOOGLE_SERVER_CLIENT_ID` con el mismo valor que `FINANZIA_GOOGLE_CLIENT_ID` del backend.
+Los `dart-define` se aplican al compilar: después de cambiarlos hay que relanzar la app, porque el hot reload no los recoge.
+
+### Google Sign-In real
+
+El proyecto de Google Cloud es `finanzia-509500` (Google Auth Platform, público externo en modo de prueba). Tiene dos clientes OAuth:
+
+- **Web** (`30065910946-hatnf…apps.googleusercontent.com`): es la audiencia del `id_token`. La app lo usa como `serverClientId` y el backend lo exige como `FINANZIA_GOOGLE_CLIENT_ID`.
+- **Android**: paquete `co.finanzia.finanzia` con el SHA-1 del keystore de debug de la máquina de desarrollo. Si otra máquina u otro keystore firma el APK, hay que agregar su SHA-1 (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
+
+Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.
+
+Pendiente para iOS: crear el cliente OAuth de iOS y añadir `GIDClientID` y el URL scheme en `ios/Runner/Info.plist`.
 
 ## Arquitectura
 
@@ -71,4 +79,3 @@ Paleta "Esmeralda andina", tipografía y tokens en `lib/core/theme/`. El detalle
 
 - **Unitarios y de widgets:** dominio, `SessionManager` (incluye el single-flight de punta a punta), repositorio, interceptor, controllers, redirects del router y estados del login.
 - **Goldens (`tag golden`):** `test/features/auth/presentation/goldens/`. Dependen del rasterizador de cada plataforma, así que CI no los corre. Se regeneran y revisan a mano.
-- **Contrato (`tag backend`):** login → `/v1/me` → refresh → restore → logout contra la API real. Se salta si no está definido `FINANZIA_API_URL`.

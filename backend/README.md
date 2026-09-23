@@ -2,7 +2,7 @@
 
 Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md).
 
-Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) implementada en la rama `CristianmMst/fase2-parsing`, pendiente de integración a `main`. Pendiente: app Flutter (F0.6, F1.9), F2.7 (bancos restantes, diferido) y Fases 3+ (Gmail, fiscal, producción).
+Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) también en `main`. La app Flutter (F0.6, F1.9) inicia sesión con Google real contra esta API. Pendiente: F2.7 (bancos restantes, diferido) y Fases 3+ (Gmail, fiscal, producción).
 
 ## 1. Prerrequisitos
 
@@ -22,7 +22,7 @@ uv sync --all-groups
 uv run alembic upgrade head
 ```
 
-- `.env` nunca se commitea (está en `.gitignore`); ajusta ahí los valores para desarrollo local (ver tabla de variables en §8).
+- `.env` nunca se commitea (está en `.gitignore`); trae solo las 4 variables obligatorias; el resto tiene default (ver §10).
 - `docker compose ... --wait` espera a que Postgres/Redis pasen su healthcheck antes de continuar.
 - `alembic upgrade head` aplica las migraciones existentes: `0001_identity` (users, refresh_tokens) y `0002_ledger_core` (linked_accounts, categories + seed de 24 categorías del sistema, transactions, transaction_sources, merchant_rules).
 
@@ -96,7 +96,7 @@ Overrides por variable de entorno (útiles en CI o si tus puertos locales difier
 | `FINANZIA_TEST_REDIS_URL` | URL de Redis db 1 (default `redis://localhost:6379/1`) |
 | `FINANZIA_TEST_MIGRATIONS_DATABASE_URL` | URL de `finanzia_test_migrations`, usada solo por el test de ciclo de migraciones |
 
-Fixtures principales de `tests/conftest.py`: `settings` (session; `env=test`, apunta a `finanzia_test`/Redis db 1, `google_verifier=fake`, límites de rate limit altos por defecto para no interferir con el resto de la suite); `migrated_db`; `db_clean` (limpia datos de usuario entre tests sin `TRUNCATE`, preservando el seed de categorías del sistema); `redis_clean`; `app`/`client` (app FastAPI + `httpx.AsyncClient` con lifespan real vía `asgi-lifespan`); `fixed_clock`; `user_factory`/`second_user` (login real contra la API con el verificador fake); `access_token_expired`. El tiempo siempre se inyecta vía `ClockPort` (nunca `freezegun` ni `datetime.now()` directo). Los dobles de prueba (fakes) viven en `tests/unit/<modulo>/fakes.py`.
+Fixtures principales de `tests/conftest.py`: `settings` (session; `env=test`, apunta a `finanzia_test`/Redis db 1, límites de rate limit altos por defecto para no interferir con el resto de la suite); `migrated_db`; `db_clean` (limpia datos de usuario entre tests sin `TRUNCATE`, preservando el seed de categorías del sistema); `redis_clean`; `app`/`client` (app FastAPI creada con `create_test_app` + `httpx.AsyncClient` con lifespan real vía `asgi-lifespan`); `fixed_clock`; `user_factory`/`second_user` (login real contra la API; `tests/support/google_stub.py` inyecta `StubGoogleIdTokenVerifier`, que acepta tokens `stub:<sub>:<email>[:unverified[:<nombre>]]` sin llamar a Google. Es solo de tests: la API no tiene modo simulado); `access_token_expired`. El tiempo siempre se inyecta vía `ClockPort` (nunca `freezegun` ni `datetime.now()` directo). Los dobles de prueba (fakes) viven en `tests/unit/<modulo>/fakes.py`.
 
 ## 6. Arquitectura del código
 
@@ -128,27 +128,26 @@ Import-linter (`uv run lint-imports`) verifica 6 contratos (`pyproject.toml`, se
 5. **R4** — los módulos son independientes entre sí salvo por `public.py`/`events.py`; cada cruce concreto está listado explícitamente en `ignore_imports` (`pyproject.toml`), p. ej. `ledger.infrastructure.api.deps` → `identity.public`, `ingestion.infrastructure.sender_policy` → `parsing.public` (allowlists de captura, D6), `parsing.infrastructure.raw_message_gateway` → `ingestion.public` (leer el cuerpo de un `raw_message`, D2), `ledger.infrastructure.raw_messages_gateway` → `ingestion.public` (resolver `/review`, D1) y `ledger.infrastructure.consumers` → `parsing.events` (consumir `TransactionParsed`/`ParseFailed`).
 6. **Kernel** — `shared` nunca importa `modules` ni los composition roots (`app`, `main`, `worker`, `events_registry`).
 
-## 7. Login local sin GCP (verificador fake)
+## 7. Login con Google
 
-Con `FINANZIA_GOOGLE_VERIFIER=fake` (y `FINANZIA_ENV` distinto de `prod`, que lo prohíbe), `POST /v1/auth/google` acepta tokens sintéticos con el formato `fake:<sub>:<email>[:unverified[:<nombre>]]` en vez de un `id_token` real de Google. Útil para probar el flujo de login en desarrollo sin credenciales de Google Cloud.
-
-```sh
-curl -X POST http://localhost:8000/v1/auth/google \
-  -H "Content-Type: application/json" \
-  -d '{"id_token": "fake:demo:demo@example.com"}'
-```
+`POST /v1/auth/google` verifica siempre el `id_token` contra Google: firma, `iss`, `exp` y `aud = FINANZIA_GOOGLE_CLIENT_ID`, que es el client ID web del proyecto `finanzia-509500`. No hay modo simulado. El login se hace desde la app Flutter (`app/README.md`, `just app-run` con el backend corriendo).
 
 La respuesta trae `access_token`, `refresh_token`, `expires_in` y `user`. El acceso se usa como `Authorization: Bearer <access_token>` en el resto de endpoints autenticados.
 
+Para los recorridos curl de §8 y §11 hace falta un `id_token` real emitido para el client ID web. Una forma de obtenerlo es el [OAuth 2.0 Playground](https://developers.google.com/oauthplayground):
+1. En ⚙ activa *Use your own OAuth credentials* con el client ID y el secreto del cliente web.
+2. En la consola, agrega `https://developers.google.com/oauthplayground` como URI de redireccionamiento del cliente web.
+3. Autoriza el scope `openid email profile` con un usuario de prueba y copia el `id_token` de la respuesta.
+
 ## 8. Recorrido de la API (curl)
 
-Con la API corriendo en `http://localhost:8000` y `FINANZIA_GOOGLE_VERIFIER=fake`:
+Con la API corriendo en `http://localhost:8000` y un `id_token` real de Google (§7):
 
 ```sh
-# 1. Login (fake)
+# 1. Login
 curl -s -X POST http://localhost:8000/v1/auth/google \
   -H "Content-Type: application/json" \
-  -d '{"id_token": "fake:demo:demo@example.com"}'
+  -d '{"id_token": "<id_token de Google>"}'
 # -> guarda access_token y refresh_token de la respuesta
 
 TOKEN="<access_token de arriba>"
@@ -210,18 +209,17 @@ El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación 
 
 ## 10. Variables de entorno (`.env`)
 
-Ver [`.env.example`](.env.example) — todas tienen el prefijo `FINANZIA_`:
+Todas tienen el prefijo `FINANZIA_`. Solo las 4 marcadas como **obligatoria** van en [`.env.example`](.env.example); el resto tiene default en `src/finanzia/shared/settings.py` y se define únicamente para cambiarlo:
 
 | Variable | Significado |
 |---|---|
-| `FINANZIA_ENV` | Entorno de ejecución: `dev`, `test` o `prod` |
-| `FINANZIA_DATABASE_URL` | URL asíncrona de Postgres (driver `asyncpg`) |
-| `FINANZIA_REDIS_URL` | URL de Redis |
-| `FINANZIA_JWT_SECRET` | Secreto para firmar JWT (≥32 caracteres; único por entorno real) |
+| `FINANZIA_ENV` | Entorno de ejecución: `dev` (default), `test` o `prod` |
+| `FINANZIA_DATABASE_URL` | **Obligatoria.** URL asíncrona de Postgres (driver `asyncpg`) |
+| `FINANZIA_REDIS_URL` | **Obligatoria.** URL de Redis |
+| `FINANZIA_JWT_SECRET` | **Obligatoria.** Secreto para firmar JWT (≥32 caracteres; único por entorno real) |
 | `FINANZIA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
 | `FINANZIA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
-| `FINANZIA_GOOGLE_CLIENT_ID` | Client ID de Google OAuth para verificar `id_token` reales |
-| `FINANZIA_GOOGLE_VERIFIER` | `"google"` (real) o `"fake"` (solo dev/test; prohibido si `FINANZIA_ENV=prod`) |
+| `FINANZIA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `finanzia-509500`) |
 | `FINANZIA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
 | `FINANZIA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
 | `FINANZIA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás de Caddy en producción) |
@@ -518,8 +516,8 @@ worker_llm_status              enabled=False model=deepseek-v4-flash
 llm_disabled_no_api_key
 ```
 
-Recorrido curl de §11 contra la instancia levantada (`FINANZIA_GOOGLE_VERIFIER=fake`, `.env` ya
-existente):
+Recorrido curl de §11 contra la instancia levantada (`.env` ya existente). Se hizo el 2026-09-21, cuando
+el backend aún tenía el verificador fake, eliminado el 2026-09-22:
 
 1. **Login** → `POST /v1/auth/google` con `fake:demo11:demo11@example.com` → 200, `access_token`
    emitido.

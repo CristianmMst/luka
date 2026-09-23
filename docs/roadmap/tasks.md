@@ -27,7 +27,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F1.6 | `ledger`: dominio puro — dedupe_key + tests; matcher transferencias + tests (incl. ambigüedad y exclusiones) | 004 §3–4, RF-5/6 | F1.5 | ✅ |
 | F1.7 | `ledger`: repos SQLAlchemy + API transacciones/categorías/cuentas (CRUD, filtros, paginación cursor, Idempotency-Key) | 005 §6–7 | F1.6 | ✅ |
 | F1.8 | Bus de eventos sobre Redis Streams en `shared` + consumers idempotentes | 003 §2.3 | F0.4 | ✅ |
-| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 | ✅ con salvedad: el login real con Google no se probó (no hay proyecto GCP); el flujo se verificó con `AUTH_MODE=fake` contra la API local (`just app-contract`) |
+| F1.9 | App feature `auth`: Google Sign-In, gate de sesión, secure storage, interceptor dio con refresh | 008 §3.1, 009 §2 | F0.6, F1.3 | ✅ verificado con Google real (proyecto GCP `finanzia-509500`) en un Android físico contra la API local; sin modo de login simulado. iOS pendiente (cliente OAuth + `Info.plist`) |
 
 ## Fase 2 — Pipeline de parsing (RF-2 parcial, RF-5, RF-8)
 
