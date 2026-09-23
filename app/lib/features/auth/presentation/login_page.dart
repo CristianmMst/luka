@@ -10,6 +10,7 @@ import 'package:finanzia/features/auth/domain/auth_failure.dart';
 import 'package:finanzia/features/auth/presentation/widgets/auth_notice.dart';
 import 'package:finanzia/features/auth/presentation/widgets/capture_ticker.dart';
 import 'package:finanzia/features/auth/presentation/widgets/google_sign_in_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,9 +176,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         tone: AuthNoticeTone.error,
         message: l10n.errorRejected,
       ),
-      AuthMisconfigured() => AuthNotice(
+      AuthMisconfigured(:final detail) => AuthNotice(
         tone: AuthNoticeTone.error,
-        message: l10n.errorMisconfigured,
+        // En debug se añade la causa técnica para diagnosticar el setup.
+        message: kDebugMode
+            ? '${l10n.errorMisconfigured}\n($detail)'
+            : l10n.errorMisconfigured,
       ),
       AuthUnexpected() || AuthCancelled() => AuthNotice(
         tone: AuthNoticeTone.error,

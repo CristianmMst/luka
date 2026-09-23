@@ -1,4 +1,5 @@
 import 'package:finanzia/features/auth/domain/auth_failure.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// Obtiene el `id_token` de Google que el backend canjea por una sesión.
@@ -25,6 +26,7 @@ class GoogleIdTokenProvider implements IdTokenProvider {
   @override
   Future<String> obtainIdToken() async {
     if (_serverClientId == null) {
+      debugPrint('[auth] GOOGLE_SERVER_CLIENT_ID vacío en este build');
       throw const AuthMisconfigured(
         'Falta --dart-define=GOOGLE_SERVER_CLIENT_ID',
       );
@@ -41,12 +43,16 @@ class GoogleIdTokenProvider implements IdTokenProvider {
       if (idToken == null) throw const AuthUnexpected('Google sin id_token');
       return idToken;
     } on GoogleSignInException catch (e) {
+      debugPrint(
+        '[auth] GoogleSignInException ${e.code.name}: '
+        '${e.description} ${e.details ?? ''}',
+      );
       throw switch (e.code) {
         GoogleSignInExceptionCode.canceled ||
         GoogleSignInExceptionCode.interrupted => const AuthCancelled(),
         GoogleSignInExceptionCode.clientConfigurationError ||
         GoogleSignInExceptionCode.providerConfigurationError =>
-          AuthMisconfigured(e.description ?? e.code.name),
+          AuthMisconfigured('${e.code.name}: ${e.description ?? ''}'),
         GoogleSignInExceptionCode.uiUnavailable ||
         GoogleSignInExceptionCode.userMismatch ||
         GoogleSignInExceptionCode.unknownError => AuthUnexpected(e),

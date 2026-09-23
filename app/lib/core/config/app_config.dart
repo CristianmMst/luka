@@ -16,12 +16,16 @@ final class AppConfig {
   });
 
   factory AppConfig.fromEnvironment() {
-    const clientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+    const clientId = String.fromEnvironment(
+      'GOOGLE_SERVER_CLIENT_ID',
+      defaultValue: devGoogleServerClientId,
+    );
     return AppConfig(
       apiBaseUrl: const String.fromEnvironment(
         'API_BASE_URL',
-        // 10.0.2.2 es el host de la máquina visto desde el emulador Android.
-        defaultValue: 'http://10.0.2.2:8000',
+        // Con `adb reverse tcp:8000 tcp:8000` el localhost del teléfono o
+        // del emulador llega al backend de la máquina de desarrollo.
+        defaultValue: 'http://localhost:8000',
       ),
       authMode: const String.fromEnvironment('AUTH_MODE') == 'fake'
           ? AuthMode.fake
@@ -33,6 +37,12 @@ final class AppConfig {
       ),
     );
   }
+
+  /// Client ID web del proyecto de desarrollo `finanzia-509500`. No es un
+  /// secreto: es la audiencia pública del `id_token`. Los builds de otros
+  /// entornos lo sobrescriben con `--dart-define`.
+  static const devGoogleServerClientId =
+      '30065910946-hatnfnvkk8782gf8qgbii9qdlqf61jn4.apps.googleusercontent.com';
 
   final String apiBaseUrl;
   final AuthMode authMode;
