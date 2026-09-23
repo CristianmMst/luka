@@ -59,7 +59,6 @@ def _settings(**overrides: Any) -> Settings:
         redis_url="redis://localhost:6379/0",
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
-        google_verifier="fake",
         **overrides,
     )
 

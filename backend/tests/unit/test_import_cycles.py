@@ -41,7 +41,6 @@ _REQUIRED_ENV = {
     "FINANZIA_REDIS_URL": "redis://localhost:6379/1",
     "FINANZIA_JWT_SECRET": "test-secret-test-secret-test-secret-1234",
     "FINANZIA_GOOGLE_CLIENT_ID": "test-client",
-    "FINANZIA_GOOGLE_VERIFIER": "fake",
 }
 
 

@@ -151,7 +151,6 @@ async def test_google_verifier_es_el_mismo_objeto_en_dos_requests() -> None:
         redis_url="redis://localhost:6379/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
-        google_verifier="fake",
     )
     app = create_app(settings)
 

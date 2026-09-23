@@ -16,7 +16,7 @@ from support.auth import AuthedUser
 async def test_login_con_google_fake_devuelve_sesion_200(
     client: AsyncClient, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
-    response = await client.post("/v1/auth/google", json={"id_token": "fake:sub-1:ana@example.com"})
+    response = await client.post("/v1/auth/google", json={"id_token": "stub:sub-1:ana@example.com"})
 
     assert response.status_code == 200
     body = response.json()
@@ -36,7 +36,7 @@ async def test_login_con_google_fake_devuelve_sesion_200(
 async def test_login_no_filtra_email_ni_refresh_token_en_logs(client: AsyncClient) -> None:
     with structlog.testing.capture_logs() as captured:
         response = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-log:log-secreto@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-log:log-secreto@example.com"}
         )
 
     assert response.status_code == 200
@@ -52,9 +52,9 @@ async def test_login_no_filtra_email_ni_refresh_token_en_logs(client: AsyncClien
 async def test_mismo_sub_otro_email_actualiza_perfil_sin_cambiar_id(
     client: AsyncClient,
 ) -> None:
-    primero = await client.post("/v1/auth/google", json={"id_token": "fake:sub-1:ana@example.com"})
+    primero = await client.post("/v1/auth/google", json={"id_token": "stub:sub-1:ana@example.com"})
     segundo = await client.post(
-        "/v1/auth/google", json={"id_token": "fake:sub-1:ana-nueva@example.com"}
+        "/v1/auth/google", json={"id_token": "stub:sub-1:ana-nueva@example.com"}
     )
 
     assert segundo.status_code == 200
@@ -65,7 +65,7 @@ async def test_mismo_sub_otro_email_actualiza_perfil_sin_cambiar_id(
 @pytest.mark.integration
 async def test_email_no_verificado_devuelve_401_unauthorized(client: AsyncClient) -> None:
     response = await client.post(
-        "/v1/auth/google", json={"id_token": "fake:sub-2:x@y.com:unverified"}
+        "/v1/auth/google", json={"id_token": "stub:sub-2:x@y.com:unverified"}
     )
 
     assert response.status_code == 401
@@ -94,7 +94,7 @@ async def test_id_token_faltante_devuelve_400_con_field(client: AsyncClient) -> 
 async def test_campo_extra_desconocido_devuelve_400(client: AsyncClient) -> None:
     response = await client.post(
         "/v1/auth/google",
-        json={"id_token": "fake:sub-1:ana@example.com", "campo_raro": "x"},
+        json={"id_token": "stub:sub-1:ana@example.com", "campo_raro": "x"},
     )
 
     assert response.status_code == 400

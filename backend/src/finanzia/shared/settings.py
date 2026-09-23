@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     refresh_ttl_days: int = 60
 
     google_client_id: str
-    google_verifier: Literal["google", "fake"] = "google"
 
     log_level: str = "INFO"
     log_json: bool | None = None
@@ -91,9 +90,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validar_restricciones_de_produccion(self) -> Self:
         if self.env == "prod":
-            if self.google_verifier == "fake":
-                msg = "google_verifier='fake' no esta permitido cuando env='prod'"
-                raise ValueError(msg)
             if self.db_echo:
                 msg = "db_echo=True no esta permitido cuando env='prod'"
                 raise ValueError(msg)

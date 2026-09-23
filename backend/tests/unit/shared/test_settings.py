@@ -46,16 +46,6 @@ def test_jwt_secret_menor_a_32_caracteres_falla(monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.mark.unit
-def test_google_verifier_fake_en_prod_falla(monkeypatch: pytest.MonkeyPatch) -> None:
-    _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "prod")
-    monkeypatch.setenv("FINANZIA_GOOGLE_VERIFIER", "fake")
-
-    with pytest.raises(ValidationError):
-        _construir_settings()
-
-
-@pytest.mark.unit
 def test_db_echo_true_en_prod_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
     monkeypatch.setenv("FINANZIA_ENV", "prod")
@@ -81,7 +71,6 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.db_pool_size == 10
     assert settings.db_echo is False
     assert settings.trust_proxy_headers is False
-    assert settings.google_verifier == "google"
     assert settings.log_json is False  # env == "dev"
     assert settings.rate_limit_ingest_per_minute == 60
     assert settings.deepseek_api_key is None

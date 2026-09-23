@@ -12,8 +12,8 @@ import pytest
 import structlog
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from support.google_stub import create_test_app
 
-from finanzia.app import create_app
 from finanzia.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
@@ -33,7 +33,7 @@ async def _tablas_limpias(db_clean: None) -> None:
 
 @asynccontextmanager
 async def _client_for(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
-    app = create_app(settings)
+    app = create_test_app(settings)
     async with LifespanManager(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -66,7 +66,7 @@ async def test_limite_global_por_usuario_en_me(settings: Settings) -> None:
     custom_settings = settings.model_copy(update={"rate_limit_user_per_minute": 2})
     async with _client_for(custom_settings) as client:
         login_response = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-rl-1:rl1@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-rl-1:rl1@example.com"}
         )
         assert login_response.status_code == 200
         headers = {"Authorization": f"Bearer {login_response.json()['access_token']}"}
@@ -95,7 +95,7 @@ async def test_llamadas_no_autenticadas_a_me_no_consumen_el_cupo_de_usuario(
             assert response.status_code == 401
 
         login_response = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-rl-2:rl2@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-rl-2:rl2@example.com"}
         )
         headers = {"Authorization": f"Bearer {login_response.json()['access_token']}"}
 
@@ -217,7 +217,7 @@ async def test_falla_abierto_si_el_limiter_no_esta_disponible(settings: Settings
     `_safe_hit`, asi que un provider ausente/roto tumbaba la request con 500 en
     vez de dejarla pasar.
     """
-    app = create_app(settings)
+    app = create_test_app(settings)
     async with LifespanManager(app):
         del app.state.rate_limiter
 

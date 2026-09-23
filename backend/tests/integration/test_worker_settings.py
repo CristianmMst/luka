@@ -66,7 +66,6 @@ def worker_settings_module(monkeypatch: pytest.MonkeyPatch, settings: Settings):
     monkeypatch.setenv("FINANZIA_REDIS_URL", str(settings.redis_url))
     monkeypatch.setenv("FINANZIA_JWT_SECRET", settings.jwt_secret.get_secret_value())
     monkeypatch.setenv("FINANZIA_GOOGLE_CLIENT_ID", settings.google_client_id)
-    monkeypatch.setenv("FINANZIA_GOOGLE_VERIFIER", "fake")
     get_settings.cache_clear()
 
     # Import perezoso, deliberado: `finanzia.worker` calcula `redis_settings` a

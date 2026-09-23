@@ -11,8 +11,8 @@ from contextlib import asynccontextmanager
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from support.google_stub import create_test_app
 
-from finanzia.app import create_app
 from finanzia.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
@@ -30,7 +30,7 @@ async def _redis_limpio(redis_clean: None) -> None:
 
 @asynccontextmanager
 async def _client_for(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
-    app = create_app(settings)
+    app = create_test_app(settings)
     async with LifespanManager(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -62,7 +62,7 @@ async def test_tercera_llamada_a_ingest_responde_429_pero_me_sigue_funcionando(
     custom_settings = settings.model_copy(update={"rate_limit_ingest_per_minute": 2})
     async with _client_for(custom_settings) as client:
         login_response = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-ingest-rl-1:ingestrl1@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-ingest-rl-1:ingestrl1@example.com"}
         )
         assert login_response.status_code == 200
         headers = {"Authorization": f"Bearer {login_response.json()['access_token']}"}
@@ -88,11 +88,11 @@ async def test_un_segundo_usuario_no_se_ve_afectado_por_el_limite_del_primero(
     custom_settings = settings.model_copy(update={"rate_limit_ingest_per_minute": 1})
     async with _client_for(custom_settings) as client:
         login_a = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-ingest-rl-a:ingestrla@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-ingest-rl-a:ingestrla@example.com"}
         )
         headers_a = {"Authorization": f"Bearer {login_a.json()['access_token']}"}
         login_b = await client.post(
-            "/v1/auth/google", json={"id_token": "fake:sub-ingest-rl-b:ingestrlb@example.com"}
+            "/v1/auth/google", json={"id_token": "stub:sub-ingest-rl-b:ingestrlb@example.com"}
         )
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
 

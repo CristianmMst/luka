@@ -13,9 +13,6 @@ from finanzia.modules.identity.domain.errors import InvalidGoogleToken
 
 _VALID_ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"})
 
-_FAKE_TOKEN_PARTS_WITH_FLAG = 4
-_FAKE_TOKEN_PARTS_WITH_NAME = 5
-
 
 class GoogleAuthIdTokenVerifier:
     """Verifica el `id_token` contra las claves publicas oficiales de Google."""
@@ -49,38 +46,3 @@ class GoogleAuthIdTokenVerifier:
             )
         except (KeyError, ValueError, GoogleAuthError) as exc:
             raise InvalidGoogleToken from exc
-
-
-class FakeGoogleIdTokenVerifier:
-    """Doble de desarrollo: acepta tokens `fake:<sub>:<email>[:unverified[:<name>]]`.
-
-    Solo debe cablearse cuando `settings.google_verifier == "fake"` (Settings ya
-    prohibe ese valor en `env="prod"`); permite probar el flujo de login sin
-    credenciales reales de Google Cloud.
-    """
-
-    async def verify(self, id_token: str) -> GoogleIdentity:
-        parts = id_token.split(":")
-        valid_lengths = (3, _FAKE_TOKEN_PARTS_WITH_FLAG, _FAKE_TOKEN_PARTS_WITH_NAME)
-        if len(parts) not in valid_lengths or parts[0] != "fake" or not parts[1] or not parts[2]:
-            raise InvalidGoogleToken
-
-        sub, email = parts[1], parts[2]
-        email_verified = True
-        name = f"Usuario {sub}"
-
-        if len(parts) >= _FAKE_TOKEN_PARTS_WITH_FLAG:
-            if parts[3] != "unverified":
-                raise InvalidGoogleToken
-            email_verified = False
-
-        if len(parts) == _FAKE_TOKEN_PARTS_WITH_NAME and parts[4]:
-            name = parts[4]
-
-        return GoogleIdentity(
-            sub=sub,
-            email=email,
-            email_verified=email_verified,
-            name=name,
-            picture=None,
-        )

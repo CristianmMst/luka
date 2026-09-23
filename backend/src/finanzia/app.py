@@ -10,14 +10,12 @@ import structlog
 from fastapi import FastAPI
 
 from finanzia.events_registry import build_registry, ensure_consumer_groups
+from finanzia.modules.identity.application.ports import GoogleIdTokenVerifierPort
 from finanzia.modules.identity.infrastructure.api.errors import (
     EXCEPTION_MAP as IDENTITY_EXCEPTION_MAP,
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
-from finanzia.modules.identity.infrastructure.google_verifier import (
-    FakeGoogleIdTokenVerifier,
-    GoogleAuthIdTokenVerifier,
-)
+from finanzia.modules.identity.infrastructure.google_verifier import GoogleAuthIdTokenVerifier
 from finanzia.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
 from finanzia.modules.ingestion.infrastructure.api.router_config import (
     router as ingestion_config_router,
@@ -80,8 +78,16 @@ def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
     ]
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
-    """Crea la aplicacion FastAPI, cableando settings, DB y Redis en `app.state`."""
+def create_app(
+    settings: Settings | None = None,
+    *,
+    google_verifier: GoogleIdTokenVerifierPort | None = None,
+) -> FastAPI:
+    """Crea la aplicacion FastAPI, cableando settings, DB y Redis en `app.state`.
+
+    `google_verifier` solo lo pasan los tests (un stub que no llama a Google);
+    en ejecucion normal se usa siempre `GoogleAuthIdTokenVerifier`.
+    """
     resolved_settings = settings if settings is not None else get_settings()
     configure_logging(resolved_settings)
 
@@ -117,11 +123,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             _logger.warning("consumer_groups_not_ensured", error_type=type(exc).__name__)
         # Construido una unica vez por proceso (no por request): evita recrear la
         # sesion HTTP con cache de claves publicas de Google en cada login (review
-        # final, item D). Settings ya prohibe "fake" en env="prod".
-        app.state.google_verifier = (
-            FakeGoogleIdTokenVerifier()
-            if resolved_settings.google_verifier == "fake"
-            else GoogleAuthIdTokenVerifier(resolved_settings.google_client_id)
+        # final, item D).
+        app.state.google_verifier = google_verifier or GoogleAuthIdTokenVerifier(
+            resolved_settings.google_client_id
         )
 
         try:

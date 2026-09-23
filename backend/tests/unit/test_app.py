@@ -12,15 +12,12 @@ _DEV_SETTINGS = Settings(
     redis_url="redis://localhost:6379/1",
     jwt_secret="test-secret-test-secret-test-secret-1234",
     google_client_id="test-client",
-    google_verifier="fake",
 )
 
 
 @pytest.mark.unit
 def test_prod_apaga_docs_redoc_y_openapi() -> None:
-    settings = _DEV_SETTINGS.model_copy(
-        update={"env": "prod", "google_verifier": "google", "db_echo": False}
-    )
+    settings = _DEV_SETTINGS.model_copy(update={"env": "prod", "db_echo": False})
     app = create_app(settings)
 
     assert app.openapi_url is None

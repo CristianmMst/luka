@@ -17,8 +17,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from support.auth import AuthedUser
 from support.db import clean_user_tables
+from support.google_stub import create_test_app
 
-from finanzia.app import create_app
 from finanzia.shared.security import encode_access_token
 from finanzia.shared.settings import Settings
 
@@ -39,7 +39,6 @@ def settings() -> Settings:
         redis_url=os.environ.get("FINANZIA_TEST_REDIS_URL", "redis://localhost:6379/1"),
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
-        google_verifier="fake",
         # Limites altos por defecto (Task 8/F1.4, subidos en review final item J):
         # el resto de la suite hace muchos logins/llamadas autenticadas desde la
         # misma IP de test y no debe toparse con el rate limiting real. Los limites
@@ -54,7 +53,7 @@ def settings() -> Settings:
 @pytest.fixture
 def app(settings: Settings) -> FastAPI:
     """Instancia de la app FastAPI construida con los settings de test."""
-    return create_app(settings)
+    return create_test_app(settings)
 
 
 @pytest.fixture
@@ -138,7 +137,7 @@ def user_factory(client: AsyncClient, db_clean: None) -> Callable[..., Awaitable
     ) -> AuthedUser:
         response = await client.post(
             "/v1/auth/google",
-            json={"id_token": f"fake:{sub}:{email}", "device_info": device_info},
+            json={"id_token": f"stub:{sub}:{email}", "device_info": device_info},
         )
         assert response.status_code == 200, response.text
         body = response.json()

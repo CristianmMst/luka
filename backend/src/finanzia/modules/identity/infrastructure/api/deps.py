@@ -55,8 +55,8 @@ def get_google_verifier(request: Request) -> GoogleIdTokenVerifierPort:
 
     `GoogleAuthIdTokenVerifier` mantiene una sesion HTTP con cache de claves publicas
     (`cachecontrol`); construirlo por request tiraria ese cache en cada login. Se crea
-    una sola vez en `app.py` (`app.state.google_verifier`, fake o real segun
-    `settings.google_verifier`) y esta dependencia solo lo expone.
+    una sola vez en `app.py` (`app.state.google_verifier`) y esta dependencia solo
+    lo expone.
     """
     return request.app.state.google_verifier  # type: ignore[no-any-return]
 

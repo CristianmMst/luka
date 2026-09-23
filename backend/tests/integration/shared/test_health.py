@@ -41,7 +41,6 @@ async def test_health_ready_degrada_si_redis_no_es_alcanzable() -> None:
         redis_url="redis://localhost:1/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
-        google_verifier="fake",
     )
     app = create_app(settings_con_redis_roto)
 
