@@ -1,5 +1,6 @@
 import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
+import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -35,4 +36,11 @@ final StreamProviderFamily<int, TransactionFilter> filteredCountProvider =
           .watch(transactionsRepositoryProvider)
           .watch(filter, limit: filteredCountCap)
           .map((items) => items.length),
+    );
+
+/// Una transacción local en vivo, sin sus fuentes (p. ej. la otra parte de
+/// una transferencia en el detalle); `null` si no existe.
+final StreamProviderFamily<TransactionView?, String> transactionByIdProvider =
+    StreamProvider.autoDispose.family<TransactionView?, String>(
+      (ref, id) => ref.watch(transactionsRepositoryProvider).watchOne(id),
     );

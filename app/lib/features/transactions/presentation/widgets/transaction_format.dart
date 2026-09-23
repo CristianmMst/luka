@@ -28,6 +28,25 @@ String timeOfDay(DateTime instant) {
   return '${two(local.hour)}:${two(local.minute)}';
 }
 
+/// Mes abreviado de tres letras (`sep`), sin el punto ni la "t" que usa
+/// CLDR para septiembre.
+String _shortMonth(DateTime local) =>
+    DateFormat('MMMM', dateLocale).format(local).substring(0, 3);
+
+/// "Martes 23 sep 2026 · 12:41", hora de Colombia.
+String longDateTime(DateTime instant) {
+  final local = colombiaLocal(instant);
+  final weekday = capitalize(DateFormat('EEEE', dateLocale).format(local));
+  return '$weekday ${local.day} ${_shortMonth(local)} ${local.year} · '
+      '${timeOfDay(instant)}';
+}
+
+/// "23 sep · 12:41", hora de Colombia.
+String shortDateTime(DateTime instant) {
+  final local = colombiaLocal(instant);
+  return '${local.day} ${_shortMonth(local)} · ${timeOfDay(instant)}';
+}
+
 /// Formato de fechas en español (los datos de `intl` los carga
 /// `flutter_localizations`).
 const dateLocale = 'es';
@@ -61,12 +80,23 @@ Color amountColor(FinanziaColors colors, TxKind kind) => switch (kind) {
 String listAmount(Cop amount, TxKind kind) =>
     formatCop(amount, sign: amountSign(kind));
 
-/// Número sin símbolo para el lector de pantalla: `126.400`.
-String spokenNumber(Cop amount) => formatCop(amount).substring(1);
+/// `−$126.400,00` (detalle, con decimales).
+String detailAmount(Cop amount, TxKind kind) =>
+    formatCop(amount, withDecimals: true, sign: amountSign(kind));
+
+/// Número sin símbolo para el lector de pantalla: `126.400` (o
+/// `126.400,00` con [withDecimals]).
+String spokenNumber(Cop amount, {bool withDecimals = false}) =>
+    formatCop(amount, withDecimals: withDecimals).substring(1);
 
 /// "gasto de 126.400 pesos".
-String amountSemantics(AppLocalizations l10n, Cop amount, TxKind kind) {
-  final number = spokenNumber(amount);
+String amountSemantics(
+  AppLocalizations l10n,
+  Cop amount,
+  TxKind kind, {
+  bool withDecimals = false,
+}) {
+  final number = spokenNumber(amount, withDecimals: withDecimals);
   return switch (kind) {
     TxKind.expense => l10n.amountExpenseSemantics(number),
     TxKind.income => l10n.amountIncomeSemantics(number),
@@ -128,6 +158,29 @@ List<({String wire, String label})> bankOptions(AppLocalizations l10n) => [
   (wire: 'banco_bogota', label: l10n.bankBancoBogota),
   (wire: 'other', label: l10n.bankOther),
 ];
+
+/// Nombre de un banco por su valor del cable; uno desconocido se muestra
+/// legible (`banco_x` → `Banco x`).
+String bankLabel(AppLocalizations l10n, String wire) {
+  for (final bank in bankOptions(l10n)) {
+    if (bank.wire == wire) return bank.label;
+  }
+  return capitalize(wire.replaceAll('_', ' '));
+}
+
+/// "Leído con": `rule:<banco>:<plantilla>` → "Plantilla Bancolombia",
+/// `llm` → "Lectura automática", `manual` → "Registro manual". `null` si no
+/// se reconoce.
+String? parsedByLabel(AppLocalizations l10n, String? parsedBy) {
+  if (parsedBy == null) return null;
+  if (parsedBy == 'llm') return l10n.parsedByLlm;
+  if (parsedBy == 'manual') return l10n.parsedByManual;
+  final parts = parsedBy.split(':');
+  if (parts.length >= 2 && parts.first == 'rule' && parts[1].isNotEmpty) {
+    return l10n.parsedByRule(bankLabel(l10n, parts[1]));
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------- periodo
 

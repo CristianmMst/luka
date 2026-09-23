@@ -11,11 +11,10 @@ import 'package:finanzia/features/transactions/application/transactions_provider
 import 'package:finanzia/features/transactions/domain/day_group.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
 import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:finanzia/features/transactions/presentation/widgets/change_category.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/day_card.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/filter_sheet.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/list_states.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/merchant_rule_dialog.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/rejected_banner.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
@@ -88,32 +87,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
   void _openDetail(TransactionView tx) =>
       context.go('${Routes.transactions}/${tx.id}');
 
-  Future<void> _changeCategory(TransactionView tx) async {
-    final l10n = AppLocalizations.of(context);
-    final choice = await CategorySheet.show(
-      context,
-      selectedId: tx.categoryId,
-      subtitle: l10n.categorySheetSubtitle(
-        displayName(l10n, tx),
-        listAmount(tx.amount, tx.kind),
-      ),
-    );
-    final id = choice?.id;
-    if (id == null || id == tx.categoryId || !mounted) return;
-    var always = false;
-    if (hasMerchant(tx)) {
-      final answer = await MerchantRuleDialog.show(
-        context,
-        merchant: tx.merchant!.trim(),
-        categoryName: choice?.name ?? '',
-      );
-      if (answer == null) return;
-      always = answer;
-    }
-    await ref
-        .read(transactionActionsProvider)
-        .changeCategory(tx, id, always: always);
-  }
+  Future<void> _changeCategory(TransactionView tx) =>
+      changeCategory(context, ref.read(transactionActionsProvider), tx);
 
   @override
   Widget build(BuildContext context) {

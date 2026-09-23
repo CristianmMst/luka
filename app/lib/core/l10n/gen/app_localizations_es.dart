@@ -172,9 +172,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shellComingSoonBody => 'Llega pronto';
 
   @override
-  String get transactionDetailPlaceholderBody => 'Detalle del movimiento';
-
-  @override
   String get transactionsSearchHint => 'Buscar comercio, categoría o nota';
 
   @override
@@ -436,4 +433,150 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get firstSyncLoading => 'Trayendo tus movimientos…';
+
+  @override
+  String get detailTitle => 'Movimiento';
+
+  @override
+  String get detailBack => 'Volver';
+
+  @override
+  String get detailNotFound => 'Este movimiento ya no existe.';
+
+  @override
+  String get detailLoadError => 'No pudimos cargar este movimiento.';
+
+  @override
+  String get detailTransferBadge => 'TRANSFERENCIA PROPIA';
+
+  @override
+  String get detailTransferNote => 'No cuenta como gasto ni como ingreso';
+
+  @override
+  String get detailCategory => 'Categoría';
+
+  @override
+  String get detailAccount => 'Cuenta';
+
+  @override
+  String get detailNoAccount => 'Sin cuenta';
+
+  @override
+  String get detailKind => 'Tipo';
+
+  @override
+  String get detailKindExpense => 'Gasto';
+
+  @override
+  String get detailKindIncome => 'Ingreso';
+
+  @override
+  String get detailKindTransfer => 'Transferencia propia';
+
+  @override
+  String get detailParsedBy => 'Leído con';
+
+  @override
+  String parsedByRule(String bank) {
+    return 'Plantilla $bank';
+  }
+
+  @override
+  String get parsedByLlm => 'Lectura automática';
+
+  @override
+  String get parsedByManual => 'Registro manual';
+
+  @override
+  String get detailSources => 'Fuentes';
+
+  @override
+  String detailSourcesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count canales',
+      one: '1 canal',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sourceNotification => 'Notificación del banco';
+
+  @override
+  String get sourceSms => 'SMS del banco';
+
+  @override
+  String get sourceEmail => 'Correo del banco';
+
+  @override
+  String get sourceManual => 'Registro manual';
+
+  @override
+  String get sourceNfc => 'Etiqueta NFC';
+
+  @override
+  String sourceReceived(String gender, String when) {
+    String _temp0 = intl.Intl.selectLogic(
+      gender,
+      {
+        'female': 'Recibida $when',
+        'male': 'Recibido $when',
+        'other': 'Registrado $when',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sourcesSeal(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '1 registro con $count fuentes, sin duplicados',
+      one: '1 registro con 1 fuente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sourcesOffline =>
+      'Las fuentes se consultan con conexión. El resto del movimiento está guardado en tu teléfono.';
+
+  @override
+  String get sourcesEmpty =>
+      'Las fuentes aparecen cuando el movimiento llega a tu cuenta en el servidor.';
+
+  @override
+  String get detailMarkTransfer => 'Marcar como transferencia propia';
+
+  @override
+  String get detailUnmarkTransfer => 'No es una transferencia';
+
+  @override
+  String get detailPairLabel => 'La otra parte';
+
+  @override
+  String detailPairValue(String account, String direction, String time) {
+    String _temp0 = intl.Intl.selectLogic(
+      direction,
+      {
+        'credit': 'recibida',
+        'other': 'enviada',
+      },
+    );
+    return '$account · $_temp0 $time';
+  }
+
+  @override
+  String detailPairSemantics(String value) {
+    return 'Abrir la otra parte: $value';
+  }
+
+  @override
+  String get detailNotes => 'Notas';
+
+  @override
+  String get detailNotesHint => 'Agrega una nota para ti';
 }

@@ -340,12 +340,6 @@ abstract class AppLocalizations {
   /// **'Llega pronto'**
   String get shellComingSoonBody;
 
-  /// No description provided for @transactionDetailPlaceholderBody.
-  ///
-  /// In es, this message translates to:
-  /// **'Detalle del movimiento'**
-  String get transactionDetailPlaceholderBody;
-
   /// No description provided for @transactionsSearchHint.
   ///
   /// In es, this message translates to:
@@ -777,6 +771,216 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Trayendo tus movimientos…'**
   String get firstSyncLoading;
+
+  /// No description provided for @detailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento'**
+  String get detailTitle;
+
+  /// No description provided for @detailBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver'**
+  String get detailBack;
+
+  /// No description provided for @detailNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Este movimiento ya no existe.'**
+  String get detailNotFound;
+
+  /// No description provided for @detailLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar este movimiento.'**
+  String get detailLoadError;
+
+  /// No description provided for @detailTransferBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'TRANSFERENCIA PROPIA'**
+  String get detailTransferBadge;
+
+  /// No description provided for @detailTransferNote.
+  ///
+  /// In es, this message translates to:
+  /// **'No cuenta como gasto ni como ingreso'**
+  String get detailTransferNote;
+
+  /// No description provided for @detailCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get detailCategory;
+
+  /// No description provided for @detailAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get detailAccount;
+
+  /// No description provided for @detailNoAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuenta'**
+  String get detailNoAccount;
+
+  /// No description provided for @detailKind.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get detailKind;
+
+  /// No description provided for @detailKindExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto'**
+  String get detailKindExpense;
+
+  /// No description provided for @detailKindIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingreso'**
+  String get detailKindIncome;
+
+  /// No description provided for @detailKindTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'Transferencia propia'**
+  String get detailKindTransfer;
+
+  /// No description provided for @detailParsedBy.
+  ///
+  /// In es, this message translates to:
+  /// **'Leído con'**
+  String get detailParsedBy;
+
+  /// No description provided for @parsedByRule.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantilla {bank}'**
+  String parsedByRule(String bank);
+
+  /// No description provided for @parsedByLlm.
+  ///
+  /// In es, this message translates to:
+  /// **'Lectura automática'**
+  String get parsedByLlm;
+
+  /// No description provided for @parsedByManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Registro manual'**
+  String get parsedByManual;
+
+  /// No description provided for @detailSources.
+  ///
+  /// In es, this message translates to:
+  /// **'Fuentes'**
+  String get detailSources;
+
+  /// No description provided for @detailSourcesCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 canal} other{{count} canales}}'**
+  String detailSourcesCount(int count);
+
+  /// No description provided for @sourceNotification.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificación del banco'**
+  String get sourceNotification;
+
+  /// No description provided for @sourceSms.
+  ///
+  /// In es, this message translates to:
+  /// **'SMS del banco'**
+  String get sourceSms;
+
+  /// No description provided for @sourceEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo del banco'**
+  String get sourceEmail;
+
+  /// No description provided for @sourceManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Registro manual'**
+  String get sourceManual;
+
+  /// No description provided for @sourceNfc.
+  ///
+  /// In es, this message translates to:
+  /// **'Etiqueta NFC'**
+  String get sourceNfc;
+
+  /// No description provided for @sourceReceived.
+  ///
+  /// In es, this message translates to:
+  /// **'{gender, select, female{Recibida {when}} male{Recibido {when}} other{Registrado {when}}}'**
+  String sourceReceived(String gender, String when);
+
+  /// No description provided for @sourcesSeal.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 registro con 1 fuente} other{1 registro con {count} fuentes, sin duplicados}}'**
+  String sourcesSeal(int count);
+
+  /// No description provided for @sourcesOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Las fuentes se consultan con conexión. El resto del movimiento está guardado en tu teléfono.'**
+  String get sourcesOffline;
+
+  /// No description provided for @sourcesEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Las fuentes aparecen cuando el movimiento llega a tu cuenta en el servidor.'**
+  String get sourcesEmpty;
+
+  /// No description provided for @detailMarkTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como transferencia propia'**
+  String get detailMarkTransfer;
+
+  /// No description provided for @detailUnmarkTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'No es una transferencia'**
+  String get detailUnmarkTransfer;
+
+  /// No description provided for @detailPairLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'La otra parte'**
+  String get detailPairLabel;
+
+  /// No description provided for @detailPairValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{account} · {direction, select, credit{recibida} other{enviada}} {time}'**
+  String detailPairValue(String account, String direction, String time);
+
+  /// No description provided for @detailPairSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir la otra parte: {value}'**
+  String detailPairSemantics(String value);
+
+  /// No description provided for @detailNotes.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get detailNotes;
+
+  /// No description provided for @detailNotesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega una nota para ti'**
+  String get detailNotesHint;
 }
 
 class _AppLocalizationsDelegate

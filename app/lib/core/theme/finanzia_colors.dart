@@ -12,6 +12,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     required this.transfer,
     required this.gold,
     required this.onGold,
+    required this.goldContainer,
     required this.warningContainer,
     required this.onWarningContainer,
     required this.hero,
@@ -29,6 +30,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     transfer: LightTokens.transfer,
     gold: brandGold,
     onGold: onBrandGold,
+    goldContainer: LightTokens.goldContainer,
     warningContainer: LightTokens.warningContainer,
     onWarningContainer: LightTokens.onWarningContainer,
     hero: LightTokens.hero,
@@ -46,6 +48,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     transfer: DarkTokens.transfer,
     gold: brandGold,
     onGold: onBrandGold,
+    goldContainer: DarkTokens.goldContainer,
     warningContainer: DarkTokens.warningContainer,
     onWarningContainer: DarkTokens.onWarningContainer,
     hero: DarkTokens.hero,
@@ -62,6 +65,10 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   final Color transfer;
   final Color gold;
   final Color onGold;
+
+  /// Fondo del sello dorado "1 registro" (con borde [gold]).
+  final Color goldContainer;
+
   final Color warningContainer;
   final Color onWarningContainer;
   final Color hero;
@@ -83,6 +90,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     Color? transfer,
     Color? gold,
     Color? onGold,
+    Color? goldContainer,
     Color? warningContainer,
     Color? onWarningContainer,
     Color? hero,
@@ -99,6 +107,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       transfer: transfer ?? this.transfer,
       gold: gold ?? this.gold,
       onGold: onGold ?? this.onGold,
+      goldContainer: goldContainer ?? this.goldContainer,
       warningContainer: warningContainer ?? this.warningContainer,
       onWarningContainer: onWarningContainer ?? this.onWarningContainer,
       hero: hero ?? this.hero,
@@ -120,6 +129,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
       transfer: Color.lerp(transfer, other.transfer, t)!,
       gold: Color.lerp(gold, other.gold, t)!,
       onGold: Color.lerp(onGold, other.onGold, t)!,
+      goldContainer: Color.lerp(goldContainer, other.goldContainer, t)!,
       warningContainer: Color.lerp(
         warningContainer,
         other.warningContainer,

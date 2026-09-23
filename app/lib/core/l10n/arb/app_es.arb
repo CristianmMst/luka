@@ -83,7 +83,6 @@
     }
   },
   "shellComingSoonBody": "Llega pronto",
-  "transactionDetailPlaceholderBody": "Detalle del movimiento",
   "transactionsSearchHint": "Buscar comercio, categoría o nota",
   "transactionsFilters": "Filtros",
   "transactionsFiltersSemantics": "{count, plural, =0{Filtros} =1{Filtros, 1 activo} other{Filtros, {count} activos}}",
@@ -276,5 +275,91 @@
     }
   },
   "noResultsClear": "Quitar filtros",
-  "firstSyncLoading": "Trayendo tus movimientos…"
+  "firstSyncLoading": "Trayendo tus movimientos…",
+  "detailTitle": "Movimiento",
+  "detailBack": "Volver",
+  "detailNotFound": "Este movimiento ya no existe.",
+  "detailLoadError": "No pudimos cargar este movimiento.",
+  "detailTransferBadge": "TRANSFERENCIA PROPIA",
+  "detailTransferNote": "No cuenta como gasto ni como ingreso",
+  "detailCategory": "Categoría",
+  "detailAccount": "Cuenta",
+  "detailNoAccount": "Sin cuenta",
+  "detailKind": "Tipo",
+  "detailKindExpense": "Gasto",
+  "detailKindIncome": "Ingreso",
+  "detailKindTransfer": "Transferencia propia",
+  "detailParsedBy": "Leído con",
+  "parsedByRule": "Plantilla {bank}",
+  "@parsedByRule": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      }
+    }
+  },
+  "parsedByLlm": "Lectura automática",
+  "parsedByManual": "Registro manual",
+  "detailSources": "Fuentes",
+  "detailSourcesCount": "{count, plural, =1{1 canal} other{{count} canales}}",
+  "@detailSourcesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sourceNotification": "Notificación del banco",
+  "sourceSms": "SMS del banco",
+  "sourceEmail": "Correo del banco",
+  "sourceManual": "Registro manual",
+  "sourceNfc": "Etiqueta NFC",
+  "sourceReceived": "{gender, select, female{Recibida {when}} male{Recibido {when}} other{Registrado {when}}}",
+  "@sourceReceived": {
+    "placeholders": {
+      "gender": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "sourcesSeal": "{count, plural, =1{1 registro con 1 fuente} other{1 registro con {count} fuentes, sin duplicados}}",
+  "@sourcesSeal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sourcesOffline": "Las fuentes se consultan con conexión. El resto del movimiento está guardado en tu teléfono.",
+  "sourcesEmpty": "Las fuentes aparecen cuando el movimiento llega a tu cuenta en el servidor.",
+  "detailMarkTransfer": "Marcar como transferencia propia",
+  "detailUnmarkTransfer": "No es una transferencia",
+  "detailPairLabel": "La otra parte",
+  "detailPairValue": "{account} · {direction, select, credit{recibida} other{enviada}} {time}",
+  "@detailPairValue": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "detailPairSemantics": "Abrir la otra parte: {value}",
+  "@detailPairSemantics": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "detailNotes": "Notas",
+  "detailNotesHint": "Agrega una nota para ti"
 }

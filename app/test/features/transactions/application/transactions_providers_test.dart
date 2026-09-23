@@ -71,4 +71,15 @@ void main() {
       () => repository.watch(filter, limit: filteredCountCap),
     ).called(1);
   });
+
+  test('la otra parte de una transferencia sale del repositorio', () async {
+    final pair = _tx('pair');
+    when(
+      () => repository.watchOne('pair'),
+    ).thenAnswer((_) => Stream.value(pair));
+
+    container.listen(transactionByIdProvider('pair'), (_, _) {});
+
+    expect(await container.read(transactionByIdProvider('pair').future), pair);
+  });
 }

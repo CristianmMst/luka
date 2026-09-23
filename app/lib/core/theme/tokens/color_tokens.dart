@@ -48,6 +48,7 @@ abstract final class LightTokens {
   static const heroChip = Color(0xFFCDE8DC);
   static const card = Color(0xFFFFFFFF);
   static const tile = Color(0xFFF2F7F4);
+  static const goldContainer = Color(0xFFFBF6E6);
 }
 
 abstract final class DarkTokens {
@@ -93,6 +94,7 @@ abstract final class DarkTokens {
   static const heroChip = Color(0xFF0E4D3F);
   static const card = Color(0xFF17231F);
   static const tile = Color(0xFF1E2B26);
+  static const goldContainer = Color(0xFF231F12);
 }
 
 /// Oro de marca: rellenos, bordes y sellos (no texto pequeño).
