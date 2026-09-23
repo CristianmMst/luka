@@ -4,6 +4,7 @@ import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/sync/application/sync_engine.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -98,7 +99,13 @@ class SyncCoordinator extends Notifier<SyncStatus> {
         authControllerProvider,
         // Microtask: no tocar `state` antes de que build() devuelva.
         (_, next) => Future.microtask(
-          () => _authQueue = _authQueue.then((_) => _onAuth(next)),
+          () => _authQueue = _authQueue
+              .then((_) => _onAuth(next))
+              // Un fallo no debe envenenar la cola: los siguientes cambios
+              // de sesión se atienden igual. Solo el tipo (P1).
+              .catchError(
+                (Object e) => debugPrint('[sync] sesión: ${e.runtimeType}'),
+              ),
         ),
         fireImmediately: true,
       );
@@ -113,10 +120,11 @@ class SyncCoordinator extends Notifier<SyncStatus> {
         // Un ciclo del usuario anterior no debe escribir tras el claim.
         await _settleInflight();
         if (!ref.mounted) return;
+        // Antes del claim: si falla, una salida voluntaria igual borra (P6).
+        _signedIn = true;
         await _store.claimFor(user.id);
         if (!ref.mounted) return;
         _userId = user.id;
-        _signedIn = true;
         await sync();
       case AsyncData(value: Unauthenticated(:final sessionExpired)):
         _userId = null;
@@ -154,16 +162,24 @@ class SyncCoordinator extends Notifier<SyncStatus> {
 
   Future<SyncRunResult> _loop() async {
     state = state.copyWith(running: true);
-    SyncRunResult result;
-    do {
-      _again = false;
-      result = await ref.read(syncEngineProvider).run();
-    } while (_again && result == SyncRunResult.synced && ref.mounted);
-    if (ref.mounted) {
-      state = state.copyWith(
-        running: false,
-        offline: result == SyncRunResult.offline,
-      );
+    var result = SyncRunResult.offline;
+    try {
+      do {
+        _again = false;
+        result = await ref.read(syncEngineProvider).run();
+      } while (_again && result == SyncRunResult.synced && ref.mounted);
+    } on Object catch (e) {
+      // Error inesperado del motor: se reintenta en el próximo disparo como
+      // si no hubiera red. Solo el tipo (P1).
+      debugPrint('[sync] ciclo: ${e.runtimeType}');
+      result = SyncRunResult.offline;
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(
+          running: false,
+          offline: result == SyncRunResult.offline,
+        );
+      }
     }
     return result;
   }

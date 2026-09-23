@@ -193,6 +193,37 @@ void main() {
     verify(() => store.clearAll()).called(1);
   });
 
+  test('un fallo en un cambio de sesión no bloquea los siguientes', () async {
+    var claims = 0;
+    when(() => store.claimFor(any())).thenAnswer((_) async {
+      if (claims++ == 0) throw StateError('disco');
+    });
+    await start(user: _ana);
+    verifyNever(() => engine.run());
+
+    await container.read(authControllerProvider.notifier).signOut();
+    await pumpEventQueue();
+    verify(() => store.clearAll()).called(1);
+
+    container.read(authControllerProvider.notifier).signedIn(_ana);
+    await pumpEventQueue();
+    verify(() => store.claimFor('u-1')).called(2);
+    verify(() => engine.run()).called(1);
+  });
+
+  test('un error inesperado del motor termina el ciclo limpio', () async {
+    when(() => engine.run()).thenThrow(StateError('bug'));
+    await start(user: _ana);
+
+    expect(status().running, isFalse);
+    expect(status().offline, isTrue);
+
+    when(() => engine.run()).thenAnswer((_) async => SyncRunResult.synced);
+    expect(await coordinator().sync(), SyncRunResult.synced);
+    expect(status().running, isFalse);
+    expect(status().offline, isFalse);
+  });
+
   test('sesión expirada conserva la base y deja de sincronizar', () async {
     await start(user: _ana);
 
