@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 class FinanziaColors extends ThemeExtension<FinanziaColors> {
   const FinanziaColors({
     required this.expense,
+    required this.onExpense,
     required this.income,
     required this.transfer,
     required this.gold,
@@ -21,6 +22,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
 
   static const light = FinanziaColors(
     expense: LightTokens.expense,
+    onExpense: LightTokens.onExpense,
     income: LightTokens.income,
     transfer: LightTokens.transfer,
     gold: brandGold,
@@ -35,6 +37,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
 
   static const dark = FinanziaColors(
     expense: DarkTokens.expense,
+    onExpense: DarkTokens.onExpense,
     income: DarkTokens.income,
     transfer: DarkTokens.transfer,
     gold: brandGold,
@@ -48,6 +51,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   );
 
   final Color expense;
+  final Color onExpense;
   final Color income;
   final Color transfer;
   final Color gold;
@@ -62,6 +66,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   @override
   FinanziaColors copyWith({
     Color? expense,
+    Color? onExpense,
     Color? income,
     Color? transfer,
     Color? gold,
@@ -75,6 +80,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   }) {
     return FinanziaColors(
       expense: expense ?? this.expense,
+      onExpense: onExpense ?? this.onExpense,
       income: income ?? this.income,
       transfer: transfer ?? this.transfer,
       gold: gold ?? this.gold,
@@ -93,6 +99,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     if (other == null) return this;
     return FinanziaColors(
       expense: Color.lerp(expense, other.expense, t)!,
+      onExpense: Color.lerp(onExpense, other.onExpense, t)!,
       income: Color.lerp(income, other.income, t)!,
       transfer: Color.lerp(transfer, other.transfer, t)!,
       gold: Color.lerp(gold, other.gold, t)!,

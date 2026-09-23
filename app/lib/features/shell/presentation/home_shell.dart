@@ -1,4 +1,5 @@
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
+import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,6 +121,8 @@ class _Destination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final brand = context.finanziaColors;
+    final textTheme = Theme.of(context).textTheme;
     final iconColor = selected
         ? scheme.onPrimaryContainer
         : scheme.onSurfaceVariant;
@@ -167,17 +170,15 @@ class _Destination extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: scheme.error,
+                            color: brand.expense,
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
                           child: ExcludeSemantics(
                             child: Text(
                               '$badgeCount',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: scheme.onError,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: brand.onExpense,
                               ),
                             ),
                           ),
@@ -187,12 +188,13 @@ class _Destination extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  color: labelColor,
+              ExcludeSemantics(
+                child: Text(
+                  label,
+                  style: textTheme.bodySmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: labelColor,
+                  ),
                 ),
               ),
             ],

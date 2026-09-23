@@ -107,6 +107,35 @@ void main() {
     expect(find.text('Movimientos'), findsWidgets);
   });
 
+  testWidgets(
+    'el destino Movimientos no duplica su semantics (etiqueta visible + '
+    'Semantics envolvente)',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpShell(tester, buildContainer());
+
+      // Antes de la corrección, el `Text(label)` visible (sin excluir de
+      // semántica) se fusionaba con el `Semantics(label: ...)` que lo
+      // envuelve, y el lector de pantalla anunciaba "Movimientos" dos veces.
+      // Con el `ExcludeSemantics` en el label, el nodo queda único y limpio:
+      // exactamente un nodo, con su `selected` intacto.
+      final movimientos = find.bySemanticsLabel('Movimientos');
+      expect(movimientos, findsOneWidget);
+      expect(
+        tester.getSemantics(movimientos).flagsCollection.isSelected,
+        isFalse,
+      );
+
+      // Inicio sí está seleccionado por defecto (rama 0): confirma que el
+      // estado `selected` se sigue exponiendo correctamente en el nodo único.
+      final inicio = find.bySemanticsLabel('Inicio');
+      expect(inicio, findsOneWidget);
+      expect(tester.getSemantics(inicio).flagsCollection.isSelected, isTrue);
+
+      handle.dispose();
+    },
+  );
+
   testWidgets('el badge de Revisión se ve con conteo > 0', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpShell(tester, buildContainer(reviewCount: 2));

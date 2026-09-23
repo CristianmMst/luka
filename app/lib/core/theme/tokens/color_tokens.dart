@@ -37,6 +37,7 @@ abstract final class LightTokens {
   static const inversePrimary = Color(0xFF7FD1B4);
 
   static const expense = Color(0xFFB4432B);
+  static const onExpense = Color(0xFFFFFFFF);
   static const income = Color(0xFF17774E);
   static const transfer = Color(0xFF45617A);
   static const warningContainer = Color(0xFFFFE9B8);
@@ -79,6 +80,7 @@ abstract final class DarkTokens {
   static const inversePrimary = Color(0xFF0E4D3F);
 
   static const expense = Color(0xFFFF9A80);
+  static const onExpense = Color(0xFF3A0B00);
   static const income = Color(0xFF7BD8A6);
   static const transfer = Color(0xFF9DB8D3);
   static const warningContainer = Color(0xFF5C3D00);
