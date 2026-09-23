@@ -20,6 +20,11 @@ typedef TransactionsPage = ({
   String? nextCursor,
 });
 
+typedef TransactionDetail = ({
+  SyncedTransaction tx,
+  List<SyncedSource> sources,
+});
+
 typedef SyncCounters = ({int pending, int rejected, DateTime? lastSyncedAt});
 
 /// API del backend para sincronizar. Falla con [RemoteFailure].
@@ -30,6 +35,10 @@ abstract interface class SyncRemote {
 
   /// `GET /transactions/{id}`; `null` si no existe (o no es del usuario).
   Future<SyncedTransaction?> fetchTransaction(String id);
+
+  /// `GET /transactions/{id}` con sus fuentes; `null` si no existe (o no es
+  /// del usuario).
+  Future<TransactionDetail?> fetchTransactionDetail(String id);
 
   /// `GET /transactions?updated_since=` (orden `updated_at` ascendente).
   Future<TransactionsPage> transactionsSince(DateTime since, {String? cursor});

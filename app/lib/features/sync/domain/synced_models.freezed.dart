@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SyncedTransaction {
 
- String get id; Cop get amount; String get currency; TxDirection get direction; TxKind get kind; DateTime get occurredAt; String get categoryId; String get fiscalTag; bool get transferAuto; String get parsedBy; DateTime get createdAt; DateTime get updatedAt; String? get merchant; String? get description; String? get bank; String? get accountId; String? get transferPairId; double? get confidence; String? get notes;
+ String get id; Cop get amount; String get currency; TxDirection get direction; TxKind get kind; DateTime get occurredAt; String get categoryId; String get fiscalTag; bool get transferAuto; String get parsedBy; DateTime get createdAt; DateTime get updatedAt; String? get merchant; String? get description; String? get bank; String? get accountId; String? get transferPairId; double? get confidence; String? get notes; List<String> get channels;
 /// Create a copy of SyncedTransaction
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SyncedTransactionCopyWith<SyncedTransaction> get copyWith => _$SyncedTransactio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SyncedTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag)&&(identical(other.transferAuto, transferAuto) || other.transferAuto == transferAuto)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SyncedTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag)&&(identical(other.transferAuto, transferAuto) || other.transferAuto == transferAuto)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.notes, notes) || other.notes == notes)&&const DeepCollectionEquality().equals(other.channels, channels));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,amount,currency,direction,kind,occurredAt,categoryId,fiscalTag,transferAuto,parsedBy,createdAt,updatedAt,merchant,description,bank,accountId,transferPairId,confidence,notes]);
+int get hashCode => Object.hashAll([runtimeType,id,amount,currency,direction,kind,occurredAt,categoryId,fiscalTag,transferAuto,parsedBy,createdAt,updatedAt,merchant,description,bank,accountId,transferPairId,confidence,notes,const DeepCollectionEquality().hash(channels)]);
 
 @override
 String toString() {
-  return 'SyncedTransaction(id: $id, amount: $amount, currency: $currency, direction: $direction, kind: $kind, occurredAt: $occurredAt, categoryId: $categoryId, fiscalTag: $fiscalTag, transferAuto: $transferAuto, parsedBy: $parsedBy, createdAt: $createdAt, updatedAt: $updatedAt, merchant: $merchant, description: $description, bank: $bank, accountId: $accountId, transferPairId: $transferPairId, confidence: $confidence, notes: $notes)';
+  return 'SyncedTransaction(id: $id, amount: $amount, currency: $currency, direction: $direction, kind: $kind, occurredAt: $occurredAt, categoryId: $categoryId, fiscalTag: $fiscalTag, transferAuto: $transferAuto, parsedBy: $parsedBy, createdAt: $createdAt, updatedAt: $updatedAt, merchant: $merchant, description: $description, bank: $bank, accountId: $accountId, transferPairId: $transferPairId, confidence: $confidence, notes: $notes, channels: $channels)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SyncedTransactionCopyWith<$Res>  {
   factory $SyncedTransactionCopyWith(SyncedTransaction value, $Res Function(SyncedTransaction) _then) = _$SyncedTransactionCopyWithImpl;
 @useResult
 $Res call({
- String id, Cop amount, String currency, TxDirection direction, TxKind kind, DateTime occurredAt, String categoryId, String fiscalTag, bool transferAuto, String parsedBy, DateTime createdAt, DateTime updatedAt, String? merchant, String? description, String? bank, String? accountId, String? transferPairId, double? confidence, String? notes
+ String id, Cop amount, String currency, TxDirection direction, TxKind kind, DateTime occurredAt, String categoryId, String fiscalTag, bool transferAuto, String parsedBy, DateTime createdAt, DateTime updatedAt, String? merchant, String? description, String? bank, String? accountId, String? transferPairId, double? confidence, String? notes, List<String> channels
 });
 
 
@@ -62,7 +62,7 @@ class _$SyncedTransactionCopyWithImpl<$Res>
 
 /// Create a copy of SyncedTransaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? currency = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? categoryId = null,Object? fiscalTag = null,Object? transferAuto = null,Object? parsedBy = null,Object? createdAt = null,Object? updatedAt = null,Object? merchant = freezed,Object? description = freezed,Object? bank = freezed,Object? accountId = freezed,Object? transferPairId = freezed,Object? confidence = freezed,Object? notes = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? currency = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? categoryId = null,Object? fiscalTag = null,Object? transferAuto = null,Object? parsedBy = null,Object? createdAt = null,Object? updatedAt = null,Object? merchant = freezed,Object? description = freezed,Object? bank = freezed,Object? accountId = freezed,Object? transferPairId = freezed,Object? confidence = freezed,Object? notes = freezed,Object? channels = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -83,7 +83,8 @@ as String?,accountId: freezed == accountId ? _self.accountId : accountId // igno
 as String?,transferPairId: freezed == transferPairId ? _self.transferPairId : transferPairId // ignore: cast_nullable_to_non_nullable
 as String?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,channels: null == channels ? _self.channels : channels // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
@@ -168,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes,  List<String> channels)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SyncedTransaction() when $default != null:
-return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes);case _:
+return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes,_that.channels);case _:
   return orElse();
 
 }
@@ -189,10 +190,10 @@ return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes,  List<String> channels)  $default,) {final _that = this;
 switch (_that) {
 case _SyncedTransaction():
-return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes);case _:
+return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes,_that.channels);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +210,10 @@ return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Cop amount,  String currency,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  String categoryId,  String fiscalTag,  bool transferAuto,  String parsedBy,  DateTime createdAt,  DateTime updatedAt,  String? merchant,  String? description,  String? bank,  String? accountId,  String? transferPairId,  double? confidence,  String? notes,  List<String> channels)?  $default,) {final _that = this;
 switch (_that) {
 case _SyncedTransaction() when $default != null:
-return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes);case _:
+return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,_that.occurredAt,_that.categoryId,_that.fiscalTag,_that.transferAuto,_that.parsedBy,_that.createdAt,_that.updatedAt,_that.merchant,_that.description,_that.bank,_that.accountId,_that.transferPairId,_that.confidence,_that.notes,_that.channels);case _:
   return null;
 
 }
@@ -224,7 +225,7 @@ return $default(_that.id,_that.amount,_that.currency,_that.direction,_that.kind,
 
 
 class _SyncedTransaction implements SyncedTransaction {
-  const _SyncedTransaction({required this.id, required this.amount, required this.currency, required this.direction, required this.kind, required this.occurredAt, required this.categoryId, required this.fiscalTag, required this.transferAuto, required this.parsedBy, required this.createdAt, required this.updatedAt, this.merchant, this.description, this.bank, this.accountId, this.transferPairId, this.confidence, this.notes});
+  const _SyncedTransaction({required this.id, required this.amount, required this.currency, required this.direction, required this.kind, required this.occurredAt, required this.categoryId, required this.fiscalTag, required this.transferAuto, required this.parsedBy, required this.createdAt, required this.updatedAt, this.merchant, this.description, this.bank, this.accountId, this.transferPairId, this.confidence, this.notes, final  List<String> channels = const <String>[]}): _channels = channels;
   
 
 @override final  String id;
@@ -246,6 +247,13 @@ class _SyncedTransaction implements SyncedTransaction {
 @override final  String? transferPairId;
 @override final  double? confidence;
 @override final  String? notes;
+ final  List<String> _channels;
+@override@JsonKey() List<String> get channels {
+  if (_channels is EqualUnmodifiableListView) return _channels;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_channels);
+}
+
 
 /// Create a copy of SyncedTransaction
 /// with the given fields replaced by the non-null parameter values.
@@ -257,16 +265,16 @@ _$SyncedTransactionCopyWith<_SyncedTransaction> get copyWith => __$SyncedTransac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SyncedTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag)&&(identical(other.transferAuto, transferAuto) || other.transferAuto == transferAuto)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SyncedTransaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag)&&(identical(other.transferAuto, transferAuto) || other.transferAuto == transferAuto)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.notes, notes) || other.notes == notes)&&const DeepCollectionEquality().equals(other._channels, _channels));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,amount,currency,direction,kind,occurredAt,categoryId,fiscalTag,transferAuto,parsedBy,createdAt,updatedAt,merchant,description,bank,accountId,transferPairId,confidence,notes]);
+int get hashCode => Object.hashAll([runtimeType,id,amount,currency,direction,kind,occurredAt,categoryId,fiscalTag,transferAuto,parsedBy,createdAt,updatedAt,merchant,description,bank,accountId,transferPairId,confidence,notes,const DeepCollectionEquality().hash(_channels)]);
 
 @override
 String toString() {
-  return 'SyncedTransaction(id: $id, amount: $amount, currency: $currency, direction: $direction, kind: $kind, occurredAt: $occurredAt, categoryId: $categoryId, fiscalTag: $fiscalTag, transferAuto: $transferAuto, parsedBy: $parsedBy, createdAt: $createdAt, updatedAt: $updatedAt, merchant: $merchant, description: $description, bank: $bank, accountId: $accountId, transferPairId: $transferPairId, confidence: $confidence, notes: $notes)';
+  return 'SyncedTransaction(id: $id, amount: $amount, currency: $currency, direction: $direction, kind: $kind, occurredAt: $occurredAt, categoryId: $categoryId, fiscalTag: $fiscalTag, transferAuto: $transferAuto, parsedBy: $parsedBy, createdAt: $createdAt, updatedAt: $updatedAt, merchant: $merchant, description: $description, bank: $bank, accountId: $accountId, transferPairId: $transferPairId, confidence: $confidence, notes: $notes, channels: $channels)';
 }
 
 
@@ -277,7 +285,7 @@ abstract mixin class _$SyncedTransactionCopyWith<$Res> implements $SyncedTransac
   factory _$SyncedTransactionCopyWith(_SyncedTransaction value, $Res Function(_SyncedTransaction) _then) = __$SyncedTransactionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Cop amount, String currency, TxDirection direction, TxKind kind, DateTime occurredAt, String categoryId, String fiscalTag, bool transferAuto, String parsedBy, DateTime createdAt, DateTime updatedAt, String? merchant, String? description, String? bank, String? accountId, String? transferPairId, double? confidence, String? notes
+ String id, Cop amount, String currency, TxDirection direction, TxKind kind, DateTime occurredAt, String categoryId, String fiscalTag, bool transferAuto, String parsedBy, DateTime createdAt, DateTime updatedAt, String? merchant, String? description, String? bank, String? accountId, String? transferPairId, double? confidence, String? notes, List<String> channels
 });
 
 
@@ -294,7 +302,7 @@ class __$SyncedTransactionCopyWithImpl<$Res>
 
 /// Create a copy of SyncedTransaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? currency = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? categoryId = null,Object? fiscalTag = null,Object? transferAuto = null,Object? parsedBy = null,Object? createdAt = null,Object? updatedAt = null,Object? merchant = freezed,Object? description = freezed,Object? bank = freezed,Object? accountId = freezed,Object? transferPairId = freezed,Object? confidence = freezed,Object? notes = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? currency = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? categoryId = null,Object? fiscalTag = null,Object? transferAuto = null,Object? parsedBy = null,Object? createdAt = null,Object? updatedAt = null,Object? merchant = freezed,Object? description = freezed,Object? bank = freezed,Object? accountId = freezed,Object? transferPairId = freezed,Object? confidence = freezed,Object? notes = freezed,Object? channels = null,}) {
   return _then(_SyncedTransaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -315,7 +323,268 @@ as String?,accountId: freezed == accountId ? _self.accountId : accountId // igno
 as String?,transferPairId: freezed == transferPairId ? _self.transferPairId : transferPairId // ignore: cast_nullable_to_non_nullable
 as String?,confidence: freezed == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
 as double?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,channels: null == channels ? _self._channels : channels // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$SyncedSource {
+
+ String get channel; DateTime get receivedAt;
+/// Create a copy of SyncedSource
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SyncedSourceCopyWith<SyncedSource> get copyWith => _$SyncedSourceCopyWithImpl<SyncedSource>(this as SyncedSource, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SyncedSource&&(identical(other.channel, channel) || other.channel == channel)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,channel,receivedAt);
+
+@override
+String toString() {
+  return 'SyncedSource(channel: $channel, receivedAt: $receivedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SyncedSourceCopyWith<$Res>  {
+  factory $SyncedSourceCopyWith(SyncedSource value, $Res Function(SyncedSource) _then) = _$SyncedSourceCopyWithImpl;
+@useResult
+$Res call({
+ String channel, DateTime receivedAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$SyncedSourceCopyWithImpl<$Res>
+    implements $SyncedSourceCopyWith<$Res> {
+  _$SyncedSourceCopyWithImpl(this._self, this._then);
+
+  final SyncedSource _self;
+  final $Res Function(SyncedSource) _then;
+
+/// Create a copy of SyncedSource
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? channel = null,Object? receivedAt = null,}) {
+  return _then(_self.copyWith(
+channel: null == channel ? _self.channel : channel // ignore: cast_nullable_to_non_nullable
+as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SyncedSource].
+extension SyncedSourcePatterns on SyncedSource {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SyncedSource value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SyncedSource() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SyncedSource value)  $default,){
+final _that = this;
+switch (_that) {
+case _SyncedSource():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SyncedSource value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SyncedSource() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String channel,  DateTime receivedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SyncedSource() when $default != null:
+return $default(_that.channel,_that.receivedAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String channel,  DateTime receivedAt)  $default,) {final _that = this;
+switch (_that) {
+case _SyncedSource():
+return $default(_that.channel,_that.receivedAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String channel,  DateTime receivedAt)?  $default,) {final _that = this;
+switch (_that) {
+case _SyncedSource() when $default != null:
+return $default(_that.channel,_that.receivedAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _SyncedSource implements SyncedSource {
+  const _SyncedSource({required this.channel, required this.receivedAt});
+  
+
+@override final  String channel;
+@override final  DateTime receivedAt;
+
+/// Create a copy of SyncedSource
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SyncedSourceCopyWith<_SyncedSource> get copyWith => __$SyncedSourceCopyWithImpl<_SyncedSource>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SyncedSource&&(identical(other.channel, channel) || other.channel == channel)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,channel,receivedAt);
+
+@override
+String toString() {
+  return 'SyncedSource(channel: $channel, receivedAt: $receivedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SyncedSourceCopyWith<$Res> implements $SyncedSourceCopyWith<$Res> {
+  factory _$SyncedSourceCopyWith(_SyncedSource value, $Res Function(_SyncedSource) _then) = __$SyncedSourceCopyWithImpl;
+@override @useResult
+$Res call({
+ String channel, DateTime receivedAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$SyncedSourceCopyWithImpl<$Res>
+    implements _$SyncedSourceCopyWith<$Res> {
+  __$SyncedSourceCopyWithImpl(this._self, this._then);
+
+  final _SyncedSource _self;
+  final $Res Function(_SyncedSource) _then;
+
+/// Create a copy of SyncedSource
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? channel = null,Object? receivedAt = null,}) {
+  return _then(_SyncedSource(
+channel: null == channel ? _self.channel : channel // ignore: cast_nullable_to_non_nullable
+as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,
   ));
 }
 

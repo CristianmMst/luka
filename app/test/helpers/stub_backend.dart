@@ -109,6 +109,7 @@ Map<String, dynamic> transactionJson({
   String? notes,
   String createdAt = '2026-09-22T15:00:00Z',
   String updatedAt = '2026-09-22T15:00:00Z',
+  List<String> channels = const ['manual'],
 }) => {
   'id': id,
   'amount': amount,
@@ -129,4 +130,5 @@ Map<String, dynamic> transactionJson({
   'notes': notes,
   'created_at': createdAt,
   'updated_at': updatedAt,
+  'channels': channels,
 };

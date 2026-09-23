@@ -229,6 +229,18 @@ class $LocalTransactionsTable extends LocalTransactions
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _channelsMeta = const VerificationMeta(
+    'channels',
+  );
+  @override
+  late final GeneratedColumn<String> channels = GeneratedColumn<String>(
+    'channels',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -251,6 +263,7 @@ class $LocalTransactionsTable extends LocalTransactions
     createdAt,
     updatedAt,
     pendingPush,
+    channels,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -414,6 +427,12 @@ class $LocalTransactionsTable extends LocalTransactions
         ),
       );
     }
+    if (data.containsKey('channels')) {
+      context.handle(
+        _channelsMeta,
+        channels.isAcceptableOrUnknown(data['channels']!, _channelsMeta),
+      );
+    }
     return context;
   }
 
@@ -503,6 +522,10 @@ class $LocalTransactionsTable extends LocalTransactions
         DriftSqlType.bool,
         data['${effectivePrefix}pending_push'],
       )!,
+      channels: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}channels'],
+      )!,
     );
   }
 
@@ -536,6 +559,11 @@ class LocalTransaction extends DataClass
 
   /// Tiene operaciones en el outbox: el pull no la sobrescribe (spec 003 §3).
   final bool pendingPush;
+
+  /// JSON de los canales de origen (`channels`, orden estable del enum
+  /// `Channel`, spec 005 §6); `'[]'` para filas creadas en local antes del
+  /// primer pull (F4.2).
+  final String channels;
   const LocalTransaction({
     required this.id,
     required this.amountCents,
@@ -557,6 +585,7 @@ class LocalTransaction extends DataClass
     required this.createdAt,
     required this.updatedAt,
     required this.pendingPush,
+    required this.channels,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -599,6 +628,7 @@ class LocalTransaction extends DataClass
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['pending_push'] = Variable<bool>(pendingPush);
+    map['channels'] = Variable<String>(channels);
     return map;
   }
 
@@ -640,6 +670,7 @@ class LocalTransaction extends DataClass
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       pendingPush: Value(pendingPush),
+      channels: Value(channels),
     );
   }
 
@@ -669,6 +700,7 @@ class LocalTransaction extends DataClass
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       pendingPush: serializer.fromJson<bool>(json['pendingPush']),
+      channels: serializer.fromJson<String>(json['channels']),
     );
   }
   @override
@@ -695,6 +727,7 @@ class LocalTransaction extends DataClass
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'pendingPush': serializer.toJson<bool>(pendingPush),
+      'channels': serializer.toJson<String>(channels),
     };
   }
 
@@ -719,6 +752,7 @@ class LocalTransaction extends DataClass
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? pendingPush,
+    String? channels,
   }) => LocalTransaction(
     id: id ?? this.id,
     amountCents: amountCents ?? this.amountCents,
@@ -742,6 +776,7 @@ class LocalTransaction extends DataClass
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     pendingPush: pendingPush ?? this.pendingPush,
+    channels: channels ?? this.channels,
   );
   LocalTransaction copyWithCompanion(LocalTransactionsCompanion data) {
     return LocalTransaction(
@@ -781,6 +816,7 @@ class LocalTransaction extends DataClass
       pendingPush: data.pendingPush.present
           ? data.pendingPush.value
           : this.pendingPush,
+      channels: data.channels.present ? data.channels.value : this.channels,
     );
   }
 
@@ -806,13 +842,14 @@ class LocalTransaction extends DataClass
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('pendingPush: $pendingPush')
+          ..write('pendingPush: $pendingPush, ')
+          ..write('channels: $channels')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     amountCents,
     currency,
@@ -833,7 +870,8 @@ class LocalTransaction extends DataClass
     createdAt,
     updatedAt,
     pendingPush,
-  );
+    channels,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -857,7 +895,8 @@ class LocalTransaction extends DataClass
           other.notes == this.notes &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.pendingPush == this.pendingPush);
+          other.pendingPush == this.pendingPush &&
+          other.channels == this.channels);
 }
 
 class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
@@ -881,6 +920,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> pendingPush;
+  final Value<String> channels;
   final Value<int> rowid;
   const LocalTransactionsCompanion({
     this.id = const Value.absent(),
@@ -903,6 +943,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.pendingPush = const Value.absent(),
+    this.channels = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalTransactionsCompanion.insert({
@@ -926,6 +967,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.pendingPush = const Value.absent(),
+    this.channels = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        amountCents = Value(amountCents),
@@ -957,6 +999,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? pendingPush,
+    Expression<String>? channels,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -980,6 +1023,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (pendingPush != null) 'pending_push': pendingPush,
+      if (channels != null) 'channels': channels,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1005,6 +1049,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<bool>? pendingPush,
+    Value<String>? channels,
     Value<int>? rowid,
   }) {
     return LocalTransactionsCompanion(
@@ -1028,6 +1073,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       pendingPush: pendingPush ?? this.pendingPush,
+      channels: channels ?? this.channels,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1095,6 +1141,9 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
     if (pendingPush.present) {
       map['pending_push'] = Variable<bool>(pendingPush.value);
     }
+    if (channels.present) {
+      map['channels'] = Variable<String>(channels.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1124,6 +1173,7 @@ class LocalTransactionsCompanion extends UpdateCompanion<LocalTransaction> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('pendingPush: $pendingPush, ')
+          ..write('channels: $channels, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3429,6 +3479,7 @@ typedef $$LocalTransactionsTableCreateCompanionBuilder =
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<bool> pendingPush,
+      Value<String> channels,
       Value<int> rowid,
     });
 typedef $$LocalTransactionsTableUpdateCompanionBuilder =
@@ -3453,6 +3504,7 @@ typedef $$LocalTransactionsTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<bool> pendingPush,
+      Value<String> channels,
       Value<int> rowid,
     });
 
@@ -3562,6 +3614,11 @@ class $$LocalTransactionsTableFilterComposer
 
   ColumnFilters<bool> get pendingPush => $composableBuilder(
     column: $table.pendingPush,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get channels => $composableBuilder(
+    column: $table.channels,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3674,6 +3731,11 @@ class $$LocalTransactionsTableOrderingComposer
     column: $table.pendingPush,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get channels => $composableBuilder(
+    column: $table.channels,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalTransactionsTableAnnotationComposer
@@ -3760,6 +3822,9 @@ class $$LocalTransactionsTableAnnotationComposer
     column: $table.pendingPush,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get channels =>
+      $composableBuilder(column: $table.channels, builder: (column) => column);
 }
 
 class $$LocalTransactionsTableTableManager
@@ -3822,6 +3887,7 @@ class $$LocalTransactionsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> pendingPush = const Value.absent(),
+                Value<String> channels = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalTransactionsCompanion(
                 id: id,
@@ -3844,6 +3910,7 @@ class $$LocalTransactionsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 pendingPush: pendingPush,
+                channels: channels,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3868,6 +3935,7 @@ class $$LocalTransactionsTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<bool> pendingPush = const Value.absent(),
+                Value<String> channels = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalTransactionsCompanion.insert(
                 id: id,
@@ -3890,6 +3958,7 @@ class $$LocalTransactionsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 pendingPush: pendingPush,
+                channels: channels,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -22,6 +22,7 @@ class TransactionDto {
     required this.parsedBy,
     required this.createdAt,
     required this.updatedAt,
+    required this.channels,
     this.merchant,
     this.description,
     this.bank,
@@ -54,6 +55,11 @@ class TransactionDto {
   final double? confidence;
   final String? notes;
 
+  /// `[]` si falta en la respuesta (compatibilidad con respuestas viejas,
+  /// antes de F4.2).
+  @JsonKey(defaultValue: <String>[])
+  final List<String> channels;
+
   /// Lanza si `direction`/`kind` no son un valor conocido (respuesta fuera de
   /// contrato: queda como `RemoteFailure(statusCode: 200, code: 'unknown')`
   /// en `SyncApi`).
@@ -77,6 +83,7 @@ class TransactionDto {
     transferPairId: transferPairId,
     confidence: confidence,
     notes: notes,
+    channels: channels,
   );
 }
 
@@ -90,4 +97,45 @@ class TransactionPageDto {
 
   final List<TransactionDto> items;
   final String? nextCursor;
+}
+
+/// `TransactionSourceResponse` de `GET /transactions/{id}` (spec 005 §6): solo
+/// `channel` y `received_at`, que es lo que consume el detalle.
+@JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+class TransactionSourceDto {
+  const TransactionSourceDto({required this.channel, required this.receivedAt});
+
+  factory TransactionSourceDto.fromJson(Map<String, dynamic> json) =>
+      _$TransactionSourceDtoFromJson(json);
+
+  final String channel;
+  final DateTime receivedAt;
+
+  SyncedSource toDomain() =>
+      SyncedSource(channel: channel, receivedAt: receivedAt);
+}
+
+/// `TransactionResponse` de `GET /transactions/{id}` (spec 005 §6): la misma
+/// forma que [TransactionDto] mas `sources`. `pair` no se tipa: F4.2 todavia
+/// no lo consume.
+class TransactionDetailDto {
+  const TransactionDetailDto({
+    required this.transaction,
+    required this.sources,
+    this.pair,
+  });
+
+  factory TransactionDetailDto.fromJson(Map<String, dynamic> json) =>
+      TransactionDetailDto(
+        transaction: TransactionDto.fromJson(json),
+        sources: [
+          for (final item in json['sources'] as List<dynamic>)
+            TransactionSourceDto.fromJson(item as Map<String, dynamic>),
+        ],
+        pair: json['pair'] as Map<String, dynamic>?,
+      );
+
+  final TransactionDto transaction;
+  final List<TransactionSourceDto> sources;
+  final Map<String, dynamic>? pair;
 }

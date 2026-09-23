@@ -42,6 +42,21 @@ void main() {
 
       expect(dto.toDomain, throwsArgumentError);
     });
+
+    test('channels parsea la lista en el orden recibido', () {
+      final dto = TransactionDto.fromJson(
+        transactionJson(channels: ['email', 'manual']),
+      );
+
+      expect(dto.toDomain().channels, ['email', 'manual']);
+    });
+
+    test('channels ausente es lista vacia (compatibilidad)', () {
+      final json = transactionJson()..remove('channels');
+      final dto = TransactionDto.fromJson(json);
+
+      expect(dto.toDomain().channels, isEmpty);
+    });
   });
 
   group('TransactionPageDto', () {
@@ -126,6 +141,64 @@ void main() {
       expect(domain.rawMessageId, 'r1');
       expect(domain.partialExtract, {'amount': '45000'});
       expect(domain.receivedAt, DateTime.utc(2026, 9, 22, 15));
+    });
+  });
+
+  group('TransactionSourceDto', () {
+    test('toDomain parsea channel y received_at en UTC', () {
+      final dto = TransactionSourceDto.fromJson({
+        'id': 's1',
+        'channel': 'sms_notification',
+        'raw_message_id': 'm1',
+        'received_at': '2026-09-22T15:00:00Z',
+      });
+
+      final domain = dto.toDomain();
+
+      expect(domain.channel, 'sms_notification');
+      expect(domain.receivedAt.isUtc, isTrue);
+      expect(domain.receivedAt, DateTime.utc(2026, 9, 22, 15));
+    });
+  });
+
+  group('TransactionDetailDto', () {
+    test('parsea la transaccion y sus sources', () {
+      final dto = TransactionDetailDto.fromJson({
+        ...transactionJson(id: 't1', channels: ['email', 'manual']),
+        'sources': [
+          {
+            'id': 's1',
+            'channel': 'email',
+            'raw_message_id': 'm1',
+            'received_at': '2026-09-22T15:00:00Z',
+          },
+          {
+            'id': 's2',
+            'channel': 'manual',
+            'raw_message_id': null,
+            'received_at': '2026-09-22T16:00:00Z',
+          },
+        ],
+        'pair': null,
+      });
+
+      expect(dto.transaction.id, 't1');
+      expect(dto.transaction.toDomain().channels, ['email', 'manual']);
+      expect(dto.sources, hasLength(2));
+      expect(dto.sources.first.toDomain().channel, 'email');
+      expect(dto.sources.last.toDomain().channel, 'manual');
+      expect(dto.pair, isNull);
+    });
+
+    test('pair presente se guarda sin tipar', () {
+      final dto = TransactionDetailDto.fromJson({
+        ...transactionJson(id: 't1'),
+        'sources': <Object?>[],
+        'pair': {'id': 'p1'},
+      });
+
+      expect(dto.sources, isEmpty);
+      expect(dto.pair, {'id': 'p1'});
     });
   });
 

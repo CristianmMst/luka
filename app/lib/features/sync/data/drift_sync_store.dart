@@ -562,6 +562,7 @@ class DriftSyncStore implements SyncStore {
           createdAt: t.createdAt,
           updatedAt: t.updatedAt,
           pendingPush: const Value(false),
+          channels: Value(jsonEncode(t.channels)),
         ),
       );
 

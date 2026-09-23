@@ -30,7 +30,18 @@ abstract class SyncedTransaction with _$SyncedTransaction {
     String? transferPairId,
     double? confidence,
     String? notes,
+    @Default(<String>[]) List<String> channels,
   }) = _SyncedTransaction;
+}
+
+/// Fuente cruda adjunta a una transaccion, solo para el detalle
+/// (`TransactionSourceResponse`, spec 005 §6).
+@freezed
+abstract class SyncedSource with _$SyncedSource {
+  const factory SyncedSource({
+    required String channel,
+    required DateTime receivedAt,
+  }) = _SyncedSource;
 }
 
 @freezed

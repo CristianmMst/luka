@@ -263,4 +263,56 @@ void main() {
       );
     });
   });
+
+  group('fetchTransactionDetail', () {
+    test('200 devuelve la transaccion y sus sources', () async {
+      final backend = StubBackend(
+        (_) => StubResponse(200, {
+          ...transactionJson(id: 't1', channels: ['email', 'manual']),
+          'sources': [
+            {
+              'id': 's1',
+              'channel': 'email',
+              'raw_message_id': 'm1',
+              'received_at': '2026-09-22T15:00:00Z',
+            },
+          ],
+          'pair': null,
+        }),
+      );
+      final api = SyncApi(stubDio(backend));
+
+      final detail = await api.fetchTransactionDetail('t1');
+
+      expect(detail!.tx.id, 't1');
+      expect(detail.tx.channels, ['email', 'manual']);
+      expect(detail.sources, hasLength(1));
+      expect(detail.sources.single.channel, 'email');
+      expect(detail.sources.single.receivedAt, DateTime.utc(2026, 9, 22, 15));
+      final request = backend.requests.single;
+      expect(request.method, 'GET');
+      expect(request.path, '/v1/transactions/t1');
+    });
+
+    test('404 (no existe o es de otro usuario) devuelve null', () async {
+      final backend = StubBackend(
+        (_) => StubResponse.error(404, 'transaction_not_found'),
+      );
+      final api = SyncApi(stubDio(backend));
+
+      expect(await api.fetchTransactionDetail('t1'), isNull);
+    });
+
+    test('sin red falla con RemoteFailure.network', () async {
+      final backend = StubBackend((r) => throw connectionError(r));
+      final api = SyncApi(stubDio(backend));
+
+      await expectLater(
+        api.fetchTransactionDetail('t1'),
+        throwsA(
+          isA<RemoteFailure>().having((f) => f.isNetwork, 'network', isTrue),
+        ),
+      );
+    });
+  });
 }

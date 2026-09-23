@@ -21,7 +21,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'finanzia'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -29,6 +29,14 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       // v1 era una base vacía (F0.6): no hay datos que migrar.
       if (from < 2) await m.createAll();
+      if (from == 2) {
+        await m.addColumn(localTransactions, localTransactions.channels);
+        // Reiniciar el cursor fuerza un pull completo que rellena los
+        // canales (F4.2).
+        await (delete(
+          syncState,
+        )..where((s) => s.key.equals('transactions_cursor'))).go();
+      }
     },
   );
 }

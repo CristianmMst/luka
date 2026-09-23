@@ -58,6 +58,25 @@ class SyncApi implements SyncRemote {
   }
 
   @override
+  Future<TransactionDetail?> fetchTransactionDetail(String id) async {
+    final Response<Map<String, dynamic>> response;
+    try {
+      response = await _dio.get<Map<String, dynamic>>('/v1/transactions/$id');
+    } on DioException catch (e) {
+      final failure = ApiException.fromDio(e);
+      if (failure.statusCode == 404) return null;
+      throw _failure(failure);
+    }
+    return _decodeOrUnknown(() {
+      final dto = TransactionDetailDto.fromJson(response.data!);
+      return (
+        tx: dto.transaction.toDomain(),
+        sources: [for (final source in dto.sources) source.toDomain()],
+      );
+    });
+  }
+
+  @override
   Future<TransactionsPage> transactionsSince(
     DateTime since, {
     String? cursor,

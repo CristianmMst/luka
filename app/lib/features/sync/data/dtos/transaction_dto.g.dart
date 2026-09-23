@@ -20,6 +20,11 @@ TransactionDto _$TransactionDtoFromJson(Map<String, dynamic> json) =>
       parsedBy: json['parsed_by'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      channels:
+          (json['channels'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       merchant: json['merchant'] as String?,
       description: json['description'] as String?,
       bank: json['bank'] as String?,
@@ -36,3 +41,10 @@ TransactionPageDto _$TransactionPageDtoFromJson(Map<String, dynamic> json) =>
           .toList(),
       nextCursor: json['next_cursor'] as String?,
     );
+
+TransactionSourceDto _$TransactionSourceDtoFromJson(
+  Map<String, dynamic> json,
+) => TransactionSourceDto(
+  channel: json['channel'] as String,
+  receivedAt: DateTime.parse(json['received_at'] as String),
+);

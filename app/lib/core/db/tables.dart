@@ -26,6 +26,11 @@ class LocalTransactions extends Table {
   /// Tiene operaciones en el outbox: el pull no la sobrescribe (spec 003 §3).
   BoolColumn get pendingPush => boolean().withDefault(const Constant(false))();
 
+  /// JSON de los canales de origen (`channels`, orden estable del enum
+  /// `Channel`, spec 005 §6); `'[]'` para filas creadas en local antes del
+  /// primer pull (F4.2).
+  TextColumn get channels => text().withDefault(const Constant('[]'))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
