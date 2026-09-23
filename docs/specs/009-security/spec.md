@@ -14,7 +14,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 | API pública | Credential stuffing / brute force / DoS | Solo Google Sign-In (sin contraseñas propias), rate limiting por IP y usuario, Caddy con límites de tamaño |
 | LLM (DeepSeek) | Fuga de PII a terceros | Se envía solo el **extracto** del mensaje bancario (`relevant_line_prefix`/fallback, spec 006 §4.1) y la fecha de recepción — nunca el cuerpo completo, email del usuario, remitente ni identificadores internos (`user_id`/`raw_message_id`, spec 006 §4.2); DPA del proveedor documentado en spec 010 |
 | App móvil | Extracción de secretos del APK | La app no contiene secretos: solo client_id público de OAuth; el canje de tokens ocurre en el backend |
-| Dependencias | Supply chain | pip-audit/osv-scanner + lockfiles (uv.lock, pubspec.lock) + Dependabot |
+| Dependencias | Supply chain | pip-audit/osv-scanner + lockfiles (uv.lock, pubspec.lock) + alertas de Dependabot (sin PRs de versiones; las actualizaciones se hacen a mano en `main`) |
 
 ## 2. Autenticación y sesiones
 

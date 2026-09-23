@@ -12,6 +12,7 @@ App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente 
 - **Spec primero (P8).** Un cambio de comportamiento actualiza su spec en el mismo commit. Si un spec contradice el código, se corrige ahí mismo.
 - **Commits:** Conventional Commits con scope, en español y sin tildes. Por ejemplo, `feat(ledger): ...` o `fix(app): ...`. El cuerpo cita el ID de roadmap (`F4.1`) y termina con el trailer `Co-Authored-By`.
 - **Solo se sube `main`**, por avance rápido. Nada de ramas remotas ni PRs. Antes de subir, correr lint y tests.
+- **Dependencias:** se actualizan a mano en `main`, respetando los pines de Flutter 3.35. Dependabot solo emite alertas de seguridad; no hay `dependabot.yml` ni PRs de versiones.
 - **TDD** en `domain/` y `application/`. Nada se da por hecho sin haber corrido el comando que lo prueba.
 
 ## Comandos (`justfile` en la raíz)
