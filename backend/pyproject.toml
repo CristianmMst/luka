@@ -19,7 +19,7 @@ dependencies = [
     "requests>=2.34.2,<3",
     "sqlalchemy[asyncio]>=2.0.54,<3",
     "structlog>=26.1.0,<27",
-    "tzdata>=2025.2,<2026",
+    "tzdata>=2025.2,<2027",
     "uvicorn[standard]>=0.53.0,<1",
 ]
 
