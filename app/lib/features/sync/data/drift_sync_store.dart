@@ -132,9 +132,10 @@ class DriftSyncStore implements SyncStore {
   Future<void> complete(OutboxEntry entry, SyncedTransaction? server) =>
       _db.transaction(() async {
         final op = entry.op;
-        await (_db.delete(
+        final removed = await (_db.delete(
           _db.outbox,
         )..where((o) => o.seq.equals(entry.seq))).go();
+        if (removed == 0) return _completeStale(op, server);
 
         var finalId = op.targetId;
         if (server != null && op.createsRecord && server.id != op.targetId) {
@@ -152,6 +153,20 @@ class DriftSyncStore implements SyncStore {
         final related = op.relatedId;
         if (related != null) await _refreshPendingPush(related);
       });
+
+  /// La operación ya no estaba en el outbox: se canceló o se borró todo
+  /// mientras viajaba. Tras un borrado total (sin dueño) no se escribe
+  /// nada; si era una creación que el servidor sí guardó, se encola su
+  /// borrado para no dejar la copia remota.
+  Future<void> _completeStale(
+    OutboxOperation op,
+    SyncedTransaction? server,
+  ) async {
+    if (await _readState(_ownerKey) == null) return;
+    if (op.createsRecord && server != null) {
+      await _insertOutbox(OutboxOperation.deleteTransaction(id: server.id));
+    }
+  }
 
   /// Canjea el id local [from] por el del servidor [to] en el outbox y en
   /// las parejas. La fila local se renombra si todavía hay operaciones
@@ -448,6 +463,9 @@ class DriftSyncStore implements SyncStore {
   /// intentó enviar, o fue rechazado), borra todas sus operaciones y
   /// devuelve `true`: el borrado no se envía.
   ///
+  /// También borra las operaciones que lo usan como pareja y limpia el
+  /// `transfer_pair_id` que lo referencia.
+  ///
   /// Con intentos fallidos el servidor pudo haberlo creado, así que el
   /// borrado se encola detrás (el canje de id lo reescribe).
   Future<bool> _cancelUnsentCreate(String id) async {
@@ -460,7 +478,29 @@ class DriftSyncStore implements SyncStore {
           (row.status == _rejected || row.attempts == 0),
     );
     if (!unsent) return false;
-    await (_db.delete(_db.outbox)..where((o) => o.targetId.equals(id))).go();
+    // Filas que apuntan a [id] como pareja: pierden la referencia.
+    final dependentOps = await (_db.select(
+      _db.outbox,
+    )..where((o) => o.relatedId.equals(id))).get();
+    final pairedRows = await (_db.select(
+      _db.localTransactions,
+    )..where((t) => t.transferPairId.equals(id))).get();
+    await (_db.delete(
+      _db.outbox,
+    )..where((o) => o.targetId.equals(id) | o.relatedId.equals(id))).go();
+    await _db.customUpdate(
+      'UPDATE local_transactions SET transfer_pair_id = NULL '
+      'WHERE transfer_pair_id = ?1',
+      variables: [Variable.withString(id)],
+      updates: {_db.localTransactions},
+    );
+    final affected = {
+      for (final row in dependentOps) row.targetId,
+      for (final row in pairedRows) row.id,
+    }..remove(id);
+    for (final other in affected) {
+      await _refreshPendingPush(other);
+    }
     return true;
   }
 
