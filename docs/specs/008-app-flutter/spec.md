@@ -29,6 +29,8 @@ flowchart TD
     ST --> PRIV[Privacidad: exportar / borrar cuenta]
 ```
 
+El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.6–F4.8. Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard.
+
 ## 3. Especificación por pantalla
 
 ### 3.1 Onboarding (RF-1)
@@ -41,8 +43,8 @@ flowchart TD
 
 ### 3.3 Transacciones (RF-9)
 - Lista infinita (paginada de Drift), agrupada por día; cada ítem: comercio, categoría (chip editable inline), monto con signo/color, íconos de fuente (correo/notif/SMS/manual/NFC) y badge `transfer`.
-- Lista (diseño B "Tarjetas por día"): una tarjeta por día con el total de gastos; chip de categoría que abre la hoja de categorías y, si hay comercio, pregunta "¿Aplicar siempre a {comercio}?"; sello "Por enviar"/"No enviado" según el outbox, con aviso para reintentar o dejar como estaba un cambio rechazado. Estados: vacío (CTA a Registrar), sin resultados ("Quitar filtros"), sin conexión y primera sincronización (esqueleto).
-- Filtros: periodo (este mes, mes pasado, este año o rango de fechas), tipo, banco, fuente, categoría y texto (comercio, categoría o nota). Cuenta: pendiente (F4.8).
+- Lista (diseño B "Tarjetas por día"): una tarjeta por día con el total de gastos; chip de categoría que abre la hoja de categorías y, si hay comercio, pregunta "¿Aplicar siempre a {comercio}?"; sello "Por enviar"/"No enviado" en la fila según el outbox. Cada movimiento rechazado agrega además, encima de las tarjetas del día (y también en su detalle), un aviso para reintentar o dejar como estaba. Estados sin filas: sin movimientos nunca ("Aún no hay movimientos", CTA "Registrar un gasto"), sin movimientos en el mes pero con historial anterior ("Sin movimientos este mes" → ver mes pasado o cambiar filtros), sin resultados de un filtro o de la búsqueda ("Quitar filtros"), error al leer la base local (reintentar) y primera sincronización (esqueleto con barra de progreso); sin conexión se avisa aparte, sobre la lista ("Sin conexión · ves tus datos guardados").
+- Filtros: periodo (este mes, mes pasado, este año o rango de fechas), tipo, banco y categoría filtran en SQL sobre Drift; fuente (canal) y texto (comercio, categoría o nota, sin tildes) se aplican en el cliente sobre las filas ya traídas. Cuenta: pendiente (F4.8).
 - Detalle (diseño A "Monto protagonista"): monto grande con decimales, fecha y hora; campos categoría (chip que abre la hoja y pregunta "¿aplicar siempre a este comercio?" = merchant_rule AC-7.2), cuenta, tipo y "Leído con" (`parsed_by`: `rule:<banco>:*` → "Plantilla <banco>", `llm` → "Lectura automática", `manual` → "Registro manual"). Fuentes (AC-9.3) de `GET /transactions/{id}`: una tarjeta por fuente con su canal y la hora de recepción y, con dos o más, el sello dorado "1 registro con N fuentes, sin duplicados"; sin red, un aviso de que las fuentes se consultan con conexión (se reintentan al volver la red). Par de transferencia navegable ("La otra parte"); marcar/desmarcar transfer; notas que se guardan solas (pausa al escribir, al perder el foco y al salir); aviso para reintentar o dejar como estaba un cambio rechazado.
 
 ### 3.4 Registrar (RF-4)
@@ -101,6 +103,8 @@ flowchart TD
 ### 7.1 Sistema de diseño "Esmeralda andina"
 
 Canvas de referencia (logins claro/oscuro, estados, splash, sistema): https://claude.ai/artifact/ELvKWCWzSaaoVooC6dVZcZ. Se eligió la composición de login **A "Veta esmeralda"**. Los tokens viven en `app/lib/core/theme/` (`ColorScheme` explícito, sin `fromSeed`, más la extensión `FinanziaColors`).
+
+Canvas F4.2 (lista "Tarjetas por día", detalle "Monto protagonista", filtros, hoja de categorías y estados de movimientos): https://claude.ai/artifact/FzyJNLUve7BckevVDnsnM5.
 
 | Rol | Claro | Oscuro | Uso |
 |---|---|---|---|

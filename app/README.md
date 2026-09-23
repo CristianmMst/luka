@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6) y el login con Google (F1.9).
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), la base local con sync offline (F4.1) y la pantalla de movimientos (F4.2); el resto del shell son marcadores.
 
 ## Requisitos
 
@@ -59,7 +59,10 @@ lib/
     │   ├── data/          # AuthApi, SessionManager, TokenStore, IdTokenProvider, repo impl
     │   ├── application/   # AuthController (sesión global), SignInController (acción)
     │   └── presentation/  # SplashPage, LoginPage, ticker de captura, botón de Google
-    └── dashboard/         # placeholder post-login hasta F4
+    ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
+    ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
+    ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Revisión/Ajustes
+    └── dashboard/         # placeholder post-login hasta F4.6
 ```
 
 `test/architecture_test.dart` verifica las reglas de capas: `domain` puro, `application` sin `data` ni `presentation`, `core` sin features.
@@ -77,7 +80,9 @@ Paleta "Esmeralda andina", tipografía y tokens en `lib/core/theme/`. El detalle
 
 ### Base de datos local y sincronización (F4.1)
 
-La app trae una base SQLite local con Drift (`AppDatabase`, base `finanzia`, `schemaVersion` 2 — `lib/core/db/tables.dart`) para funcionar sin conexión (spec 004 §5): `local_transactions` (con la bandera `pending_push`), `local_categories`, `local_accounts`, `local_review` y `outbox` (operaciones offline en orden FIFO, con `target_id`/`related_id` para canjear ids locales), más `sync_state` (cursor de transacciones, última sincronización y usuario dueño). El `SyncCoordinator` (`lib/features/sync/`, contrato en spec 005 §9, disparadores en spec 008 §5) drena primero el outbox y luego hace el pull.
+La app trae una base SQLite local con Drift (`AppDatabase`, base `finanzia`, `schemaVersion` 3 — `lib/core/db/tables.dart`) para funcionar sin conexión (spec 004 §5): `local_transactions` (con la bandera `pending_push` y, desde F4.2, la columna `channels`), `local_categories`, `local_accounts`, `local_review` y `outbox` (operaciones offline en orden FIFO, con `target_id`/`related_id` para canjear ids locales), más `sync_state` (cursor de transacciones, última sincronización y usuario dueño). El `SyncCoordinator` (`lib/features/sync/`, contrato en spec 005 §9, disparadores en spec 008 §5) drena primero el outbox y luego hace el pull.
+
+La migración a `schemaVersion` 3 (F4.2, `lib/core/db/app_database.dart`) agrega `channels` y, en el mismo paso, borra el cursor de `sync_state`: eso fuerza un pull completo en el próximo sync para rellenar los canales de las transacciones que ya estaban en la base antes de la migración.
 
 Se borra por completo, incluido lo que no alcanzó a enviarse, solo cuando el usuario cierra sesión voluntariamente en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. También se borra si inicia sesión un usuario distinto al que la dejó (`claimFor`). Antes de borrar o de reclamar la base para otro usuario, el coordinador espera a que termine cualquier sync en curso, para que no se crucen escrituras tardías entre usuarios (P6).
 
@@ -89,6 +94,15 @@ adb shell run-as co.finanzia.finanzia ls app_flutter
 ```
 
 El archivo (`finanzia.sqlite`) suele vivir en `app_flutter` (carpeta de documentos de la app), no en `databases`; con la ruta se puede copiar (`adb shell run-as ... cat ...` o `run-as ... cp`) y abrir con `sqlite3`, o inspeccionarla directo con el Database Inspector de Android Studio.
+
+### Movimientos (F4.2)
+
+Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones tiene pantalla real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
+
+`lib/features/transactions/` trae las dos pantallas nuevas (spec 008 §3.3, diseño en el canvas F4.2 enlazado en spec 008 §7.1):
+
+- **Lista** (`transactions_page.dart`, diseño B "Tarjetas por día"): tarjetas por día con paginación creciente sobre `TransactionsRepository.watch`, buscador con debounce y hoja de filtros. Periodo, tipo, banco y categoría filtran en SQL; fuente (canal) y texto se aplican en el cliente. Cubre los 5 estados sin filas (vacío total, vacío del mes, sin resultados, error de lectura local y primera sincronización) más el aviso de sin conexión y el de operaciones rechazadas (reintentar o dejar como estaba).
+- **Detalle** (`transaction_detail_page.dart`, diseño A "Monto protagonista"): monto con decimales, campos editables, fuentes del servidor (`GET /transactions/{id}`, con reintento automático al recuperar la red), par de transferencia navegable, marcar/desmarcar transfer y notas con guardado automático.
 
 ## Tests
 

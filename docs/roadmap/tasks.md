@@ -1,6 +1,6 @@
 # Roadmap de implementación
 
-> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing` (mergeada a `main` el 2026-09-22). App Flutter F0.6 (scaffold) y F1.9 (auth) completadas el 2026-09-22 en la rama `CristianmMst/app-login`. F4.1 (esquema Drift completo + `SyncCoordinator` con push/pull y outbox) completada el 2026-09-23 en la rama `f4.1-sync-offline`. Pendientes: F2.7 (bancos restantes, diferido), Fase 3 (Gmail) y el resto de Fase 4 en adelante. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
+> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing` (mergeada a `main` el 2026-09-22). App Flutter F0.6 (scaffold) y F1.9 (auth) completadas el 2026-09-22 en la rama `CristianmMst/app-login`. F4.1 (esquema Drift completo + `SyncCoordinator` con push/pull y outbox) completada el 2026-09-23 en la rama `f4.1-sync-offline`. F4.2 (feature transactions: lista por día, filtros, detalle con fuentes, edición de categoría y marcar transfer) completada el 2026-09-23 en la rama local `f4.2-movimientos` (sin subir; ver flujo de trabajo). Pendientes: F2.7 (bancos restantes, diferido), Fase 3 (Gmail) y el resto de Fase 4 a partir de F4.3. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
 
 Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
@@ -58,7 +58,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | ID | Tarea | Specs | Deps | Estado |
 |---|---|---|---|---|
 | F4.1 | Esquema Drift completo + SyncCoordinator (pull incremental + outbox push) + tests de conflicto | 004 §5, 005 §9, 008 §5 | F1.9 | ✅ sin tombstones de borrado entre dispositivos |
-| F4.2 | Feature transactions: lista, filtros, detalle con fuentes, edición de categoría (+merchant_rule prompt), marcar transfer | 008 §3.3 | F4.1 | incluye resolución manual de operaciones rechazadas del outbox (reintentar o descartar) sobre la transacción afectada |
+| F4.2 | Feature transactions: lista, filtros, detalle con fuentes, edición de categoría (+merchant_rule prompt), marcar transfer | 008 §3.3 | F4.1 | ✅ incluye resolución manual de operaciones rechazadas del outbox (reintentar o descartar) sobre la transacción afectada; el texto original de las fuentes queda pendiente porque la API no lo expone; filtrar por cuenta pendiente (F4.8) |
 | F4.3 | Feature capture Android: NotificationCaptureService (config remota de paquetes, filtros, outbox, batch a /ingest) — backend hecho en F2 (`POST /ingest/notifications`, `GET /config/capture`); falta la app | 006 §3, 005 §5 | F4.1, F2.5 | |
 | F4.4 | Onboarding completo (4 pasos) + detección de permiso revocado | 008 §3.1 | F3.6, F4.3 | |
 | F4.5 | Feature capture NFC: lectura/escritura de tags, deep link quick-add, formulario rápido offline | 006 §5, 008 §3.4 | F4.1 | |
