@@ -3,7 +3,7 @@ import 'package:finanzia/core/network/auth_interceptor.dart';
 import 'package:finanzia/core/network/session_bridge.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/fake_backend.dart';
+import '../../helpers/stub_backend.dart';
 
 /// Sesión en memoria que cuenta refreshes y expiraciones.
 class _FakeSession implements SessionBridge {
@@ -32,25 +32,25 @@ class _FakeSession implements SessionBridge {
 }
 
 void main() {
-  late FakeBackend backend;
+  late StubBackend backend;
   late Dio dio;
   late _FakeSession session;
 
   /// El backend acepta solo `Bearer new`; `old` está vencido.
-  FakeResponse acceptOnlyNew(RequestOptions request) =>
+  StubResponse acceptOnlyNew(RequestOptions request) =>
       request.headers['Authorization'] == 'Bearer new'
-      ? const FakeResponse(200, {'ok': true})
-      : FakeResponse.error(401, 'token_expired');
+      ? const StubResponse(200, {'ok': true})
+      : StubResponse.error(401, 'token_expired');
 
-  void setUpClient(FakeHandler handler, {_FakeSession? withSession}) {
-    backend = FakeBackend(handler);
+  void setUpClient(StubHandler handler, {_FakeSession? withSession}) {
+    backend = StubBackend(handler);
     session = withSession ?? _FakeSession();
-    dio = fakeDio(backend);
+    dio = stubDio(backend);
     dio.interceptors.add(AuthInterceptor(dio: dio, session: session));
   }
 
   test('añade el Bearer del access token vigente', () async {
-    setUpClient((_) => const FakeResponse(200, {'ok': true}));
+    setUpClient((_) => const StubResponse(200, {'ok': true}));
     session.token = 'new';
     await dio.get<void>('/v1/me');
     expect(backend.requests.single.headers['Authorization'], 'Bearer new');
@@ -58,7 +58,7 @@ void main() {
 
   test('sin sesión no añade Authorization', () async {
     setUpClient(
-      (_) => const FakeResponse(200, {'ok': true}),
+      (_) => const StubResponse(200, {'ok': true}),
       withSession: _FakeSession(token: null),
     );
     await dio.get<void>('/v1/me');
@@ -101,7 +101,7 @@ void main() {
   });
 
   test('401 unauthorized expira sin intentar refresh', () async {
-    setUpClient((_) => FakeResponse.error(401, 'unauthorized'));
+    setUpClient((_) => StubResponse.error(401, 'unauthorized'));
     await expectLater(
       dio.get<void>('/v1/me'),
       throwsA(isA<DioException>()),
@@ -111,7 +111,7 @@ void main() {
   });
 
   test('el reintento no entra en bucle si vuelve a fallar', () async {
-    setUpClient((_) => FakeResponse.error(401, 'token_expired'));
+    setUpClient((_) => StubResponse.error(401, 'token_expired'));
     await expectLater(
       dio.get<void>('/v1/me'),
       throwsA(isA<DioException>()),
@@ -122,7 +122,7 @@ void main() {
   });
 
   test('otros errores pasan intactos', () async {
-    setUpClient((_) => FakeResponse.error(404, 'not_found'));
+    setUpClient((_) => StubResponse.error(404, 'not_found'));
     await expectLater(
       dio.get<void>('/v1/transactions/x'),
       throwsA(

@@ -47,10 +47,10 @@ jobs:
       - name: Analyze (sin warnings ni infos)
         run: flutter analyze --fatal-infos --fatal-warnings
 
-      # Los goldens dependen del rasterizador de cada plataforma y el contrato
-      # necesita el backend local: ambos se corren a mano (app/README.md).
+      # Los goldens dependen del rasterizador de cada plataforma: se corren a
+      # mano (app/README.md).
       - name: Tests
-        run: flutter test --coverage --exclude-tags golden,backend
+        run: flutter test --coverage --exclude-tags golden
 
       - name: Gate de cobertura domain + application (>= 90 %)
         run: dart run tool/coverage_gate.dart coverage/lcov.info 90

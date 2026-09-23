@@ -1,5 +1,3 @@
 tags:
   golden:
     description: Goldens visuales; dependen del rasterizador de la plataforma. Regenerar con `just app-goldens`.
-  backend:
-    description: Contrato contra la API local; requiere FINANZIA_API_URL. Correr con `just app-contract`.

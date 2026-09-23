@@ -5,15 +5,15 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 /// Respuesta simulada del backend.
-class FakeResponse {
-  const FakeResponse(this.status, [this.body, this.headers = const {}]);
+class StubResponse {
+  const StubResponse(this.status, [this.body, this.headers = const {}]);
 
   /// Sobre de error del backend: `{"error": {"code", "message"}}`.
-  factory FakeResponse.error(
+  factory StubResponse.error(
     int status,
     String code, {
     Map<String, String> headers = const {},
-  }) => FakeResponse(status, {
+  }) => StubResponse(status, {
     'error': {'code': code, 'message': code},
   }, headers);
 
@@ -22,14 +22,14 @@ class FakeResponse {
   final Map<String, String> headers;
 }
 
-typedef FakeHandler = FutureOr<FakeResponse> Function(RequestOptions request);
+typedef StubHandler = FutureOr<StubResponse> Function(RequestOptions request);
 
 /// Adapter de dio que responde con [handler] y registra cada petición.
 /// Lanzar un `DioException` desde el handler simula un fallo de red.
-class FakeBackend implements HttpClientAdapter {
-  FakeBackend(this.handler);
+class StubBackend implements HttpClientAdapter {
+  StubBackend(this.handler);
 
-  FakeHandler handler;
+  StubHandler handler;
   final requests = <RequestOptions>[];
 
   int countOf(String path) => requests.where((r) => r.path == path).length;
@@ -58,7 +58,7 @@ class FakeBackend implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Dio fakeDio(FakeBackend backend) =>
+Dio stubDio(StubBackend backend) =>
     Dio(BaseOptions(baseUrl: 'http://test.local'))..httpClientAdapter = backend;
 
 DioException connectionError(RequestOptions request) => DioException(

@@ -1,19 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Cómo obtiene la app el `id_token` de Google.
-///
-/// `fake` genera tokens `fake:<sub>:<email>` que el backend acepta cuando
-/// corre con `FINANZIA_GOOGLE_VERIFIER=fake` (solo desarrollo y tests).
-enum AuthMode { google, fake }
-
-/// Configuración de compilación, leída de `--dart-define`.
+/// Configuración de compilación, leída de `--dart-define`. Sin flags usa los
+/// valores de desarrollo.
 final class AppConfig {
-  const AppConfig({
-    required this.apiBaseUrl,
-    required this.authMode,
-    required this.fakeUserEmail,
-    this.googleServerClientId,
-  });
+  const AppConfig({required this.apiBaseUrl, this.googleServerClientId});
 
   factory AppConfig.fromEnvironment() {
     const clientId = String.fromEnvironment(
@@ -27,14 +17,7 @@ final class AppConfig {
         // del emulador llega al backend de la máquina de desarrollo.
         defaultValue: 'http://localhost:8000',
       ),
-      authMode: const String.fromEnvironment('AUTH_MODE') == 'fake'
-          ? AuthMode.fake
-          : AuthMode.google,
       googleServerClientId: clientId.isEmpty ? null : clientId,
-      fakeUserEmail: const String.fromEnvironment(
-        'FAKE_USER_EMAIL',
-        defaultValue: 'dev@finanzia.local',
-      ),
     );
   }
 
@@ -45,13 +28,10 @@ final class AppConfig {
       '30065910946-hatnfnvkk8782gf8qgbii9qdlqf61jn4.apps.googleusercontent.com';
 
   final String apiBaseUrl;
-  final AuthMode authMode;
 
   /// Client ID web de Google Cloud; es la audiencia del `id_token` que
   /// verifica el backend.
   final String? googleServerClientId;
-
-  final String fakeUserEmail;
 }
 
 final appConfigProvider = Provider<AppConfig>(

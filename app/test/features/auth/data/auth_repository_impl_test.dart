@@ -10,13 +10,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../../helpers/fake_backend.dart';
+import '../../../helpers/stub_backend.dart';
 
 class _MockIdTokens extends Mock implements IdTokenProvider {}
 
 void main() {
   var now = DateTime.utc(2026, 9, 22, 12);
-  late FakeBackend backend;
+  late StubBackend backend;
   late _MockIdTokens idTokens;
   late SessionManager session;
   late AuthRepositoryImpl repository;
@@ -24,13 +24,13 @@ void main() {
   setUp(() {
     now = DateTime.utc(2026, 9, 22, 12);
     FlutterSecureStorage.setMockInitialValues({});
-    backend = FakeBackend((_) => FakeResponse(200, sessionJson()));
+    backend = StubBackend((_) => StubResponse(200, sessionJson()));
     idTokens = _MockIdTokens();
     when(
       () => idTokens.obtainIdToken(),
-    ).thenAnswer((_) async => 'fake:dev-ana:ana@example.com');
+    ).thenAnswer((_) async => 'google-id-token-ana');
     when(() => idTokens.signOut()).thenAnswer((_) async {});
-    final api = AuthApi(fakeDio(backend));
+    final api = AuthApi(stubDio(backend));
     session = SessionManager(
       store: TokenStore(const FlutterSecureStorage()),
       api: api,
@@ -53,7 +53,7 @@ void main() {
       expect(user.greetingName, 'Ana');
       expect(backend.requests.single.path, '/v1/auth/google');
       expect(backend.requests.single.data, {
-        'id_token': 'fake:dev-ana:ana@example.com',
+        'id_token': 'google-id-token-ana',
         'device_info': 'android test',
       });
       expect(await session.accessToken(), 'access-1');
@@ -68,10 +68,10 @@ void main() {
       expect(backend.requests, isEmpty);
     });
 
-    final cases = <String, (FakeHandler, Matcher)>{
+    final cases = <String, (StubHandler, Matcher)>{
       'sin red': ((r) => throw connectionError(r), isA<AuthNetworkFailure>()),
       '429': (
-        (_) => FakeResponse.error(
+        (_) => StubResponse.error(
           429,
           'rate_limited',
           headers: {'retry-after': '30'},
@@ -83,15 +83,15 @@ void main() {
         ),
       ),
       '401': (
-        (_) => FakeResponse.error(401, 'unauthorized'),
+        (_) => StubResponse.error(401, 'unauthorized'),
         isA<AuthRejected>(),
       ),
       '500': (
-        (_) => FakeResponse.error(500, 'internal'),
+        (_) => StubResponse.error(500, 'internal'),
         isA<AuthUnexpected>(),
       ),
       'cuerpo fuera de contrato': (
-        (_) => const FakeResponse(200, {'access_token': 1}),
+        (_) => const StubResponse(200, {'access_token': 1}),
         isA<AuthUnexpected>(),
       ),
     };
@@ -122,7 +122,7 @@ void main() {
     test('access vencido → refresca', () async {
       await seed();
       now = now.add(const Duration(hours: 1));
-      backend.handler = (_) => FakeResponse(200, sessionJson(access: 'a-2'));
+      backend.handler = (_) => StubResponse(200, sessionJson(access: 'a-2'));
       expect(await repository.restoreSession(), isNotNull);
       expect(backend.countOf('/v1/auth/refresh'), 1);
       expect(await session.accessToken(), 'a-2');
@@ -131,7 +131,7 @@ void main() {
     test('refresh rechazado → null y sesión borrada', () async {
       await seed();
       now = now.add(const Duration(hours: 1));
-      backend.handler = (_) => FakeResponse.error(401, 'unauthorized');
+      backend.handler = (_) => StubResponse.error(401, 'unauthorized');
       expect(await repository.restoreSession(), isNull);
       expect(await session.current(), isNull);
     });
@@ -148,7 +148,7 @@ void main() {
   group('signOut', () {
     test('revoca en el backend con el Bearer y borra todo', () async {
       await repository.signInWithGoogle();
-      backend.handler = (_) => const FakeResponse(204);
+      backend.handler = (_) => const StubResponse(204);
 
       await repository.signOut();
 
@@ -171,8 +171,8 @@ void main() {
       await repository.signInWithGoogle();
       now = now.add(const Duration(hours: 1));
       backend.handler = (r) => r.path == '/v1/auth/refresh'
-          ? FakeResponse(200, sessionJson(access: 'a-2', refresh: 'r-2'))
-          : const FakeResponse(204);
+          ? StubResponse(200, sessionJson(access: 'a-2', refresh: 'r-2'))
+          : const StubResponse(204);
 
       await repository.signOut();
 

@@ -66,21 +66,3 @@ class GoogleIdTokenProvider implements IdTokenProvider {
     await _client.signOut();
   }
 }
-
-/// Doble de desarrollo: genera `fake:<sub>:<email>`, que el backend acepta
-/// con `FINANZIA_GOOGLE_VERIFIER=fake`. Nunca se usa en producción (el
-/// backend rechaza ese verificador con `env=prod`).
-class FakeIdTokenProvider implements IdTokenProvider {
-  const FakeIdTokenProvider({required this.email});
-
-  final String email;
-
-  @override
-  Future<String> obtainIdToken() async {
-    final sub = 'dev-${email.split('@').first}';
-    return 'fake:$sub:$email';
-  }
-
-  @override
-  Future<void> signOut() async {}
-}

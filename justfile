@@ -55,13 +55,14 @@ app-gen:
 	cd app && dart run build_runner build --delete-conflicting-outputs
 	cd app && flutter gen-l10n
 
-# Corre la app contra el backend local con login fake (emulador Android).
+# Corre la app en el dispositivo USB; el tunel adb expone el backend local en su localhost:8000.
 app-run:
-	cd app && flutter run --dart-define=AUTH_MODE=fake --dart-define=API_BASE_URL=http://10.0.2.2:8000
+	adb reverse tcp:8000 tcp:8000
+	cd app && flutter run
 
-# Tests de la app (sin goldens ni contrato con el backend).
+# Tests de la app (sin goldens).
 app-test:
-	cd app && flutter test --coverage --exclude-tags golden,backend
+	cd app && flutter test --coverage --exclude-tags golden
 	cd app && dart run tool/coverage_gate.dart
 
 # Formato + analisis estatico de la app.
@@ -72,10 +73,6 @@ app-lint:
 # Regenera los goldens visuales del login (revisar el diff de imagenes).
 app-goldens:
 	cd app && flutter test --tags golden --update-goldens
-
-# Contrato de auth contra la API local (requiere `just up` y `just dev`).
-app-contract:
-	cd app && FINANZIA_API_URL=http://localhost:8000 flutter test --tags backend
 
 # Pipeline de CI de la app.
 app-ci: app-lint app-test

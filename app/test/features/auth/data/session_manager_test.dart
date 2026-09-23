@@ -10,26 +10,26 @@ import 'package:finanzia/features/auth/data/token_store.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../helpers/fake_backend.dart';
+import '../../../helpers/stub_backend.dart';
 
 void main() {
   final now = DateTime.utc(2026, 9, 22, 12);
-  late FakeBackend authBackend;
+  late StubBackend authBackend;
   late SessionManager manager;
   late TokenStore store;
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
     store = TokenStore(const FlutterSecureStorage());
-    authBackend = FakeBackend(
-      (_) => FakeResponse(
+    authBackend = StubBackend(
+      (_) => StubResponse(
         200,
         sessionJson(access: 'access-2', refresh: 'refresh-2'),
       ),
     );
     manager = SessionManager(
       store: store,
-      api: AuthApi(fakeDio(authBackend)),
+      api: AuthApi(stubDio(authBackend)),
       deviceInfo: 'android test',
       now: () => now,
     );
@@ -66,13 +66,13 @@ void main() {
 
   test('401 del refresh es rejected; sin red es unavailable', () async {
     await seedSession();
-    authBackend.handler = (_) => FakeResponse.error(401, 'unauthorized');
+    authBackend.handler = (_) => StubResponse.error(401, 'unauthorized');
     expect(await manager.refresh(), RefreshOutcome.rejected);
 
     authBackend.handler = (r) => throw connectionError(r);
     expect(await manager.refresh(), RefreshOutcome.unavailable);
 
-    authBackend.handler = (_) => FakeResponse.error(500, 'internal');
+    authBackend.handler = (_) => StubResponse.error(500, 'internal');
     expect(await manager.refresh(), RefreshOutcome.unavailable);
   });
 
@@ -102,17 +102,17 @@ void main() {
       final gate = Completer<void>();
       authBackend.handler = (_) async {
         await gate.future;
-        return FakeResponse(
+        return StubResponse(
           200,
           sessionJson(access: 'access-2', refresh: 'refresh-2'),
         );
       };
-      final apiBackend = FakeBackend(
+      final apiBackend = StubBackend(
         (r) => r.headers['Authorization'] == 'Bearer access-2'
-            ? const FakeResponse(200, {'ok': true})
-            : FakeResponse.error(401, 'token_expired'),
+            ? const StubResponse(200, {'ok': true})
+            : StubResponse.error(401, 'token_expired'),
       );
-      final api = fakeDio(apiBackend);
+      final api = stubDio(apiBackend);
       api.interceptors.add(AuthInterceptor(dio: api, session: manager));
 
       final calls = [

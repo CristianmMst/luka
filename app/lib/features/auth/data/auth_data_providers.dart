@@ -34,15 +34,11 @@ final sessionManagerProvider = Provider<SessionManager>((ref) {
   return manager;
 });
 
-final idTokenProviderProvider = Provider<IdTokenProvider>((ref) {
-  final config = ref.watch(appConfigProvider);
-  return switch (config.authMode) {
-    AuthMode.fake => FakeIdTokenProvider(email: config.fakeUserEmail),
-    AuthMode.google => GoogleIdTokenProvider(
-      serverClientId: config.googleServerClientId,
-    ),
-  };
-});
+final idTokenProviderProvider = Provider<IdTokenProvider>(
+  (ref) => GoogleIdTokenProvider(
+    serverClientId: ref.watch(appConfigProvider).googleServerClientId,
+  ),
+);
 
 final authRepositoryImplProvider = Provider<AuthRepositoryImpl>(
   (ref) => AuthRepositoryImpl(
