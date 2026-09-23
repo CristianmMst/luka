@@ -267,6 +267,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cerrar sesión'**
   String get homeSignOut;
+
+  /// No description provided for @syncStatusSynced.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronizado · {pending, plural, =0{al día} =1{1 pendiente} other{{pending} pendientes}}'**
+  String syncStatusSynced(int pending);
+
+  /// No description provided for @syncStatusOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión · los cambios se enviarán al volver'**
+  String get syncStatusOffline;
+
+  /// No description provided for @syncStatusRunning.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronizando…'**
+  String get syncStatusRunning;
 }
 
 class _AppLocalizationsDelegate

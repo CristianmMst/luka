@@ -49,5 +49,15 @@
     }
   },
   "homePlaceholderBody": "Ya iniciaste sesión. El resumen de tus gastos llega en la siguiente fase.",
-  "homeSignOut": "Cerrar sesión"
+  "homeSignOut": "Cerrar sesión",
+  "syncStatusSynced": "Sincronizado · {pending, plural, =0{al día} =1{1 pendiente} other{{pending} pendientes}}",
+  "@syncStatusSynced": {
+    "placeholders": {
+      "pending": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusOffline": "Sin conexión · los cambios se enviarán al volver",
+  "syncStatusRunning": "Sincronizando…"
 }

@@ -108,4 +108,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get homeSignOut => 'Cerrar sesión';
+
+  @override
+  String syncStatusSynced(int pending) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pending,
+      locale: localeName,
+      other: '$pending pendientes',
+      one: '1 pendiente',
+      zero: 'al día',
+    );
+    return 'Sincronizado · $_temp0';
+  }
+
+  @override
+  String get syncStatusOffline =>
+      'Sin conexión · los cambios se enviarán al volver';
+
+  @override
+  String get syncStatusRunning => 'Sincronizando…';
 }
