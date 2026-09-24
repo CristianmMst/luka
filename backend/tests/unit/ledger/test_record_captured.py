@@ -80,15 +80,20 @@ def _make_use_case(
 
 
 class _RecordingTransactionRepo(InMemoryTransactionRepo):
-    """Doble que registra cada llamada a `update` (verifica el touch de `updated_at`)."""
+    """Doble que registra `update` y `touch` (el touch no debe reescribir la fila)."""
 
     def __init__(self, sources) -> None:
         super().__init__(sources=sources)
         self.update_calls: list[Transaction] = []
+        self.touch_calls: list[tuple[UUID, UUID, datetime]] = []
 
     async def update(self, tx: Transaction) -> None:
         self.update_calls.append(tx)
         await super().update(tx)
+
+    async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
+        self.touch_calls.append((user_id, id, at))
+        await super().touch(user_id, id, at)
 
 
 @pytest.mark.unit
@@ -149,10 +154,13 @@ async def test_adjuntar_fuente_a_transaccion_existente_actualiza_updated_at() ->
     )
 
     assert second.source_attached is True
-    assert len(recording_repo.update_calls) == 1
-    updated = recording_repo.update_calls[0]
-    assert updated.id == first.transaction.id
-    assert updated.updated_at == clock.now()
+    # Solo `updated_at`: un `update` completo pisaria un PATCH concurrente.
+    assert recording_repo.update_calls == []
+    assert recording_repo.touch_calls == [(USER, first.transaction.id, clock.now())]
+    assert second.transaction.updated_at == clock.now()
+    stored = await recording_repo.get(USER, first.transaction.id)
+    assert stored is not None
+    assert stored.updated_at == clock.now()
 
 
 @pytest.mark.unit
@@ -170,6 +178,7 @@ async def test_fuente_duplicada_en_transaccion_existente_no_toca_updated_at() ->
 
     assert second.source_attached is False
     assert recording_repo.update_calls == []
+    assert recording_repo.touch_calls == []
 
 
 @pytest.mark.unit
@@ -327,7 +336,7 @@ async def test_tercer_candidato_ambiguo_no_empareja_a_nadie() -> None:
     assert refreshed_b.transfer_pair_id is None
 
 
-class _RaceTransactionRepo(InMemoryTransactionRepo):
+class _RaceTransactionRepo(_RecordingTransactionRepo):
     """Simula una carrera: la primera insercion "gana" en otro proceso, no en este."""
 
     def __init__(self, sources) -> None:
@@ -353,3 +362,5 @@ async def test_carrera_de_insercion_adjunta_la_fuente_a_la_fila_existente() -> N
     assert result.created is False
     assert result.source_attached is True
     assert len(repos.events.events) == 0
+    assert race_repo.update_calls == []
+    assert race_repo.touch_calls == [(USER, result.transaction.id, NOW)]

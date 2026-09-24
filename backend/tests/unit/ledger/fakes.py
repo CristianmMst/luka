@@ -159,6 +159,11 @@ class InMemoryTransactionRepo:
         self._by_id[tx.id] = tx
         self._dedupe_index[(tx.user_id, tx.dedupe_key)] = tx.id
 
+    async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
+        tx = self._by_id.get(id)
+        if tx is not None and tx.user_id == user_id:
+            self._by_id[id] = replace(tx, updated_at=at)
+
     async def delete(self, user_id: UUID, id: UUID) -> None:
         tx = self._by_id.get(id)
         if tx is not None and tx.user_id == user_id:

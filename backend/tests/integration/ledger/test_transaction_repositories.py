@@ -7,6 +7,7 @@ transferencias (`find_transfer_candidates`).
 """
 
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
@@ -26,7 +27,10 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
+from finanzia.modules.ledger.domain.system_categories import (
+    SIN_CATEGORIA_ID,
+    system_category_id,
+)
 from finanzia.modules.ledger.infrastructure.repositories.accounts import (
     SqlAlchemyLinkedAccountRepository,
 )
@@ -163,6 +167,62 @@ async def test_attach_siempre_true_cuando_raw_message_id_es_none(
     async with session_factory() as session:
         sources = await SqlAlchemyTransactionSourceRepository(session).list_for(tx.id)
     assert len(sources) == 2
+
+
+async def test_touch_solo_actualiza_updated_at_y_no_pisa_un_patch_concurrente(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """El camino de dedupe lee `target` sin lock; si un PATCH de categoria entra entre
+    la lectura y el touch, el touch no debe revertirlo (reescribe solo `updated_at`).
+    """
+    user = await user_factory(sub="sub-repo-touch", email="repo-touch@example.com")
+    stale = _make_tx(user_id=user.id, dedupe_key="dedupe-touch-1")
+    async with session_factory() as session:
+        await SqlAlchemyTransactionRepository(session).insert_if_absent(stale)
+        await session.commit()
+
+    mercado = system_category_id("mercado")
+    async with session_factory() as session:
+        await SqlAlchemyTransactionRepository(session).update(
+            replace(stale, category_id=mercado, notes="corregida por el usuario")
+        )
+        await session.commit()
+
+    touched_at = stale.updated_at + timedelta(minutes=5)
+    async with session_factory() as session:
+        await SqlAlchemyTransactionRepository(session).touch(stale.user_id, stale.id, touched_at)
+        await session.commit()
+
+    async with session_factory() as session:
+        stored = await SqlAlchemyTransactionRepository(session).get(user.id, stale.id)
+    assert stored is not None
+    assert stored.updated_at == touched_at
+    assert stored.category_id == mercado
+    assert stored.notes == "corregida por el usuario"
+
+
+async def test_touch_no_toca_transacciones_de_otro_usuario(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    owner = await user_factory(sub="sub-repo-touch-a", email="repo-touch-a@example.com")
+    other = await user_factory(sub="sub-repo-touch-b", email="repo-touch-b@example.com")
+    tx = _make_tx(user_id=owner.id, dedupe_key="dedupe-touch-2")
+    async with session_factory() as session:
+        await SqlAlchemyTransactionRepository(session).insert_if_absent(tx)
+        await session.commit()
+
+    async with session_factory() as session:
+        await SqlAlchemyTransactionRepository(session).touch(
+            other.id, tx.id, tx.updated_at + timedelta(minutes=5)
+        )
+        await session.commit()
+
+    async with session_factory() as session:
+        stored = await SqlAlchemyTransactionRepository(session).get(owner.id, tx.id)
+    assert stored is not None
+    assert stored.updated_at == tx.updated_at
 
 
 async def test_list_respeta_user_id(

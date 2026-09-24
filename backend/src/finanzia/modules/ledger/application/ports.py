@@ -53,6 +53,14 @@ class TransactionRepositoryPort(Protocol):
         """Reemplaza el estado persistido de `tx` (misma `id`)."""
         ...
 
+    async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
+        """Pone `updated_at = at` en la transaccion propia `id` sin tocar otra columna.
+
+        Lo usa el camino de dedupe al adjuntar una fuente: reescribir la fila completa
+        con un snapshot leido sin lock pisaria un PATCH o un emparejamiento concurrente.
+        """
+        ...
+
     async def delete(self, user_id: UUID, id: UUID) -> None:
         """Borra la transaccion propia `id`, si existe."""
         ...

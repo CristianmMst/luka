@@ -152,6 +152,14 @@ class SqlAlchemyTransactionRepository:
         )
         await self._session.execute(stmt)
 
+    async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
+        stmt = (
+            update(TransactionRow)
+            .where(TransactionRow.id == id, TransactionRow.user_id == user_id)
+            .values(updated_at=at)
+        )
+        await self._session.execute(stmt)
+
     async def delete(self, user_id: UUID, id: UUID) -> None:
         stmt = delete(TransactionRow).where(
             TransactionRow.id == id, TransactionRow.user_id == user_id

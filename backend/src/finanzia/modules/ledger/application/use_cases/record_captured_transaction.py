@@ -19,6 +19,7 @@ from finanzia.modules.ledger.application.use_cases._transfer_matching import try
 from finanzia.modules.ledger.domain.dedupe import candidate_keys, is_same_capture
 from finanzia.modules.ledger.domain.entities import (
     Category,
+    Transaction,
     TransactionSource,
     new_captured_transaction,
 )
@@ -72,8 +73,7 @@ class RecordCapturedTransaction:
             target = min(existing, key=lambda t: t.created_at)
             attached = await self._attach_source(target.id, cmd)
             if attached:
-                target = replace(target, updated_at=self._clock.now())
-                await self._transactions.update(target)
+                target = await self._touch(target)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
@@ -110,8 +110,7 @@ class RecordCapturedTransaction:
             target = reread[0]
             attached = await self._attach_source(target.id, cmd)
             if attached:
-                target = replace(target, updated_at=self._clock.now())
-                await self._transactions.update(target)
+                target = await self._touch(target)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
@@ -135,6 +134,14 @@ class RecordCapturedTransaction:
             )
         )
         return Recorded(transaction=tx, created=True, source_attached=True)
+
+    async def _touch(self, target: Transaction) -> Transaction:
+        """Marca `updated_at` (sync 005 SS9) sin reescribir las demas columnas: `target`
+        se leyo sin lock y un PATCH/emparejamiento concurrente no debe perderse.
+        """
+        now = self._clock.now()
+        await self._transactions.touch(target.user_id, target.id, now)
+        return replace(target, updated_at=now)
 
     async def _attach_source(self, transaction_id: UUID, cmd: CapturedTransactionCommand) -> bool:
         source = TransactionSource(
