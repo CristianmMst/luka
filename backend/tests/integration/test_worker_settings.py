@@ -32,7 +32,9 @@ from support.gmail_connections import insert_gmail_connection
 from support.raw_messages import insert_raw_message
 
 from finanzia.modules.ingestion import public as ingestion_public
+from finanzia.modules.ingestion.infrastructure import gmail_sync as gmail_sync_infra
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
+from finanzia.modules.ingestion.infrastructure.gmail_sync import SYNC_GMAIL_TIMEOUT_S
 from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
 from finanzia.shared.settings import Settings, get_settings
 
@@ -459,7 +461,8 @@ async def test_renew_gmail_watches_renueva_y_loguea_solo_contadores(  # noqa: PL
             await worker_settings_module.renew_gmail_watches(ctx)
 
         (finished,) = [e for e in captured if e.get("event") == "gmail_watches_renewed"]
-        assert (finished["renewed"], finished["revoked"], finished["errored"]) == (1, 0, 0)
+        counters = [finished[k] for k in ("renewed", "revoked", "errored", "deferred")]
+        assert counters == [1, 0, 0, 0]
         assert "email" not in repr(finished)
         assert "refresh" not in repr(finished)
     finally:
@@ -493,7 +496,12 @@ def _sync_ctx(**extra: Any) -> dict[str, Any]:
 
 def test_sync_gmail_esta_registrado_como_job(worker_settings_module) -> None:
     functions = worker_settings_module.WorkerSettings.functions
-    assert worker_settings_module.sync_gmail in functions
+    (job,) = [f for f in functions if getattr(f, "name", None) == "sync_gmail"]
+    assert job.coroutine is worker_settings_module.sync_gmail
+    # Timeout propio mayor que el global y lock de Redis que lo sobrevive (B5).
+    assert job.timeout_s == SYNC_GMAIL_TIMEOUT_S == 900
+    assert job.timeout_s > worker_settings_module.WorkerSettings.job_timeout
+    assert gmail_sync_infra._LOCK_TTL_S > job.timeout_s
 
 
 async def test_sync_gmail_con_ctx_vacio_loguea_y_no_revienta(worker_settings_module) -> None:

@@ -58,8 +58,11 @@ _logger = structlog.get_logger()
 SYNC_GMAIL_JOB = "sync_gmail"
 
 _ENQUEUE_TIMEOUT_S = 2.0
-#: Mayor que `job_timeout` del worker (300 s): el lock no vence con el job vivo.
-_LOCK_TTL_S = 330
+#: Timeout propio del job `sync_gmail` en arq (el global del worker es 300 s): un
+#: resync de 7 dias hace hasta 500 `messages.get` y 3 pasadas, y no debe cortarse.
+SYNC_GMAIL_TIMEOUT_S = 900
+#: Mayor que `SYNC_GMAIL_TIMEOUT_S`: el lock no vence con el job vivo.
+_LOCK_TTL_S = SYNC_GMAIL_TIMEOUT_S + 30
 #: Pasadas extra por avisos que llegaron durante un sync; el resto lo cubre el proximo push.
 _MAX_ROUNDS = 3
 #: Espera del sync reencolado cuando quedo un aviso pendiente tras el tope de pasadas.
@@ -201,4 +204,4 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
     return results
 
 
-__all__ = ["SYNC_GMAIL_JOB", "ArqGmailSyncQueue", "run_gmail_sync"]
+__all__ = ["SYNC_GMAIL_JOB", "SYNC_GMAIL_TIMEOUT_S", "ArqGmailSyncQueue", "run_gmail_sync"]

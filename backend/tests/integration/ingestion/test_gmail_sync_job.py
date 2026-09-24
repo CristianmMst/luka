@@ -9,7 +9,7 @@ remitentes, ingesta idempotente y cursor.
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator, Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -460,3 +460,49 @@ async def test_mensaje_ilegible_se_salta_sin_bloquear_el_cursor(
         "unreadable"
     ]
     assert "m-roto" not in repr(captured)
+
+
+async def test_renovar_el_watch_con_un_aviso_pendiente_no_pierde_el_correo(  # noqa: PLR0913, PLR0917 - fixtures
+    google: FakeGoogle,
+    gmail: GoogleGmailClient,
+    run_sync: RunSync,
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """Regresion: push encolado -> renovacion del watch -> sync ingiere el mensaje.
+
+    `users.watch` devuelve el historyId actual del buzon (`HISTORY_ID`, mayor que
+    el cursor); si la renovacion lo adoptara, el sync pediria history desde ahi y
+    el correo que llego antes se perderia.
+    """
+    authed = await user_factory()
+    cursor = HISTORY_ID - 100
+    await insert_gmail_connection(
+        session_factory,
+        user_id=authed.id,
+        email=ACCOUNT_EMAIL,
+        refresh_token_enc=AesGcmTokenCipher.from_settings(settings).encrypt(
+            authed.id, REFRESH_TOKEN
+        ),
+        history_id=cursor,
+        watch_expires_at=datetime.now(UTC) + timedelta(hours=10),  # vence en < 48h
+    )
+    google.history[cursor] = ["m-banco"]
+    google.add_message("m-banco", _BANK, _BANK_BODY, _INTERNAL_MS)
+    notified = google.mailbox_history_id  # aviso encolado, aun sin procesar
+
+    async with session_factory() as session:
+        summary = await ingestion_public.renew_gmail_watches(
+            session, gmail, SystemClock(), settings
+        )
+    assert summary.renewed == 1
+    assert (await _connection(session_factory, authed.id)).history_id == cursor
+
+    (result,) = await run_sync(authed.id, notified)
+
+    assert (result.status, result.accepted) == ("synced", 1)
+    assert [row["external_id"] for row in await _raw_messages(session_factory, authed.id)] == [
+        "m-banco"
+    ]
+    assert (await _connection(session_factory, authed.id)).history_id == notified

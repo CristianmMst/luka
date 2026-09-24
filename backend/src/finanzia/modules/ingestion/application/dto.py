@@ -154,14 +154,17 @@ class RenewWatchesSummary:
     """Resultado de una corrida de `RenewGmailWatches` (cron diario, F3.5, spec 006 §2.1).
 
     Solo contadores (nunca el email de la cuenta ni el refresh token, P1/P6).
-    `renewed` son watches renovados con exito; `revoked`/`errored` las conexiones
-    que pasaron a ese estado durante la corrida (un `GmailAuthRevoked` revoca, el
-    resto de fallos de Gmail o un token indescifrable marcan error).
+    `renewed` son watches renovados con exito (la conexion queda `active`);
+    `revoked`/`errored` las conexiones que pasaron a ese estado durante la corrida
+    (un `GmailAuthRevoked` revoca; un rechazo permanente o un token indescifrable
+    marcan error). `deferred` son fallos transitorios: el estado no cambia y la
+    ventana de 48 h deja otro intento al dia siguiente.
     """
 
     renewed: int = 0
     revoked: int = 0
     errored: int = 0
+    deferred: int = 0
 
 
 @dataclass(frozen=True, slots=True)

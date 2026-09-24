@@ -208,16 +208,19 @@ class InMemoryGmailConnectionRepo:
             return
         self.by_user[user_id] = replace(current, status=status, updated_at=now)
 
-    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
+    async def list_renewable_before(self, before: datetime) -> list[GmailConnection]:
+        def renewable(c: GmailConnection) -> bool:
+            expiring = c.watch_expires_at is not None and c.watch_expires_at < before
+            if c.status is GmailConnectionStatus.ACTIVE:
+                return expiring
+            return c.status is GmailConnectionStatus.ERROR and (
+                c.watch_expires_at is None or expiring
+            )
+
+        min_date = datetime.min.replace(tzinfo=UTC)
         return sorted(
-            (
-                c
-                for c in self.by_user.values()
-                if c.status is GmailConnectionStatus.ACTIVE
-                and c.watch_expires_at is not None
-                and c.watch_expires_at < before
-            ),
-            key=lambda c: c.watch_expires_at,  # type: ignore[arg-type,return-value]
+            (c for c in self.by_user.values() if renewable(c)),
+            key=lambda c: c.watch_expires_at or min_date,
         )
 
     async def renew_watch(
@@ -226,9 +229,13 @@ class InMemoryGmailConnectionRepo:
         current = self.by_user.get(user_id)
         if current is None or current.email != email:
             return
-        cursor = max(current.history_id or 0, history_id)
+        cursor = current.history_id if current.history_id is not None else history_id
         self.by_user[user_id] = replace(
-            current, history_id=cursor, watch_expires_at=watch_expires_at, updated_at=now
+            current,
+            history_id=cursor,
+            watch_expires_at=watch_expires_at,
+            status=GmailConnectionStatus.ACTIVE,
+            updated_at=now,
         )
 
 

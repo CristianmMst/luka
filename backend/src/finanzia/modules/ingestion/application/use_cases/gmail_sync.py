@@ -81,8 +81,9 @@ class SyncGmail:
     - `GmailRequestRejected` permanente en `access_token`/`history.list` (p. ej.
       `invalid_client`) marca la conexion `error`, sin propagar (nada que
       reintentar).
-    - Un mensaje que Gmail ya no devuelve (`GmailRequestRejected` en
-      `messages.get`) se salta.
+    - En `messages.get` solo se saltan `GmailMessageNotFound` (mensaje borrado) y
+      `GmailMessageUnreadable` (2xx ilegible); cualquier otro `GmailRequestRejected`
+      corta la pasada sin avanzar el cursor.
     """
 
     def __init__(  # noqa: PLR0913 - un parametro por port + la config del resync

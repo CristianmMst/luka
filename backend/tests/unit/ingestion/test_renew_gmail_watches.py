@@ -8,6 +8,9 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from finanzia.modules.ingestion.application.dto import RenewWatchesSummary
+from finanzia.modules.ingestion.application.use_cases.gmail_sync import SyncGmail
+from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
 from finanzia.modules.ingestion.application.use_cases.renew_gmail_watches import (
     EXPIRING_WITHIN_DEFAULT,
     RenewGmailWatches,
@@ -21,16 +24,21 @@ from finanzia.modules.ingestion.domain.errors import (
 )
 from ingestion.fakes import (
     FakeGmailClient,
+    FakeSenderPolicy,
     FakeTokenCipher,
     FixedClock,
     InMemoryGmailConnectionRepo,
+    InMemoryRawMessageRepo,
     NoopUoW,
+    RecordingPublisher,
+    SequenceIdGenerator,
 )
 
 pytestmark = pytest.mark.unit
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 TOPIC = "projects/finanzia-509500/topics/gmail-push"
+BANK = "alertas@bancolombia.com.co"
 
 
 class _Deps:
@@ -98,13 +106,50 @@ async def test_no_renueva_conexion_activa_que_no_vence_pronto() -> None:
     assert deps.gmail.calls == []
 
 
-async def test_no_renueva_conexion_inactiva() -> None:
+async def test_no_renueva_conexion_revocada() -> None:
     deps = _Deps()
-    await deps.seed(status=GmailConnectionStatus.ERROR)
+    await deps.seed(status=GmailConnectionStatus.REVOKED)
 
     summary = await deps.use_case().execute()
 
     assert (summary.renewed, summary.revoked, summary.errored) == (0, 0, 0)
+    assert deps.gmail.calls == []
+
+
+async def test_conexion_en_error_sin_watch_se_recupera_a_active() -> None:
+    # Connect dejo `error` con watch NULL (fallo transitorio al crear el watch).
+    deps = _Deps()
+    connection = await deps.seed(
+        status=GmailConnectionStatus.ERROR, watch_expires_at=None, history_id=None
+    )
+    deps.gmail.watch_expires_at = NOW + timedelta(days=7)
+
+    summary = await deps.use_case().execute()
+
+    assert summary.renewed == 1
+    stored = deps.stored(connection.user_id)
+    assert stored.status is GmailConnectionStatus.ACTIVE
+    assert stored.watch_expires_at == NOW + timedelta(days=7)
+    assert stored.history_id == 999  # cursor nulo: el watch lo siembra
+
+
+async def test_conexion_en_error_con_watch_por_vencer_se_recupera() -> None:
+    deps = _Deps()
+    connection = await deps.seed(status=GmailConnectionStatus.ERROR)
+
+    summary = await deps.use_case().execute()
+
+    assert summary.renewed == 1
+    assert deps.stored(connection.user_id).status is GmailConnectionStatus.ACTIVE
+
+
+async def test_conexion_en_error_con_watch_lejano_no_se_toca() -> None:
+    deps = _Deps()
+    await deps.seed(status=GmailConnectionStatus.ERROR, watch_expires_at=NOW + timedelta(days=6))
+
+    summary = await deps.use_case().execute()
+
+    assert summary == RenewWatchesSummary()
     assert deps.gmail.calls == []
 
 
@@ -118,13 +163,51 @@ async def test_el_cursor_nunca_retrocede_al_renovar() -> None:
     assert deps.stored(connection.user_id).history_id == 500
 
 
-async def test_el_cursor_avanza_si_watch_trae_uno_mayor() -> None:
+async def test_el_cursor_no_avanza_aunque_watch_traiga_uno_mayor() -> None:
+    # `users.watch` devuelve el historyId actual del buzon: adelantar el cursor
+    # saltaria los correos que aun no se sincronizaron.
     deps = _Deps()
     connection = await deps.seed(history_id=100)
     deps.gmail.history_id = 500
 
     await deps.use_case().execute()
 
+    assert deps.stored(connection.user_id).history_id == 100
+
+
+async def test_push_pendiente_se_ingiere_aunque_la_renovacion_corra_antes() -> None:
+    """Regresion B1: push encolado -> renovacion -> sync ingiere el mensaje."""
+    deps = _Deps()
+    connection = await deps.seed(history_id=100)
+    deps.gmail.history_id = 500  # historyId actual que devuelve `watch`
+    deps.gmail.mailbox_history_id = 500
+    deps.gmail.history[100] = ["m-1"]
+    deps.gmail.add_message("m-1", BANK, "Compraste $10.000 en TIENDA")
+    notified_history_id = 500  # el aviso encolado, aun sin procesar
+
+    await deps.use_case().execute()
+    raw = InMemoryRawMessageRepo()
+    ingest = IngestRawMessage(
+        repo=raw,
+        policy=FakeSenderPolicy(email_map={BANK: "bancolombia"}),
+        events=RecordingPublisher(),
+        clock=deps.clock,
+        ids=SequenceIdGenerator(),
+        uow=deps.uow,
+    )
+    sync = SyncGmail(
+        repo=deps.connections,
+        gmail=deps.gmail,
+        cipher=deps.cipher,
+        ingest=ingest,
+        clock=deps.clock,
+        uow=deps.uow,
+    )
+
+    result = await sync.execute(connection.user_id, notified_history_id)
+
+    assert (result.status, result.accepted) == ("synced", 1)
+    assert [m.external_id for m in raw.by_id.values()] == ["m-1"]
     assert deps.stored(connection.user_id).history_id == 500
 
 
@@ -139,15 +222,28 @@ async def test_invalid_grant_marca_la_conexion_revoked() -> None:
     assert deps.stored(connection.user_id).status is GmailConnectionStatus.REVOKED
 
 
-async def test_error_transitorio_marca_error_y_sigue_con_las_demas() -> None:
+async def test_error_transitorio_no_cambia_el_estado_y_sigue_con_las_demas() -> None:
     deps = _Deps()
     fallida = await deps.seed()
     deps.gmail.errors["watch"] = GmailTransientError("watch: 503")
 
     summary = await deps.use_case().execute()
 
-    assert (summary.renewed, summary.revoked, summary.errored) == (0, 0, 1)
-    assert deps.stored(fallida.user_id).status is GmailConnectionStatus.ERROR
+    assert summary == RenewWatchesSummary(deferred=1)
+    stored = deps.stored(fallida.user_id)
+    assert stored.status is GmailConnectionStatus.ACTIVE
+    assert stored.watch_expires_at == fallida.watch_expires_at
+
+
+async def test_error_transitorio_deja_en_error_a_una_conexion_en_error() -> None:
+    deps = _Deps()
+    connection = await deps.seed(status=GmailConnectionStatus.ERROR, watch_expires_at=None)
+    deps.gmail.errors["access_token"] = GmailTransientError("token: 503")
+
+    summary = await deps.use_case().execute()
+
+    assert summary.deferred == 1
+    assert deps.stored(connection.user_id).status is GmailConnectionStatus.ERROR
 
 
 async def test_rechazo_marca_error() -> None:

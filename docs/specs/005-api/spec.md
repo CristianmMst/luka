@@ -50,7 +50,8 @@ Todas las rutas exigen el Bearer y operan solo sobre la conexión del usuario de
 
 - `status`: `active` / `revoked` / `error` (estado guardado, spec 004 §2.3) o `disconnected` si el usuario no tiene conexión; en ese caso `email`, `last_sync_at` y `watch_expires_at` son `null`.
 - `email` es la cuenta Gmail conectada, que puede diferir del email del usuario.
-- Reconectar (`POST` con conexión previa) reemplaza token, email y watch, y conserva `created_at`. Si la conexión previa era de **otra** cuenta Gmail, antes de reemplazarla se detiene su watch y se revoca su grant (best effort); con la misma cuenta no se revoca nada, porque Google revoca el grant completo y mataría también el token recién emitido.
+- Reconectar (`POST` con conexión previa) reemplaza token, email y watch, y conserva `created_at`. Si la conexión previa era de **otra** cuenta Gmail, antes de reemplazarla se detiene su watch y se revoca su grant (best effort) y el cursor arranca de cero; con la misma cuenta no se revoca nada, porque Google revoca el grant completo y mataría también el token recién emitido, y se conserva el cursor (`history_id`) previo si lo había (el próximo sync sigue desde ahí; si venció, cae al resync de 7 días, spec 006 §2.1).
+- `error` es recuperable: el cron diario de renovación (spec 006 §2.1) reintenta el watch de toda conexión `error` sin watch o con el watch por vencer y, si sale bien, la deja `active`. Un fallo transitorio en la renovación no cambia el estado. `revoked` solo se recupera reconectando.
 - `DELETE` borra la fila solo si sigue siendo de la cuenta que leyó: un `POST` concurrente que reconectó con otra cuenta no se borra.
 - Ninguna ruta espera a Google con una transacción de base de datos abierta: la conexión se lee, la transacción se cierra, se llama a Google y la escritura final corre en una transacción nueva.
 
@@ -67,7 +68,7 @@ Errores de `POST /gmail/connect`:
 | El usuario no concedió `gmail.readonly` en el consentimiento (el `scope` del grant no lo trae) | 400 `validation_error`, `field: "server_auth_code"`, mensaje "permiso de Gmail no concedido". El grant recién emitido se revoca (best effort) solo si el usuario no tiene una conexión `active`: Google revoca el grant completo y mataría esa conexión. No se guarda nada |
 | `users.getProfile` responde 403 con el scope concedido (cuota, `accessNotConfigured`) | 503 `upstream_unavailable`; no se revoca nada ni se guarda nada |
 | Google caído en el canje (timeout, 5xx, 429) | 503 `upstream_unavailable`. No se guarda nada |
-| El canje salió bien pero `watch` falló | 200 con `status: "error"` y `watch_expires_at: null`: la conexión (con el token cifrado) queda guardada, porque el código ya se consumió y no se puede volver a canjear; la renovación de watch o una reconexión la recuperan. Si Google revocó el token recién emitido, `status: "revoked"` |
+| El canje salió bien pero `watch` falló (transitorio o rechazo) | 200 con `status: "error"` y `watch_expires_at: null`: la conexión (con el token cifrado) queda guardada, porque el código ya se consumió y no se puede volver a canjear. El cron diario de renovación la toma (es `error` sin watch), reintenta el watch y, si sale bien, la deja `active`; una reconexión también la recupera. Si Google revocó el token recién emitido, `status: "revoked"` |
 
 ## 4. Webhook Pub/Sub (ingestion) — **público con OIDC**
 

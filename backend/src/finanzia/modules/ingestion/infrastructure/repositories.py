@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, delete, func, select, update
+from sqlalchemy import CursorResult, and_, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -175,14 +175,27 @@ class SqlAlchemyGmailConnectionRepository:
         )
         await self._session.execute(stmt)
 
-    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
+    async def list_renewable_before(self, before: datetime) -> list[GmailConnection]:
+        active = GmailConnectionStatus.ACTIVE.value
+        error = GmailConnectionStatus.ERROR.value
         stmt = (
             select(GmailConnectionRow)
             .where(
-                GmailConnectionRow.status == GmailConnectionStatus.ACTIVE.value,
-                GmailConnectionRow.watch_expires_at < before,
+                or_(
+                    and_(
+                        GmailConnectionRow.status == active,
+                        GmailConnectionRow.watch_expires_at < before,
+                    ),
+                    and_(
+                        GmailConnectionRow.status == error,
+                        or_(
+                            GmailConnectionRow.watch_expires_at.is_(None),
+                            GmailConnectionRow.watch_expires_at < before,
+                        ),
+                    ),
+                )
             )
-            .order_by(GmailConnectionRow.watch_expires_at.asc())
+            .order_by(GmailConnectionRow.watch_expires_at.asc().nulls_first())
         )
         result = await self._session.execute(stmt)
         return [gmail_connection_row_to_entity(row) for row in result.scalars()]
@@ -190,15 +203,16 @@ class SqlAlchemyGmailConnectionRepository:
     async def renew_watch(
         self, user_id: UUID, email: str, history_id: int, watch_expires_at: datetime, now: datetime
     ) -> None:
-        """`GREATEST` en SQL: igual que `record_sync`, el cursor nunca retrocede."""
+        """`COALESCE` en SQL: el `historyId` del watch solo siembra un cursor nulo;
+        nunca adelanta uno existente (saltaria correo sin sincronizar, spec 006 §2.1).
+        """
         stmt = (
             update(GmailConnectionRow)
             .where(GmailConnectionRow.user_id == user_id, GmailConnectionRow.email == email)
             .values(
-                history_id=func.greatest(
-                    func.coalesce(GmailConnectionRow.history_id, 0), history_id
-                ),
+                history_id=func.coalesce(GmailConnectionRow.history_id, history_id),
                 watch_expires_at=watch_expires_at,
+                status=GmailConnectionStatus.ACTIVE.value,
                 updated_at=now,
             )
         )

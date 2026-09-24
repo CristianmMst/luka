@@ -107,18 +107,22 @@ class GmailConnectionRepositoryPort(Protocol):
         """Cambia el `status` de la conexion, con la misma guarda por `email`."""
         ...
 
-    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
-        """Conexiones `active` cuyo `watch_expires_at` vence antes de `before`
-        (cron de renovacion diaria, spec 006 §2.1, F3.5).
+    async def list_renewable_before(self, before: datetime) -> list[GmailConnection]:
+        """Conexiones cuyo watch toca renovar (cron diario, spec 006 §2.1, F3.5):
+        `active` con `watch_expires_at < before`, y `error` sin watch o con
+        `watch_expires_at < before` (el cron es la via de recuperacion de `error`).
         """
         ...
 
     async def renew_watch(
         self, user_id: UUID, email: str, history_id: int, watch_expires_at: datetime, now: datetime
     ) -> None:
-        """Renueva el watch (F3.5): fija `watch_expires_at` y avanza `history_id` a
-        `GREATEST(actual, nuevo)` (nunca retrocede), solo si la conexion sigue
-        siendo de `email` (misma guarda que `record_sync`/`mark_status`).
+        """Renueva el watch (F3.5): fija `watch_expires_at` y deja la conexion `active`.
+
+        `history_id` solo siembra un cursor nulo: un cursor existente **nunca** se
+        adelanta al `historyId` del watch (el actual del buzon), porque saltaria los
+        correos aun no sincronizados. Solo si la conexion sigue siendo de `email`
+        (misma guarda que `record_sync`/`mark_status`).
         """
         ...
 

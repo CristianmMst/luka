@@ -234,6 +234,51 @@ async def test_reconectar_con_la_misma_cuenta_no_revoca_el_grant() -> None:
     assert [op for op, _ in deps.gmail.calls] == ["exchange_code", "access_token", "watch"]
 
 
+async def test_reconectar_con_la_misma_cuenta_conserva_el_cursor() -> None:
+    # Adoptar el historyId del watch saltaria el correo aun no sincronizado; si el
+    # cursor viejo vencio, el 404 de history cae al resync de 7 dias.
+    deps = _Deps()
+    await deps.seed(email="Ana@Gmail.com", history_id=10, status=GmailConnectionStatus.REVOKED)
+    deps.gmail.history_id = 999
+
+    await deps.connect().execute(USER, "code-2")
+
+    stored = deps.repo.by_user[USER]
+    assert (stored.history_id, stored.status) == (10, GmailConnectionStatus.ACTIVE)
+
+
+async def test_reconectar_con_la_misma_cuenta_y_watch_fallido_conserva_el_cursor() -> None:
+    deps = _Deps()
+    await deps.seed(history_id=10)
+    deps.gmail.errors["watch"] = GmailTransientError("watch: 503")
+
+    await deps.connect().execute(USER, "code-2")
+
+    stored = deps.repo.by_user[USER]
+    assert (stored.history_id, stored.status) == (10, GmailConnectionStatus.ERROR)
+    assert stored.watch_expires_at is None
+
+
+async def test_reconectar_con_la_misma_cuenta_sin_cursor_usa_el_del_watch() -> None:
+    deps = _Deps()
+    await deps.seed(history_id=None)
+    deps.gmail.history_id = 999
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert deps.repo.by_user[USER].history_id == 999
+
+
+async def test_reconectar_con_otra_cuenta_no_hereda_el_cursor() -> None:
+    deps = _Deps()
+    await deps.seed(email="vieja@gmail.com", history_id=10)
+    deps.gmail.history_id = 999
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert deps.repo.by_user[USER].history_id == 999
+
+
 async def test_connect_no_llama_a_google_con_la_transaccion_de_lectura_abierta() -> None:
     deps = _Deps()
     await deps.seed(email="vieja@gmail.com")

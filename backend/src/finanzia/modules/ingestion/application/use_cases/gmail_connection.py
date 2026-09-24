@@ -49,14 +49,17 @@ class ConnectGmail:
 
     Si el canje falla no se guarda nada. Si el canje sale bien pero el watch no,
     la conexion se guarda igual (el refresh token ya no se puede volver a pedir
-    con el mismo codigo) con `status=error`, o `revoked` si Google invalido el
-    token recien emitido; la renovacion de watch (cron) o una reconexion la
-    recuperan.
+    con el mismo codigo) con `status=error` y `watch_expires_at=None`, o `revoked`
+    si Google invalido el token recien emitido. El cron diario de renovacion
+    (`RenewGmailWatches`) toma las conexiones `error` sin watch, reintenta el
+    watch y, si sale bien, las deja `active`; una reconexion tambien las recupera.
 
     Si ya habia una conexion con **otra** cuenta Gmail, su watch se detiene y su
     grant se revoca (best effort) antes de reemplazarla. Con la misma cuenta no se
     revoca nada: revocar el token viejo invalidaria tambien el recien emitido
-    (Google revoca el grant completo del par usuario-cliente).
+    (Google revoca el grant completo del par usuario-cliente). Con la misma cuenta
+    tambien se conserva el cursor (`history_id`) previo: el proximo sync sigue
+    desde ahi y, si ya vencio, el 404 de `history.list` cae al resync de 7 dias.
     """
 
     def __init__(  # noqa: PLR0913 - un parametro por port + el topic
@@ -88,15 +91,17 @@ class ConnectGmail:
         if not grant.scope_granted or email is None:
             await self._reject_scope(refresh_token, previous)
             raise GmailScopeNotGranted("token: sin permiso gmail.readonly")
-        if previous is not None and previous.email.casefold() != email.casefold():
+        same_account = previous is not None and previous.email.casefold() == email.casefold()
+        if previous is not None and not same_account:
             await _cleanup_remote(self._gmail, self._cipher, previous)
+        kept_cursor = previous.history_id if previous is not None and same_account else None
 
         now = self._clock.now()
         connection = GmailConnection(
             user_id=user_id,
             email=email,
             refresh_token_enc=self._cipher.encrypt(user_id, refresh_token),
-            history_id=None,
+            history_id=kept_cursor,
             watch_expires_at=None,
             status=GmailConnectionStatus.ACTIVE,
             last_sync_at=None,
@@ -111,7 +116,8 @@ class ConnectGmail:
         except GmailError:
             connection = replace(connection, status=GmailConnectionStatus.ERROR)
         else:
-            connection = replace(connection, history_id=history_id, watch_expires_at=expires_at)
+            cursor = kept_cursor if kept_cursor is not None else history_id
+            connection = replace(connection, history_id=cursor, watch_expires_at=expires_at)
 
         await self._repo.upsert(connection)
         await self._uow.commit()

@@ -39,13 +39,16 @@ import httpx
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 import structlog
-from arq import Retry, cron
+from arq import Retry, cron, func
 from arq.connections import RedisSettings
 
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
 from finanzia.modules.ingestion import public as ingestion_public
 from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
-from finanzia.modules.ingestion.infrastructure.gmail_sync import ArqGmailSyncQueue
+from finanzia.modules.ingestion.infrastructure.gmail_sync import (
+    SYNC_GMAIL_TIMEOUT_S,
+    ArqGmailSyncQueue,
+)
 from finanzia.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
@@ -150,12 +153,14 @@ async def purge_raw_message_bodies(ctx: dict[str, Any]) -> None:
 async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
     """Cron diario 08:00 UTC = 03:00 Bogota (mismo horario que la purga, F3.5):
     renueva el watch de Gmail de toda conexion `active` cuyo `watch_expires_at`
-    venza dentro de las proximas 48h (spec 006 §2.1).
+    venza dentro de las proximas 48h y recupera las `error` sin watch o por
+    vencer (spec 006 §2.1).
 
     Un fallo en una conexion nunca corta las demas (`RenewGmailWatches`): un
-    `GmailAuthRevoked` la deja `revoked`, cualquier otro error de Gmail o un
-    token indescifrable la deja `error`. Solo loguea contadores, nunca el email
-    de la cuenta ni el refresh token (P1/P6).
+    `GmailAuthRevoked` la deja `revoked`, un rechazo permanente o un token
+    indescifrable la deja `error` y un fallo transitorio no cambia el estado
+    (`deferred`). Solo loguea contadores, nunca el email de la cuenta ni el
+    refresh token (P1/P6).
     """
     session_factory = ctx.get("events_session_factory")
     gmail = ctx.get("gmail_client")
@@ -170,6 +175,7 @@ async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
         renewed=summary.renewed,
         revoked=summary.revoked,
         errored=summary.errored,
+        deferred=summary.deferred,
     )
 
 
@@ -432,7 +438,9 @@ async def on_shutdown(ctx: dict[str, Any]) -> None:
 class WorkerSettings:
     """Configuracion de arq (spec 003 SS2.4): mismo Docker image, proceso separado."""
 
-    functions: ClassVar[list[Any]] = [ping, sync_gmail]
+    # `sync_gmail` lleva su propio timeout (900 s > `job_timeout`): un resync de 7
+    # dias puede pasar de 5 min; el lock de Redis dura 30 s mas (spec 006 §2.1).
+    functions: ClassVar[list[Any]] = [ping, func(sync_gmail, timeout=SYNC_GMAIL_TIMEOUT_S)]
     # Task 10 (F3.7 adelantado, riesgo 4): purga diaria de cuerpos (spec 004 §6) y
     # reencolado de `raw_messages` `pending` huerfanos (cada 15 min, D9).
     #

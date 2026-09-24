@@ -58,7 +58,8 @@ class GmailScopeNotGranted(GmailRequestRejected):
 
 class GmailMessageNotFound(GmailRequestRejected):
     """`messages.get` respondio 404 (o 400 por id invalido): el mensaje se borro
-    entre `history.list` y la lectura. Es el unico rechazo que el sync salta.
+    entre `history.list` y la lectura. El sync lo salta; junto con
+    `GmailMessageUnreadable` son los unicos rechazos que no cortan la pasada.
     """
 
 

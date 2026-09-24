@@ -254,7 +254,7 @@ async def test_mark_status_cambia_el_estado(
 # --- F3.5: renovacion diaria de watches --------------------------------------------
 
 
-async def test_list_active_expiring_before_solo_trae_activas_por_vencer(
+async def test_list_renewable_before_trae_activas_por_vencer_y_error_recuperables(
     session_factory: async_sessionmaker[AsyncSession],
     user_factory: Callable[..., Awaitable[AuthedUser]],
 ) -> None:
@@ -262,7 +262,11 @@ async def test_list_active_expiring_before_solo_trae_activas_por_vencer(
     lejos = await user_factory(sub="sub-2", email="beatriz@example.com")
     revocada = await user_factory(sub="sub-3", email="carla@example.com")
     sin_watch = await user_factory(sub="sub-4", email="diana@example.com")
+    error_sin_watch = await user_factory(sub="sub-5", email="elena@example.com")
+    error_por_vencer = await user_factory(sub="sub-6", email="fabiola@example.com")
+    error_lejos = await user_factory(sub="sub-7", email="gloria@example.com")
     limite = NOW + timedelta(hours=48)
+    error = GmailConnectionStatus.ERROR
 
     await _seed(
         session_factory,
@@ -281,36 +285,61 @@ async def test_list_active_expiring_before_solo_trae_activas_por_vencer(
         ),
     )
     await _seed(session_factory, _connection(user_id=sin_watch.id, watch_expires_at=None))
+    await _seed(
+        session_factory,
+        _connection(user_id=error_sin_watch.id, watch_expires_at=None, status=error),
+    )
+    await _seed(
+        session_factory,
+        _connection(
+            user_id=error_por_vencer.id, watch_expires_at=NOW + timedelta(hours=20), status=error
+        ),
+    )
+    await _seed(
+        session_factory,
+        _connection(user_id=error_lejos.id, watch_expires_at=NOW + timedelta(days=6), status=error),
+    )
 
     async with session_factory() as session:
-        found = await SqlAlchemyGmailConnectionRepository(session).list_active_expiring_before(
-            limite
-        )
+        found = await SqlAlchemyGmailConnectionRepository(session).list_renewable_before(limite)
 
-    assert [c.user_id for c in found] == [por_vencer.id]
+    assert [c.user_id for c in found] == [error_sin_watch.id, por_vencer.id, error_por_vencer.id]
 
 
-async def test_renew_watch_avanza_watch_expires_at_y_el_cursor_solo_hacia_adelante(
+async def test_renew_watch_no_mueve_un_cursor_existente_y_deja_la_conexion_active(
     session_factory: async_sessionmaker[AsyncSession],
     user_factory: Callable[..., Awaitable[AuthedUser]],
 ) -> None:
     user = await user_factory()
-    await _seed(session_factory, _connection(user_id=user.id, history_id=500))
+    await _seed(
+        session_factory,
+        _connection(user_id=user.id, history_id=500, status=GmailConnectionStatus.ERROR),
+    )
     later = datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
 
+    for watch_history_id in (300, 700):  # ni retrocede ni se adelanta
+        async with session_factory() as session:
+            await SqlAlchemyGmailConnectionRepository(session).renew_watch(
+                user.id, "ana@example.com", watch_history_id, later, NOW
+            )
+            await session.commit()
+
+        stored = await _get(session_factory, user.id)
+        assert stored.history_id == 500
+        assert stored.watch_expires_at == later
+        assert stored.status is GmailConnectionStatus.ACTIVE
+
+
+async def test_renew_watch_siembra_un_cursor_nulo(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    user = await user_factory()
+    await _seed(session_factory, _connection(user_id=user.id, history_id=None))
+
     async with session_factory() as session:
         await SqlAlchemyGmailConnectionRepository(session).renew_watch(
-            user.id, "ana@example.com", 300, later, NOW
-        )
-        await session.commit()
-
-    stored = await _get(session_factory, user.id)
-    assert stored.history_id == 500  # no retrocede: 300 < 500
-    assert stored.watch_expires_at == later
-
-    async with session_factory() as session:
-        await SqlAlchemyGmailConnectionRepository(session).renew_watch(
-            user.id, "ana@example.com", 700, later, NOW
+            user.id, "ana@example.com", 700, NOW + timedelta(days=7), NOW
         )
         await session.commit()
 
