@@ -32,8 +32,10 @@ void main() {
   late _MockAuth auth;
   late ProviderContainer container;
 
-  ProviderContainer build({User? user = _ana}) {
-    when(() => auth.restoreSession()).thenAnswer((_) async => user);
+  ProviderContainer build({User? user = _ana, Future<User?>? restored}) {
+    when(
+      () => auth.restoreSession(),
+    ).thenAnswer((_) => restored ?? Future.value(user));
     return container =
         ProviderContainer(
             overrides: [
@@ -99,6 +101,18 @@ void main() {
     expect(gate(), GmailGate.skip);
   });
 
+  test('"Ahora no" guardado → skip sin esperar el estado de red', () async {
+    final pending = Completer<GmailConnectionInfo>();
+    when(() => gmail.status()).thenAnswer((_) => pending.future);
+    when(() => prompts.isDismissed('u-1')).thenAnswer((_) async => true);
+    build();
+    await container.read(gmailPromptDismissedProvider.future);
+
+    expect(container.read(gmailControllerProvider).isLoading, isTrue);
+    expect(gate(), GmailGate.skip);
+    pending.complete(GmailConnectionInfo.disconnected);
+  });
+
   test('sin red → skip: Gmail es opcional', () async {
     when(() => gmail.status()).thenThrow(const GmailNetworkFailure());
     build();
@@ -155,6 +169,54 @@ void main() {
       pending.complete(GmailConnectionInfo.disconnected);
       async.flushMicrotasks();
       expect(gate(), GmailGate.prompt);
+    });
+  });
+
+  test('el tope arranca cuando la sesión es Authenticated, no al primer '
+      'read', () {
+    fakeAsync((async) {
+      final restored = Completer<User?>();
+      final pending = Completer<GmailConnectionInfo>();
+      when(() => gmail.status()).thenAnswer((_) => pending.future);
+      build(restored: restored.future);
+      async.flushMicrotasks();
+      expect(gate(), GmailGate.pending);
+
+      // Restaurar la sesión tarda 3 s: no se descuenta del tope de Gmail.
+      async.elapse(const Duration(seconds: 3));
+      restored.complete(_ana);
+      async.flushMicrotasks();
+      expect(gate(), GmailGate.pending);
+
+      async.elapse(
+        GmailGateController.timeout - const Duration(milliseconds: 1),
+      );
+      expect(gate(), GmailGate.pending);
+      async.elapse(const Duration(milliseconds: 1));
+      expect(gate(), GmailGate.skip);
+      pending.complete(GmailConnectionInfo.disconnected);
+      async.flushMicrotasks();
+    });
+  });
+
+  test('una sesión nueva rearma el tope', () {
+    fakeAsync((async) {
+      build(user: null);
+      async.flushMicrotasks();
+      expect(gate(), GmailGate.skip);
+
+      // Sin sesión no corre ningún tope: el login llega mucho después.
+      async.elapse(const Duration(seconds: 30));
+      final pending = Completer<GmailConnectionInfo>();
+      when(() => gmail.status()).thenAnswer((_) => pending.future);
+      container.read(authControllerProvider.notifier).signedIn(_ana);
+      async.flushMicrotasks();
+      expect(gate(), GmailGate.pending);
+
+      async.elapse(GmailGateController.timeout);
+      expect(gate(), GmailGate.skip);
+      pending.complete(GmailConnectionInfo.disconnected);
+      async.flushMicrotasks();
     });
   });
 }

@@ -1156,6 +1156,12 @@ abstract class AppLocalizations {
   /// **'No pudimos conectar Gmail. Inténtalo de nuevo.'**
   String get gmailErrorUnexpected;
 
+  /// No description provided for @gmailConnectedInactive.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado, pero no pudimos activar la captura; reintenta desde Ajustes.'**
+  String get gmailConnectedInactive;
+
   /// No description provided for @settingsGmailTitle.
   ///
   /// In es, this message translates to:

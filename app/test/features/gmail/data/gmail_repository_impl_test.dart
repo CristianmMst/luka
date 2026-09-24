@@ -13,12 +13,14 @@ import '../../../helpers/stub_backend.dart';
 class _MockAuthorizer extends Mock implements GmailAuthorizer {}
 
 /// Sobre de error de `POST /v1/gmail/connect` con el mensaje real del
-/// backend (`ingestion/infrastructure/api/errors.py`).
-StubResponse _codeError(String message) => StubResponse(400, {
+/// backend (`ingestion/infrastructure/api/errors.py`) y, si se da, su
+/// `reason`.
+StubResponse _codeError(String message, {String? reason}) => StubResponse(400, {
   'error': {
     'code': 'validation_error',
     'message': message,
     'field': 'server_auth_code',
+    'reason': ?reason,
   },
 });
 
@@ -152,7 +154,28 @@ void main() {
       expect(backend.requests, isEmpty);
     });
 
-    test('distingue los tres 400 de server_auth_code', () async {
+    test('distingue los tres 400 de server_auth_code por reason', () async {
+      final cases = <String, Matcher>{
+        'invalid_code': isA<GmailCodeRejected>(),
+        'refresh_token_missing': isA<GmailRefreshTokenMissing>(),
+        'scope_not_granted': isA<GmailScopeDenied>(),
+      };
+      for (final MapEntry(:key, :value) in cases.entries) {
+        // El mensaje no decide: con reason, se ignora.
+        backend.handler = (_) => _codeError('otro texto', reason: key);
+        await expectLater(repository.connect(), throwsA(value), reason: key);
+      }
+    });
+
+    test('reason desconocido cae al mensaje', () async {
+      backend.handler = (_) => _codeError(
+        'permiso de Gmail no concedido: la app debe pedir gmail.readonly',
+        reason: 'motivo_nuevo',
+      );
+      await expectLater(repository.connect(), throwsA(isA<GmailScopeDenied>()));
+    });
+
+    test('sin reason distingue los tres 400 por el mensaje', () async {
       final cases = <String, Matcher>{
         'server_auth_code invalido, vencido o ya usado':
             isA<GmailCodeRejected>(),

@@ -24,6 +24,15 @@ final gmailPromptStoreProvider = Provider<GmailPromptStore>(
   ),
 );
 
+/// "Ahora no" guardado para el usuario en sesión (`true` sin sesión: no hay a
+/// quién preguntarle). Va aparte del estado del backend para que el gate de
+/// Gmail lo lea sin esperar la red (spec 008 §3.1).
+final gmailPromptDismissedProvider = FutureProvider<bool>((ref) async {
+  final auth = await ref.watch(authControllerProvider.future);
+  if (auth is! Authenticated) return true;
+  return ref.read(gmailPromptStoreProvider).isDismissed(auth.user.id);
+});
+
 /// Lo que las pantallas de Gmail necesitan saber.
 @freezed
 abstract class GmailState with _$GmailState {
@@ -69,10 +78,8 @@ class GmailController extends AsyncNotifier<GmailState> {
         promptDismissed: true,
       );
     }
-    final userId = _userId = auth.user.id;
-    final dismissed = await ref
-        .read(gmailPromptStoreProvider)
-        .isDismissed(userId);
+    _userId = auth.user.id;
+    final dismissed = await ref.watch(gmailPromptDismissedProvider.future);
     final info = await ref.read(gmailRepositoryProvider).status();
     return GmailState(info: info, promptDismissed: dismissed);
   }

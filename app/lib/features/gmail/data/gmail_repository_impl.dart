@@ -51,14 +51,21 @@ class GmailRepositoryImpl implements GmailRepository {
     ApiErrorCode.rateLimited => GmailRateLimited(e.retryAfter),
     ApiErrorCode.upstreamUnavailable => const GmailUpstreamUnavailable(),
     ApiErrorCode.validationError when e.field == 'server_auth_code' =>
-      _codeFailure(e.message ?? ''),
+      _codeFailure(e),
     _ => GmailUnexpected(e),
   };
 
   /// Los tres rechazos del código llegan como `400 validation_error` con
-  /// `field: server_auth_code`; solo el mensaje los distingue
-  /// (`ingestion/infrastructure/api/errors.py`).
-  static GmailFailure _codeFailure(String message) {
+  /// `field: server_auth_code` y se distinguen por `reason` (spec 005 §3).
+  /// Sin `reason` (backend anterior) se cae al texto del mensaje.
+  static GmailFailure _codeFailure(ApiException e) => switch (e.reason) {
+    'invalid_code' => const GmailCodeRejected(),
+    'refresh_token_missing' => const GmailRefreshTokenMissing(),
+    'scope_not_granted' => const GmailScopeDenied(),
+    _ => _codeFailureFromMessage(e.message ?? ''),
+  };
+
+  static GmailFailure _codeFailureFromMessage(String message) {
     if (message.contains('refresh token')) {
       return const GmailRefreshTokenMissing();
     }

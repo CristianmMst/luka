@@ -21,7 +21,7 @@ class SplashPage extends StatelessWidget {
           children: [
             Center(
               child: BrandMark(
-                gemColor: const Color(0xFF1F6B55),
+                gemColor: brand.gem,
                 textColor: brand.onHero,
                 size: 36,
                 direction: Axis.vertical,
@@ -36,7 +36,7 @@ class SplashPage extends StatelessWidget {
                   child: LinearProgressIndicator(
                     minHeight: 3,
                     color: brand.gold,
-                    backgroundColor: const Color(0xFF1F6B55),
+                    backgroundColor: brand.gem,
                     semanticsLabel: label,
                   ),
                 ),

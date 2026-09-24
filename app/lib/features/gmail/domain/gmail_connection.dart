@@ -6,7 +6,8 @@ part 'gmail_connection.freezed.dart';
 ///
 /// - `active`: el watch está vivo y llegan los correos del banco.
 /// - `revoked`: Google revocó el permiso; hay que reconectar.
-/// - `error`: la conexión existe pero el watch falló; reconectar la arregla.
+/// - `error`: la conexión existe pero el watch falló; el backend lo reintenta
+///   a diario y reconectar también la arregla.
 /// - `disconnected`: el usuario nunca conectó Gmail o lo desconectó.
 enum GmailStatus { active, revoked, error, disconnected }
 

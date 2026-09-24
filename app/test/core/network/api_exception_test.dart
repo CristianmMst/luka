@@ -27,7 +27,22 @@ void main() {
     );
     expect(error.code, ApiErrorCode.validationError);
     expect(error.field, 'id_token');
+    expect(error.reason, isNull);
     expect(error.statusCode, 400);
+  });
+
+  test('lee el reason opcional del sobre', () async {
+    final error = await failWith(
+      (_) => const StubResponse(400, {
+        'error': {
+          'code': 'validation_error',
+          'message': 'da igual',
+          'field': 'server_auth_code',
+          'reason': 'scope_not_granted',
+        },
+      }),
+    );
+    expect(error.reason, 'scope_not_granted');
   });
 
   test('distingue token_expired de unauthorized', () async {

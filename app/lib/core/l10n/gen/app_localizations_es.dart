@@ -682,6 +682,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No pudimos conectar Gmail. Inténtalo de nuevo.';
 
   @override
+  String get gmailConnectedInactive =>
+      'Conectado, pero no pudimos activar la captura; reintenta desde Ajustes.';
+
+  @override
   String get settingsGmailTitle => 'Gmail';
 
   @override

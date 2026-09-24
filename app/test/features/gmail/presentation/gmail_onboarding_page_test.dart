@@ -138,6 +138,42 @@ void main() {
     expect(find.text(_inicio), findsOneWidget);
   });
 
+  for (final status in [GmailStatus.error, GmailStatus.revoked]) {
+    testWidgets('conectado con ${status.name}: avisa y lleva a Inicio', (
+      tester,
+    ) async {
+      when(() => gmail.connect()).thenAnswer(
+        (_) async =>
+            GmailConnectionInfo(status: status, email: 'ana@gmail.com'),
+      );
+      await pumpPage(tester);
+
+      await tester.tap(connectButton());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(_inicio), findsOneWidget);
+      expect(
+        find.text(
+          'Conectado, pero no pudimos activar la captura; '
+          'reintenta desde Ajustes.',
+        ),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('conectado y activo: sin aviso', (tester) async {
+    when(() => gmail.connect()).thenAnswer((_) async => _active);
+    await pumpPage(tester);
+
+    await tester.tap(connectButton());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
   testWidgets('mientras conecta bloquea los botones', (tester) async {
     final pending = Completer<GmailConnectionInfo>();
     when(() => gmail.connect()).thenAnswer((_) => pending.future);

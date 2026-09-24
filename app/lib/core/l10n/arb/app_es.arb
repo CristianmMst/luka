@@ -416,6 +416,7 @@
   "gmailErrorUpstream": "No pudimos hablar con Google. Inténtalo de nuevo en unos minutos.",
   "gmailErrorMisconfigured": "La conexión con Gmail no está configurada en esta versión de la app.",
   "gmailErrorUnexpected": "No pudimos conectar Gmail. Inténtalo de nuevo.",
+  "gmailConnectedInactive": "Conectado, pero no pudimos activar la captura; reintenta desde Ajustes.",
   "settingsGmailTitle": "Gmail",
   "settingsGmailConnected": "Conectado · {email}",
   "@settingsGmailConnected": {

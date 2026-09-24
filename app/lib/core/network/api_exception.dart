@@ -41,6 +41,7 @@ final class ApiException implements Exception {
     this.code, {
     this.message,
     this.field,
+    this.reason,
     this.statusCode,
     this.retryAfter,
   });
@@ -82,6 +83,7 @@ final class ApiException implements Exception {
           : code,
       message: envelope?['message'] as String?,
       field: envelope?['field'] as String?,
+      reason: envelope?['reason'] as String?,
       statusCode: response.statusCode,
       retryAfter: _parseRetryAfter(response.headers.value('retry-after')),
     );
@@ -90,6 +92,10 @@ final class ApiException implements Exception {
   final ApiErrorCode code;
   final String? message;
   final String? field;
+
+  /// Código estable opcional que afina [code] (`error.reason`, spec 005 §1),
+  /// p. ej. `invalid_code` en los 400 de `server_auth_code`.
+  final String? reason;
   final int? statusCode;
   final Duration? retryAfter;
 

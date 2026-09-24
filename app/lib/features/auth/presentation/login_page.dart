@@ -228,7 +228,10 @@ class _Hero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: Space.xl - 4,
             children: [
-              BrandMark(gemColor: const Color(0xFF1F6B55), textColor: onColor),
+              BrandMark(
+                gemColor: context.finanziaColors.gem,
+                textColor: onColor,
+              ),
               const CaptureTicker(),
             ],
           ),

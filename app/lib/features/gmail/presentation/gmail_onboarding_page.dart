@@ -6,6 +6,7 @@ import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/widgets/brand_mark.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
+import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:finanzia/features/gmail/presentation/widgets/gmail_failure_notice.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,9 @@ import 'package:go_router/go_router.dart';
 
 /// Paso "Conecta tu Gmail" tras el login (spec 008 §3.1, AC-1.2/AC-1.3), con
 /// el lenguaje del login "Veta esmeralda": hero esmeralda y titular
-/// Bricolage. Conectar y "Ahora no" llevan a Inicio.
+/// Bricolage. Conectar y "Ahora no" llevan a Inicio; si la conexión quedó
+/// guardada pero sin captura (`error`/`revoked`), avisa que se reintenta
+/// desde Ajustes.
 class GmailOnboardingPage extends ConsumerWidget {
   const GmailOnboardingPage({super.key});
 
@@ -44,6 +47,14 @@ class GmailOnboardingPage extends ConsumerWidget {
     Future<void> connect() async {
       if (loadFailed) return controller.refresh();
       if (await controller.connect() && context.mounted) {
+        // 200 con `error`/`revoked` (el watch falló): la conexión quedó
+        // guardada pero no captura. Se avisa en vez de ir en silencio.
+        final status = ref.read(gmailControllerProvider).value?.info.status;
+        if (status != GmailStatus.active) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.gmailConnectedInactive)));
+        }
         context.go(Routes.home);
       }
     }
@@ -188,7 +199,10 @@ class _Hero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: Space.xl - 4,
             children: [
-              BrandMark(gemColor: const Color(0xFF1F6B55), textColor: onColor),
+              BrandMark(
+                gemColor: context.finanziaColors.gem,
+                textColor: onColor,
+              ),
               Semantics(
                 label: l10n.gmailHeroSemantics,
                 excludeSemantics: true,
