@@ -40,16 +40,15 @@ class GoogleIdTokenProvider implements IdTokenProvider {
       if (idToken == null) throw const AuthUnexpected('Google sin id_token');
       return idToken;
     } on GoogleSignInException catch (e) {
-      debugPrint(
-        '[auth] GoogleSignInException ${e.code.name}: '
-        '${e.description} ${e.details ?? ''}',
-      );
+      // Solo el código: `description`/`details` pueden traer el email de la
+      // cuenta u otros datos de Google (spec 009 §5).
+      debugPrint('[auth] GoogleSignInException ${e.code.name}');
       throw switch (e.code) {
         GoogleSignInExceptionCode.canceled ||
         GoogleSignInExceptionCode.interrupted => const AuthCancelled(),
         GoogleSignInExceptionCode.clientConfigurationError ||
         GoogleSignInExceptionCode.providerConfigurationError =>
-          AuthMisconfigured('${e.code.name}: ${e.description ?? ''}'),
+          AuthMisconfigured(e.code.name),
         GoogleSignInExceptionCode.uiUnavailable ||
         GoogleSignInExceptionCode.userMismatch ||
         GoogleSignInExceptionCode.unknownError => AuthUnexpected(e),
