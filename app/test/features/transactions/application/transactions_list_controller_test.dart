@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:finanzia/core/format/money.dart';
+import 'package:finanzia/features/auth/application/auth_controller.dart';
+import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
@@ -13,6 +15,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repository extends Mock implements TransactionsRepository {}
+
+/// Sesión controlable desde el test.
+class _Auth extends AuthController {
+  @override
+  Future<AuthState> build() async => const Authenticated(_ana);
+
+  void emit(AuthState next) => state = AsyncData(next);
+}
+
+const _ana = User(id: 'ana', email: 'ana@b.co', status: UserStatus.active);
+const _beto = User(id: 'beto', email: 'beto@b.co', status: UserStatus.active);
 
 TransactionView _tx(String id, DateTime occurredAt) => TransactionView(
   id: id,
@@ -33,7 +46,7 @@ void main() {
 
   setUpAll(() => registerFallbackValue(const TransactionFilter()));
 
-  setUp(() {
+  setUp(() async {
     repository = _Repository();
     rows = StreamController<List<TransactionView>>.broadcast();
     when(
@@ -43,8 +56,11 @@ void main() {
       overrides: [
         transactionsRepositoryProvider.overrideWithValue(repository),
         transactionsClockProvider.overrideWithValue(() => now),
+        authControllerProvider.overrideWith(_Auth.new),
       ],
     );
+    // La sesión ya está resuelta cuando se abre la lista.
+    await container.read(authControllerProvider.future);
   });
 
   tearDown(() async {
@@ -189,6 +205,46 @@ void main() {
           limit: any(named: 'limit'),
         ),
       );
+    });
+  });
+
+  group('cambio de sesión', () {
+    const nequi = TransactionFilter(text: 'nequi');
+    _Auth auth() => container.read(authControllerProvider.notifier) as _Auth;
+
+    void startSignedIn() {
+      start();
+      controller().setFilter(nequi);
+      expect(state().filter, nequi);
+    }
+
+    test('otro usuario arranca con el filtro por defecto', () async {
+      startSignedIn();
+
+      auth().emit(const Authenticated(_beto));
+      await pumpEventQueue();
+
+      expect(state().filter, const TransactionFilter());
+      expect(state().limit, 50);
+      expect(state().groups, isA<AsyncLoading<Object?>>());
+    });
+
+    test('cerrar sesión descarta el filtro', () async {
+      startSignedIn();
+
+      auth().emit(const Unauthenticated());
+      await pumpEventQueue();
+
+      expect(state().filter, const TransactionFilter());
+    });
+
+    test('el mismo usuario conserva el filtro', () async {
+      startSignedIn();
+
+      auth().emit(const Authenticated(_ana));
+      await pumpEventQueue();
+
+      expect(state().filter, nequi);
     });
   });
 }

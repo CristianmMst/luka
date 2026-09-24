@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:finanzia/features/transactions/domain/day_group.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
@@ -25,6 +26,9 @@ abstract class TransactionsListState with _$TransactionsListState {
 /// Cada cambio de filtro y cada `loadMore` vuelve a suscribirse; así el
 /// repositorio recalcula el rango del periodo con la hora actual sin
 /// timers.
+///
+/// El filtro es del usuario: al cerrar sesión o entrar con otra cuenta el
+/// controlador se reconstruye con el estado inicial.
 class TransactionsListController extends Notifier<TransactionsListState> {
   static const pageSize = 50;
   static const textDebounce = Duration(milliseconds: 250);
@@ -34,10 +38,12 @@ class TransactionsListController extends Notifier<TransactionsListState> {
 
   @override
   TransactionsListState build() {
-    ref.onDispose(() {
-      _debounce?.cancel();
-      unawaited(_subscription?.cancel());
-    });
+    ref
+      ..watch(authControllerProvider.select(_sessionUserId))
+      ..onDispose(() {
+        _debounce?.cancel();
+        unawaited(_subscription?.cancel());
+      });
     const filter = TransactionFilter();
     _subscribe(filter, pageSize);
     return const TransactionsListState(
@@ -47,6 +53,12 @@ class TransactionsListController extends Notifier<TransactionsListState> {
       hasMore: false,
     );
   }
+
+  static String? _sessionUserId(AsyncValue<AuthState> auth) =>
+      switch (auth.value) {
+        Authenticated(:final user) => user.id,
+        _ => null,
+      };
 
   /// Reemplaza el filtro y vuelve a la primera página.
   void setFilter(TransactionFilter filter) {
