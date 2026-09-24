@@ -10,8 +10,9 @@ from fastapi import FastAPI
 from finanzia.app import create_app
 from finanzia.modules.identity.domain.entities import GoogleIdentity
 from finanzia.modules.identity.domain.errors import InvalidGoogleToken
-from finanzia.modules.ingestion.application.ports import GmailClientPort
+from finanzia.modules.ingestion.application.ports import GmailClientPort, PushTokenVerifierPort
 from finanzia.shared.settings import Settings
+from support.oidc import build_test_push_verifier
 
 _PARTS_WITH_FLAG = 4
 _PARTS_WITH_NAME = 5
@@ -47,13 +48,23 @@ class StubGoogleIdTokenVerifier:
         )
 
 
-def create_test_app(settings: Settings, *, gmail_client: GmailClientPort | None = None) -> FastAPI:
+def create_test_app(
+    settings: Settings,
+    *,
+    gmail_client: GmailClientPort | None = None,
+    push_verifier: PushTokenVerifierPort | None = None,
+) -> FastAPI:
     """`create_app` con el verificador stub cableado en el lifespan.
 
     `gmail_client` permite inyectar un doble de Gmail (p. ej. `GoogleGmailClient`
     sobre `httpx.MockTransport`); sin el, la app arma el cliente real, que no
-    llama a Google mientras ningun test toque `/v1/gmail/*`.
+    llama a Google mientras ningun test toque `/v1/gmail/*`. El verificador del
+    webhook push es siempre el real (`GoogleOidcPushVerifier`) con los
+    certificados de prueba de `support.oidc`, salvo que se pase otro.
     """
     return create_app(
-        settings, google_verifier=StubGoogleIdTokenVerifier(), gmail_client=gmail_client
+        settings,
+        google_verifier=StubGoogleIdTokenVerifier(),
+        gmail_client=gmail_client,
+        push_verifier=push_verifier or build_test_push_verifier(),
     )

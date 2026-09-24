@@ -20,6 +20,7 @@ import codecs
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from email.utils import parseaddr
 from html.parser import HTMLParser
 
 from finanzia.modules.ingestion.domain.body import truncate_utf8
@@ -98,6 +99,15 @@ class GmailMessage:
     def __post_init__(self) -> None:
         if self.internal_date.tzinfo is None or self.internal_date.utcoffset() is None:
             raise ValueError("internal_date debe ser aware")
+
+    @property
+    def sender_address(self) -> str:
+        """Direccion del `From` en minusculas, sin display name; `""` si no hay una
+        direccion inequivoca (el filtro de remitentes la descarta, AC-2.4).
+        """
+        _, address = parseaddr(self.sender)
+        address = address.strip().lower()
+        return address if "@" in address else ""
 
     def body(self, max_bytes: int = GMAIL_BODY_MAX_BYTES) -> str:
         """El cuerpo en texto segun spec 006 §2.3 (ver `extract_body`)."""

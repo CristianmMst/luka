@@ -40,6 +40,10 @@ def test_forbidden_log_keys_coincide_con_el_contrato() -> None:
     assert FORBIDDEN_LOG_KEYS == frozenset(
         {
             "email",
+            "email_address",
+            "sender",
+            "subject",
+            "server_auth_code",
             "amount",
             "merchant",
             "description",

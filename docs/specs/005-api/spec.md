@@ -71,9 +71,20 @@ Errores de `POST /gmail/connect`:
 
 `POST /webhooks/gmail`
 
-- Autenticación: token OIDC de Google en `Authorization` (audience = URL del webhook, service account del push). Firma inválida → 403.
+- Autenticación: token OIDC de Google en `Authorization: Bearer` (no el access JWT de la app). Se verifica con `google.oauth2.id_token.verify_token` (firma y `exp`) contra `aud = gmail_push_audience`, más `iss` de Google (`accounts.google.com` o `https://accounts.google.com`), `email == gmail_push_service_account` y `email_verified = true`. El token se verifica **antes** de leer el cuerpo.
+- Exenta del rate limit por usuario y de `Idempotency-Key` (prefijo `/v1/webhooks/`): la autentica su propio token.
 - Body: envelope estándar de Pub/Sub; `message.data` (base64) contiene `{ emailAddress, historyId }`.
-- Comportamiento: resolver usuario → encolar job de sync (`history.list` desde cursor) → responder 204 **antes** de parsear (el parsing es asíncrono). Errores transitorios → 5xx para que Pub/Sub reintente.
+- Comportamiento: resolver las conexiones `active` de esa cuenta Gmail (índice por `email`) → encolar un job arq `sync_gmail(user_id, history_id)` por cada una → responder 204 **antes** de sincronizar o parsear (todo es asíncrono, spec 006 §2.1).
+
+| Caso | Respuesta |
+|---|---|
+| Aviso válido | 204, jobs encolados |
+| Cuenta desconocida o conexión `revoked`/`error` | 204 sin encolar (Pub/Sub no reintenta) |
+| Sin token, token ilegible, firma inválida, vencido, otra audiencia, otro service account o email sin verificar | 403 `forbidden` (no se distingue el motivo) |
+| Envelope malformado (no JSON, sin `message.data`, base64 o JSON inválido, sin `emailAddress`/`historyId`) | 204 sin encolar y un warning `gmail_push_ignored`. No 400: el token ya probó que viene de nuestra suscripción y Pub/Sub reintenta todo lo que no sea 2xx hasta que vence la retención (7 días); reintentar no arregla un cuerpo ilegible |
+| Redis caído al encolar | 503 `upstream_unavailable` para que Pub/Sub reintente |
+
+Logs: solo `gmail_push_received` con `jobs_enqueued`; nunca el `emailAddress` ni el token.
 
 ## 5. Ingesta desde el dispositivo (ingestion)
 

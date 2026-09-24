@@ -8,15 +8,18 @@ Starlette elige el handler de la clase mas especifica (MRO), asi que
 from finanzia.modules.ingestion.domain.errors import (
     GmailRefreshTokenMissing,
     GmailScopeNotGranted,
+    GmailSyncEnqueueFailed,
     GmailTransientError,
     IngestionError,
     InvalidChannel,
     InvalidExternalId,
+    InvalidPushToken,
     InvalidServerAuthCode,
 )
 from finanzia.shared.crypto.aesgcm import DecryptionError
 from finanzia.shared.errors import (
     ExceptionMap,
+    ForbiddenError,
     InternalError,
     UpstreamUnavailableError,
     ValidationAppError,
@@ -42,6 +45,9 @@ INGESTION_EXCEPTION_MAP: ExceptionMap = {
         field="server_auth_code",
     ),
     GmailTransientError: lambda e: UpstreamUnavailableError(),
+    # Webhook push (spec 005 §4): 403 sin distinguir el motivo; 503 para que Pub/Sub reintente.
+    InvalidPushToken: lambda e: ForbiddenError(message="token de push invalido"),
+    GmailSyncEnqueueFailed: lambda e: UpstreamUnavailableError(),
     DecryptionError: lambda e: InternalError(),
     IngestionError: lambda e: InternalError(),
 }

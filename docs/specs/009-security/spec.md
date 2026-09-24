@@ -49,7 +49,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 
 ## 5. Logging y monitoreo
 
-- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. La `ruta` registrada es siempre la **plantilla** de la ruta (p. ej. `/v1/transactions/{id}`), nunca el path crudo ni el query string, para no filtrar identificadores ni parámetros de búsqueda a los logs. **Prohibido**: cuerpos de mensajes, montos, comercios, emails, tokens (P1). Test de CI que greppea patrones prohibidos en llamadas de log.
+- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. La `ruta` registrada es siempre la **plantilla** de la ruta (p. ej. `/v1/transactions/{id}`), nunca el path crudo ni el query string, para no filtrar identificadores ni parámetros de búsqueda a los logs. **Prohibido**: cuerpos de mensajes, montos, comercios, emails (incluida la cuenta Gmail de un aviso push), remitentes y asuntos de correo, tokens y `serverAuthCode` (P1); `FORBIDDEN_LOG_KEYS` (`shared/logging.py`) los redacta en runtime. Test de CI que greppea patrones prohibidos en llamadas de log.
 - Auditoría de eventos sensibles: login, refresh reuse detectado, conexión/desconexión Gmail, exportación, borrado de cuenta.
 - Alertas mínimas MVP: tasa de 5xx, backlog de colas, fallos de renovación de watch, presupuesto LLM global.
 

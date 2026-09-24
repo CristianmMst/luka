@@ -7,9 +7,17 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from finanzia.modules.ingestion.application.dto import BankDecision
+from finanzia.modules.ingestion.application.dto import (
+    BankDecision,
+    IngestOutcome,
+    RawMessageInput,
+)
 from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from finanzia.modules.ingestion.domain.enums import (
+    Channel,
+    GmailConnectionStatus,
+    RawMessageStatus,
+)
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage
 
 
@@ -74,6 +82,24 @@ class GmailConnectionRepositoryPort(Protocol):
 
     async def delete(self, user_id: UUID) -> bool:
         """Borra la conexion del usuario; `True` si existia."""
+        ...
+
+    async def list_active_user_ids_by_email(self, email: str) -> list[UUID]:
+        """Usuarios con una conexion `active` a la cuenta Gmail `email` (webhook push)."""
+        ...
+
+    async def record_sync(self, user_id: UUID, email: str, history_id: int, now: datetime) -> None:
+        """Avanza el cursor a `max(actual, history_id)` y fija `last_sync_at=now`.
+
+        Solo si la conexion sigue siendo de `email`: si el usuario reconecto con
+        otra cuenta mientras corria el sync, la fila nueva no se toca.
+        """
+        ...
+
+    async def mark_status(
+        self, user_id: UUID, email: str, status: GmailConnectionStatus, now: datetime
+    ) -> None:
+        """Cambia el `status` de la conexion, con la misma guarda por `email`."""
         ...
 
 
@@ -159,9 +185,37 @@ class GmailClientPort(Protocol):
         """
         ...
 
+    async def profile_history_id(self, access_token: str) -> int:
+        """`historyId` actual del buzon (`users.getProfile`): cursor tras un resync."""
+        ...
+
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
         """Mensaje completo (`format=full`): remitente, `internalDate` y partes MIME."""
         ...
+
+
+class PushTokenVerifierPort(Protocol):
+    """Verificacion del token OIDC que Pub/Sub manda en cada push (spec 005 §4)."""
+
+    async def verify(self, token: str) -> None:
+        """Lanza `InvalidPushToken` si la firma, `aud`, `iss`, el service account o
+        `email_verified` no cuadran, o si el token vencio.
+        """
+        ...
+
+
+class GmailSyncQueuePort(Protocol):
+    """Cola del job `sync_gmail` (arq, spec 006 §2.1)."""
+
+    async def enqueue_sync(self, user_id: UUID, history_id: int | None) -> None:
+        """Encola un sync; `GmailSyncEnqueueFailed` si la cola no responde."""
+        ...
+
+
+class RawMessageIngestPort(Protocol):
+    """Ingesta idempotente de un mensaje crudo (`IngestRawMessage`, spec 006 §4.4)."""
+
+    async def execute(self, input: RawMessageInput) -> IngestOutcome: ...
 
 
 class ClockPort(Protocol):
@@ -187,7 +241,10 @@ __all__ = [
     "EventPublisherPort",
     "GmailClientPort",
     "GmailConnectionRepositoryPort",
+    "GmailSyncQueuePort",
     "IdGeneratorPort",
+    "PushTokenVerifierPort",
+    "RawMessageIngestPort",
     "RawMessageRepositoryPort",
     "SenderPolicyPort",
     "TokenCipherPort",

@@ -33,12 +33,13 @@ from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
+from uuid import UUID
 
 import httpx
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 import structlog
-from arq import cron
+from arq import Retry, cron
 from arq.connections import RedisSettings
 
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
@@ -158,6 +159,56 @@ async def requeue_pending_raw_messages(ctx: dict[str, Any]) -> None:
     async with session_factory() as session:
         summary = await ingestion_public.requeue_pending_raw_messages(session, bus, clock)
     _logger.info("raw_messages_requeued", count=summary.requeued, exhausted=summary.exhausted)
+
+
+# Reintentos de `sync_gmail` ante un `GmailTransientError` (red, 5xx, 429, 401 de
+# Gmail): arq solo reintenta si el job lanza `Retry`, hasta `max_tries` (5 por
+# defecto) intentos en total; el backoff es lineal (30 s, 60 s, ...).
+_SYNC_GMAIL_RETRY_BASE_S = 30
+
+
+async def sync_gmail(ctx: dict[str, Any], user_id: str, history_id: int | None = None) -> None:
+    """Job encolado por el webhook push (spec 006 §2.1, F3.4): sincroniza el buzon
+    del usuario desde su cursor e ingiere los correos nuevos.
+
+    Solo loguea contadores y el estado de cada pasada; nunca el email de la cuenta,
+    remitentes, asuntos ni cuerpos (spec 009 §5).
+    """
+    session_factory = ctx.get("events_session_factory")
+    bus = ctx.get("events_bus")
+    redis_client = ctx.get("events_redis")
+    gmail = ctx.get("gmail_client")
+    if session_factory is None or bus is None or redis_client is None or gmail is None:
+        _logger.warning("job_sin_contexto", job="sync_gmail")
+        return
+    try:
+        results = await ingestion_public.run_gmail_sync(
+            session_factory=session_factory,
+            redis_client=redis_client,
+            event_bus=bus,
+            gmail=gmail,
+            clock=SystemClock(),
+            settings=get_settings(),
+            user_id=UUID(user_id),
+            history_id=history_id,
+        )
+    except ingestion_public.GmailTransientError as exc:
+        job_try = int(ctx.get("job_try") or 1)
+        _logger.warning("gmail_sync_retry", error_type=type(exc).__name__, job_try=job_try)
+        raise Retry(defer=_SYNC_GMAIL_RETRY_BASE_S * job_try) from exc
+    if not results:
+        _logger.info("gmail_sync_skipped", reason="lock_held")
+    for result in results:
+        _logger.info(
+            "gmail_sync_finished",
+            status=result.status,
+            resync=result.resync,
+            fetched=result.fetched,
+            accepted=result.accepted,
+            duplicates=result.duplicates,
+            discarded=result.discarded,
+            skipped=result.skipped,
+        )
 
 
 async def _supervise(
@@ -346,7 +397,7 @@ async def on_shutdown(ctx: dict[str, Any]) -> None:
 class WorkerSettings:
     """Configuracion de arq (spec 003 SS2.4): mismo Docker image, proceso separado."""
 
-    functions: ClassVar[list[Any]] = [ping]
+    functions: ClassVar[list[Any]] = [ping, sync_gmail]
     # Task 10 (F3.7 adelantado, riesgo 4): purga diaria de cuerpos (spec 004 §6) y
     # reencolado de `raw_messages` `pending` huerfanos (cada 15 min, D9).
     #

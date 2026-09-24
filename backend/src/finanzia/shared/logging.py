@@ -15,6 +15,12 @@ from finanzia.shared.settings import Settings
 FORBIDDEN_LOG_KEYS: frozenset[str] = frozenset(
     {
         "email",
+        # Gmail (F3.3/F3.4): la cuenta del aviso push, el remitente/asunto del
+        # correo y el codigo de autorizacion nunca se loguean (spec 009 §5).
+        "email_address",
+        "sender",
+        "subject",
+        "server_auth_code",
         "amount",
         "merchant",
         "description",

@@ -60,6 +60,8 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | last_sync_at | TIMESTAMPTZ NULL | |
 | created_at / updated_at | TIMESTAMPTZ | reconectar (upsert) conserva `created_at` |
 
+Índice `ix_gmail_connections_email` (migración 0006): el webhook push resuelve el usuario por la cuenta Gmail (spec 005 §4).
+
 ### 2.4 `linked_accounts` (ledger) — cuentas/tarjetas propias
 
 | Columna | Tipo | Notas |

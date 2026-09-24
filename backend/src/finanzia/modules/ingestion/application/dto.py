@@ -157,6 +157,26 @@ class DisconnectResult:
     remote_cleanup: bool
 
 
+@dataclass(frozen=True, slots=True)
+class GmailSyncResult:
+    """Resultado de una pasada de `SyncGmail` (solo contadores, nunca datos del correo).
+
+    `status`: `synced`, `up_to_date` (el aviso ya estaba cubierto por el cursor),
+    `no_connection`, `inactive` (conexion `revoked`/`error`), `revoked` (Google
+    respondio `invalid_grant` en esta pasada) o `undecryptable` (el token guardado
+    no descifra; la conexion pasa a `error`). `skipped` son ids que Gmail ya no
+    devuelve (borrados entre `history.list` y `messages.get`).
+    """
+
+    status: str
+    resync: bool = False
+    fetched: int = 0
+    accepted: int = 0
+    duplicates: int = 0
+    discarded: int = 0
+    skipped: int = 0
+
+
 __all__ = [
     "GMAIL_DISCONNECTED",
     "Accepted",
@@ -166,6 +186,7 @@ __all__ = [
     "DisconnectResult",
     "Duplicate",
     "GmailConnectionView",
+    "GmailSyncResult",
     "IngestOutcome",
     "NotificationItemInput",
     "RawMessageInput",

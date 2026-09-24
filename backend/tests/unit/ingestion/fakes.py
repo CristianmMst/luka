@@ -12,9 +12,17 @@ from support.clock import FixedClock
 
 from finanzia.modules.ingestion.application.dto import BankDecision
 from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
-from finanzia.modules.ingestion.domain.errors import GmailTokenUndecryptable
-from finanzia.modules.ingestion.domain.gmail_message import GmailMessage
+from finanzia.modules.ingestion.domain.enums import (
+    Channel,
+    GmailConnectionStatus,
+    RawMessageStatus,
+)
+from finanzia.modules.ingestion.domain.errors import (
+    GmailHistoryExpired,
+    GmailRequestRejected,
+    GmailTokenUndecryptable,
+)
+from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
 
 __all__ = [
     "FakeGmailClient",
@@ -25,6 +33,7 @@ __all__ = [
     "InMemoryRawMessageRepo",
     "NoopUoW",
     "RecordingPublisher",
+    "RecordingSyncQueue",
     "SequenceIdGenerator",
 ]
 
@@ -171,6 +180,43 @@ class InMemoryGmailConnectionRepo:
     async def delete(self, user_id: UUID) -> bool:
         return self.by_user.pop(user_id, None) is not None
 
+    async def list_active_user_ids_by_email(self, email: str) -> list[UUID]:
+        return [
+            c.user_id
+            for c in self.by_user.values()
+            if c.email == email and c.status is GmailConnectionStatus.ACTIVE
+        ]
+
+    async def record_sync(self, user_id: UUID, email: str, history_id: int, now: datetime) -> None:
+        current = self.by_user.get(user_id)
+        if current is None or current.email != email:
+            return
+        cursor = max(current.history_id or 0, history_id)
+        self.by_user[user_id] = replace(
+            current, history_id=cursor, last_sync_at=now, updated_at=now
+        )
+
+    async def mark_status(
+        self, user_id: UUID, email: str, status: GmailConnectionStatus, now: datetime
+    ) -> None:
+        current = self.by_user.get(user_id)
+        if current is None or current.email != email:
+            return
+        self.by_user[user_id] = replace(current, status=status, updated_at=now)
+
+
+class RecordingSyncQueue:
+    """Doble de `GmailSyncQueuePort`: guarda `(user_id, history_id)` de cada job encolado."""
+
+    def __init__(self) -> None:
+        self.jobs: list[tuple[UUID, int | None]] = []
+        self.error: Exception | None = None
+
+    async def enqueue_sync(self, user_id: UUID, history_id: int | None) -> None:
+        if self.error is not None:
+            raise self.error
+        self.jobs.append((user_id, history_id))
+
 
 class FakeTokenCipher:
     """Doble reversible de `TokenCipherPort`: `user_id|token` en claro, atado al usuario."""
@@ -207,6 +253,11 @@ class FakeGmailClient:
         self.watch_expires_at = watch_expires_at or datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
         self.errors: dict[str, Exception] = {}
         self.calls: list[tuple[str, str]] = []
+        #: Buzon falso: `history` = ids nuevos por `start_history_id`; `messages` por id.
+        self.mailbox_history_id = history_id
+        self.history: dict[int, list[str]] = {}
+        self.recent: list[str] = []
+        self.messages: dict[str, GmailMessage] = {}
 
     def _record(self, operation: str, argument: str) -> None:
         self.calls.append((operation, argument))
@@ -235,12 +286,37 @@ class FakeGmailClient:
     async def history_new_message_ids(
         self, access_token: str, start_history_id: int
     ) -> tuple[list[str], int]:
-        raise NotImplementedError
+        self._record("history", str(start_history_id))
+        if start_history_id not in self.history:
+            raise GmailHistoryExpired("history.list: 404")
+        return list(self.history[start_history_id]), self.mailbox_history_id
 
     async def recent_message_ids(
         self, access_token: str, days: int = 7, limit: int = 500
     ) -> list[str]:
-        raise NotImplementedError
+        self._record("recent", f"{days}d/{limit}")
+        return self.recent[:limit]
+
+    async def profile_history_id(self, access_token: str) -> int:
+        self._record("profile_history_id", access_token)
+        return self.mailbox_history_id
 
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
-        raise NotImplementedError
+        self._record("get_message", message_id)
+        message = self.messages.get(message_id)
+        if message is None:
+            raise GmailRequestRejected("messages.get: 404")
+        return message
+
+    def add_message(
+        self, message_id: str, sender: str, text: str, received_at: datetime | None = None
+    ) -> GmailMessage:
+        """Agrega un mensaje `text/plain` al buzon falso."""
+        message = GmailMessage(
+            id=message_id,
+            sender=sender,
+            internal_date=received_at or datetime(2026, 5, 1, 12, 0, tzinfo=UTC),
+            payload=MimePart(mime_type="text/plain", data=text.encode(), charset="utf-8"),
+        )
+        self.messages[message_id] = message
+        return message

@@ -57,6 +57,18 @@ class GmailScopeNotGranted(GmailRequestRejected):
     """
 
 
+class InvalidPushEnvelope(IngestionError):  # noqa: N818
+    """El cuerpo del push de Pub/Sub no tiene la forma esperada (spec 005 §4)."""
+
+
+class InvalidPushToken(IngestionError):  # noqa: N818
+    """El token OIDC del push falta, no verifica o no es del service account esperado."""
+
+
+class GmailSyncEnqueueFailed(IngestionError):  # noqa: N818
+    """No se pudo encolar el job `sync_gmail` (Redis caido): Pub/Sub debe reintentar."""
+
+
 class InvalidServerAuthCode(IngestionError):  # noqa: N818
     """El `serverAuthCode` es invalido, expiro o ya se uso (`invalid_grant` al canjear)."""
 
@@ -72,11 +84,14 @@ __all__ = [
     "GmailRefreshTokenMissing",
     "GmailRequestRejected",
     "GmailScopeNotGranted",
+    "GmailSyncEnqueueFailed",
     "GmailTokenUndecryptable",
     "GmailTransientError",
     "IngestionError",
     "InvalidChannel",
     "InvalidExternalId",
+    "InvalidPushEnvelope",
+    "InvalidPushToken",
     "InvalidServerAuthCode",
     "RawMessageNotFound",
 ]

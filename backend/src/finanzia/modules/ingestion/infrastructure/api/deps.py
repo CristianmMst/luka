@@ -16,12 +16,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.identity.public import get_current_user_id
 from finanzia.modules.ingestion import public as ingestion_public
-from finanzia.modules.ingestion.application.ports import GmailClientPort
+from finanzia.modules.ingestion.application.ports import (
+    GmailClientPort,
+    GmailSyncQueuePort,
+    PushTokenVerifierPort,
+)
 from finanzia.modules.ingestion.application.use_cases.gmail_connection import (
     ConnectGmail,
     DisconnectGmail,
     GetGmailStatus,
 )
+from finanzia.modules.ingestion.application.use_cases.gmail_sync import HandleGmailPush
 from finanzia.modules.ingestion.infrastructure.api.schemas import CaptureConfigResponse
 from finanzia.modules.ingestion.infrastructure.repositories import (
     SqlAlchemyGmailConnectionRepository,
@@ -132,3 +137,27 @@ def get_disconnect_gmail(
 
 def get_gmail_status(session: AsyncSession = Depends(get_session)) -> GetGmailStatus:
     return GetGmailStatus(repo=SqlAlchemyGmailConnectionRepository(session))
+
+
+# --- Webhook push de Gmail (F3.4) -----------------------------------------------------
+
+
+def get_push_verifier(request: Request) -> PushTokenVerifierPort:
+    """Verificador OIDC construido una vez en el lifespan (`app.state.push_verifier`)."""
+    return request.app.state.push_verifier  # type: ignore[no-any-return]
+
+
+def get_gmail_sync_queue(request: Request) -> GmailSyncQueuePort:
+    """Cola arq de `sync_gmail` creada en el lifespan (`app.state.gmail_sync_queue`)."""
+    return request.app.state.gmail_sync_queue  # type: ignore[no-any-return]
+
+
+def get_handle_gmail_push(
+    session: AsyncSession = Depends(get_session),
+    queue: GmailSyncQueuePort = Depends(get_gmail_sync_queue),
+) -> HandleGmailPush:
+    return HandleGmailPush(
+        repo=SqlAlchemyGmailConnectionRepository(session),
+        queue=queue,
+        uow=SqlAlchemyUnitOfWork(session),
+    )

@@ -68,6 +68,8 @@ class GmailConnectionRow(Base, TimestampMixin):
     __tablename__ = "gmail_connections"
     __table_args__ = (
         CheckConstraint(f"status IN ({_GMAIL_CONNECTION_STATUS_VALUES})", name="status_valido"),
+        # El webhook push resuelve el usuario por la cuenta Gmail (spec 005 §4).
+        Index(None, "email"),
     )
 
     # PK y FK a la vez (relacion 1:1): no usa `UUIDPrimaryKeyMixin`, que genera un

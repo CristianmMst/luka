@@ -210,6 +210,13 @@ class GoogleGmailClient:
                 return ids
             params = {**params, "pageToken": str(next_token)}
 
+    async def profile_history_id(self, access_token: str) -> int:
+        data = await self._api("profile", "GET", "/profile", access_token)
+        try:
+            return int(data["historyId"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise GmailRequestRejected("profile: respuesta ilegible") from exc
+
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
         data = await self._api(
             "messages.get",

@@ -12,12 +12,16 @@ from datetime import datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, delete, select, update
+from sqlalchemy import CursorResult, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from finanzia.modules.ingestion.domain.enums import (
+    Channel,
+    GmailConnectionStatus,
+    RawMessageStatus,
+)
 from finanzia.modules.ingestion.infrastructure.mappers import (
     gmail_connection_entity_to_values,
     gmail_connection_row_to_entity,
@@ -136,6 +140,38 @@ class SqlAlchemyGmailConnectionRepository:
         stmt = delete(GmailConnectionRow).where(GmailConnectionRow.user_id == user_id)
         result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
         return result.rowcount > 0
+
+    async def list_active_user_ids_by_email(self, email: str) -> list[UUID]:
+        stmt = select(GmailConnectionRow.user_id).where(
+            GmailConnectionRow.email == email,
+            GmailConnectionRow.status == GmailConnectionStatus.ACTIVE.value,
+        )
+        return list((await self._session.execute(stmt)).scalars())
+
+    async def record_sync(self, user_id: UUID, email: str, history_id: int, now: datetime) -> None:
+        """`GREATEST` en SQL: dos syncs concurrentes nunca hacen retroceder el cursor."""
+        stmt = (
+            update(GmailConnectionRow)
+            .where(GmailConnectionRow.user_id == user_id, GmailConnectionRow.email == email)
+            .values(
+                history_id=func.greatest(
+                    func.coalesce(GmailConnectionRow.history_id, 0), history_id
+                ),
+                last_sync_at=now,
+                updated_at=now,
+            )
+        )
+        await self._session.execute(stmt)
+
+    async def mark_status(
+        self, user_id: UUID, email: str, status: GmailConnectionStatus, now: datetime
+    ) -> None:
+        stmt = (
+            update(GmailConnectionRow)
+            .where(GmailConnectionRow.user_id == user_id, GmailConnectionRow.email == email)
+            .values(status=status.value, updated_at=now)
+        )
+        await self._session.execute(stmt)
 
 
 __all__ = ["SqlAlchemyGmailConnectionRepository", "SqlAlchemyRawMessageRepository"]

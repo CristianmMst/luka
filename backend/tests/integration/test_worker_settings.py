@@ -18,15 +18,17 @@ import signal
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from uuid import uuid4
 
 import pytest
 import structlog.testing
-from arq import Worker, create_pool
+from arq import Retry, Worker, create_pool
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
+from finanzia.modules.ingestion import public as ingestion_public
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
 from finanzia.shared.settings import Settings, get_settings
 
@@ -390,3 +392,76 @@ async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_co
         assert logs[0]["count"] == 1
     finally:
         await worker_settings_module.on_shutdown(ctx)
+
+
+# --- sync_gmail (F3.4) ----------------------------------------------------------------
+
+_FULL_SYNC_CTX_KEYS = ("events_session_factory", "events_bus", "events_redis", "gmail_client")
+
+
+def _sync_ctx(**extra: Any) -> dict[str, Any]:
+    return {key: object() for key in _FULL_SYNC_CTX_KEYS} | extra
+
+
+def test_sync_gmail_esta_registrado_como_job(worker_settings_module) -> None:
+    functions = worker_settings_module.WorkerSettings.functions
+    assert worker_settings_module.sync_gmail in functions
+
+
+async def test_sync_gmail_con_ctx_vacio_loguea_y_no_revienta(worker_settings_module) -> None:
+    with structlog.testing.capture_logs() as captured:
+        await worker_settings_module.sync_gmail({}, str(uuid4()), 1)
+
+    assert any(
+        e.get("event") == "job_sin_contexto" and e.get("job") == "sync_gmail" for e in captured
+    )
+
+
+async def test_sync_gmail_error_transitorio_pide_reintento_a_arq(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def transient(**kwargs: Any) -> list[Any]:
+        del kwargs
+        raise ingestion_public.GmailTransientError("history.list: 503")
+
+    monkeypatch.setattr(ingestion_public, "run_gmail_sync", transient)
+
+    with pytest.raises(Retry) as exc_info:
+        await worker_settings_module.sync_gmail(_sync_ctx(job_try=2), str(uuid4()), 5)
+
+    assert exc_info.value.defer_score == 60_000  # backoff lineal: 30 s x intento
+
+
+async def test_sync_gmail_loguea_solo_contadores(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    user_id = uuid4()
+    seen: dict[str, Any] = {}
+
+    async def fake_run(**kwargs: Any) -> list[Any]:
+        seen.update(kwargs)
+        return [ingestion_public.GmailSyncResult("synced", fetched=2, accepted=1, discarded=1)]
+
+    monkeypatch.setattr(ingestion_public, "run_gmail_sync", fake_run)
+
+    with structlog.testing.capture_logs() as captured:
+        await worker_settings_module.sync_gmail(_sync_ctx(), str(user_id), 5)
+
+    assert (seen["user_id"], seen["history_id"]) == (user_id, 5)
+    (finished,) = [e for e in captured if e.get("event") == "gmail_sync_finished"]
+    assert (finished["status"], finished["accepted"], finished["discarded"]) == ("synced", 1, 1)
+
+
+async def test_sync_gmail_con_el_lock_tomado_loguea_skipped(
+    worker_settings_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def lock_held(**kwargs: Any) -> list[Any]:
+        del kwargs
+        return []
+
+    monkeypatch.setattr(ingestion_public, "run_gmail_sync", lock_held)
+
+    with structlog.testing.capture_logs() as captured:
+        await worker_settings_module.sync_gmail(_sync_ctx(), str(uuid4()))
+
+    assert any(e.get("event") == "gmail_sync_skipped" for e in captured)

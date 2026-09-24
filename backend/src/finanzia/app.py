@@ -8,6 +8,7 @@ import httpx
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 import structlog
+from arq.connections import ArqRedis
 from fastapi import FastAPI
 
 from finanzia.events_registry import build_registry, ensure_consumer_groups
@@ -17,7 +18,7 @@ from finanzia.modules.identity.infrastructure.api.errors import (
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
 from finanzia.modules.identity.infrastructure.google_verifier import GoogleAuthIdTokenVerifier
-from finanzia.modules.ingestion.application.ports import GmailClientPort
+from finanzia.modules.ingestion.application.ports import GmailClientPort, PushTokenVerifierPort
 from finanzia.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
 from finanzia.modules.ingestion.infrastructure.api.router_config import (
     router as ingestion_config_router,
@@ -28,7 +29,12 @@ from finanzia.modules.ingestion.infrastructure.api.router_gmail import (
 from finanzia.modules.ingestion.infrastructure.api.router_ingest import (
     router as ingestion_ingest_router,
 )
+from finanzia.modules.ingestion.infrastructure.api.router_webhooks import (
+    router as ingestion_webhooks_router,
+)
 from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
+from finanzia.modules.ingestion.infrastructure.gmail_sync import ArqGmailSyncQueue
+from finanzia.modules.ingestion.infrastructure.push_verifier import GoogleOidcPushVerifier
 from finanzia.modules.ledger.infrastructure.api.errors import LEDGER_EXCEPTION_MAP
 from finanzia.modules.ledger.infrastructure.api.router_accounts import (
     router as ledger_accounts_router,
@@ -66,6 +72,9 @@ _logger = structlog.get_logger()
 _CONSUMER_GROUPS_TIMEOUT_S = 2.0
 _REDIS_CONNECT_TIMEOUT_S = 2.0
 _REDIS_SOCKET_TIMEOUT_S = 5.0
+# Webhooks publicos (spec 005 §4): los autentica su propio token (OIDC de Google),
+# no el Bearer de la app, asi que no aplican rate limit por usuario ni idempotencia.
+_WEBHOOKS_PREFIX = "/v1/webhooks/"
 
 
 def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
@@ -84,17 +93,47 @@ def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
     ]
 
 
+def _add_middlewares(app: FastAPI, settings: Settings) -> None:
+    """Pila de middlewares HTTP (spec 009 §4-5)."""
+    # `add_middleware` apila en orden inverso: el ultimo agregado queda mas afuera.
+    # Orden de ejecucion resultante: RequestId -> SecurityHeaders -> BodyLimit -> RateLimit
+    # -> Idempotency -> router. Idempotency se agrega PRIMERO (queda mas adentro, junto
+    # al router) para que ya haya pasado el rate limiting antes de tocar Redis por la
+    # clave de idempotencia. `redis_provider`/`limiter_provider` son perezosos porque
+    # `app.state.redis`/`app.state.rate_limiter` recien existen despues de que el
+    # lifespan corrio (ver docstrings de IdempotencyMiddleware/RateLimitMiddleware).
+    app.add_middleware(
+        IdempotencyMiddleware,
+        redis_provider=lambda: app.state.redis,
+        ttl_seconds=settings.idempotency_ttl_seconds,
+        jwt_secret=settings.jwt_secret.get_secret_value(),
+        exempt_prefixes=(_WEBHOOKS_PREFIX,),
+    )
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter_provider=lambda: app.state.rate_limiter,
+        rules=_default_rate_limit_rules(settings),
+        jwt_secret=settings.jwt_secret.get_secret_value(),
+        trust_proxy_headers=settings.trust_proxy_headers,
+        exempt_prefixes=("/health", _WEBHOOKS_PREFIX),
+    )
+    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_body_bytes)
+    app.add_middleware(SecurityHeadersMiddleware, is_prod=settings.env == "prod")
+    app.add_middleware(RequestIdMiddleware)
+
+
 def create_app(
     settings: Settings | None = None,
     *,
     google_verifier: GoogleIdTokenVerifierPort | None = None,
     gmail_client: GmailClientPort | None = None,
+    push_verifier: PushTokenVerifierPort | None = None,
 ) -> FastAPI:
     """Crea la aplicacion FastAPI, cableando settings, DB y Redis en `app.state`.
 
-    `google_verifier` y `gmail_client` solo los pasan los tests (dobles que no
-    llaman a Google); en ejecucion normal se usan siempre
-    `GoogleAuthIdTokenVerifier` y `GoogleGmailClient`.
+    `google_verifier`, `gmail_client` y `push_verifier` solo los pasan los tests
+    (dobles que no llaman a Google); en ejecucion normal se usan siempre
+    `GoogleAuthIdTokenVerifier`, `GoogleGmailClient` y `GoogleOidcPushVerifier`.
     """
     resolved_settings = settings if settings is not None else get_settings()
     configure_logging(resolved_settings)
@@ -143,6 +182,15 @@ def create_app(
             app.state.gmail_client = build_gmail_client(resolved_settings, gmail_http_client)
         else:
             app.state.gmail_client = gmail_client
+        app.state.push_verifier = push_verifier or GoogleOidcPushVerifier(
+            audience=resolved_settings.gmail_push_audience,
+            service_account=resolved_settings.gmail_push_service_account,
+        )
+        # Cola arq de `sync_gmail` (F3.4) sobre el mismo pool de Redis: no abre
+        # conexiones nuevas ni hace ping en el arranque (fail-soft como el resto).
+        app.state.gmail_sync_queue = ArqGmailSyncQueue(
+            ArqRedis(connection_pool=redis_client.connection_pool)
+        )
 
         try:
             yield
@@ -164,29 +212,7 @@ def create_app(
         openapi_url=None if is_prod else "/openapi.json",
     )
 
-    # `add_middleware` apila en orden inverso: el ultimo agregado queda mas afuera.
-    # Orden de ejecucion resultante: RequestId -> SecurityHeaders -> BodyLimit -> RateLimit
-    # -> Idempotency -> router. Idempotency se agrega PRIMERO (queda mas adentro, junto
-    # al router) para que ya haya pasado el rate limiting antes de tocar Redis por la
-    # clave de idempotencia. `redis_provider`/`limiter_provider` son perezosos porque
-    # `app.state.redis`/`app.state.rate_limiter` recien existen despues de que el
-    # lifespan corrio (ver docstrings de IdempotencyMiddleware/RateLimitMiddleware).
-    app.add_middleware(
-        IdempotencyMiddleware,
-        redis_provider=lambda: app.state.redis,
-        ttl_seconds=resolved_settings.idempotency_ttl_seconds,
-        jwt_secret=resolved_settings.jwt_secret.get_secret_value(),
-    )
-    app.add_middleware(
-        RateLimitMiddleware,
-        limiter_provider=lambda: app.state.rate_limiter,
-        rules=_default_rate_limit_rules(resolved_settings),
-        jwt_secret=resolved_settings.jwt_secret.get_secret_value(),
-        trust_proxy_headers=resolved_settings.trust_proxy_headers,
-    )
-    app.add_middleware(BodyLimitMiddleware, max_bytes=resolved_settings.max_body_bytes)
-    app.add_middleware(SecurityHeadersMiddleware, is_prod=resolved_settings.env == "prod")
-    app.add_middleware(RequestIdMiddleware)
+    _add_middlewares(app, resolved_settings)
 
     install_error_handlers(
         app, [IDENTITY_EXCEPTION_MAP, LEDGER_EXCEPTION_MAP, INGESTION_EXCEPTION_MAP]
@@ -201,4 +227,5 @@ def create_app(
     app.include_router(ingestion_ingest_router, prefix="/v1")
     app.include_router(ingestion_config_router, prefix="/v1")
     app.include_router(ingestion_gmail_router, prefix="/v1")
+    app.include_router(ingestion_webhooks_router, prefix="/v1")
     return app

@@ -124,3 +124,25 @@ def test_detector_no_marca_codigo_limpio(tmp_path: Path) -> None:
     )
 
     assert find_violations(tmp_path) == []
+
+
+@pytest.mark.ci
+@pytest.mark.parametrize("key", ["email_address", "sender", "subject", "server_auth_code"])
+def test_claves_de_gmail_son_prohibidas(key: str) -> None:
+    # F3.4: la cuenta del push, el remitente/asunto y el `serverAuthCode` (spec 009 §5).
+    assert key in FORBIDDEN_LOG_KEYS
+
+
+@pytest.mark.ci
+def test_detector_marca_datos_de_gmail(tmp_path: Path) -> None:
+    archivo = tmp_path / "gmail.py"
+    archivo.write_text(
+        "import structlog\n"
+        "logger = structlog.get_logger()\n"
+        "logger.info('gmail_push_received', email_address=notification.email_address)\n"
+        "logger.info('gmail_message', sender=message.sender)\n"
+        "logger.warning(f'push de {email_address}')\n",
+        encoding="utf-8",
+    )
+
+    assert len(find_violations(tmp_path)) == 3

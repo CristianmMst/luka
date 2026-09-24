@@ -4,7 +4,8 @@
 webhook de Gmail y `POST /v1/ingest/notifications` (Fase 3/F4.3) sin conocer los
 adapters SQLAlchemy de ingestion. `get_raw_message_for_parsing` es como `parsing`
 lee el cuerpo de un mensaje ya persistido (D2: el evento `RawMessageReceived`
-solo lleva ids).
+solo lleva ids). `run_gmail_sync` es el cuerpo del job `sync_gmail` del worker
+(F3.4) y `gmail_connection_status` lo que lee identity para `GET /v1/me`.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from finanzia.modules.ingestion.application.dto import (
     BatchResult,
     Discarded,
     Duplicate,
+    GmailSyncResult,
     IngestOutcome,
     NotificationItemInput,
     RawMessageInput,
@@ -37,8 +39,10 @@ from finanzia.modules.ingestion.application.use_cases.requeue_pending import (
 )
 from finanzia.modules.ingestion.domain.entities import RawMessage
 from finanzia.modules.ingestion.domain.enums import RawMessageStatus
+from finanzia.modules.ingestion.domain.errors import GmailTransientError
 from finanzia.modules.ingestion.events import RawMessageReceived
 from finanzia.modules.ingestion.infrastructure.event_publisher import BusEventPublisher
+from finanzia.modules.ingestion.infrastructure.gmail_sync import run_gmail_sync
 from finanzia.modules.ingestion.infrastructure.id_generator import SecretsIdGenerator
 from finanzia.modules.ingestion.infrastructure.logging import log_ingest_outcome
 from finanzia.modules.ingestion.infrastructure.repositories import (
@@ -62,6 +66,8 @@ __all__ = [
     "BatchResult",
     "Discarded",
     "Duplicate",
+    "GmailSyncResult",
+    "GmailTransientError",
     "IngestOutcome",
     "NotificationItemInput",
     "RawMessageInput",
@@ -76,6 +82,7 @@ __all__ = [
     "mark_raw_message",
     "purge_expired_bodies",
     "requeue_pending_raw_messages",
+    "run_gmail_sync",
 ]
 
 _RETENTION_DAYS_DEFAULT = 90

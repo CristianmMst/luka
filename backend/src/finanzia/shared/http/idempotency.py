@@ -5,7 +5,8 @@ para no romper streaming/backpressure, `redis_provider` perezoso (recien resuelt
 en cada request, porque `app.state.redis` no existe hasta que corre el lifespan) y
 fail-open ante cualquier falla de Redis.
 
-Solo aplica a `POST` bajo `path_prefix` con header `Idempotency-Key` presente. El
+Solo aplica a `POST` bajo `path_prefix` (fuera de `exempt_prefixes`, p. ej. los
+webhooks publicos) con header `Idempotency-Key` presente. El
 body se drena una vez (para poder calcular el fingerprint y, si aplica, guardarlo)
 y se re-inyecta intacto para que el resto de la app lo lea normalmente.
 """
@@ -16,7 +17,7 @@ import base64
 import hashlib
 import json
 import uuid
-from collections.abc import Awaitable, Callable, MutableMapping
+from collections.abc import Awaitable, Callable, MutableMapping, Sequence
 from typing import Any
 
 import redis.exceptions
@@ -45,7 +46,7 @@ _logger = structlog.get_logger()
 class IdempotencyMiddleware:
     """Deduplica `POST` bajo `path_prefix` via `Idempotency-Key` almacenada en Redis."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - config del middleware, todo keyword-only
         self,
         app: ASGIApp,
         *,
@@ -53,12 +54,14 @@ class IdempotencyMiddleware:
         ttl_seconds: int,
         jwt_secret: str,
         path_prefix: str = "/v1/",
+        exempt_prefixes: Sequence[str] = (),
     ) -> None:
         self._app = app
         self._redis_provider = redis_provider
         self._ttl_seconds = ttl_seconds
         self._jwt_secret = jwt_secret
         self._path_prefix = path_prefix
+        self._exempt_prefixes = tuple(exempt_prefixes)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         raw_key = self._match(scope)
@@ -73,6 +76,8 @@ class IdempotencyMiddleware:
             return None
         path = scope.get("path", "")
         if not isinstance(path, str) or not path.startswith(self._path_prefix):
+            return None
+        if path.startswith(self._exempt_prefixes):
             return None
         return _get_header(scope, b"idempotency-key")
 
