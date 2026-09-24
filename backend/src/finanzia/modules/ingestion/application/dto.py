@@ -178,9 +178,11 @@ class GmailSyncResult:
 
     `status`: `synced`, `up_to_date` (el aviso ya estaba cubierto por el cursor),
     `no_connection`, `inactive` (conexion `revoked`/`error`), `revoked` (Google
-    respondio `invalid_grant` en esta pasada) o `undecryptable` (el token guardado
-    no descifra; la conexion pasa a `error`). `skipped` son ids que Gmail ya no
-    devuelve (borrados entre `history.list` y `messages.get`).
+    respondio `invalid_grant` en esta pasada), `undecryptable` (el token guardado
+    no descifra; la conexion pasa a `error`) o `error` (rechazo permanente de
+    Google en `access_token`/`history.list`, p. ej. `invalid_client`; la conexion
+    tambien pasa a `error`). `skipped` son ids que Gmail ya no devuelve (borrados
+    entre `history.list` y `messages.get`).
     """
 
     status: str

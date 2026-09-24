@@ -241,6 +241,26 @@ async def test_invalid_grant_marca_la_conexion_revoked(
     assert connection.history_id == HISTORY_ID
 
 
+async def test_rechazo_permanente_en_refresh_marca_la_conexion_error(
+    google: FakeGoogle,
+    user: AuthedUser,
+    run_sync: RunSync,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Carry-in Task 5: un rechazo permanente de Google (p. ej. `invalid_client`,
+    aqui un 403 generico que no es `invalid_grant`) al pedir el access token marca
+    la conexion `error` sin propagar (nada que reintentar via arq).
+    """
+    google.status_by_operation["refresh"] = 403
+
+    (result,) = await run_sync(user.id)
+
+    assert result.status == "error"
+    connection = await _connection(session_factory, user.id)
+    assert connection.status is GmailConnectionStatus.ERROR
+    assert connection.history_id == HISTORY_ID  # el cursor no se toca
+
+
 async def test_error_transitorio_se_propaga_y_suelta_el_lock(
     google: FakeGoogle,
     user: AuthedUser,

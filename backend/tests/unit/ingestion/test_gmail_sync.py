@@ -16,6 +16,7 @@ from finanzia.modules.ingestion.domain.entities import GmailConnection
 from finanzia.modules.ingestion.domain.enums import Channel, GmailConnectionStatus
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
+    GmailRequestRejected,
     GmailSyncEnqueueFailed,
     GmailTransientError,
 )
@@ -237,6 +238,24 @@ async def test_token_indescifrable_marca_la_conexion_error() -> None:
     assert result.status == "undecryptable"
     assert deps.stored().status is GmailConnectionStatus.ERROR
     assert deps.gmail.calls == []
+
+
+@pytest.mark.parametrize("operation", ["access_token", "history"])
+async def test_rechazo_permanente_marca_la_conexion_error_sin_propagar(operation: str) -> None:
+    # Carry-in Task 5: `invalid_client` u otro rechazo permanente de Google en
+    # `access_token`/`history.list` no se arregla reintentando (a diferencia de
+    # `GmailTransientError`), asi que la conexion pasa a `error` sin que el job
+    # se propague (nada de `Retry` de arq).
+    deps = _Deps()
+    await deps.seed()
+    deps.gmail.history[CURSOR] = ["m1"]
+    deps.gmail.errors[operation] = GmailRequestRejected(f"{operation}: invalid_client")
+
+    result = await deps.sync().execute(USER)
+
+    assert result.status == "error"
+    assert deps.stored().status is GmailConnectionStatus.ERROR
+    assert deps.stored().history_id == CURSOR  # el cursor no se toca
 
 
 @pytest.mark.parametrize("operation", ["history", "get_message"])

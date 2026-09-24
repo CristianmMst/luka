@@ -76,7 +76,11 @@ class SyncGmail:
     - `GmailAuthRevoked` (refresh token revocado) marca la conexion `revoked`.
     - `GmailTransientError` se propaga sin tocar el cursor: el job se reintenta y
       la ingesta es idempotente, asi que repetir mensajes no duplica nada.
-    - Un mensaje que Gmail ya no devuelve (`GmailRequestRejected`) se salta.
+    - `GmailRequestRejected` permanente en `access_token`/`history.list` (p. ej.
+      `invalid_client`) marca la conexion `error`, sin propagar (nada que
+      reintentar).
+    - Un mensaje que Gmail ya no devuelve (`GmailRequestRejected` en
+      `messages.get`) se salta.
     """
 
     def __init__(  # noqa: PLR0913 - un parametro por port + la config del resync
@@ -100,7 +104,7 @@ class SyncGmail:
         self._resync_days = resync_days
         self._resync_limit = resync_limit
 
-    async def execute(
+    async def execute(  # noqa: PLR0911 - un return por rama de estado (revoked/error/etc.)
         self, user_id: UUID, notified_history_id: int | None = None
     ) -> GmailSyncResult:
         connection = await self._repo.get(user_id)
@@ -125,6 +129,13 @@ class SyncGmail:
         except GmailAuthRevoked:
             await self._mark(connection, GmailConnectionStatus.REVOKED)
             return GmailSyncResult("revoked")
+        except GmailRequestRejected:
+            # Rechazo permanente de `access_token`/`history.list` (p. ej.
+            # `invalid_client`): reintentar no lo arregla, asi que la conexion pasa
+            # a `error` en vez de dejar que el job se propague y arq lo reintente
+            # sin motivo (carry-in Task 5, controller ruling).
+            await self._mark(connection, GmailConnectionStatus.ERROR)
+            return GmailSyncResult("error")
 
         result = await self._ingest_all(connection, access_token, message_ids, resync=resync)
         await self._repo.record_sync(

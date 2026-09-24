@@ -96,6 +96,17 @@ async def test_catalogo_de_constraints_de_gmail_connections(
 async def test_db_clean_vacia_gmail_connections(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    """Antes/despues se filtran por `user_id` (no un `count(*)` global de la
+    tabla): un conteo absoluto dependeria de que ninguna otra fila de
+    `gmail_connections` sobreviva en ese instante, algo que este test no
+    controla por si mismo (depende de que el autouse `db_clean` de
+    `tests/integration/ingestion/conftest.py` haya corrido antes, y de que
+    ningun otro test dentro del mismo archivo deje una fila huerfana, p. ej.
+    `test_dos_filas_para_el_mismo_usuario_lanza_integrity_error`, cuyo primer
+    insert si se confirma). Filtrar por `user_id` hace la asercion valida sin
+    importar el orden de ejecucion de los demas tests (bug preexistente,
+    controller ruling Task 4/carry-in Task 5).
+    """
     async with session_factory() as session:
         user_id = await _insert_user(
             session, sub="sub-gmail-db-clean", email="gmail-db-clean@example.com"
@@ -105,13 +116,19 @@ async def test_db_clean_vacia_gmail_connections(
     await insert_gmail_connection(session_factory, user_id=user_id)
 
     async with session_factory() as session:
-        antes = (await session.execute(text("SELECT count(*) FROM gmail_connections"))).scalar_one()
+        antes = (
+            await session.execute(
+                text("SELECT count(*) FROM gmail_connections WHERE user_id = :id"), {"id": user_id}
+            )
+        ).scalar_one()
     assert antes == 1
 
     await clean_user_tables(session_factory)
 
     async with session_factory() as session:
         despues = (
-            await session.execute(text("SELECT count(*) FROM gmail_connections"))
+            await session.execute(
+                text("SELECT count(*) FROM gmail_connections WHERE user_id = :id"), {"id": user_id}
+            )
         ).scalar_one()
     assert despues == 0
