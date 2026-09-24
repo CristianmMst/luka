@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -23,6 +24,8 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailTransientError,
 )
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
+from finanzia.shared.logging import configure_logging
+from finanzia.shared.settings import Settings
 
 _API = "https://gmail.googleapis.com/gmail/v1/users/me"
 _TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -214,7 +217,6 @@ class TestWatch:
         assert captured["json"] == {
             "topicName": "projects/p/topics/t",
             "labelIds": ["INBOX"],
-            "labelFilterBehavior": "INCLUDE",
         }
         assert history_id == 12345
         assert expires_at == datetime.fromtimestamp(1_790_000_000, tz=UTC)
@@ -283,6 +285,7 @@ class TestHistory:
         assert dict(seen[0].params) == {
             "startHistoryId": "100",
             "historyTypes": "messageAdded",
+            "labelId": "INBOX",
         }
         assert seen[1].params["pageToken"] == "p2"
 
@@ -314,7 +317,7 @@ class TestHistory:
 
         assert await client.recent_message_ids(_SECRET_ACCESS, days=3) == ["a", "b", "c"]
         assert seen[0].path == "/gmail/v1/users/me/messages"
-        assert dict(seen[0].params) == {"q": "newer_than:3d", "maxResults": "100"}
+        assert dict(seen[0].params) == {"q": "in:inbox newer_than:3d", "maxResults": "100"}
         assert seen[1].params["pageToken"] == "n"
 
     async def test_recent_message_ids_buzon_vacio(self, make_client: ClientFactory) -> None:
@@ -452,6 +455,24 @@ class TestErroresTransitorios:
         with pytest.raises(GmailTransientError):
             await client.watch(_SECRET_ACCESS, "t")
 
+    async def test_401_de_gmail_es_transitorio_para_reintentar_con_token_nuevo(
+        self, make_client: ClientFactory
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(401, json={"error": {"code": 401}}))
+        with pytest.raises(GmailTransientError):
+            await client.get_message(_SECRET_ACCESS, "x")
+        with pytest.raises(GmailTransientError):
+            await client.history_new_message_ids(_SECRET_ACCESS, 1)
+        with pytest.raises(GmailTransientError):
+            await client.stop(_SECRET_ACCESS)
+
+    async def test_401_del_endpoint_de_token_no_es_transitorio(
+        self, make_client: ClientFactory
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(401, json={"error": "invalid_client"}))
+        with pytest.raises(GmailRequestRejected):
+            await client.access_token(_SECRET_REFRESH)
+
     async def test_otro_4xx_es_rechazo(self, make_client: ClientFactory) -> None:
         client = make_client(lambda _: httpx.Response(403, json={"error": {"code": 403}}))
         with pytest.raises(GmailRequestRejected):
@@ -493,6 +514,38 @@ class TestLogsSinSecretos:
         for secret in (_SECRET_ACCESS, _SECRET_REFRESH, _SECRET_CODE, _ACCOUNT_EMAIL, "18f0c0ffee"):
             assert secret not in dumped
         assert "Compraste" not in dumped
+
+    async def test_httpx_no_emite_registros_con_la_url_cruda(
+        self, make_client: ClientFactory, settings: Settings
+    ) -> None:
+        """httpx loguea `HTTP Request: GET <url>` en INFO: la URL lleva ids de mensaje,
+        `startHistoryId`, `pageToken` y `q`. `configure_logging` lo sube a WARNING.
+
+        No usa `caplog`: `configure_logging` reemplaza los handlers del root (y con
+        ellos el de `caplog`), asi que se agrega un colector propio despues.
+        """
+        records: list[logging.LogRecord] = []
+
+        class _Collector(logging.Handler):
+            def emit(self, record: logging.LogRecord) -> None:
+                records.append(record)
+
+        fixture = bancolombia_fixtures()[0]
+        client = make_client(lambda _: httpx.Response(200, json=_full_message(fixture.body)))
+        root = logging.getLogger()
+        saved_handlers, saved_level = root.handlers[:], root.level
+        configure_logging(settings)
+        collector = _Collector(level=logging.DEBUG)
+        root.addHandler(collector)
+        root.setLevel(logging.DEBUG)
+        try:
+            await client.get_message(_SECRET_ACCESS, "18f0c0ffee")
+        finally:
+            root.handlers, root.level = saved_handlers, saved_level
+
+        messages = [record.getMessage() for record in records]
+        assert not [m for m in messages if "18f0c0ffee" in m or "/gmail/v1/" in m]
+        assert not [r for r in records if r.name.startswith(("httpx", "httpcore"))]
 
 
 @pytest.mark.unit

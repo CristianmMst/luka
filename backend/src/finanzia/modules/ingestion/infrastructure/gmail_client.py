@@ -109,7 +109,8 @@ class GoogleGmailClient:
     # --- Gmail API -----------------------------------------------------------
 
     async def watch(self, access_token: str, topic: str) -> tuple[int, datetime]:
-        body = {"topicName": topic, "labelIds": ["INBOX"], "labelFilterBehavior": "INCLUDE"}
+        # `labelIds` ya filtra por inclusion (default de Google); sin `labelFilterBehavior`.
+        body = {"topicName": topic, "labelIds": ["INBOX"]}
         data = await self._api("watch", "POST", "/watch", access_token, json=body)
         try:
             history_id = int(data["historyId"])
@@ -131,6 +132,7 @@ class GoogleGmailClient:
         params: dict[str, str] = {
             "startHistoryId": str(start_history_id),
             "historyTypes": "messageAdded",
+            "labelId": "INBOX",
         }
         while True:
             response = await self._send(
@@ -157,7 +159,10 @@ class GoogleGmailClient:
 
     async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
         ids: list[str] = []
-        params: dict[str, str] = {"q": f"newer_than:{days}d", "maxResults": str(_PAGE_SIZE)}
+        params: dict[str, str] = {
+            "q": f"in:inbox newer_than:{days}d",
+            "maxResults": str(_PAGE_SIZE),
+        }
         while True:
             page = await self._api("messages.list", "GET", "/messages", access_token, params=params)
             try:
@@ -231,6 +236,10 @@ class GoogleGmailClient:
                 latency_ms=int((time.monotonic() - start) * 1000),
             )
         if response.is_server_error or response.status_code == httpx.codes.TOO_MANY_REQUESTS:
+            raise GmailTransientError(f"{operation}: {response.status_code}")
+        if response.status_code == httpx.codes.UNAUTHORIZED and url.startswith(GMAIL_API_BASE):
+            # Access token vencido a mitad del job: reintentar genera uno nuevo. El 401
+            # del endpoint de token (`invalid_client`) no pasa por aqui: es rechazo.
             raise GmailTransientError(f"{operation}: {response.status_code}")
         return response
 

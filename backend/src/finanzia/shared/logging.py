@@ -95,5 +95,9 @@ def configure_logging(settings: Settings) -> None:
     access_logger.setLevel(logging.CRITICAL)
 
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    # httpx/httpcore loguean la URL cruda en INFO (`HTTP Request: GET <url>`): lleva ids
+    # de mensaje de Gmail, `startHistoryId`, `pageToken` y `q` (spec 009 §5).
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     setattr(root_logger, _CONFIGURED_ATTR, True)
