@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:finanzia/app/app.dart';
 import 'package:finanzia/app/router.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
@@ -48,6 +50,15 @@ void main() {
     when(
       () => transactions.watch(any(), limit: any(named: 'limit')),
     ).thenAnswer((_) => Stream.value(const []));
+    when(
+      () => transactions.watchOne(any()),
+    ).thenAnswer((_) => Stream.value(null));
+    when(
+      () => transactions.watchCategories(),
+    ).thenAnswer((_) => Stream.value(const []));
+    when(
+      () => transactions.fetchSources(any()),
+    ).thenAnswer((_) async => const []);
   });
 
   ProviderContainer buildContainer({
@@ -157,6 +168,50 @@ void main() {
     expect(find.text('2'), findsOneWidget);
     expect(find.bySemanticsLabel('2 por revisar'), findsOneWidget);
     handle.dispose();
+  });
+
+  testWidgets('el badge de Revisión no se recorta con 10 o más', (
+    tester,
+  ) async {
+    await pumpShell(tester, buildContainer(reviewCount: 12));
+
+    final text = find.text('12');
+    expect(text, findsOneWidget);
+    final badge = find.ancestor(of: text, matching: find.byType(Container));
+    final decoration =
+        tester.widget<Container>(badge.first).decoration! as BoxDecoration;
+    // Un círculo recorta dos dígitos: la píldora crece a lo ancho.
+    expect(decoration.shape, BoxShape.rectangle);
+    expect(decoration.borderRadius, isNotNull);
+    final badgeSize = tester.getSize(badge.first);
+    expect(badgeSize.height, greaterThanOrEqualTo(18));
+    expect(
+      badgeSize.width,
+      greaterThanOrEqualTo(tester.getSize(text).width + 8),
+    );
+  });
+
+  testWidgets('el detalle se abre a pantalla completa, sin barra inferior', (
+    tester,
+  ) async {
+    final container = buildContainer();
+    await pumpShell(tester, container);
+    await tester.tap(find.text('Movimientos'));
+    await tester.pumpAndSettle();
+
+    unawaited(
+      container.read(routerProvider).push('${Routes.transactions}/tx1'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajustes'), findsNothing);
+    expect(find.text('Movimientos'), findsNothing);
+
+    container.read(routerProvider).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajustes'), findsOneWidget);
+    expect(find.text('Aún no hay movimientos'), findsOneWidget);
   });
 
   testWidgets('el badge de Revisión se oculta con conteo 0', (tester) async {

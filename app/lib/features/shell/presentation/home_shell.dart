@@ -171,7 +171,9 @@ class _Destination extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             color: brand.expense,
-                            shape: BoxShape.circle,
+                            // Píldora: con 10 o más crece a lo ancho sin
+                            // recortar los dígitos; con uno es un círculo.
+                            borderRadius: BorderRadius.circular(9),
                           ),
                           alignment: Alignment.center,
                           child: ExcludeSemantics(

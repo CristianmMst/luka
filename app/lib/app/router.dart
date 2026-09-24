@@ -9,7 +9,7 @@ import 'package:finanzia/features/shell/presentation/registrar_page.dart';
 import 'package:finanzia/features/shell/presentation/revision_page.dart';
 import 'package:finanzia/features/transactions/presentation/transaction_detail_page.dart';
 import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,7 +37,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     ..listen(authControllerProvider, (_, next) => authState.value = next)
     ..onDispose(authState.dispose);
 
+  // El detalle se apila sobre el navegador raíz: a pantalla completa, sin
+  // la barra inferior del shell (diseño DetalleA).
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
   final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: Routes.splash,
     refreshListenable: authState,
     redirect: (context, state) =>
@@ -71,6 +75,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: ':id',
+                    parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => TransactionDetailPage(
                       id: state.pathParameters['id']!,
                     ),
