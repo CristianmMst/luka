@@ -40,15 +40,9 @@ uv run arq finanzia.worker.WorkerSettings
 
 El worker arranca el observador `ledger-observer`, que consume `TransactionCaptured` desde Redis Streams y solo loguea metadatos (nunca montos ni comercios, spec 009 §5).
 
-### Perfil `app` de Docker Compose
+### Docker Compose solo levanta infraestructura
 
-Para levantar API + worker también en contenedores (imagen construida desde el `Dockerfile` del backend), junto con Postgres/Redis:
-
-```sh
-docker compose -f docker-compose.dev.yml --profile app up -d --build
-```
-
-Esto agrega los servicios `api` (puerto 8000) y `worker` al `up` normal de infra. Sin `--profile app`, `docker compose up` solo levanta Postgres y Redis (el flujo de desarrollo habitual, con la API corriendo local vía `uv run uvicorn`).
+`docker-compose.dev.yml` levanta únicamente Postgres y Redis. La API (`just dev`) y el worker (`just worker`) siempre corren locales, así usan el código y el `.env` del momento. Un contenedor lee el `.env` solo al crearse y su imagen queda con el código de cuando se construyó. El perfil `app`, que corría API y worker en contenedores, se retiró el 2026-09-23 por eso: un contenedor viejo con el client ID de ejemplo rechazaba el login con 401.
 
 ## 4. Comandos de calidad
 
@@ -500,7 +494,7 @@ grep -rn TBD docs/
   # solo docs/constitution.md:56 (la frase de la regla P8 en sí misma)
 ```
 
-Recorrido en vivo (Docker Compose, perfil `app`):
+Recorrido en vivo (Docker Compose, perfil `app`; registro histórico, el perfil se retiró el 2026-09-23):
 
 ```sh
 docker compose -f docker-compose.dev.yml --profile app up -d --build

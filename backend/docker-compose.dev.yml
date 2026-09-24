@@ -27,34 +27,8 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
-    profiles: ["app"]
-    build: .
-    env_file: .env
-    environment:
-      FINANZIA_DATABASE_URL: postgresql+asyncpg://finanzia:finanzia@postgres:5432/finanzia
-      FINANZIA_REDIS_URL: redis://redis:6379/0
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  worker:
-    profiles: ["app"]
-    build: .
-    command: ["arq", "finanzia.worker.WorkerSettings"]
-    env_file: .env
-    environment:
-      FINANZIA_DATABASE_URL: postgresql+asyncpg://finanzia:finanzia@postgres:5432/finanzia
-      FINANZIA_REDIS_URL: redis://redis:6379/0
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+# Solo infraestructura: la API (`just dev`) y el worker (`just worker`) corren
+# locales, con el código y el `.env` actuales.
 
 volumes:
   finanzia_postgres_data:
