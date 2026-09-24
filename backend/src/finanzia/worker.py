@@ -146,6 +146,32 @@ async def purge_raw_message_bodies(ctx: dict[str, Any]) -> None:
     _logger.info("raw_message_bodies_purged", count=count)
 
 
+async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
+    """Cron diario 08:00 UTC = 03:00 Bogota (mismo horario que la purga, F3.5):
+    renueva el watch de Gmail de toda conexion `active` cuyo `watch_expires_at`
+    venza dentro de las proximas 48h (spec 006 §2.1).
+
+    Un fallo en una conexion nunca corta las demas (`RenewGmailWatches`): un
+    `GmailAuthRevoked` la deja `revoked`, cualquier otro error de Gmail o un
+    token indescifrable la deja `error`. Solo loguea contadores, nunca el email
+    de la cuenta ni el refresh token (P1/P6).
+    """
+    session_factory = ctx.get("events_session_factory")
+    gmail = ctx.get("gmail_client")
+    if session_factory is None or gmail is None:
+        _logger.warning("cron_sin_contexto", job="renew_gmail_watches")
+        return
+    clock = SystemClock()
+    async with session_factory() as session:
+        summary = await ingestion_public.renew_gmail_watches(session, gmail, clock, get_settings())
+    _logger.info(
+        "gmail_watches_renewed",
+        renewed=summary.renewed,
+        revoked=summary.revoked,
+        errored=summary.errored,
+    )
+
+
 async def requeue_pending_raw_messages(ctx: dict[str, Any]) -> None:
     """Cron cada 15 min: republica `RawMessageReceived` para `raw_messages` `pending`
     huerfanos (riesgo 4 / D9, mitiga la falta de outbox sin outbox).
@@ -410,6 +436,8 @@ class WorkerSettings:
     cron_jobs: ClassVar[list[Any]] = [
         cron(purge_raw_message_bodies, hour=8, minute=0, run_at_startup=False),
         cron(requeue_pending_raw_messages, minute={0, 15, 30, 45}, run_at_startup=False),
+        # F3.5: mismo horario que la purga (08:00 UTC = 03:00 Bogota, ver arriba).
+        cron(renew_gmail_watches, hour=8, minute=0, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))
     on_startup = on_startup

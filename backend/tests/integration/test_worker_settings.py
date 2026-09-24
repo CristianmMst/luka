@@ -20,16 +20,20 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
+import httpx
 import pytest
 import structlog.testing
 from arq import Retry, Worker, create_pool
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
+from support.fake_google import FakeGoogle
+from support.gmail_connections import insert_gmail_connection
 from support.raw_messages import insert_raw_message
 
 from finanzia.modules.ingestion import public as ingestion_public
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
+from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
 from finanzia.shared.settings import Settings, get_settings
 
 pytestmark = pytest.mark.integration
@@ -248,16 +252,21 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
     assert lingering == []
 
 
-def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_settings_module) -> None:
+def test_cron_jobs_tiene_los_tres_jobs_con_sus_horarios(worker_settings_module) -> None:
     """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 08:00 UTC (= 03:00 en
     Bogota, el contenedor corre en UTC) y reencolado cada 15 min
-    (`minute={0,15,30,45}`); ninguno corre al arrancar (`run_at_startup=False`).
+    (`minute={0,15,30,45}`). Task 5 (F3.5): renovacion de watches en el mismo
+    horario que la purga. Ninguno corre al arrancar (`run_at_startup=False`).
     """
     cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
-    assert len(cron_jobs) == 2
+    assert len(cron_jobs) == 3
 
     by_name = {job.name: job for job in cron_jobs}
-    assert set(by_name) == {"cron:purge_raw_message_bodies", "cron:requeue_pending_raw_messages"}
+    assert set(by_name) == {
+        "cron:purge_raw_message_bodies",
+        "cron:requeue_pending_raw_messages",
+        "cron:renew_gmail_watches",
+    }
 
     purge_job = by_name["cron:purge_raw_message_bodies"]
     assert purge_job.hour == 8  # UTC = 03:00 America/Bogota (UTC-5 fijo)
@@ -268,8 +277,16 @@ def test_cron_jobs_tiene_los_dos_jobs_de_task_10_con_sus_horarios(worker_setting
     assert requeue_job.minute == {0, 15, 30, 45}
     assert requeue_job.run_at_startup is False
 
+    renew_job = by_name["cron:renew_gmail_watches"]
+    assert renew_job.hour == 8
+    assert renew_job.minute == 0
+    assert renew_job.run_at_startup is False
 
-@pytest.mark.parametrize("job_name", ["purge_raw_message_bodies", "requeue_pending_raw_messages"])
+
+@pytest.mark.parametrize(
+    "job_name",
+    ["purge_raw_message_bodies", "requeue_pending_raw_messages", "renew_gmail_watches"],
+)
 async def test_crons_con_ctx_vacio_loguean_y_no_revientan(worker_settings_module, job_name) -> None:
     """Si `on_startup` murio a mitad, `ctx` no trae las claves de eventos: los crons
     salen temprano con un warning en vez de un `KeyError` (review final A10).
@@ -392,6 +409,71 @@ async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_co
         assert logs[0]["count"] == 1
     finally:
         await worker_settings_module.on_shutdown(ctx)
+
+
+# --- renew_gmail_watches (F3.5) --------------------------------------------------------
+
+
+def test_renew_gmail_watches_esta_registrado_como_cron(worker_settings_module) -> None:
+    cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
+    assert any(job.name == "cron:renew_gmail_watches" for job in cron_jobs)
+
+
+async def test_renew_gmail_watches_renueva_y_loguea_solo_contadores(  # noqa: PLR0913, PLR0917 - un parametro por fixture inyectada (patron pytest)
+    worker_settings_module,
+    monkeypatch: pytest.MonkeyPatch,
+    redis_clean: None,
+    db_clean: None,
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """El job cron delega en `ingestion.public.renew_gmail_watches` sobre una
+    sesion abierta desde `ctx["events_session_factory"]`, usando el cliente
+    Gmail real de `ctx["gmail_client"]` (aqui, sobre `FakeGoogle`), y loguea
+    solo los contadores (nunca el email de la cuenta ni el refresh token, P1/P6).
+    """
+    del redis_clean, db_clean
+    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    get_settings.cache_clear()
+
+    user = await user_factory(sub="worker-cron-renew", email="worker-cron-renew@example.com")
+    settings = get_settings()
+    await insert_gmail_connection(
+        session_factory,
+        user_id=user.id,
+        refresh_token_enc=AesGcmTokenCipher.from_settings(settings).encrypt(
+            user.id, "1//refresh-token-secreto"
+        ),
+        history_id=100,
+        watch_expires_at=datetime.now(UTC) + timedelta(hours=10),  # vence en < 48h
+    )
+
+    google = FakeGoogle()
+    http_client = httpx.AsyncClient(transport=google.transport())
+
+    ctx = _new_worker_ctx()
+    await worker_settings_module.on_startup(ctx)
+    try:
+        ctx["gmail_client"] = worker_settings_module.build_gmail_client(settings, http_client)
+        with structlog.testing.capture_logs() as captured:
+            await worker_settings_module.renew_gmail_watches(ctx)
+
+        (finished,) = [e for e in captured if e.get("event") == "gmail_watches_renewed"]
+        assert (finished["renewed"], finished["revoked"], finished["errored"]) == (1, 0, 0)
+        assert "email" not in repr(finished)
+        assert "refresh" not in repr(finished)
+    finally:
+        await http_client.aclose()
+        await worker_settings_module.on_shutdown(ctx)
+
+    async with session_factory() as session:
+        row = (
+            await session.execute(
+                text("SELECT watch_expires_at FROM gmail_connections WHERE user_id = :id"),
+                {"id": user.id},
+            )
+        ).one()
+    assert row.watch_expires_at is not None
 
 
 # --- sync_gmail (F3.4) ----------------------------------------------------------------

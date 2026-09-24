@@ -1,7 +1,7 @@
 """Tests de integracion de `SqlAlchemyGmailConnectionRepository` (spec 004 §2.3, F3.2)."""
 
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -249,3 +249,89 @@ async def test_mark_status_cambia_el_estado(
         await session.commit()
 
     assert (await _get(session_factory, user.id)).status is GmailConnectionStatus.REVOKED
+
+
+# --- F3.5: renovacion diaria de watches --------------------------------------------
+
+
+async def test_list_active_expiring_before_solo_trae_activas_por_vencer(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    por_vencer = await user_factory()
+    lejos = await user_factory(sub="sub-2", email="beatriz@example.com")
+    revocada = await user_factory(sub="sub-3", email="carla@example.com")
+    sin_watch = await user_factory(sub="sub-4", email="diana@example.com")
+    limite = NOW + timedelta(hours=48)
+
+    await _seed(
+        session_factory,
+        _connection(user_id=por_vencer.id, watch_expires_at=NOW + timedelta(hours=10)),
+    )
+    await _seed(
+        session_factory,
+        _connection(user_id=lejos.id, watch_expires_at=NOW + timedelta(days=6)),
+    )
+    await _seed(
+        session_factory,
+        _connection(
+            user_id=revocada.id,
+            watch_expires_at=NOW + timedelta(hours=1),
+            status=GmailConnectionStatus.REVOKED,
+        ),
+    )
+    await _seed(session_factory, _connection(user_id=sin_watch.id, watch_expires_at=None))
+
+    async with session_factory() as session:
+        found = await SqlAlchemyGmailConnectionRepository(session).list_active_expiring_before(
+            limite
+        )
+
+    assert [c.user_id for c in found] == [por_vencer.id]
+
+
+async def test_renew_watch_avanza_watch_expires_at_y_el_cursor_solo_hacia_adelante(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    user = await user_factory()
+    await _seed(session_factory, _connection(user_id=user.id, history_id=500))
+    later = datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
+
+    async with session_factory() as session:
+        await SqlAlchemyGmailConnectionRepository(session).renew_watch(
+            user.id, "ana@example.com", 300, later, NOW
+        )
+        await session.commit()
+
+    stored = await _get(session_factory, user.id)
+    assert stored.history_id == 500  # no retrocede: 300 < 500
+    assert stored.watch_expires_at == later
+
+    async with session_factory() as session:
+        await SqlAlchemyGmailConnectionRepository(session).renew_watch(
+            user.id, "ana@example.com", 700, later, NOW
+        )
+        await session.commit()
+
+    assert (await _get(session_factory, user.id)).history_id == 700
+
+
+async def test_renew_watch_no_toca_la_conexion_de_otra_cuenta(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    user = await user_factory()
+    await _seed(
+        session_factory, _connection(user_id=user.id, email="nueva@gmail.com", history_id=10)
+    )
+    later = datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
+
+    async with session_factory() as session:
+        await SqlAlchemyGmailConnectionRepository(session).renew_watch(
+            user.id, "vieja@gmail.com", 999, later, NOW
+        )
+        await session.commit()
+
+    stored = await _get(session_factory, user.id)
+    assert (stored.history_id, stored.watch_expires_at) == (10, None)

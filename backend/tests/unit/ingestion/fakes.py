@@ -204,6 +204,29 @@ class InMemoryGmailConnectionRepo:
             return
         self.by_user[user_id] = replace(current, status=status, updated_at=now)
 
+    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
+        return sorted(
+            (
+                c
+                for c in self.by_user.values()
+                if c.status is GmailConnectionStatus.ACTIVE
+                and c.watch_expires_at is not None
+                and c.watch_expires_at < before
+            ),
+            key=lambda c: c.watch_expires_at,  # type: ignore[arg-type,return-value]
+        )
+
+    async def renew_watch(
+        self, user_id: UUID, email: str, history_id: int, watch_expires_at: datetime, now: datetime
+    ) -> None:
+        current = self.by_user.get(user_id)
+        if current is None or current.email != email:
+            return
+        cursor = max(current.history_id or 0, history_id)
+        self.by_user[user_id] = replace(
+            current, history_id=cursor, watch_expires_at=watch_expires_at, updated_at=now
+        )
+
 
 class RecordingSyncQueue:
     """Doble de `GmailSyncQueuePort`: guarda `(user_id, history_id)` de cada job encolado."""

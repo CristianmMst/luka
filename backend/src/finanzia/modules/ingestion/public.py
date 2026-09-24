@@ -25,6 +25,7 @@ from finanzia.modules.ingestion.application.dto import (
     NotificationItemInput,
     RawMessageInput,
     RawMessageView,
+    RenewWatchesSummary,
     RequeueSummary,
 )
 from finanzia.modules.ingestion.application.use_cases.gmail_connection import GetGmailStatus
@@ -34,6 +35,7 @@ from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch
 from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
 from finanzia.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
 from finanzia.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
+from finanzia.modules.ingestion.application.use_cases.renew_gmail_watches import RenewGmailWatches
 from finanzia.modules.ingestion.application.use_cases.requeue_pending import (
     RequeuePendingRawMessages,
 )
@@ -50,6 +52,7 @@ from finanzia.modules.ingestion.infrastructure.repositories import (
     SqlAlchemyRawMessageRepository,
 )
 from finanzia.modules.ingestion.infrastructure.sender_policy import ParsingSenderPolicy
+from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
 from finanzia.modules.ingestion.infrastructure.uow import SqlAlchemyUnitOfWork
 
 if TYPE_CHECKING:
@@ -58,8 +61,9 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from finanzia.modules.ingestion.application.ports import ClockPort
+    from finanzia.modules.ingestion.application.ports import ClockPort, GmailClientPort
     from finanzia.shared.events.port import EventBusPort
+    from finanzia.shared.settings import Settings
 
 __all__ = [
     "Accepted",
@@ -73,6 +77,7 @@ __all__ = [
     "RawMessageInput",
     "RawMessageReceived",
     "RawMessageView",
+    "RenewWatchesSummary",
     "RequeueSummary",
     "get_raw_message_for_parsing",
     "gmail_connection_status",
@@ -81,6 +86,7 @@ __all__ = [
     "load_raw_messages_for_review",
     "mark_raw_message",
     "purge_expired_bodies",
+    "renew_gmail_watches",
     "requeue_pending_raw_messages",
     "run_gmail_sync",
 ]
@@ -227,6 +233,23 @@ async def requeue_pending_raw_messages(
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(older_than=older_than, limit=limit)
+
+
+async def renew_gmail_watches(
+    session: AsyncSession, gmail: GmailClientPort, clock: ClockPort, settings: Settings
+) -> RenewWatchesSummary:
+    """Renueva los watches de Gmail por vencer (cron diario, spec 006 §2.1, F3.5);
+    comitea. Un fallo en una conexion nunca corta las demas (ver `RenewGmailWatches`).
+    """
+    use_case = RenewGmailWatches(
+        repo=SqlAlchemyGmailConnectionRepository(session),
+        gmail=gmail,
+        cipher=AesGcmTokenCipher.from_settings(settings),
+        clock=clock,
+        uow=SqlAlchemyUnitOfWork(session),
+        topic=settings.gmail_pubsub_topic,
+    )
+    return await use_case.execute()
 
 
 async def gmail_connection_status(session: AsyncSession, user_id: UUID) -> str:

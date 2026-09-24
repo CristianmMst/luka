@@ -102,6 +102,21 @@ class GmailConnectionRepositoryPort(Protocol):
         """Cambia el `status` de la conexion, con la misma guarda por `email`."""
         ...
 
+    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
+        """Conexiones `active` cuyo `watch_expires_at` vence antes de `before`
+        (cron de renovacion diaria, spec 006 §2.1, F3.5).
+        """
+        ...
+
+    async def renew_watch(
+        self, user_id: UUID, email: str, history_id: int, watch_expires_at: datetime, now: datetime
+    ) -> None:
+        """Renueva el watch (F3.5): fija `watch_expires_at` y avanza `history_id` a
+        `GREATEST(actual, nuevo)` (nunca retrocede), solo si la conexion sigue
+        siendo de `email` (misma guarda que `record_sync`/`mark_status`).
+        """
+        ...
+
 
 class TokenCipherPort(Protocol):
     """Cifrado en reposo del refresh token de Gmail, atado al usuario (spec 009 §3)."""

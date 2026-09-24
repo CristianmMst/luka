@@ -173,5 +173,34 @@ class SqlAlchemyGmailConnectionRepository:
         )
         await self._session.execute(stmt)
 
+    async def list_active_expiring_before(self, before: datetime) -> list[GmailConnection]:
+        stmt = (
+            select(GmailConnectionRow)
+            .where(
+                GmailConnectionRow.status == GmailConnectionStatus.ACTIVE.value,
+                GmailConnectionRow.watch_expires_at < before,
+            )
+            .order_by(GmailConnectionRow.watch_expires_at.asc())
+        )
+        result = await self._session.execute(stmt)
+        return [gmail_connection_row_to_entity(row) for row in result.scalars()]
+
+    async def renew_watch(
+        self, user_id: UUID, email: str, history_id: int, watch_expires_at: datetime, now: datetime
+    ) -> None:
+        """`GREATEST` en SQL: igual que `record_sync`, el cursor nunca retrocede."""
+        stmt = (
+            update(GmailConnectionRow)
+            .where(GmailConnectionRow.user_id == user_id, GmailConnectionRow.email == email)
+            .values(
+                history_id=func.greatest(
+                    func.coalesce(GmailConnectionRow.history_id, 0), history_id
+                ),
+                watch_expires_at=watch_expires_at,
+                updated_at=now,
+            )
+        )
+        await self._session.execute(stmt)
+
 
 __all__ = ["SqlAlchemyGmailConnectionRepository", "SqlAlchemyRawMessageRepository"]
