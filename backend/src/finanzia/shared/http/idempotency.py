@@ -285,6 +285,8 @@ async def _send_app_error(send: Send, error: AppError) -> None:
     body: dict[str, object] = {"code": error.code, "message": error.message}
     if error.field is not None:
         body["field"] = error.field
+    if error.reason is not None:
+        body["reason"] = error.reason
     payload = json.dumps({"error": body}).encode()
 
     headers = [(b"content-type", b"application/json")]

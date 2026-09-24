@@ -153,6 +153,7 @@ async def test_connect_con_codigo_invalido_responde_400_sin_guardar(
     error = response.json()["error"]
     assert error["code"] == "validation_error"
     assert error["field"] == "server_auth_code"
+    assert error["reason"] == "invalid_code"
     assert _CODE not in response.text
     assert await _stored_refresh_token(session_factory, settings, user) is None
 
@@ -173,6 +174,7 @@ async def test_connect_sin_refresh_token_responde_400_pidiendo_consentimiento(
     error = response.json()["error"]
     assert error["code"] == "validation_error"
     assert error["field"] == "server_auth_code"
+    assert error["reason"] == "refresh_token_missing"
     assert "consentimiento" in error["message"]
 
 
@@ -210,6 +212,7 @@ async def test_connect_sin_permiso_de_gmail_responde_400_revoca_y_no_guarda(
     assert response.status_code == 400
     error = response.json()["error"]
     assert (error["code"], error["field"]) == ("validation_error", "server_auth_code")
+    assert error["reason"] == "scope_not_granted"
     assert "permiso de Gmail" in error["message"]
     assert google.operations() == ["exchange", "revoke"]
     assert google.requests[1][1]["token"] == REFRESH_TOKEN

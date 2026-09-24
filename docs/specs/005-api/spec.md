@@ -12,6 +12,8 @@
 { "error": { "code": "validation_error", "message": "amount must be positive", "field": "amount" } }
 ```
 
+`field` y `reason` son opcionales y se omiten cuando no aplican. `reason` es un código estable (snake_case) que afina `code` cuando el cliente necesita distinguir casos con el mismo `code` y `field`; hoy solo lo llevan los 400 de `POST /gmail/connect` (§3). El cliente decide por `code`/`reason`, nunca por el texto de `message`.
+
 | HTTP | code | Cuándo |
 |---|---|---|
 | 400 | `validation_error` | entrada inválida; reemplaza el 422 por defecto de FastAPI. `field` es el `loc` del error sin el prefijo `body`/`query`/`path` |
@@ -63,9 +65,9 @@ Errores de `POST /gmail/connect`:
 
 | Caso | Respuesta |
 |---|---|
-| Código inválido, vencido o ya usado (`invalid_grant`) | 400 `validation_error`, `field: "server_auth_code"`. No se guarda nada |
-| Google no entregó refresh token (la app no pidió acceso offline o no forzó el consentimiento) | 400 `validation_error`, `field: "server_auth_code"`, con un mensaje que lo indica. No se guarda nada |
-| El usuario no concedió `gmail.readonly` en el consentimiento (el `scope` del grant no lo trae) | 400 `validation_error`, `field: "server_auth_code"`, mensaje "permiso de Gmail no concedido". El grant recién emitido se revoca (best effort) solo si el usuario no tiene una conexión `active`: Google revoca el grant completo y mataría esa conexión. No se guarda nada |
+| Código inválido, vencido o ya usado (`invalid_grant`) | 400 `validation_error`, `field: "server_auth_code"`, `reason: "invalid_code"`. No se guarda nada |
+| Google no entregó refresh token (la app no pidió acceso offline o no forzó el consentimiento) | 400 `validation_error`, `field: "server_auth_code"`, `reason: "refresh_token_missing"`, con un mensaje que lo indica. No se guarda nada |
+| El usuario no concedió `gmail.readonly` en el consentimiento (el `scope` del grant no lo trae) | 400 `validation_error`, `field: "server_auth_code"`, `reason: "scope_not_granted"`, mensaje "permiso de Gmail no concedido". El grant recién emitido se revoca (best effort) solo si el usuario no tiene una conexión `active`: Google revoca el grant completo y mataría esa conexión. No se guarda nada |
 | `users.getProfile` responde 403 con el scope concedido (cuota, `accessNotConfigured`) | 503 `upstream_unavailable`; no se revoca nada ni se guarda nada |
 | Google caído en el canje (timeout, 5xx, 429) | 503 `upstream_unavailable`. No se guarda nada |
 | El canje salió bien pero `watch` falló (transitorio o rechazo) | 200 con `status: "error"` y `watch_expires_at: null`: la conexión (con el token cifrado) queda guardada, porque el código ya se consumió y no se puede volver a canjear. El cron diario de renovación la toma (es `error` sin watch), reintenta el watch y, si sale bien, la deja `active`; una reconexión también la recupera. Si Google revocó el token recién emitido, `status: "revoked"` |

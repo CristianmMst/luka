@@ -29,23 +29,29 @@ _MESSAGE_BY_CODE = {
 }
 
 
-def _error_response(
+def _error_response(  # noqa: PLR0913 - un parametro por campo del sobre + headers y reason
     status: int,
     code: str,
     message: str,
     field: str | None = None,
+    *,
     headers: dict[str, str] | None = None,
+    reason: str | None = None,
 ) -> JSONResponse:
     error: dict[str, object] = {"code": code, "message": message}
     if field is not None:
         error["field"] = field
+    if reason is not None:
+        error["reason"] = reason
     return JSONResponse(status_code=status, content={"error": error}, headers=headers or None)
 
 
 async def _handle_app_error(request: Request, exc: Exception) -> JSONResponse:
     del request
     assert isinstance(exc, AppError)  # noqa: S101 - guardia de tipo para el dispatcher
-    return _error_response(exc.status, exc.code, exc.message, exc.field, exc.headers)
+    return _error_response(
+        exc.status, exc.code, exc.message, exc.field, headers=exc.headers, reason=exc.reason
+    )
 
 
 async def _handle_validation_error(request: Request, exc: Exception) -> JSONResponse:

@@ -215,7 +215,7 @@ Todas tienen el prefijo `FINANZIA_`. Solo las 6 marcadas como **obligatoria** va
 | `FINANZIA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
 | `FINANZIA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `finanzia-509500`) |
 | `FINANZIA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
-| `FINANZIA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3) |
+| `FINANZIA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3). En `prod` se rechaza la llave de ejemplo de `.env.example` |
 | `FINANZIA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/finanzia-509500/topics/gmail-push`) |
 | `FINANZIA_GMAIL_PUSH_AUDIENCE` | Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail` (default fijo `finanzia-gmail-push`; no cambia con la URL del túnel, ver §16) |
 | `FINANZIA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com`) |

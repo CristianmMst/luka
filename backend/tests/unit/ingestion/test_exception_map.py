@@ -15,15 +15,23 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.mark.parametrize(
-    "error", [InvalidServerAuthCode(), GmailRefreshTokenMissing("x"), GmailScopeNotGranted("x")]
+    ("error", "reason"),
+    [
+        (InvalidServerAuthCode(), "invalid_code"),
+        (GmailRefreshTokenMissing("x"), "refresh_token_missing"),
+        (GmailScopeNotGranted("x"), "scope_not_granted"),
+    ],
 )
-def test_fallos_del_canje_son_400_en_server_auth_code(error: Exception) -> None:
+def test_fallos_del_canje_son_400_en_server_auth_code_con_reason(
+    error: Exception, reason: str
+) -> None:
     app_error = INGESTION_EXCEPTION_MAP[type(error)](error)
 
-    assert (app_error.status, app_error.code, app_error.field) == (
+    assert (app_error.status, app_error.code, app_error.field, app_error.reason) == (
         400,
         "validation_error",
         "server_auth_code",
+        reason,
     )
 
 

@@ -9,7 +9,7 @@ from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel
 
 from finanzia.app import create_app
-from finanzia.shared.errors import AppError, ConflictError, NotFoundError
+from finanzia.shared.errors import AppError, ConflictError, NotFoundError, ValidationAppError
 from finanzia.shared.http.error_handlers import install_error_handlers
 from finanzia.shared.settings import Settings
 
@@ -36,6 +36,10 @@ def _build_test_app(settings: Settings) -> FastAPI:
     @router.get("/_test/not-found")
     async def _raise_not_found() -> None:
         raise NotFoundError
+
+    @router.get("/_test/reason")
+    async def _raise_with_reason() -> None:
+        raise ValidationAppError(message="motivo", field="campo", reason="motivo_estable")
 
     @router.get("/_test/boom")
     async def _raise_boom() -> None:
@@ -80,6 +84,24 @@ async def test_not_found_error_no_incluye_field_cuando_es_none(
     body = response.json()
     assert body["error"]["code"] == "not_found"
     assert "field" not in body["error"]
+    assert "reason" not in body["error"]
+
+
+@pytest.mark.integration
+async def test_app_error_con_reason_lo_incluye_en_el_sobre(
+    error_test_client: AsyncClient,
+) -> None:
+    response = await error_test_client.get("/_test/reason")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "motivo",
+            "field": "campo",
+            "reason": "motivo_estable",
+        }
+    }
 
 
 @pytest.mark.integration

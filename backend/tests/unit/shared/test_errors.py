@@ -39,6 +39,19 @@ def test_subclase_expone_status_y_code_esperados(
     assert error.code == expected_code
     assert error.field is None
     assert error.headers == {}
+    assert error.reason is None
+
+
+@pytest.mark.unit
+def test_validation_app_error_acepta_un_reason_estable() -> None:
+    error = ValidationAppError(message="x", field="server_auth_code", reason="invalid_code")
+
+    assert (error.status, error.code, error.field, error.reason) == (
+        400,
+        "validation_error",
+        "server_auth_code",
+        "invalid_code",
+    )
 
 
 @pytest.mark.unit

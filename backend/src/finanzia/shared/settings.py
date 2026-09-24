@@ -11,6 +11,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _JWT_SECRET_MIN_LENGTH = 32
 _RAW_MESSAGE_BODY_MAX_BYTES_MINIMO = 512
 _GMAIL_TOKEN_KEY_LENGTH_BYTES = 32
+#: Llave de desarrollo publicada en `backend/.env.example`: nunca vale en produccion.
+_GMAIL_TOKEN_KEY_EJEMPLO = "62aisewZDhTFPU8eKAYDMaVzeVR4usdqlWxZgK7Abbg="  # noqa: S105
 
 
 class Settings(BaseSettings):
@@ -115,6 +117,9 @@ class Settings(BaseSettings):
         if self.env == "prod":
             if self.db_echo:
                 msg = "db_echo=True no esta permitido cuando env='prod'"
+                raise ValueError(msg)
+            if self.gmail_token_key.get_secret_value() == _GMAIL_TOKEN_KEY_EJEMPLO:
+                msg = "gmail_token_key de .env.example no esta permitida cuando env='prod'"
                 raise ValueError(msg)
         if self.log_json is None:
             self.log_json = self.env != "dev"

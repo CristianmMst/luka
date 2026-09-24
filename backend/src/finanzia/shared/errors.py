@@ -12,15 +12,21 @@ class AppError(Exception):
 
     Los mensajes por defecto son genericos y nunca deben construirse a partir de
     entrada del usuario (evita filtrar datos en la respuesta de error).
+
+    `reason` es un codigo estable y opcional que afina `code` cuando el cliente
+    necesita distinguir casos con el mismo `code` y `field` (p. ej. los 400 de
+    `server_auth_code`, spec 005 §3); el `message` sigue siendo solo texto.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - status, code, message, field + headers y reason por nombre
         self,
         status: int,
         code: str,
         message: str,
         field: str | None = None,
+        *,
         headers: dict[str, str] | None = None,
+        reason: str | None = None,
     ) -> None:
         super().__init__(message)
         self.status = status
@@ -28,13 +34,19 @@ class AppError(Exception):
         self.message = message
         self.field = field
         self.headers = headers if headers is not None else {}
+        self.reason = reason
 
 
 class ValidationAppError(AppError):
     """400 - entrada invalida (reemplaza el 422 por defecto de FastAPI, spec 005 SS1)."""
 
-    def __init__(self, message: str = "Entrada invalida", field: str | None = None) -> None:
-        super().__init__(400, "validation_error", message, field=field)
+    def __init__(
+        self,
+        message: str = "Entrada invalida",
+        field: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        super().__init__(400, "validation_error", message, field=field, reason=reason)
 
 
 class UnauthorizedError(AppError):

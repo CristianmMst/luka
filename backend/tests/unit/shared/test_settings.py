@@ -1,9 +1,14 @@
 """Tests unitarios de `Settings`: prefijo de entorno y validadores (spec 003 F0.4)."""
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from finanzia.shared.settings import Settings
+
+#: `backend/.env.example`: su llave de ejemplo no debe valer en produccion.
+_ENV_EXAMPLE = Path(__file__).resolve().parents[3] / ".env.example"
 
 _GMAIL_TOKEN_KEY_VALIDA = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="  # 32 bytes en base64
 
@@ -57,6 +62,41 @@ def test_db_echo_true_en_prod_falla(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(ValidationError):
         _construir_settings()
+
+
+@pytest.mark.unit
+def test_gmail_token_key_de_env_example_en_prod_falla(monkeypatch: pytest.MonkeyPatch) -> None:
+    ejemplo = next(
+        line.split("=", 1)[1].strip()
+        for line in _ENV_EXAMPLE.read_text(encoding="utf-8").splitlines()
+        if line.startswith("FINANZIA_GMAIL_TOKEN_KEY=")
+    )
+    _setear_env_valido(monkeypatch)
+    monkeypatch.setenv("FINANZIA_ENV", "prod")
+    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", ejemplo)
+
+    with pytest.raises(ValidationError, match=r"env\.example"):
+        _construir_settings()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("env", ["dev", "test"])
+def test_gmail_token_key_de_env_example_fuera_de_prod_pasa(
+    monkeypatch: pytest.MonkeyPatch, env: str
+) -> None:
+    _setear_env_valido(monkeypatch)
+    monkeypatch.setenv("FINANZIA_ENV", env)
+    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", "62aisewZDhTFPU8eKAYDMaVzeVR4usdqlWxZgK7Abbg=")
+
+    assert _construir_settings().env == env
+
+
+@pytest.mark.unit
+def test_gmail_token_key_propia_en_prod_pasa(monkeypatch: pytest.MonkeyPatch) -> None:
+    _setear_env_valido(monkeypatch)
+    monkeypatch.setenv("FINANZIA_ENV", "prod")
+
+    assert _construir_settings().env == "prod"
 
 
 @pytest.mark.unit
