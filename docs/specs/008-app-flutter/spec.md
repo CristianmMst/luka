@@ -29,12 +29,23 @@ flowchart TD
     ST --> PRIV[Privacidad: exportar / borrar cuenta]
 ```
 
-El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.5–F4.8 (Registrar en F4.5). Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard.
+El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.5–F4.8 (Registrar en F4.5). Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard, y la fila de Gmail (F3.6, §3.7).
+
+Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). A la fecha (F3.6) el onboarding tiene solo el paso de Gmail (`/onboarding/gmail`); notificaciones y cuentas llegan en F4.4.
+- Sin sesión, cualquier ruta va a `/login`; mientras se restaura la sesión, a `/splash`.
+- Con sesión, al salir de `/splash` o de `/login` decide `gmailGateProvider` (feature `gmail`, capa de aplicación): si Gmail no está activo (nunca conectado, revocado o con error) y el usuario no eligió "Ahora no", va a `/onboarding/gmail`; si no, a Inicio.
+- Mientras se lee el estado de Gmail la app espera en el splash en vez de abrir Inicio y luego saltar al onboarding (sin rebote). La espera tiene un tope de 4 s: con red lenta o sin red sigue a Inicio (P4), igual que si el estado falla, porque Gmail es opcional (AC-1.3). Si el estado llega después, no redirige.
+- En cualquier otra ruta el gate de Gmail no redirige: sin bucles, desconectar Gmail en Ajustes no saca al usuario de ahí y el deep link a `/onboarding/gmail` funciona aunque no haya nada pendiente.
+- El redirect lee la sesión y el gate en el momento (no una copia), así que justo después del login ve el gate ya en espera y no el "no preguntar" de la sesión cerrada.
 
 ## 3. Especificación por pantalla
 
 ### 3.1 Onboarding (RF-1)
 - Paso Gmail: pantalla propia explicando qué se lee ("solo correos de tus bancos, nunca tu correo personal") antes del consent de Google; botón "ahora no" visible (AC-1.3). Usa autorización incremental: `google_sign_in` solicita `gmail.readonly` y envía el `serverAuthCode` a `/gmail/connect`.
+  - Pantalla `/onboarding/gmail` con el lenguaje del login "Veta esmeralda" (hero esmeralda con la tarjeta "Solo alertas de tus bancos", titular Bricolage, sin oro): "Conecta tu Gmail"; **Lee** correos de alertas de tus bancos (Bancolombia, Nequi…); **Nunca lee** tu correo personal, contactos ni adjuntos; por qué: tus compras quedan registradas solas, sin duplicados. Botones "Conectar Gmail" y "Ahora no", y una nota: el permiso se quita cuando quieras desde Ajustes o desde la cuenta de Google.
+  - "Conectar Gmail" abre el consentimiento y, si sale bien, lleva a Inicio. "Ahora no" lo guarda y lleva a Inicio.
+  - Estados: conectando (botones bloqueados, "Conectando Gmail…"); consentimiento cancelado (se queda en la página, sin aviso); sin red; rechazo del servidor (código inválido o sin refresh token: "Google no aceptó la autorización. Inténtalo de nuevo."); permiso desmarcado; Google no disponible (503); demasiados intentos (429). Con un fallo el botón dice "Reintentar". Si el estado no se pudo leer (deep link sin red), "Reintentar" vuelve a leerlo.
+  - Goldens claro y oscuro en `test/features/gmail/presentation/goldens/`.
   - La autorización (`authorizeServer`) usa la misma instancia de `GoogleSignIn` que el login, inicializada una sola vez con el `serverClientId` (`core/google/google_sign_in_setup.dart`). En Android pide acceso offline con consentimiento forzado, así que cada canje trae refresh token.
   - Cancelar el consentimiento no es un error. Los tres 400 de `server_auth_code` (código inválido, sin refresh token, permiso no concedido) se distinguen por el mensaje del backend; los dos primeros se arreglan volviendo a intentarlo.
   - "Ahora no" se guarda en `sync_state` con la clave `gmail_prompt_dismissed:<userId>`, así que restaurar la sesión no vuelve a preguntar. Cerrar sesión vacía `sync_state` y la invitación reaparece en el siguiente login.
@@ -64,6 +75,7 @@ El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas 
 
 ### 3.7 Ajustes
 - Perfil Google; estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
+  - Fila "Gmail" (F3.6, AC-1.3): conectado muestra la cuenta Gmail ("Conectado · email") y ofrece "Desconectar", que pide confirmación en un diálogo Material ("¿Desconectar Gmail?": deja de leer los correos, los movimientos se quedan); revocado o con error explica que la captura se detuvo y ofrece "Reconectar"; desconectado ofrece "Conectar"; sin poder consultar el estado, "Reintentar". Mientras corre una acción se ve un indicador en lugar del botón y un fallo se avisa bajo la fila. La acción mide 48 dp o más y su etiqueta accesible dice qué hace ("Desconectar Gmail").
 - Cuentas vinculadas (CRUD); categorías (CRUD de propias); escribir/gestionar tags NFC.
 - Privacidad: política, exportar datos (RF-11.2), borrar cuenta con doble confirmación + texto de irreversibilidad (RF-11.3).
 

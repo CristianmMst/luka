@@ -96,6 +96,18 @@ void main() {
       expect(state.shouldPrompt, isFalse);
     });
 
+    test('revocado o con error → vuelve a preguntar', () async {
+      for (final status in [GmailStatus.revoked, GmailStatus.error]) {
+        when(
+          () => gmail.status(),
+        ).thenAnswer((_) async => GmailConnectionInfo(status: status));
+        build();
+        expect((await settled()).shouldPrompt, isTrue, reason: '$status');
+        container.dispose();
+      }
+      build();
+    });
+
     test('sin sesión → no consulta nada ni pregunta', () async {
       build(user: null);
       final state = await settled();

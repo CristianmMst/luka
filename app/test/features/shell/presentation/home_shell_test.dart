@@ -4,6 +4,10 @@ import 'package:finanzia/app/app.dart';
 import 'package:finanzia/app/router.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/gmail/application/gmail_controller.dart';
+import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
+import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
+import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
@@ -18,6 +22,10 @@ class _MockSyncStore extends Mock implements SyncStore {}
 
 class _MockTransactionsRepository extends Mock
     implements TransactionsRepository {}
+
+class _MockGmail extends Mock implements GmailRepository {}
+
+class _MockPrompts extends Mock implements GmailPromptStore {}
 
 class _FixedAuthController extends AuthController {
   _FixedAuthController(this._state);
@@ -41,12 +49,21 @@ void main() {
   const user = User(id: 'u', email: 'a@b.co', status: UserStatus.active);
   late _MockSyncStore store;
   late _MockTransactionsRepository transactions;
+  late _MockGmail gmail;
+  late _MockPrompts prompts;
 
   setUpAll(() => registerFallbackValue(const TransactionFilter()));
 
   setUp(() {
     store = _MockSyncStore();
     transactions = _MockTransactionsRepository();
+    // Gmail ya conectado: el gate lleva directo al shell.
+    gmail = _MockGmail();
+    prompts = _MockPrompts();
+    when(() => gmail.status()).thenAnswer(
+      (_) async => const GmailConnectionInfo(status: GmailStatus.active),
+    );
+    when(() => prompts.isDismissed(any())).thenAnswer((_) async => false);
     when(
       () => transactions.watch(any(), limit: any(named: 'limit')),
     ).thenAnswer((_) => Stream.value(const []));
@@ -76,6 +93,8 @@ void main() {
         ),
         syncStoreProvider.overrideWithValue(store),
         transactionsRepositoryProvider.overrideWithValue(transactions),
+        gmailRepositoryProvider.overrideWithValue(gmail),
+        gmailPromptStoreProvider.overrideWithValue(prompts),
       ],
     );
     addTearDown(container.dispose);

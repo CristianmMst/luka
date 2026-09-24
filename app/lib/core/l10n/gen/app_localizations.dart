@@ -1041,6 +1041,222 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cambiar filtros'**
   String get emptyPeriodFilters;
+
+  /// No description provided for @gmailHeroLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'SOLO ALERTAS DE TUS BANCOS'**
+  String get gmailHeroLabel;
+
+  /// No description provided for @gmailHeroBanks.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancolombia · Nequi · Davivienda · BBVA'**
+  String get gmailHeroBanks;
+
+  /// No description provided for @gmailHeroSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'finanzia solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.'**
+  String get gmailHeroSemantics;
+
+  /// No description provided for @gmailOnboardingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecta tu Gmail'**
+  String get gmailOnboardingTitle;
+
+  /// No description provided for @gmailOnboardingBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus compras quedan registradas solas, sin duplicados.'**
+  String get gmailOnboardingBody;
+
+  /// No description provided for @gmailReadsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Lee'**
+  String get gmailReadsLabel;
+
+  /// No description provided for @gmailReads.
+  ///
+  /// In es, this message translates to:
+  /// **'Correos de alertas de tus bancos (Bancolombia, Nequi…).'**
+  String get gmailReads;
+
+  /// No description provided for @gmailNeverReadsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca lee'**
+  String get gmailNeverReadsLabel;
+
+  /// No description provided for @gmailNeverReads.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu correo personal, contactos ni adjuntos.'**
+  String get gmailNeverReads;
+
+  /// No description provided for @gmailConnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar Gmail'**
+  String get gmailConnect;
+
+  /// No description provided for @gmailConnecting.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectando Gmail…'**
+  String get gmailConnecting;
+
+  /// No description provided for @gmailRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get gmailRetry;
+
+  /// No description provided for @gmailNotNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get gmailNotNow;
+
+  /// No description provided for @gmailRevokeNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes quitar el permiso cuando quieras desde Ajustes o desde tu cuenta de Google.'**
+  String get gmailRevokeNote;
+
+  /// No description provided for @gmailErrorRejected.
+  ///
+  /// In es, this message translates to:
+  /// **'Google no aceptó la autorización. Inténtalo de nuevo.'**
+  String get gmailErrorRejected;
+
+  /// No description provided for @gmailErrorScopeDenied.
+  ///
+  /// In es, this message translates to:
+  /// **'Para conectar Gmail, marca el permiso de lectura de correos en la pantalla de Google.'**
+  String get gmailErrorScopeDenied;
+
+  /// No description provided for @gmailErrorUpstream.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos hablar con Google. Inténtalo de nuevo en unos minutos.'**
+  String get gmailErrorUpstream;
+
+  /// No description provided for @gmailErrorMisconfigured.
+  ///
+  /// In es, this message translates to:
+  /// **'La conexión con Gmail no está configurada en esta versión de la app.'**
+  String get gmailErrorMisconfigured;
+
+  /// No description provided for @gmailErrorUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos conectar Gmail. Inténtalo de nuevo.'**
+  String get gmailErrorUnexpected;
+
+  /// No description provided for @settingsGmailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gmail'**
+  String get settingsGmailTitle;
+
+  /// No description provided for @settingsGmailConnected.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado · {email}'**
+  String settingsGmailConnected(String email);
+
+  /// No description provided for @settingsGmailConnectedNoEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado'**
+  String get settingsGmailConnectedNoEmail;
+
+  /// No description provided for @settingsGmailRevoked.
+  ///
+  /// In es, this message translates to:
+  /// **'Google quitó el permiso. Reconecta para seguir capturando.'**
+  String get settingsGmailRevoked;
+
+  /// No description provided for @settingsGmailError.
+  ///
+  /// In es, this message translates to:
+  /// **'La captura de correos se detuvo. Reconecta para reanudarla.'**
+  String get settingsGmailError;
+
+  /// No description provided for @settingsGmailDisconnected.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conectar · tus compras por correo no se registran'**
+  String get settingsGmailDisconnected;
+
+  /// No description provided for @settingsGmailLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Consultando Gmail…'**
+  String get settingsGmailLoading;
+
+  /// No description provided for @settingsGmailUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos consultar el estado de Gmail.'**
+  String get settingsGmailUnavailable;
+
+  /// No description provided for @settingsGmailConnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar'**
+  String get settingsGmailConnect;
+
+  /// No description provided for @settingsGmailReconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Reconectar'**
+  String get settingsGmailReconnect;
+
+  /// No description provided for @settingsGmailDisconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar'**
+  String get settingsGmailDisconnect;
+
+  /// No description provided for @settingsGmailRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get settingsGmailRetry;
+
+  /// No description provided for @settingsGmailActionSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{action} Gmail'**
+  String settingsGmailActionSemantics(String action);
+
+  /// No description provided for @settingsGmailDisconnectTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Desconectar Gmail?'**
+  String get settingsGmailDisconnectTitle;
+
+  /// No description provided for @settingsGmailDisconnectBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejamos de leer los correos de tus bancos. Los movimientos que ya tienes se quedan.'**
+  String get settingsGmailDisconnectBody;
+
+  /// No description provided for @settingsGmailDisconnectConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar'**
+  String get settingsGmailDisconnectConfirm;
+
+  /// No description provided for @settingsGmailDisconnectCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get settingsGmailDisconnectCancel;
 }
 
 class _AppLocalizationsDelegate

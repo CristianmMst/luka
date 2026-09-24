@@ -2,11 +2,12 @@ import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 
-enum AuthNoticeTone { error, warning, info }
+enum NoticeTone { error, warning, info }
 
-/// Aviso en línea sobre el botón de login (error, espera o información).
-class AuthNotice extends StatelessWidget {
-  const AuthNotice({
+/// Aviso en línea sobre el botón principal de una pantalla (error, espera o
+/// información): login, Gmail.
+class InlineNotice extends StatelessWidget {
+  const InlineNotice({
     required this.message,
     required this.tone,
     this.icon,
@@ -14,7 +15,7 @@ class AuthNotice extends StatelessWidget {
   });
 
   final String message;
-  final AuthNoticeTone tone;
+  final NoticeTone tone;
 
   /// Por defecto, el ícono del tono.
   final IconData? icon;
@@ -24,17 +25,17 @@ class AuthNotice extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final brand = context.finanziaColors;
     final (background, foreground, toneIcon) = switch (tone) {
-      AuthNoticeTone.error => (
+      NoticeTone.error => (
         scheme.errorContainer,
         scheme.onErrorContainer,
         Icons.error_outline_rounded,
       ),
-      AuthNoticeTone.warning => (
+      NoticeTone.warning => (
         brand.warningContainer,
         brand.onWarningContainer,
         Icons.timer_outlined,
       ),
-      AuthNoticeTone.info => (
+      NoticeTone.info => (
         scheme.primaryContainer,
         scheme.onPrimaryContainer,
         Icons.lock_outline_rounded,

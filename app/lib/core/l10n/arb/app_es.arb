@@ -396,5 +396,55 @@
   "emptyPeriodTitle": "Sin movimientos este mes",
   "emptyPeriodBody": "Tus movimientos anteriores siguen guardados. Revisa el mes pasado o cambia los filtros.",
   "emptyPeriodLastMonth": "Ver mes pasado",
-  "emptyPeriodFilters": "Cambiar filtros"
+  "emptyPeriodFilters": "Cambiar filtros",
+  "gmailHeroLabel": "SOLO ALERTAS DE TUS BANCOS",
+  "gmailHeroBanks": "Bancolombia · Nequi · Davivienda · BBVA",
+  "gmailHeroSemantics": "finanzia solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.",
+  "gmailOnboardingTitle": "Conecta tu Gmail",
+  "gmailOnboardingBody": "Tus compras quedan registradas solas, sin duplicados.",
+  "gmailReadsLabel": "Lee",
+  "gmailReads": "Correos de alertas de tus bancos (Bancolombia, Nequi…).",
+  "gmailNeverReadsLabel": "Nunca lee",
+  "gmailNeverReads": "Tu correo personal, contactos ni adjuntos.",
+  "gmailConnect": "Conectar Gmail",
+  "gmailConnecting": "Conectando Gmail…",
+  "gmailRetry": "Reintentar",
+  "gmailNotNow": "Ahora no",
+  "gmailRevokeNote": "Puedes quitar el permiso cuando quieras desde Ajustes o desde tu cuenta de Google.",
+  "gmailErrorRejected": "Google no aceptó la autorización. Inténtalo de nuevo.",
+  "gmailErrorScopeDenied": "Para conectar Gmail, marca el permiso de lectura de correos en la pantalla de Google.",
+  "gmailErrorUpstream": "No pudimos hablar con Google. Inténtalo de nuevo en unos minutos.",
+  "gmailErrorMisconfigured": "La conexión con Gmail no está configurada en esta versión de la app.",
+  "gmailErrorUnexpected": "No pudimos conectar Gmail. Inténtalo de nuevo.",
+  "settingsGmailTitle": "Gmail",
+  "settingsGmailConnected": "Conectado · {email}",
+  "@settingsGmailConnected": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGmailConnectedNoEmail": "Conectado",
+  "settingsGmailRevoked": "Google quitó el permiso. Reconecta para seguir capturando.",
+  "settingsGmailError": "La captura de correos se detuvo. Reconecta para reanudarla.",
+  "settingsGmailDisconnected": "Sin conectar · tus compras por correo no se registran",
+  "settingsGmailLoading": "Consultando Gmail…",
+  "settingsGmailUnavailable": "No pudimos consultar el estado de Gmail.",
+  "settingsGmailConnect": "Conectar",
+  "settingsGmailReconnect": "Reconectar",
+  "settingsGmailDisconnect": "Desconectar",
+  "settingsGmailRetry": "Reintentar",
+  "settingsGmailActionSemantics": "{action} Gmail",
+  "@settingsGmailActionSemantics": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsGmailDisconnectTitle": "¿Desconectar Gmail?",
+  "settingsGmailDisconnectBody": "Dejamos de leer los correos de tus bancos. Los movimientos que ya tienes se quedan.",
+  "settingsGmailDisconnectConfirm": "Desconectar",
+  "settingsGmailDisconnectCancel": "Cancelar"
 }

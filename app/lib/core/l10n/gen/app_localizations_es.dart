@@ -614,4 +614,130 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get emptyPeriodFilters => 'Cambiar filtros';
+
+  @override
+  String get gmailHeroLabel => 'SOLO ALERTAS DE TUS BANCOS';
+
+  @override
+  String get gmailHeroBanks => 'Bancolombia · Nequi · Davivienda · BBVA';
+
+  @override
+  String get gmailHeroSemantics =>
+      'finanzia solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.';
+
+  @override
+  String get gmailOnboardingTitle => 'Conecta tu Gmail';
+
+  @override
+  String get gmailOnboardingBody =>
+      'Tus compras quedan registradas solas, sin duplicados.';
+
+  @override
+  String get gmailReadsLabel => 'Lee';
+
+  @override
+  String get gmailReads =>
+      'Correos de alertas de tus bancos (Bancolombia, Nequi…).';
+
+  @override
+  String get gmailNeverReadsLabel => 'Nunca lee';
+
+  @override
+  String get gmailNeverReads => 'Tu correo personal, contactos ni adjuntos.';
+
+  @override
+  String get gmailConnect => 'Conectar Gmail';
+
+  @override
+  String get gmailConnecting => 'Conectando Gmail…';
+
+  @override
+  String get gmailRetry => 'Reintentar';
+
+  @override
+  String get gmailNotNow => 'Ahora no';
+
+  @override
+  String get gmailRevokeNote =>
+      'Puedes quitar el permiso cuando quieras desde Ajustes o desde tu cuenta de Google.';
+
+  @override
+  String get gmailErrorRejected =>
+      'Google no aceptó la autorización. Inténtalo de nuevo.';
+
+  @override
+  String get gmailErrorScopeDenied =>
+      'Para conectar Gmail, marca el permiso de lectura de correos en la pantalla de Google.';
+
+  @override
+  String get gmailErrorUpstream =>
+      'No pudimos hablar con Google. Inténtalo de nuevo en unos minutos.';
+
+  @override
+  String get gmailErrorMisconfigured =>
+      'La conexión con Gmail no está configurada en esta versión de la app.';
+
+  @override
+  String get gmailErrorUnexpected =>
+      'No pudimos conectar Gmail. Inténtalo de nuevo.';
+
+  @override
+  String get settingsGmailTitle => 'Gmail';
+
+  @override
+  String settingsGmailConnected(String email) {
+    return 'Conectado · $email';
+  }
+
+  @override
+  String get settingsGmailConnectedNoEmail => 'Conectado';
+
+  @override
+  String get settingsGmailRevoked =>
+      'Google quitó el permiso. Reconecta para seguir capturando.';
+
+  @override
+  String get settingsGmailError =>
+      'La captura de correos se detuvo. Reconecta para reanudarla.';
+
+  @override
+  String get settingsGmailDisconnected =>
+      'Sin conectar · tus compras por correo no se registran';
+
+  @override
+  String get settingsGmailLoading => 'Consultando Gmail…';
+
+  @override
+  String get settingsGmailUnavailable =>
+      'No pudimos consultar el estado de Gmail.';
+
+  @override
+  String get settingsGmailConnect => 'Conectar';
+
+  @override
+  String get settingsGmailReconnect => 'Reconectar';
+
+  @override
+  String get settingsGmailDisconnect => 'Desconectar';
+
+  @override
+  String get settingsGmailRetry => 'Reintentar';
+
+  @override
+  String settingsGmailActionSemantics(String action) {
+    return '$action Gmail';
+  }
+
+  @override
+  String get settingsGmailDisconnectTitle => '¿Desconectar Gmail?';
+
+  @override
+  String get settingsGmailDisconnectBody =>
+      'Dejamos de leer los correos de tus bancos. Los movimientos que ya tienes se quedan.';
+
+  @override
+  String get settingsGmailDisconnectConfirm => 'Desconectar';
+
+  @override
+  String get settingsGmailDisconnectCancel => 'Cancelar';
 }

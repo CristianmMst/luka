@@ -8,5 +8,8 @@ abstract final class Routes {
   static const register = '/registrar';
   static const review = '/revision';
   static const settings = '/ajustes';
-  // Reservadas: /onboarding/* (F3.6, F4.4).
+
+  /// Paso "Conecta tu Gmail" tras el login (F3.6). El resto de
+  /// `/onboarding/*` queda reservado para F4.4.
+  static const onboardingGmail = '/onboarding/gmail';
 }

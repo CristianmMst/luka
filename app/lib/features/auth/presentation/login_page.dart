@@ -4,10 +4,10 @@ import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/widgets/brand_mark.dart';
+import 'package:finanzia/core/widgets/inline_notice.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/application/sign_in_controller.dart';
 import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/presentation/widgets/auth_notice.dart';
 import 'package:finanzia/features/auth/presentation/widgets/capture_ticker.dart';
 import 'package:finanzia/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:flutter/foundation.dart';
@@ -157,38 +157,38 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     required bool sessionExpired,
   }) {
     if (remaining != null) {
-      return AuthNotice(
-        tone: AuthNoticeTone.warning,
+      return InlineNotice(
+        tone: NoticeTone.warning,
         message: l10n.errorRateLimited(_formatCountdown(remaining)),
       );
     }
     return switch (failure) {
-      AuthNetworkFailure() => AuthNotice(
-        tone: AuthNoticeTone.error,
+      AuthNetworkFailure() => InlineNotice(
+        tone: NoticeTone.error,
         icon: Icons.wifi_off_rounded,
         message: l10n.errorNetwork,
       ),
-      AuthRateLimited() => AuthNotice(
-        tone: AuthNoticeTone.warning,
+      AuthRateLimited() => InlineNotice(
+        tone: NoticeTone.warning,
         message: l10n.errorRateLimitedNoWait,
       ),
-      AuthRejected() => AuthNotice(
-        tone: AuthNoticeTone.error,
+      AuthRejected() => InlineNotice(
+        tone: NoticeTone.error,
         message: l10n.errorRejected,
       ),
-      AuthMisconfigured(:final detail) => AuthNotice(
-        tone: AuthNoticeTone.error,
+      AuthMisconfigured(:final detail) => InlineNotice(
+        tone: NoticeTone.error,
         // En debug se añade la causa técnica para diagnosticar el setup.
         message: kDebugMode
             ? '${l10n.errorMisconfigured}\n($detail)'
             : l10n.errorMisconfigured,
       ),
-      AuthUnexpected() || AuthCancelled() => AuthNotice(
-        tone: AuthNoticeTone.error,
+      AuthUnexpected() || AuthCancelled() => InlineNotice(
+        tone: NoticeTone.error,
         message: l10n.errorUnexpected,
       ),
-      _ when sessionExpired => AuthNotice(
-        tone: AuthNoticeTone.info,
+      _ when sessionExpired => InlineNotice(
+        tone: NoticeTone.info,
         message: l10n.sessionExpiredNotice,
       ),
       _ => null,

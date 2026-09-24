@@ -43,9 +43,11 @@ abstract class GmailState with _$GmailState {
 
   const GmailState._();
 
-  /// Mostrar la invitación a conectar Gmail tras el login.
+  /// Mostrar la invitación a conectar Gmail tras el login: no está activo
+  /// (nunca conectado, revocado o con error) y el usuario no eligió
+  /// "Ahora no".
   bool get shouldPrompt =>
-      !promptDismissed && info.status == GmailStatus.disconnected;
+      !promptDismissed && info.status != GmailStatus.active;
 }
 
 /// Conexión de Gmail del usuario en sesión.
