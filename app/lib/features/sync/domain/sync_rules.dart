@@ -1,4 +1,5 @@
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
+import 'package:finanzia/features/sync/domain/synced_models.dart';
 
 typedef LocalVersion = ({DateTime updatedAt, bool pendingPush});
 
@@ -12,6 +13,13 @@ bool shouldApplyRemote({
   if (local.pendingPush) return false;
   return !remoteUpdatedAt.isBefore(local.updatedAt);
 }
+
+/// Etiqueta fiscal de una transacción, como `resolve_fiscal_tag` del backend
+/// (spec 004 §2.5): una transferencia es siempre `transferencia`; si no, la
+/// de su categoría. `null` si la categoría no está en local (el servidor la
+/// corrige al responder).
+String? resolveFiscalTag(TxKind kind, String? categoryFiscalTag) =>
+    kind == TxKind.transfer ? 'transferencia' : categoryFiscalTag;
 
 /// Fallo al hablar con el backend, sin depender de dio.
 final class RemoteFailure implements Exception {

@@ -88,6 +88,28 @@ class DriftSyncStore implements SyncStore {
     return true;
   }
 
+  /// Efecto optimista de una operación rechazada que se reintenta. A
+  /// diferencia de [_applyOptimistic], no reinserta creaciones ni
+  /// conversiones (su fila local nunca se quitó al rechazarse) y un borrado
+  /// no cancela nada: sus operaciones ya volvieron a `pending`.
+  Future<void> _reapplyOptimistic(OutboxOperation op) async {
+    switch (op) {
+      case CreateTransactionOp() || ConvertReviewOp():
+        break;
+      case PatchTransactionOp(:final id, :final patch):
+        await _applyPatch(id, patch);
+      case SetTransferPairOp(:final id, :final pairId):
+        await _setPair(id, pairId);
+        await _setPair(pairId, id);
+      case UnsetTransferPairOp(:final id):
+        await _clearPairOf(id);
+      case DeleteTransactionOp(:final id):
+        await _deleteLocalTransaction(id);
+      case DiscardReviewOp(:final rawMessageId):
+        await _deleteReviewItem(rawMessageId);
+    }
+  }
+
   Future<void> _insertOutbox(OutboxOperation op) async {
     final encoded = OutboxCodec.encode(op);
     await _db
@@ -267,6 +289,11 @@ class DriftSyncStore implements SyncStore {
     await (_db.update(_db.outbox)
           ..where((o) => o.seq.isIn([for (final row in rows) row.seq])))
         .write(const OutboxCompanion(status: Value(_pending)));
+    // El rechazo pudo dejar la fila como la tiene el servidor: se vuelve a
+    // mostrar lo que el usuario reintenta.
+    for (final row in rows) {
+      await _reapplyOptimistic(_decode(row));
+    }
     for (final other in _idsOf(rows)) {
       await _refreshPendingPush(other);
     }
@@ -502,10 +529,19 @@ class DriftSyncStore implements SyncStore {
 
   Future<void> _applyPatch(String id, TransactionPatch patch) async {
     final categoryId = patch.categoryId;
-    final fiscalTag = categoryId == null
-        ? null
-        : await _fiscalTagOf(categoryId);
     final kind = patch.kind;
+    String? fiscalTag;
+    if (categoryId != null || kind != null) {
+      // Como el backend: con el kind resultante, una transferencia queda en
+      // `transferencia` aunque su nueva categoría diga otra cosa.
+      final current = await _findLocalTransaction(id);
+      final resultingKind =
+          kind ?? (current == null ? null : TxKind.values.byName(current.kind));
+      final categoryTag = await _fiscalTagOf(categoryId ?? current?.categoryId);
+      fiscalTag = resultingKind == null
+          ? categoryTag
+          : resolveFiscalTag(resultingKind, categoryTag);
+    }
     final notes = patch.notes;
     final merchant = patch.merchant;
     await _updateLocalTransaction(

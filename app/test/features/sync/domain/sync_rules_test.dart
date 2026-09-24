@@ -140,4 +140,21 @@ void main() {
       );
     });
   });
+
+  group('resolveFiscalTag', () {
+    test('una transferencia es siempre transferencia', () {
+      expect(
+        resolveFiscalTag(TxKind.transfer, 'no_deducible'),
+        'transferencia',
+      );
+      expect(resolveFiscalTag(TxKind.transfer, null), 'transferencia');
+    });
+    test('un gasto o ingreso toma la etiqueta de su categoría', () {
+      expect(resolveFiscalTag(TxKind.expense, 'salud'), 'salud');
+      expect(resolveFiscalTag(TxKind.income, 'no_deducible'), 'no_deducible');
+    });
+    test('sin la categoría en local no hay etiqueta', () {
+      expect(resolveFiscalTag(TxKind.expense, null), isNull);
+    });
+  });
 }
