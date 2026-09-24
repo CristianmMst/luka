@@ -62,6 +62,13 @@ class GmailMessageNotFound(GmailRequestRejected):
     """
 
 
+class GmailMessageUnreadable(GmailRequestRejected):
+    """`messages.get` respondio 2xx con un cuerpo que no se puede interpretar
+    (no JSON, sin `payload`/`internalDate`, base64 roto). Reintentar no lo arregla:
+    el sync lo salta para no bloquear el cursor del usuario para siempre.
+    """
+
+
 class InvalidPushEnvelope(IngestionError):  # noqa: N818
     """El cuerpo del push de Pub/Sub no tiene la forma esperada (spec 005 §4)."""
 
@@ -87,6 +94,7 @@ __all__ = [
     "GmailError",
     "GmailHistoryExpired",
     "GmailMessageNotFound",
+    "GmailMessageUnreadable",
     "GmailRefreshTokenMissing",
     "GmailRequestRejected",
     "GmailScopeNotGranted",

@@ -20,6 +20,7 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
     GmailMessageNotFound,
+    GmailMessageUnreadable,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
     GmailTransientError,
@@ -575,10 +576,44 @@ class TestGetMessage:
         with pytest.raises(GmailRequestRejected):
             await client.history_new_message_ids(_SECRET_ACCESS, 1)
 
-    async def test_get_message_malformado_es_rechazo(self, make_client: ClientFactory) -> None:
-        client = make_client(lambda _: httpx.Response(200, json={"id": "x"}))
-        with pytest.raises(GmailRequestRejected):
+    @pytest.mark.parametrize(
+        "response",
+        [
+            httpx.Response(200, json={"id": "x"}),
+            httpx.Response(200, content=b"<html>no json</html>"),
+            httpx.Response(200, json=["no", "objeto"]),
+            httpx.Response(
+                200,
+                json={
+                    "id": "x",
+                    "internalDate": "1",
+                    "payload": {"mimeType": "text/plain", "body": {"data": "a"}},
+                },
+            ),
+        ],
+        ids=["sin_payload", "no_json", "no_objeto", "base64_roto"],
+    )
+    async def test_get_message_ilegible_lanza_unreadable_y_loguea_sin_id(
+        self, make_client: ClientFactory, response: httpx.Response
+    ) -> None:
+        client = make_client(lambda _: response)
+
+        with structlog.testing.capture_logs() as logs, pytest.raises(GmailMessageUnreadable):
+            await client.get_message(_SECRET_ACCESS, "id-secreto-123")
+
+        skipped = [e for e in logs if e["event"] == "gmail_message_skipped"]
+        assert skipped == [
+            {"event": "gmail_message_skipped", "log_level": "warning", "reason": "unreadable"}
+        ]
+        assert "id-secreto-123" not in json.dumps(logs)
+
+    async def test_get_message_otro_4xx_sigue_siendo_rechazo(
+        self, make_client: ClientFactory
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(409, json={"error": {"code": 409}}))
+        with pytest.raises(GmailRequestRejected) as exc_info:
             await client.get_message(_SECRET_ACCESS, "x")
+        assert not isinstance(exc_info.value, GmailMessageUnreadable)
 
 
 @pytest.mark.unit

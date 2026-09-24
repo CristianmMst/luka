@@ -164,6 +164,7 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
     await redis_client.set(pending_key, b"1", ex=_LOCK_TTL_S)
     results: list[GmailSyncResult] = []
     notified: int | None = history_id
+    reason = "round_cap"
     for _ in range(_MAX_ROUNDS):
         owner = secrets.token_hex(16)
         if not await redis_client.set(lock_key, owner, nx=True, ex=_LOCK_TTL_S):
@@ -188,14 +189,15 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
         if not await redis_client.exists(pending_key):
             return results
         if not lock_kept:
+            reason = "lock_lost"
             break  # el lock vencio a mitad de la pasada: no se sabe quien lo tiene
     # Tope de pasadas (o lock vencido) con un aviso aun pendiente: reencolar.
     try:
         await requeue.enqueue_sync(user_id, None, defer_s=_REQUEUE_DEFER_S)
     except GmailSyncEnqueueFailed as exc:
-        _logger.warning("gmail_sync_requeue_failed", error_type=type(exc).__name__)
+        _logger.warning("gmail_sync_requeue_failed", reason=reason, error_type=type(exc).__name__)
     else:
-        _logger.info("gmail_sync_requeued", defer_s=_REQUEUE_DEFER_S)
+        _logger.info("gmail_sync_requeued", reason=reason, defer_s=_REQUEUE_DEFER_S)
     return results
 
 

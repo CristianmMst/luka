@@ -23,6 +23,7 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
     GmailMessageNotFound,
+    GmailMessageUnreadable,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
     GmailTransientError,
@@ -227,8 +228,9 @@ class GoogleGmailClient:
             # Cuota por usuario u otro 403: reintentar (la ingesta es idempotente)
             # en vez de saltar el mensaje y avanzar el cursor sin el.
             raise GmailTransientError("messages.get: 403")
-        data = _json_object("messages.get", response)
+        _raise_for_status("messages.get", response)  # otros 4xx: rechazo, se propaga
         try:
+            data = _json_object("messages.get", response)
             payload = data["payload"]
             internal_date = datetime.fromtimestamp(int(data["internalDate"]) / 1000, tz=UTC)
             return GmailMessage(
@@ -237,8 +239,17 @@ class GoogleGmailClient:
                 internal_date=internal_date,
                 payload=_parse_part(payload),
             )
-        except (KeyError, TypeError, ValueError, AttributeError, binascii.Error) as exc:
-            raise GmailRequestRejected("messages.get: respuesta ilegible") from exc
+        except (
+            GmailRequestRejected,
+            KeyError,
+            TypeError,
+            ValueError,
+            AttributeError,
+            binascii.Error,
+        ) as exc:
+            # Nunca el id del mensaje ni el cuerpo (spec 009 §5): solo el motivo.
+            _logger.warning("gmail_message_skipped", reason="unreadable")
+            raise GmailMessageUnreadable("messages.get: respuesta ilegible") from exc
 
     # --- HTTP ----------------------------------------------------------------
 

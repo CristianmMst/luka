@@ -16,6 +16,7 @@ from finanzia.modules.ingestion.domain.entities import GmailConnection
 from finanzia.modules.ingestion.domain.enums import Channel, GmailConnectionStatus
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
+    GmailMessageUnreadable,
     GmailRequestRejected,
     GmailSyncEnqueueFailed,
     GmailTransientError,
@@ -402,3 +403,23 @@ async def test_otro_rechazo_de_messages_get_no_se_salta_ni_avanza_el_cursor() ->
 
     assert deps.stored().history_id == CURSOR
     assert deps.stored().status is GmailConnectionStatus.ACTIVE
+
+
+async def test_mensaje_ilegible_se_salta_y_el_cursor_avanza() -> None:
+    deps = _Deps()
+    await deps.seed()
+    deps.gmail.history[CURSOR] = ["ilegible", "m2"]
+    deps.gmail.add_message("m2", BANK, "Compra")
+    original = deps.gmail.get_message
+
+    async def unreadable_first(access_token: str, message_id: str):  # type: ignore[no-untyped-def]
+        if message_id == "ilegible":
+            raise GmailMessageUnreadable("messages.get: respuesta ilegible")
+        return await original(access_token, message_id)
+
+    deps.gmail.get_message = unreadable_first  # type: ignore[method-assign]
+
+    result = await deps.sync().execute(USER)
+
+    assert (result.skipped, result.accepted) == (1, 1)
+    assert deps.stored().history_id == 150

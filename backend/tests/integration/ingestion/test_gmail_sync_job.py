@@ -396,10 +396,13 @@ async def test_aviso_pendiente_tras_el_tope_o_lock_vencido_se_reencola_diferido(
     google.history[google.mailbox_history_id] = []
     client = _PushEveryPass(gmail, redis_client, user.id, steal_lock=steal_lock)
 
-    results = await run_sync(user.id, client=client)
+    with structlog.testing.capture_logs() as captured:
+        results = await run_sync(user.id, client=client)
 
     assert len(results) == passes
     assert requeue.jobs == [(user.id, None, 30.0)]
+    (requeued,) = [e for e in captured if e["event"] == "gmail_sync_requeued"]
+    assert requeued["reason"] == ("lock_lost" if steal_lock else "round_cap")
 
 
 async def test_cuota_403_en_messages_get_reintenta_sin_avanzar_el_cursor(
@@ -436,3 +439,24 @@ async def test_mensaje_borrado_404_se_salta_y_el_cursor_avanza(
 
     assert (result.skipped, result.accepted) == (1, 1)
     assert (await _connection(session_factory, user.id)).history_id == google.mailbox_history_id
+
+
+async def test_mensaje_ilegible_se_salta_sin_bloquear_el_cursor(
+    google: FakeGoogle,
+    user: AuthedUser,
+    run_sync: RunSync,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    google.history[HISTORY_ID] = ["m-roto", "m-banco"]
+    google.add_message("m-banco", _BANK, _BANK_BODY)
+    google.messages["m-roto"] = {"id": "m-roto"}  # 200 sin `payload` ni `internalDate`
+
+    with structlog.testing.capture_logs() as captured:
+        (result,) = await run_sync(user.id)
+
+    assert (result.skipped, result.accepted) == (1, 1)
+    assert (await _connection(session_factory, user.id)).history_id == google.mailbox_history_id
+    assert [e["reason"] for e in captured if e["event"] == "gmail_message_skipped"] == [
+        "unreadable"
+    ]
+    assert "m-roto" not in repr(captured)
