@@ -532,6 +532,42 @@ abstract class AppLocalizations {
   /// **'Otro'**
   String get bankOther;
 
+  /// No description provided for @accountKindSavings.
+  ///
+  /// In es, this message translates to:
+  /// **'ahorros'**
+  String get accountKindSavings;
+
+  /// No description provided for @accountKindChecking.
+  ///
+  /// In es, this message translates to:
+  /// **'corriente'**
+  String get accountKindChecking;
+
+  /// No description provided for @accountKindCreditCard.
+  ///
+  /// In es, this message translates to:
+  /// **'tarjeta de crédito'**
+  String get accountKindCreditCard;
+
+  /// No description provided for @accountKindWallet.
+  ///
+  /// In es, this message translates to:
+  /// **'billetera'**
+  String get accountKindWallet;
+
+  /// Cuenta vinculada sin últimos 4: banco y tipo de cuenta en minúscula.
+  ///
+  /// In es, this message translates to:
+  /// **'{bank} {kind}'**
+  String accountLabel(String bank, String kind);
+
+  /// Cuenta vinculada: banco, tipo de cuenta en minúscula y últimos 4.
+  ///
+  /// In es, this message translates to:
+  /// **'{bank} {kind} ···{last4}'**
+  String accountLabelWithLast4(String bank, String kind, String last4);
+
   /// No description provided for @channelNotification.
   ///
   /// In es, this message translates to:

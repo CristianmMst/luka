@@ -52,7 +52,14 @@ abstract class TransactionView with _$TransactionView {
     String? categoryName,
     String? categorySlug,
     String? bank,
-    String? accountLabel,
+
+    /// Cuenta vinculada, en crudo (`Bank`/`AccountKind` del cable, spec 004
+    /// §2.4); presentation arma la etiqueta con l10n. Sin cuenta, todas
+    /// son `null`.
+    String? accountBank,
+    String? accountKind,
+    String? accountLast4,
+    String? accountAlias,
     String? notes,
     String? transferPairId,
     String? parsedBy,

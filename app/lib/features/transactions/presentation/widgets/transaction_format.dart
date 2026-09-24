@@ -168,6 +168,30 @@ String bankLabel(AppLocalizations l10n, String wire) {
   return capitalize(wire.replaceAll('_', ' '));
 }
 
+/// Tipo de cuenta en minúscula (`AccountKind` del backend, spec 004 §2.4);
+/// uno desconocido se muestra legible (`cdt_digital` → `cdt digital`).
+String accountKindLabel(AppLocalizations l10n, String wire) => switch (wire) {
+  'savings' => l10n.accountKindSavings,
+  'checking' => l10n.accountKindChecking,
+  'credit_card' => l10n.accountKindCreditCard,
+  'wallet' => l10n.accountKindWallet,
+  _ => wire.replaceAll('_', ' '),
+};
+
+/// Cuenta vinculada de [tx]: `"Bancolombia ahorros ···4821"`; sin últimos 4,
+/// sin el sufijo. `null` si la transacción no tiene cuenta vinculada.
+String? accountLabel(AppLocalizations l10n, TransactionView tx) {
+  final bank = tx.accountBank;
+  final kind = tx.accountKind;
+  if (bank == null || kind == null) return null;
+  final bankName = bankLabel(l10n, bank);
+  final kindName = accountKindLabel(l10n, kind);
+  final last4 = tx.accountLast4;
+  return last4 == null || last4.isEmpty
+      ? l10n.accountLabel(bankName, kindName)
+      : l10n.accountLabelWithLast4(bankName, kindName, last4);
+}
+
 /// "Leído con": `rule:<banco>:<plantilla>` → "Plantilla Bancolombia",
 /// `llm` → "Lectura automática", `manual` → "Registro manual". `null` si no
 /// se reconoce.

@@ -34,26 +34,6 @@ class DriftTransactionsRepository implements TransactionsRepository {
   static const _rejected = 'rejected';
   static const _uncategorizedSlug = 'sin_categoria';
 
-  /// Nombre visible de cada banco (`Bank` del backend, spec 004).
-  static const _bankNames = {
-    'bancolombia': 'Bancolombia',
-    'nequi': 'Nequi',
-    'davivienda': 'Davivienda',
-    'daviplata': 'Daviplata',
-    'bbva': 'BBVA',
-    'banco_bogota': 'Banco de Bogotá',
-    'other': 'Otro banco',
-  };
-
-  /// Tipo de cuenta en minúscula, como va dentro de la etiqueta
-  /// (`AccountKind` del backend, spec 004 §2.4).
-  static const _accountKindLabels = {
-    'savings': 'ahorros',
-    'checking': 'corriente',
-    'credit_card': 'tarjeta de crédito',
-    'wallet': 'billetera',
-  };
-
   // ---------------------------------------------------------------- lista
 
   @override
@@ -210,7 +190,10 @@ class DriftTransactionsRepository implements TransactionsRepository {
       categoryName: category?.name,
       categorySlug: category?.slug,
       bank: tx.bank,
-      accountLabel: account == null ? null : _accountLabel(account),
+      accountBank: account?.bank,
+      accountKind: account?.kind,
+      accountLast4: account?.last4,
+      accountAlias: account?.alias,
       notes: tx.notes,
       transferPairId: tx.transferPairId,
       parsedBy: tx.parsedBy,
@@ -223,14 +206,4 @@ class DriftTransactionsRepository implements TransactionsRepository {
     for (final wire in (jsonDecode(json) as List<dynamic>).cast<String>())
       ?TxChannel.fromWire(wire),
   };
-
-  /// `"Bancolombia ahorros ···4821"`; sin `last4`, sin el sufijo.
-  static String _accountLabel(LocalAccount account) {
-    final last4 = account.last4;
-    return [
-      _bankNames[account.bank] ?? account.bank,
-      _accountKindLabels[account.kind] ?? account.kind,
-      ?(last4 == null || last4.isEmpty ? null : '···$last4'),
-    ].join(' ');
-  }
 }

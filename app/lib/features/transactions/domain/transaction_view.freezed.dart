@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TransactionView {
 
- String get id; Cop get amount; TxDirection get direction; TxKind get kind; DateTime get occurredAt; Set<TxChannel> get channels; SyncMark get sync; String? get merchant; String? get categoryId; String? get categoryName; String? get categorySlug; String? get bank; String? get accountLabel; String? get notes; String? get transferPairId; String? get parsedBy;
+ String get id; Cop get amount; TxDirection get direction; TxKind get kind; DateTime get occurredAt; Set<TxChannel> get channels; SyncMark get sync; String? get merchant; String? get categoryId; String? get categoryName; String? get categorySlug; String? get bank;/// Cuenta vinculada, en crudo (`Bank`/`AccountKind` del cable, spec 004
+/// §2.4); presentation arma la etiqueta con l10n. Sin cuenta, todas
+/// son `null`.
+ String? get accountBank; String? get accountKind; String? get accountLast4; String? get accountAlias; String? get notes; String? get transferPairId; String? get parsedBy;
 /// Create a copy of TransactionView
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $TransactionViewCopyWith<TransactionView> get copyWith => _$TransactionViewCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionView&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&const DeepCollectionEquality().equals(other.channels, channels)&&(identical(other.sync, sync) || other.sync == sync)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName)&&(identical(other.categorySlug, categorySlug) || other.categorySlug == categorySlug)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountLabel, accountLabel) || other.accountLabel == accountLabel)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionView&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&const DeepCollectionEquality().equals(other.channels, channels)&&(identical(other.sync, sync) || other.sync == sync)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName)&&(identical(other.categorySlug, categorySlug) || other.categorySlug == categorySlug)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountBank, accountBank) || other.accountBank == accountBank)&&(identical(other.accountKind, accountKind) || other.accountKind == accountKind)&&(identical(other.accountLast4, accountLast4) || other.accountLast4 == accountLast4)&&(identical(other.accountAlias, accountAlias) || other.accountAlias == accountAlias)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,direction,kind,occurredAt,const DeepCollectionEquality().hash(channels),sync,merchant,categoryId,categoryName,categorySlug,bank,accountLabel,notes,transferPairId,parsedBy);
+int get hashCode => Object.hashAll([runtimeType,id,amount,direction,kind,occurredAt,const DeepCollectionEquality().hash(channels),sync,merchant,categoryId,categoryName,categorySlug,bank,accountBank,accountKind,accountLast4,accountAlias,notes,transferPairId,parsedBy]);
 
 @override
 String toString() {
-  return 'TransactionView(id: $id, amount: $amount, direction: $direction, kind: $kind, occurredAt: $occurredAt, channels: $channels, sync: $sync, merchant: $merchant, categoryId: $categoryId, categoryName: $categoryName, categorySlug: $categorySlug, bank: $bank, accountLabel: $accountLabel, notes: $notes, transferPairId: $transferPairId, parsedBy: $parsedBy)';
+  return 'TransactionView(id: $id, amount: $amount, direction: $direction, kind: $kind, occurredAt: $occurredAt, channels: $channels, sync: $sync, merchant: $merchant, categoryId: $categoryId, categoryName: $categoryName, categorySlug: $categorySlug, bank: $bank, accountBank: $accountBank, accountKind: $accountKind, accountLast4: $accountLast4, accountAlias: $accountAlias, notes: $notes, transferPairId: $transferPairId, parsedBy: $parsedBy)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $TransactionViewCopyWith<$Res>  {
   factory $TransactionViewCopyWith(TransactionView value, $Res Function(TransactionView) _then) = _$TransactionViewCopyWithImpl;
 @useResult
 $Res call({
- String id, Cop amount, TxDirection direction, TxKind kind, DateTime occurredAt, Set<TxChannel> channels, SyncMark sync, String? merchant, String? categoryId, String? categoryName, String? categorySlug, String? bank, String? accountLabel, String? notes, String? transferPairId, String? parsedBy
+ String id, Cop amount, TxDirection direction, TxKind kind, DateTime occurredAt, Set<TxChannel> channels, SyncMark sync, String? merchant, String? categoryId, String? categoryName, String? categorySlug, String? bank, String? accountBank, String? accountKind, String? accountLast4, String? accountAlias, String? notes, String? transferPairId, String? parsedBy
 });
 
 
@@ -62,7 +65,7 @@ class _$TransactionViewCopyWithImpl<$Res>
 
 /// Create a copy of TransactionView
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? channels = null,Object? sync = null,Object? merchant = freezed,Object? categoryId = freezed,Object? categoryName = freezed,Object? categorySlug = freezed,Object? bank = freezed,Object? accountLabel = freezed,Object? notes = freezed,Object? transferPairId = freezed,Object? parsedBy = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? channels = null,Object? sync = null,Object? merchant = freezed,Object? categoryId = freezed,Object? categoryName = freezed,Object? categorySlug = freezed,Object? bank = freezed,Object? accountBank = freezed,Object? accountKind = freezed,Object? accountLast4 = freezed,Object? accountAlias = freezed,Object? notes = freezed,Object? transferPairId = freezed,Object? parsedBy = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -76,7 +79,10 @@ as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // 
 as String?,categoryName: freezed == categoryName ? _self.categoryName : categoryName // ignore: cast_nullable_to_non_nullable
 as String?,categorySlug: freezed == categorySlug ? _self.categorySlug : categorySlug // ignore: cast_nullable_to_non_nullable
 as String?,bank: freezed == bank ? _self.bank : bank // ignore: cast_nullable_to_non_nullable
-as String?,accountLabel: freezed == accountLabel ? _self.accountLabel : accountLabel // ignore: cast_nullable_to_non_nullable
+as String?,accountBank: freezed == accountBank ? _self.accountBank : accountBank // ignore: cast_nullable_to_non_nullable
+as String?,accountKind: freezed == accountKind ? _self.accountKind : accountKind // ignore: cast_nullable_to_non_nullable
+as String?,accountLast4: freezed == accountLast4 ? _self.accountLast4 : accountLast4 // ignore: cast_nullable_to_non_nullable
+as String?,accountAlias: freezed == accountAlias ? _self.accountAlias : accountAlias // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,transferPairId: freezed == transferPairId ? _self.transferPairId : transferPairId // ignore: cast_nullable_to_non_nullable
 as String?,parsedBy: freezed == parsedBy ? _self.parsedBy : parsedBy // ignore: cast_nullable_to_non_nullable
@@ -165,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountLabel,  String? notes,  String? transferPairId,  String? parsedBy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountBank,  String? accountKind,  String? accountLast4,  String? accountAlias,  String? notes,  String? transferPairId,  String? parsedBy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TransactionView() when $default != null:
-return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountLabel,_that.notes,_that.transferPairId,_that.parsedBy);case _:
+return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountBank,_that.accountKind,_that.accountLast4,_that.accountAlias,_that.notes,_that.transferPairId,_that.parsedBy);case _:
   return orElse();
 
 }
@@ -186,10 +192,10 @@ return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredA
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountLabel,  String? notes,  String? transferPairId,  String? parsedBy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountBank,  String? accountKind,  String? accountLast4,  String? accountAlias,  String? notes,  String? transferPairId,  String? parsedBy)  $default,) {final _that = this;
 switch (_that) {
 case _TransactionView():
-return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountLabel,_that.notes,_that.transferPairId,_that.parsedBy);case _:
+return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountBank,_that.accountKind,_that.accountLast4,_that.accountAlias,_that.notes,_that.transferPairId,_that.parsedBy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +212,10 @@ return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredA
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountLabel,  String? notes,  String? transferPairId,  String? parsedBy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Cop amount,  TxDirection direction,  TxKind kind,  DateTime occurredAt,  Set<TxChannel> channels,  SyncMark sync,  String? merchant,  String? categoryId,  String? categoryName,  String? categorySlug,  String? bank,  String? accountBank,  String? accountKind,  String? accountLast4,  String? accountAlias,  String? notes,  String? transferPairId,  String? parsedBy)?  $default,) {final _that = this;
 switch (_that) {
 case _TransactionView() when $default != null:
-return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountLabel,_that.notes,_that.transferPairId,_that.parsedBy);case _:
+return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredAt,_that.channels,_that.sync,_that.merchant,_that.categoryId,_that.categoryName,_that.categorySlug,_that.bank,_that.accountBank,_that.accountKind,_that.accountLast4,_that.accountAlias,_that.notes,_that.transferPairId,_that.parsedBy);case _:
   return null;
 
 }
@@ -221,7 +227,7 @@ return $default(_that.id,_that.amount,_that.direction,_that.kind,_that.occurredA
 
 
 class _TransactionView implements TransactionView {
-  const _TransactionView({required this.id, required this.amount, required this.direction, required this.kind, required this.occurredAt, required final  Set<TxChannel> channels, required this.sync, this.merchant, this.categoryId, this.categoryName, this.categorySlug, this.bank, this.accountLabel, this.notes, this.transferPairId, this.parsedBy}): _channels = channels;
+  const _TransactionView({required this.id, required this.amount, required this.direction, required this.kind, required this.occurredAt, required final  Set<TxChannel> channels, required this.sync, this.merchant, this.categoryId, this.categoryName, this.categorySlug, this.bank, this.accountBank, this.accountKind, this.accountLast4, this.accountAlias, this.notes, this.transferPairId, this.parsedBy}): _channels = channels;
   
 
 @override final  String id;
@@ -242,7 +248,13 @@ class _TransactionView implements TransactionView {
 @override final  String? categoryName;
 @override final  String? categorySlug;
 @override final  String? bank;
-@override final  String? accountLabel;
+/// Cuenta vinculada, en crudo (`Bank`/`AccountKind` del cable, spec 004
+/// §2.4); presentation arma la etiqueta con l10n. Sin cuenta, todas
+/// son `null`.
+@override final  String? accountBank;
+@override final  String? accountKind;
+@override final  String? accountLast4;
+@override final  String? accountAlias;
 @override final  String? notes;
 @override final  String? transferPairId;
 @override final  String? parsedBy;
@@ -257,16 +269,16 @@ _$TransactionViewCopyWith<_TransactionView> get copyWith => __$TransactionViewCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionView&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&const DeepCollectionEquality().equals(other._channels, _channels)&&(identical(other.sync, sync) || other.sync == sync)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName)&&(identical(other.categorySlug, categorySlug) || other.categorySlug == categorySlug)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountLabel, accountLabel) || other.accountLabel == accountLabel)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionView&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&const DeepCollectionEquality().equals(other._channels, _channels)&&(identical(other.sync, sync) || other.sync == sync)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName)&&(identical(other.categorySlug, categorySlug) || other.categorySlug == categorySlug)&&(identical(other.bank, bank) || other.bank == bank)&&(identical(other.accountBank, accountBank) || other.accountBank == accountBank)&&(identical(other.accountKind, accountKind) || other.accountKind == accountKind)&&(identical(other.accountLast4, accountLast4) || other.accountLast4 == accountLast4)&&(identical(other.accountAlias, accountAlias) || other.accountAlias == accountAlias)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.transferPairId, transferPairId) || other.transferPairId == transferPairId)&&(identical(other.parsedBy, parsedBy) || other.parsedBy == parsedBy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,direction,kind,occurredAt,const DeepCollectionEquality().hash(_channels),sync,merchant,categoryId,categoryName,categorySlug,bank,accountLabel,notes,transferPairId,parsedBy);
+int get hashCode => Object.hashAll([runtimeType,id,amount,direction,kind,occurredAt,const DeepCollectionEquality().hash(_channels),sync,merchant,categoryId,categoryName,categorySlug,bank,accountBank,accountKind,accountLast4,accountAlias,notes,transferPairId,parsedBy]);
 
 @override
 String toString() {
-  return 'TransactionView(id: $id, amount: $amount, direction: $direction, kind: $kind, occurredAt: $occurredAt, channels: $channels, sync: $sync, merchant: $merchant, categoryId: $categoryId, categoryName: $categoryName, categorySlug: $categorySlug, bank: $bank, accountLabel: $accountLabel, notes: $notes, transferPairId: $transferPairId, parsedBy: $parsedBy)';
+  return 'TransactionView(id: $id, amount: $amount, direction: $direction, kind: $kind, occurredAt: $occurredAt, channels: $channels, sync: $sync, merchant: $merchant, categoryId: $categoryId, categoryName: $categoryName, categorySlug: $categorySlug, bank: $bank, accountBank: $accountBank, accountKind: $accountKind, accountLast4: $accountLast4, accountAlias: $accountAlias, notes: $notes, transferPairId: $transferPairId, parsedBy: $parsedBy)';
 }
 
 
@@ -277,7 +289,7 @@ abstract mixin class _$TransactionViewCopyWith<$Res> implements $TransactionView
   factory _$TransactionViewCopyWith(_TransactionView value, $Res Function(_TransactionView) _then) = __$TransactionViewCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Cop amount, TxDirection direction, TxKind kind, DateTime occurredAt, Set<TxChannel> channels, SyncMark sync, String? merchant, String? categoryId, String? categoryName, String? categorySlug, String? bank, String? accountLabel, String? notes, String? transferPairId, String? parsedBy
+ String id, Cop amount, TxDirection direction, TxKind kind, DateTime occurredAt, Set<TxChannel> channels, SyncMark sync, String? merchant, String? categoryId, String? categoryName, String? categorySlug, String? bank, String? accountBank, String? accountKind, String? accountLast4, String? accountAlias, String? notes, String? transferPairId, String? parsedBy
 });
 
 
@@ -294,7 +306,7 @@ class __$TransactionViewCopyWithImpl<$Res>
 
 /// Create a copy of TransactionView
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? channels = null,Object? sync = null,Object? merchant = freezed,Object? categoryId = freezed,Object? categoryName = freezed,Object? categorySlug = freezed,Object? bank = freezed,Object? accountLabel = freezed,Object? notes = freezed,Object? transferPairId = freezed,Object? parsedBy = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? direction = null,Object? kind = null,Object? occurredAt = null,Object? channels = null,Object? sync = null,Object? merchant = freezed,Object? categoryId = freezed,Object? categoryName = freezed,Object? categorySlug = freezed,Object? bank = freezed,Object? accountBank = freezed,Object? accountKind = freezed,Object? accountLast4 = freezed,Object? accountAlias = freezed,Object? notes = freezed,Object? transferPairId = freezed,Object? parsedBy = freezed,}) {
   return _then(_TransactionView(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -308,7 +320,10 @@ as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // 
 as String?,categoryName: freezed == categoryName ? _self.categoryName : categoryName // ignore: cast_nullable_to_non_nullable
 as String?,categorySlug: freezed == categorySlug ? _self.categorySlug : categorySlug // ignore: cast_nullable_to_non_nullable
 as String?,bank: freezed == bank ? _self.bank : bank // ignore: cast_nullable_to_non_nullable
-as String?,accountLabel: freezed == accountLabel ? _self.accountLabel : accountLabel // ignore: cast_nullable_to_non_nullable
+as String?,accountBank: freezed == accountBank ? _self.accountBank : accountBank // ignore: cast_nullable_to_non_nullable
+as String?,accountKind: freezed == accountKind ? _self.accountKind : accountKind // ignore: cast_nullable_to_non_nullable
+as String?,accountLast4: freezed == accountLast4 ? _self.accountLast4 : accountLast4 // ignore: cast_nullable_to_non_nullable
+as String?,accountAlias: freezed == accountAlias ? _self.accountAlias : accountAlias // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,transferPairId: freezed == transferPairId ? _self.transferPairId : transferPairId // ignore: cast_nullable_to_non_nullable
 as String?,parsedBy: freezed == parsedBy ? _self.parsedBy : parsedBy // ignore: cast_nullable_to_non_nullable

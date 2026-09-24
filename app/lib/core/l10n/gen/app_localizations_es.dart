@@ -287,6 +287,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bankOther => 'Otro';
 
   @override
+  String get accountKindSavings => 'ahorros';
+
+  @override
+  String get accountKindChecking => 'corriente';
+
+  @override
+  String get accountKindCreditCard => 'tarjeta de crédito';
+
+  @override
+  String get accountKindWallet => 'billetera';
+
+  @override
+  String accountLabel(String bank, String kind) {
+    return '$bank $kind';
+  }
+
+  @override
+  String accountLabelWithLast4(String bank, String kind, String last4) {
+    return '$bank $kind ···$last4';
+  }
+
+  @override
   String get channelNotification => 'Notificación';
 
   @override

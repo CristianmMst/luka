@@ -317,7 +317,7 @@ class _FieldsCard extends StatelessWidget {
     final bank = tx.bank;
     final parsedBy = parsedByLabel(l10n, tx.parsedBy);
     final account =
-        tx.accountLabel ??
+        accountLabel(l10n, tx) ??
         (bank == null ? l10n.detailNoAccount : bankLabel(l10n, bank));
     final kind = switch (tx.kind) {
       TxKind.expense => l10n.detailKindExpense,
@@ -495,7 +495,7 @@ class _PairCard extends ConsumerWidget {
         : l10n.detailPairValue(
             switch (pair.bank) {
               final bank? => bankLabel(l10n, bank),
-              null => pair.accountLabel ?? displayName(l10n, pair),
+              null => accountLabel(l10n, pair) ?? displayName(l10n, pair),
             },
             pair.direction == TxDirection.credit ? 'credit' : 'debit',
             timeOfDay(pair.occurredAt),

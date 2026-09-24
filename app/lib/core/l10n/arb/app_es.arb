@@ -139,6 +139,37 @@
   "bankBbva": "BBVA",
   "bankBancoBogota": "Banco de Bogotá",
   "bankOther": "Otro",
+  "accountKindSavings": "ahorros",
+  "accountKindChecking": "corriente",
+  "accountKindCreditCard": "tarjeta de crédito",
+  "accountKindWallet": "billetera",
+  "accountLabel": "{bank} {kind}",
+  "@accountLabel": {
+    "description": "Cuenta vinculada sin últimos 4: banco y tipo de cuenta en minúscula.",
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "accountLabelWithLast4": "{bank} {kind} ···{last4}",
+  "@accountLabelWithLast4": {
+    "description": "Cuenta vinculada: banco, tipo de cuenta en minúscula y últimos 4.",
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
   "channelNotification": "Notificación",
   "channelSms": "SMS",
   "channelEmail": "Correo",

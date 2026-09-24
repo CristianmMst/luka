@@ -62,7 +62,9 @@ final _exito = TransactionView(
   categoryName: 'Mercado',
   categorySlug: 'mercado',
   bank: 'bancolombia',
-  accountLabel: 'Bancolombia ahorros ···4821',
+  accountBank: 'bancolombia',
+  accountKind: 'savings',
+  accountLast4: '4821',
   parsedBy: 'rule:bancolombia:compra_v1',
 );
 
