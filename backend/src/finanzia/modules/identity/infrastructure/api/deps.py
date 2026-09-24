@@ -19,6 +19,7 @@ from finanzia.modules.identity.application.use_cases.logout import Logout
 from finanzia.modules.identity.application.use_cases.refresh_session import RefreshSession
 from finanzia.modules.identity.infrastructure.access_token_issuer import JwtAccessTokenIssuer
 from finanzia.modules.identity.infrastructure.audit import StructlogAudit
+from finanzia.modules.identity.infrastructure.gmail_status import IngestionGmailStatus
 from finanzia.modules.identity.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
     SqlAlchemyUserRepository,
@@ -124,8 +125,8 @@ def get_logout_use_case(
 
 
 def get_me_use_case(session: AsyncSession = Depends(get_session)) -> GetMe:
-    """Ensambla `GetMe` con el repositorio SQLAlchemy de usuarios."""
-    return GetMe(users=SqlAlchemyUserRepository(session))
+    """Ensambla `GetMe` con el repositorio de usuarios y el estado Gmail de ingestion."""
+    return GetMe(users=SqlAlchemyUserRepository(session), gmail=IngestionGmailStatus(session))
 
 
 def _build_issuer(settings: Settings) -> JwtAccessTokenIssuer:

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from finanzia.modules.ingestion.application.dto import (
+    GMAIL_DISCONNECTED,
     Accepted,
     BatchResult,
     Discarded,
@@ -24,6 +25,7 @@ from finanzia.modules.ingestion.application.dto import (
     RawMessageView,
     RequeueSummary,
 )
+from finanzia.modules.ingestion.application.use_cases.gmail_connection import GetGmailStatus
 from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch import (
     IngestNotificationsBatch,
 )
@@ -39,7 +41,10 @@ from finanzia.modules.ingestion.events import RawMessageReceived
 from finanzia.modules.ingestion.infrastructure.event_publisher import BusEventPublisher
 from finanzia.modules.ingestion.infrastructure.id_generator import SecretsIdGenerator
 from finanzia.modules.ingestion.infrastructure.logging import log_ingest_outcome
-from finanzia.modules.ingestion.infrastructure.repositories import SqlAlchemyRawMessageRepository
+from finanzia.modules.ingestion.infrastructure.repositories import (
+    SqlAlchemyGmailConnectionRepository,
+    SqlAlchemyRawMessageRepository,
+)
 from finanzia.modules.ingestion.infrastructure.sender_policy import ParsingSenderPolicy
 from finanzia.modules.ingestion.infrastructure.uow import SqlAlchemyUnitOfWork
 
@@ -64,6 +69,7 @@ __all__ = [
     "RawMessageView",
     "RequeueSummary",
     "get_raw_message_for_parsing",
+    "gmail_connection_status",
     "ingest_notifications_batch",
     "ingest_raw_message",
     "load_raw_messages_for_review",
@@ -214,3 +220,11 @@ async def requeue_pending_raw_messages(
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(older_than=older_than, limit=limit)
+
+
+async def gmail_connection_status(session: AsyncSession, user_id: UUID) -> str:
+    """Estado de la conexion Gmail para `GET /v1/me` (spec 005 §2): `active`,
+    `revoked`, `error` o `none` si el usuario no tiene conexion. No comitea.
+    """
+    view = await GetGmailStatus(repo=SqlAlchemyGmailConnectionRepository(session)).execute(user_id)
+    return "none" if view.status == GMAIL_DISCONNECTED else view.status

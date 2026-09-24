@@ -50,6 +50,13 @@ class GmailRefreshTokenMissing(GmailRequestRejected):
     """
 
 
+class GmailScopeNotGranted(GmailRequestRejected):
+    """El canje salio bien pero el usuario no concedio `gmail.readonly` en la
+    pantalla de consentimiento (el `scope` del grant no lo trae o `users.getProfile`
+    responde 403). El adaptador ya intento revocar el grant recien emitido.
+    """
+
+
 class InvalidServerAuthCode(IngestionError):  # noqa: N818
     """El `serverAuthCode` es invalido, expiro o ya se uso (`invalid_grant` al canjear)."""
 
@@ -64,6 +71,7 @@ __all__ = [
     "GmailHistoryExpired",
     "GmailRefreshTokenMissing",
     "GmailRequestRejected",
+    "GmailScopeNotGranted",
     "GmailTokenUndecryptable",
     "GmailTransientError",
     "IngestionError",

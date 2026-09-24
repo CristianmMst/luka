@@ -24,9 +24,9 @@ class MeResult:
     connections: Mapping[str, str]
 
 
-def build_connections(user: User) -> Mapping[str, str]:
-    """Deriva el mapa de conexiones a partir de los consentimientos del usuario."""
+def build_connections(user: User, gmail_status: str) -> Mapping[str, str]:
+    """Mapa de conexiones: Gmail segun ingestion, notificaciones segun los consentimientos."""
     return {
-        "gmail": "none",
+        "gmail": gmail_status,
         "notifications": "granted" if "notifications" in user.consents else "none",
     }

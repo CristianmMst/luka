@@ -95,7 +95,9 @@ async def test_connect_canjea_cifra_guarda_y_crea_el_watch() -> None:
     # Solo se guarda cifrado (atado al usuario), nunca en claro.
     assert b"refresh-1" != stored.refresh_token_enc
     assert deps.cipher.decrypt(USER, stored.refresh_token_enc) == "refresh-1"
-    assert deps.uow.commits == 1
+    # Uno cierra la lectura de la conexion previa (antes de llamar a Google) y otro
+    # confirma el upsert.
+    assert deps.uow.commits == 2
     assert deps.gmail.calls == [
         ("exchange_code", "code-1"),
         ("access_token", "refresh-1"),
@@ -147,7 +149,7 @@ async def test_connect_con_watch_fallido_guarda_la_conexion_en_error(error: Exce
     assert stored.history_id is None
     assert stored.watch_expires_at is None
     assert deps.cipher.decrypt(USER, stored.refresh_token_enc) == "refresh-1"
-    assert deps.uow.commits == 1
+    assert deps.uow.commits == 2
     assert view.status == "error"
     assert view.watch_expires_at is None
 
@@ -177,7 +179,96 @@ async def test_reconectar_reemplaza_la_conexion_y_conserva_created_at() -> None:
     assert stored.updated_at == NOW
 
 
+async def test_reconectar_con_otra_cuenta_detiene_y_revoca_el_grant_viejo() -> None:
+    deps = _Deps()
+    await deps.seed(email="vieja@gmail.com")
+    deps.gmail.refresh_token = "refresh-nuevo"
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert deps.gmail.calls == [
+        ("exchange_code", "code-2"),
+        ("access_token", "refresh-viejo"),
+        ("stop", "access-for-refresh-viejo"),
+        ("revoke", "refresh-viejo"),
+        ("access_token", "refresh-nuevo"),
+        ("watch", TOPIC),
+    ]
+    stored = deps.repo.by_user[USER]
+    assert stored.email == "ana@gmail.com"
+    assert deps.cipher.decrypt(USER, stored.refresh_token_enc) == "refresh-nuevo"
+
+
+async def test_reconectar_con_otra_cuenta_tolera_que_google_falle_al_limpiar() -> None:
+    deps = _Deps()
+    await deps.seed(email="vieja@gmail.com")
+    deps.gmail.errors["revoke"] = GmailTransientError("revoke: 503")
+
+    view = await deps.connect().execute(USER, "code-2")
+
+    # La limpieza del grant viejo es best effort: la conexion nueva queda activa.
+    assert view.status == "active"
+    assert deps.repo.by_user[USER].email == "ana@gmail.com"
+
+
+async def test_reconectar_con_otra_cuenta_y_token_viejo_indescifrable_no_llama_a_google() -> None:
+    deps = _Deps()
+    await deps.seed(
+        email="vieja@gmail.com", refresh_token_enc=deps.cipher.encrypt(uuid4(), "de-otro")
+    )
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert ("revoke", "de-otro") not in deps.gmail.calls
+    assert deps.repo.by_user[USER].status is GmailConnectionStatus.ACTIVE
+
+
+async def test_reconectar_con_la_misma_cuenta_no_revoca_el_grant() -> None:
+    # Revocar el token viejo de la misma cuenta mataria tambien el recien emitido.
+    deps = _Deps()
+    await deps.seed(email="Ana@Gmail.com")
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert [op for op, _ in deps.gmail.calls] == ["exchange_code", "access_token", "watch"]
+
+
+async def test_connect_no_llama_a_google_con_la_transaccion_de_lectura_abierta() -> None:
+    deps = _Deps()
+    await deps.seed(email="vieja@gmail.com")
+    commits_at_google_call: list[int] = []
+    original = deps.gmail.access_token
+
+    async def spy(refresh_token: str) -> str:
+        commits_at_google_call.append(deps.uow.commits)
+        return await original(refresh_token)
+
+    deps.gmail.access_token = spy  # type: ignore[method-assign]
+
+    await deps.connect().execute(USER, "code-2")
+
+    assert commits_at_google_call
+    assert all(commits >= 1 for commits in commits_at_google_call)
+
+
 # --- DisconnectGmail ------------------------------------------------------------------
+
+
+async def test_disconnect_no_llama_a_google_con_la_transaccion_de_lectura_abierta() -> None:
+    deps = _Deps()
+    await deps.seed()
+    commits_at_google_call: list[int] = []
+    original = deps.gmail.access_token
+
+    async def spy(refresh_token: str) -> str:
+        commits_at_google_call.append(deps.uow.commits)
+        return await original(refresh_token)
+
+    deps.gmail.access_token = spy  # type: ignore[method-assign]
+
+    await deps.disconnect().execute(USER)
+
+    assert commits_at_google_call == [1]
 
 
 async def test_disconnect_detiene_revoca_y_borra() -> None:
@@ -187,7 +278,8 @@ async def test_disconnect_detiene_revoca_y_borra() -> None:
     result = await deps.disconnect().execute(USER)
 
     assert USER not in deps.repo.by_user
-    assert deps.uow.commits == 1
+    # Uno cierra la lectura antes de llamar a Google y otro confirma el borrado.
+    assert deps.uow.commits == 2
     assert deps.gmail.calls == [
         ("access_token", "refresh-viejo"),
         ("stop", "access-for-refresh-viejo"),
@@ -206,7 +298,7 @@ async def test_disconnect_borra_aunque_google_falle(failing: str) -> None:
     result = await deps.disconnect().execute(USER)
 
     assert USER not in deps.repo.by_user
-    assert deps.uow.commits == 1
+    assert deps.uow.commits == 2
     assert result.existed is True
     assert result.remote_cleanup is False
     # El revoke se intenta aunque el stop (o el access token) haya fallado.
@@ -221,7 +313,7 @@ async def test_disconnect_con_token_indescifrable_borra_sin_llamar_a_google() ->
 
     assert USER not in deps.repo.by_user
     assert deps.gmail.calls == []
-    assert deps.uow.commits == 1
+    assert deps.uow.commits == 2
     assert result.remote_cleanup is False
 
 
@@ -231,7 +323,7 @@ async def test_disconnect_sin_conexion_no_hace_nada() -> None:
     result = await deps.disconnect().execute(USER)
 
     assert deps.gmail.calls == []
-    assert deps.uow.commits == 0
+    assert deps.uow.commits == 1
     assert result.existed is False
     assert result.remote_cleanup is False
 

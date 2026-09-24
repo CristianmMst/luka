@@ -192,6 +192,64 @@ async def test_connect_con_google_caido_en_el_canje_responde_503(
     assert response.json()["error"]["code"] == "upstream_unavailable"
 
 
+async def test_connect_sin_permiso_de_gmail_responde_400_revoca_y_no_guarda(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    google: FakeGoogle,
+) -> None:
+    # El usuario desmarco gmail.readonly: el canje sale bien pero `/profile` da 403.
+    user = await user_factory()
+    google.status_by_operation["profile"] = 403
+
+    response = await client.post(
+        "/v1/gmail/connect", json={"server_auth_code": _CODE}, headers=user.headers
+    )
+
+    assert response.status_code == 400
+    error = response.json()["error"]
+    assert (error["code"], error["field"]) == ("validation_error", "server_auth_code")
+    assert "permiso de Gmail" in error["message"]
+    assert google.operations() == ["exchange", "profile", "revoke"]
+    assert google.requests[2][1]["token"] == REFRESH_TOKEN
+    assert await _stored_refresh_token(session_factory, settings, user) is None
+
+
+async def test_reconectar_con_otra_cuenta_revoca_el_grant_viejo(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    google: FakeGoogle,
+) -> None:
+    user = await user_factory()
+    cipher = AesGcmTokenCipher.from_settings(settings)
+    await insert_gmail_connection(
+        session_factory,
+        user_id=user.id,
+        email="cuenta-vieja@gmail.com",
+        refresh_token_enc=cipher.encrypt(user.id, "1//refresh-viejo"),
+    )
+
+    response = await client.post(
+        "/v1/gmail/connect", json={"server_auth_code": _CODE}, headers=user.headers
+    )
+
+    assert response.status_code == 200
+    assert google.operations() == [
+        "exchange",
+        "profile",
+        "refresh",
+        "stop",
+        "revoke",
+        "refresh",
+        "watch",
+    ]
+    assert google.requests[4][1]["token"] == "1//refresh-viejo"
+    assert await _stored_refresh_token(session_factory, settings, user) == REFRESH_TOKEN
+
+
 async def test_connect_con_watch_fallido_guarda_la_conexion_en_error(
     client: AsyncClient,
     user_factory: Callable[..., Awaitable[AuthedUser]],

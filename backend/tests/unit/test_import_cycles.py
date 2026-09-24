@@ -62,7 +62,17 @@ def _run_import(module: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-@pytest.mark.parametrize("module", ["finanzia.worker", "finanzia.modules.parsing.public"])
+@pytest.mark.parametrize(
+    "module",
+    [
+        "finanzia.worker",
+        "finanzia.app",
+        "finanzia.modules.parsing.public",
+        # identity entra a ingestion por su fachada (`/v1/me`, F3.3).
+        "finanzia.modules.identity.public",
+        "finanzia.modules.ingestion.public",
+    ],
+)
 def test_import_en_proceso_limpio_no_revienta_por_ciclo(module: str) -> None:
     result = _run_import(module)
     assert result.returncode == 0, (

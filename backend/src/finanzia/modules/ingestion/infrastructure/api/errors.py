@@ -7,6 +7,7 @@ Starlette elige el handler de la clase mas especifica (MRO), asi que
 
 from finanzia.modules.ingestion.domain.errors import (
     GmailRefreshTokenMissing,
+    GmailScopeNotGranted,
     GmailTransientError,
     IngestionError,
     InvalidChannel,
@@ -34,6 +35,10 @@ INGESTION_EXCEPTION_MAP: ExceptionMap = {
             "Google no entrego refresh token: la app debe pedir acceso offline "
             "y forzar el consentimiento"
         ),
+        field="server_auth_code",
+    ),
+    GmailScopeNotGranted: lambda e: ValidationAppError(
+        message="permiso de Gmail no concedido: la app debe pedir gmail.readonly",
         field="server_auth_code",
     ),
     GmailTransientError: lambda e: UpstreamUnavailableError(),

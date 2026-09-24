@@ -1,7 +1,7 @@
 """Tests unitarios de `GetMe`."""
 
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -11,6 +11,32 @@ from finanzia.modules.identity.domain.errors import UserNotFound
 from identity.fakes import InMemoryUserRepo
 
 NOW = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+
+class _FixedGmailStatus:
+    """Doble de `GmailConnectionStatusPort`: mismo estado para cualquier usuario."""
+
+    def __init__(self, status: str = "none") -> None:
+        self.status = status
+        self.asked: list[UUID] = []
+
+    async def gmail_status(self, user_id: UUID) -> str:
+        self.asked.append(user_id)
+        return self.status
+
+
+def _user(consents: dict[str, datetime] | None = None) -> User:
+    return User(
+        id=uuid4(),
+        google_sub="google-sub-3",
+        email="gael@example.com",
+        display_name="Gael",
+        photo_url=None,
+        status=UserStatus.ACTIVE,
+        consents=consents or {},
+        created_at=NOW,
+        updated_at=NOW,
+    )
 
 
 @pytest.mark.unit
@@ -28,7 +54,7 @@ async def test_usuario_encontrado_devuelve_perfil_y_conexiones() -> None:
         updated_at=NOW,
     )
     await users.add(user)
-    use_case = GetMe(users=users)
+    use_case = GetMe(users=users, gmail=_FixedGmailStatus())
 
     result = await use_case.execute(user.id)
 
@@ -38,7 +64,7 @@ async def test_usuario_encontrado_devuelve_perfil_y_conexiones() -> None:
 
 @pytest.mark.unit
 async def test_usuario_inexistente_lanza_user_not_found() -> None:
-    use_case = GetMe(users=InMemoryUserRepo())
+    use_case = GetMe(users=InMemoryUserRepo(), gmail=_FixedGmailStatus())
 
     with pytest.raises(UserNotFound):
         await use_case.execute(uuid4())
@@ -59,8 +85,21 @@ async def test_consentimiento_de_notificaciones_marca_conexion_granted() -> None
         updated_at=NOW,
     )
     await users.add(user)
-    use_case = GetMe(users=users)
+    use_case = GetMe(users=users, gmail=_FixedGmailStatus())
 
     result = await use_case.execute(user.id)
 
     assert result.connections["notifications"] == "granted"
+
+
+@pytest.mark.unit
+async def test_conexion_gmail_sale_del_puerto_de_ingestion() -> None:
+    users = InMemoryUserRepo()
+    user = _user()
+    await users.add(user)
+    gmail = _FixedGmailStatus("revoked")
+
+    result = await GetMe(users=users, gmail=gmail).execute(user.id)
+
+    assert result.connections["gmail"] == "revoked"
+    assert gmail.asked == [user.id]

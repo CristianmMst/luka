@@ -21,6 +21,7 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailHistoryExpired,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
+    GmailScopeNotGranted,
     GmailTransientError,
 )
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
@@ -133,6 +134,74 @@ class TestOAuth:
         client = make_client(lambda _: httpx.Response(200, json={"access_token": "a"}))
         with pytest.raises(GmailRefreshTokenMissing, match="refresh_token"):
             await client.exchange_code(_SECRET_CODE)
+
+    @pytest.mark.parametrize(
+        ("grant_scope", "profile_status"),
+        [
+            # Scope explicito sin gmail.readonly: ni siquiera se llama a `/profile`.
+            ("openid https://www.googleapis.com/auth/userinfo.email", None),
+            # Sin `scope` en la respuesta: el 403 de `/profile` delata el permiso faltante.
+            (None, 403),
+        ],
+    )
+    async def test_exchange_code_sin_permiso_de_gmail_revoca_y_lanza_scope_not_granted(
+        self, make_client: ClientFactory, grant_scope: str | None, profile_status: int | None
+    ) -> None:
+        seen: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            url = str(request.url)
+            if url == _TOKEN_URL:
+                seen.append("token")
+                grant: dict[str, Any] = {"access_token": _SECRET_ACCESS}
+                grant["refresh_token"] = _SECRET_REFRESH
+                if grant_scope is not None:
+                    grant["scope"] = grant_scope
+                return httpx.Response(200, json=grant)
+            if url == _REVOKE_URL:
+                seen.append(f"revoke:{_form(request)['token']}")
+                return httpx.Response(200)
+            seen.append("profile")
+            return httpx.Response(profile_status or 200, json={"error": {"code": 403}})
+
+        client = make_client(handler)
+
+        with pytest.raises(GmailScopeNotGranted):
+            await client.exchange_code(_SECRET_CODE)
+
+        assert seen[-1] == f"revoke:{_SECRET_REFRESH}"
+        assert ("profile" in seen) is (profile_status is not None)
+
+    async def test_exchange_code_sin_permiso_y_revoke_fallido_igual_lanza_scope_not_granted(
+        self, make_client: ClientFactory
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if str(request.url) == _TOKEN_URL:
+                return httpx.Response(
+                    200,
+                    json={"access_token": "a", "refresh_token": "r", "scope": "openid email"},
+                )
+            return httpx.Response(503)
+
+        client = make_client(handler)
+
+        with pytest.raises(GmailScopeNotGranted):
+            await client.exchange_code(_SECRET_CODE)
+
+    async def test_exchange_code_con_scope_de_gmail_sigue_al_perfil(
+        self, make_client: ClientFactory
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if str(request.url) == _TOKEN_URL:
+                scope = "openid https://www.googleapis.com/auth/gmail.readonly email"
+                return httpx.Response(
+                    200, json={"access_token": "a", "refresh_token": "r", "scope": scope}
+                )
+            return httpx.Response(200, json={"emailAddress": _ACCOUNT_EMAIL})
+
+        client = make_client(handler)
+
+        assert await client.exchange_code(_SECRET_CODE) == ("r", _ACCOUNT_EMAIL)
 
     async def test_access_token_refresca(self, make_client: ClientFactory) -> None:
         captured: dict[str, str] = {}
@@ -319,6 +388,38 @@ class TestHistory:
         assert seen[0].path == "/gmail/v1/users/me/messages"
         assert dict(seen[0].params) == {"q": "in:inbox newer_than:3d", "maxResults": "100"}
         assert seen[1].params["pageToken"] == "n"
+
+    async def test_recent_message_ids_se_detiene_en_el_tope(
+        self, make_client: ClientFactory
+    ) -> None:
+        pages: list[str | None] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            token = request.url.params.get("pageToken")
+            pages.append(token)
+            start = int(token or 0)
+            ids = [{"id": f"m{start + i}"} for i in range(100)]
+            return httpx.Response(200, json={"messages": ids, "nextPageToken": str(start + 100)})
+
+        client = make_client(handler)
+
+        ids = await client.recent_message_ids(_SECRET_ACCESS, limit=250)
+
+        # Gmail lista del mas nuevo al mas viejo: el tope conserva los mas recientes.
+        assert ids == [f"m{i}" for i in range(250)]
+        assert pages == [None, "100", "200"]
+
+    async def test_recent_message_ids_tope_por_defecto_es_500(
+        self, make_client: ClientFactory
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            start = int(request.url.params.get("pageToken") or 0)
+            ids = [{"id": f"m{start + i}"} for i in range(100)]
+            return httpx.Response(200, json={"messages": ids, "nextPageToken": str(start + 100)})
+
+        client = make_client(handler)
+
+        assert len(await client.recent_message_ids(_SECRET_ACCESS)) == 500
 
     async def test_recent_message_ids_buzon_vacio(self, make_client: ClientFactory) -> None:
         client = make_client(lambda _: httpx.Response(200, json={"resultSizeEstimate": 0}))

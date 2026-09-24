@@ -34,7 +34,7 @@
 | POST | `/auth/google` **público** | Body `{ "id_token": "...", "device_info?" }` (`device_info` opcional, ≤200 caracteres) → verifica firma/audiencia con Google, crea o encuentra usuario. `email_verified=false` → 401 `unauthorized`. Respuesta: `{ access_token, refresh_token, expires_in, user }` |
 | POST | `/auth/refresh` **público** | Body `{ "refresh_token", "device_info?" }` (mismo límite) → rota el refresh (familia) y emite nuevo par. Refresh vencido, revocado, reusado o desconocido → 401 `unauthorized` genérico (no se distingue el motivo); `token_expired` es exclusivo del access JWT |
 | POST | `/auth/logout` | Body `{ "refresh_token" }` → revoca ese refresh token. Responde 204 siempre, exista o no el token |
-| GET | `/me` | Perfil + `consents` + `connections`. En Fase 1, `connections` es `{ "gmail": "none", "notifications": "none" \| "granted" }` |
+| GET | `/me` | Perfil + `consents` + `connections`: `{ "gmail": "active" \| "revoked" \| "error" \| "none", "notifications": "none" \| "granted" }`. `gmail` es el estado guardado de la conexión (ingestion, leído por su fachada pública) o `none` si el usuario no conectó Gmail |
 | DELETE | `/me` | Inicia borrado de cuenta (RF-11.3). Respuesta 202 |
 | GET | `/me/export` | Genera exportación completa (job async) → `{ job_id }`; se consulta en `/me/export/{job_id}` (RF-11.2) |
 
@@ -50,7 +50,8 @@ Todas las rutas exigen el Bearer y operan solo sobre la conexión del usuario de
 
 - `status`: `active` / `revoked` / `error` (estado guardado, spec 004 §2.3) o `disconnected` si el usuario no tiene conexión; en ese caso `email`, `last_sync_at` y `watch_expires_at` son `null`.
 - `email` es la cuenta Gmail conectada, que puede diferir del email del usuario.
-- Reconectar (`POST` con conexión previa) reemplaza token, email y watch, y conserva `created_at`.
+- Reconectar (`POST` con conexión previa) reemplaza token, email y watch, y conserva `created_at`. Si la conexión previa era de **otra** cuenta Gmail, antes de reemplazarla se detiene su watch y se revoca su grant (best effort); con la misma cuenta no se revoca nada, porque Google revoca el grant completo y mataría también el token recién emitido.
+- Ninguna ruta espera a Google con una transacción de base de datos abierta: la conexión se lee, la transacción se cierra, se llama a Google y la escritura final corre en una transacción nueva.
 
 ```json
 { "status": "active", "email": "ana@gmail.com", "watch_expires_at": "2026-05-08T12:00:00Z" }
@@ -62,6 +63,7 @@ Errores de `POST /gmail/connect`:
 |---|---|
 | Código inválido, vencido o ya usado (`invalid_grant`) | 400 `validation_error`, `field: "server_auth_code"`. No se guarda nada |
 | Google no entregó refresh token (la app no pidió acceso offline o no forzó el consentimiento) | 400 `validation_error`, `field: "server_auth_code"`, con un mensaje que lo indica. No se guarda nada |
+| El usuario no concedió `gmail.readonly` en el consentimiento (el `scope` del grant no lo trae o `users.getProfile` responde 403) | 400 `validation_error`, `field: "server_auth_code"`, mensaje "permiso de Gmail no concedido". El grant recién emitido se revoca (best effort). No se guarda nada |
 | Google caído en el canje (timeout, 5xx, 429) | 503 `upstream_unavailable`. No se guarda nada |
 | El canje salió bien pero `watch` falló | 200 con `status: "error"` y `watch_expires_at: null`: la conexión (con el token cifrado) queda guardada, porque el código ya se consumió y no se puede volver a canjear; la renovación de watch o una reconexión la recuperan. Si Google revocó el token recién emitido, `status: "revoked"` |
 

@@ -65,6 +65,14 @@ class AuditLogPort(Protocol):
     def record(self, event: str, *, user_id: UUID | None = None, **attrs: str) -> None: ...
 
 
+class GmailConnectionStatusPort(Protocol):
+    """Estado de la conexion Gmail del usuario, que vive en ingestion (spec 005 §2)."""
+
+    async def gmail_status(self, user_id: UUID) -> str:
+        """`active` / `revoked` / `error`, o `none` si el usuario no conecto Gmail."""
+        ...
+
+
 class UnitOfWorkPort(Protocol):
     """Confirma los cambios acumulados en la unidad de trabajo actual."""
 
@@ -75,6 +83,7 @@ __all__ = [
     "AccessTokenIssuerPort",
     "AuditLogPort",
     "ClockPort",
+    "GmailConnectionStatusPort",
     "GoogleIdTokenVerifierPort",
     "RefreshTokenRepositoryPort",
     "TokenGeneratorPort",

@@ -1,8 +1,9 @@
 """Casos de uso de la conexion Gmail: conectar, desconectar y estado (F3.3, spec 005 §3).
 
 Ninguno devuelve ni guarda el refresh token en claro: solo pasa por
-`TokenCipherPort` (spec 009 §3). Las llamadas a Google ocurren antes de tocar la
-base, asi que no queda una transaccion abierta mientras se espera la red.
+`TokenCipherPort` (spec 009 §3). Nunca se espera a Google con una transaccion
+abierta: la conexion previa se lee y la transaccion se cierra (`uow.commit()`)
+antes de la primera llamada de red; la escritura final abre una transaccion nueva.
 """
 
 from __future__ import annotations
@@ -49,6 +50,11 @@ class ConnectGmail:
     con el mismo codigo) con `status=error`, o `revoked` si Google invalido el
     token recien emitido; la renovacion de watch (cron) o una reconexion la
     recuperan.
+
+    Si ya habia una conexion con **otra** cuenta Gmail, su watch se detiene y su
+    grant se revoca (best effort) antes de reemplazarla. Con la misma cuenta no se
+    revoca nada: revocar el token viejo invalidaria tambien el recien emitido
+    (Google revoca el grant completo del par usuario-cliente).
     """
 
     def __init__(  # noqa: PLR0913 - un parametro por port + el topic
@@ -73,6 +79,11 @@ class ConnectGmail:
             refresh_token, email = await self._gmail.exchange_code(server_auth_code)
         except GmailAuthRevoked as exc:
             raise InvalidServerAuthCode from exc
+
+        previous = await self._repo.get(user_id)
+        await self._uow.commit()  # cierra la lectura antes de volver a llamar a Google
+        if previous is not None and previous.email.casefold() != email.casefold():
+            await _cleanup_remote(self._gmail, self._cipher, previous)
 
         now = self._clock.now()
         connection = GmailConnection(
@@ -106,7 +117,8 @@ class DisconnectGmail:
 
     Google es best effort: cualquier fallo (red, token ya revocado, blob que no
     descifra) se tolera y la fila se borra igual. Las transacciones del usuario
-    no se tocan.
+    no se tocan. La lectura de la conexion se confirma antes de llamar a Google,
+    asi que el borrado corre en una transaccion propia y corta.
     """
 
     def __init__(
@@ -124,34 +136,40 @@ class DisconnectGmail:
 
     async def execute(self, user_id: UUID) -> DisconnectResult:
         connection = await self._repo.get(user_id)
+        await self._uow.commit()  # no esperar a Google con la transaccion abierta
         if connection is None:
             return DisconnectResult(existed=False, remote_cleanup=False)
 
-        remote_cleanup = False
-        try:
-            refresh_token = self._cipher.decrypt(user_id, connection.refresh_token_enc)
-        except GmailTokenUndecryptable:
-            refresh_token = None
-        if refresh_token is not None:
-            remote_cleanup = await self._cleanup_remote(refresh_token)
+        remote_cleanup = await _cleanup_remote(self._gmail, self._cipher, connection)
 
         await self._repo.delete(user_id)
         await self._uow.commit()
         return DisconnectResult(existed=True, remote_cleanup=remote_cleanup)
 
-    async def _cleanup_remote(self, refresh_token: str) -> bool:
-        """`stop` y luego `revoke`; el revoke se intenta aunque el stop falle."""
-        stopped = True
-        try:
-            access_token = await self._gmail.access_token(refresh_token)
-            await self._gmail.stop(access_token)
-        except GmailError:
-            stopped = False
-        try:
-            await self._gmail.revoke(refresh_token)
-        except GmailError:
-            return False
-        return stopped
+
+async def _cleanup_remote(
+    gmail: GmailClientPort, cipher: TokenCipherPort, connection: GmailConnection
+) -> bool:
+    """`stop` y luego `revoke` del grant de `connection`, best effort.
+
+    El revoke se intenta aunque el stop falle. `False` si algo fallo o el token
+    guardado no descifra (en ese caso no se llama a Google).
+    """
+    try:
+        refresh_token = cipher.decrypt(connection.user_id, connection.refresh_token_enc)
+    except GmailTokenUndecryptable:
+        return False
+    stopped = True
+    try:
+        access_token = await gmail.access_token(refresh_token)
+        await gmail.stop(access_token)
+    except GmailError:
+        stopped = False
+    try:
+        await gmail.revoke(refresh_token)
+    except GmailError:
+        return False
+    return stopped
 
 
 class GetGmailStatus:

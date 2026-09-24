@@ -4,6 +4,7 @@ import pytest
 
 from finanzia.modules.ingestion.domain.errors import (
     GmailRefreshTokenMissing,
+    GmailScopeNotGranted,
     GmailTokenUndecryptable,
     GmailTransientError,
     InvalidServerAuthCode,
@@ -14,7 +15,9 @@ from finanzia.shared.crypto.aesgcm import DecryptionError
 pytestmark = pytest.mark.unit
 
 
-@pytest.mark.parametrize("error", [InvalidServerAuthCode(), GmailRefreshTokenMissing("x")])
+@pytest.mark.parametrize(
+    "error", [InvalidServerAuthCode(), GmailRefreshTokenMissing("x"), GmailScopeNotGranted("x")]
+)
 def test_fallos_del_canje_son_400_en_server_auth_code(error: Exception) -> None:
     app_error = INGESTION_EXCEPTION_MAP[type(error)](error)
 

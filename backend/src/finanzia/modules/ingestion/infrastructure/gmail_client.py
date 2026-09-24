@@ -10,19 +10,22 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
 import re
 import time
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, NoReturn
 
 import httpx
 import structlog
 
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
+    GmailError,
     GmailHistoryExpired,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
+    GmailScopeNotGranted,
     GmailTransientError,
 )
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
@@ -35,6 +38,17 @@ REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 
 _PAGE_SIZE = 100
+#: Tope del resync (spec 006 §2.1): `messages.list` devuelve del mas nuevo al mas
+#: viejo, asi que el tope conserva los mas recientes.
+RESYNC_MAX_MESSAGES = 500
+#: Cualquiera de estos scopes permite leer el buzon; la app pide `gmail.readonly`.
+_GMAIL_READ_SCOPES = frozenset(
+    {
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://mail.google.com/",
+    }
+)
 _CHARSET_PATTERN = re.compile(r"""charset\s*=\s*["']?([^"';\s]+)""", re.IGNORECASE)
 
 
@@ -80,11 +94,29 @@ class GoogleGmailClient:
             raise GmailRefreshTokenMissing("token: respuesta sin refresh_token")
         if not isinstance(access_token, str) or not access_token:
             raise GmailRequestRejected("token: respuesta sin access_token")
-        profile = await self._api("profile", "GET", "/profile", access_token)
+        scope = grant.get("scope")
+        if isinstance(scope, str) and _GMAIL_READ_SCOPES.isdisjoint(scope.split()):
+            await self._reject_scope(refresh_token)
+        response = await self._send(
+            "profile", "GET", f"{GMAIL_API_BASE}/profile", headers=_bearer(access_token)
+        )
+        if response.status_code == httpx.codes.FORBIDDEN:
+            await self._reject_scope(refresh_token)
+        profile = _json_object("profile", response)
         email = profile.get("emailAddress")
         if not isinstance(email, str) or not email:
             raise GmailRequestRejected("profile: respuesta sin emailAddress")
         return refresh_token, email
+
+    async def _reject_scope(self, refresh_token: str) -> NoReturn:
+        """Revoca (best effort) el grant sin permiso de Gmail y lanza `GmailScopeNotGranted`.
+
+        Sin el revoke, el refresh token recien emitido quedaria vivo en Google sin
+        que el backend lo guarde nunca.
+        """
+        with contextlib.suppress(GmailError):
+            await self.revoke(refresh_token)
+        raise GmailScopeNotGranted("token: sin permiso gmail.readonly")
 
     async def access_token(self, refresh_token: str) -> str:
         grant = await self._token_request(
@@ -157,7 +189,9 @@ class GoogleGmailClient:
                 return list(ids), new_history_id
             params = {**params, "pageToken": str(next_token)}
 
-    async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
+    async def recent_message_ids(
+        self, access_token: str, days: int = 7, limit: int = RESYNC_MAX_MESSAGES
+    ) -> list[str]:
         ids: list[str] = []
         params: dict[str, str] = {
             "q": f"in:inbox newer_than:{days}d",
@@ -170,6 +204,8 @@ class GoogleGmailClient:
             except (KeyError, TypeError) as exc:
                 raise GmailRequestRejected("messages.list: respuesta ilegible") from exc
             next_token = page.get("nextPageToken")
+            if len(ids) >= limit:
+                return ids[:limit]
             if not next_token:
                 return ids
             params = {**params, "pageToken": str(next_token)}
@@ -309,4 +345,11 @@ def _parse_part(part: dict[str, Any]) -> MimePart:
     )
 
 
-__all__ = ["GMAIL_API_BASE", "REVOKE_URL", "TOKEN_URL", "GoogleGmailClient", "build_gmail_client"]
+__all__ = [
+    "GMAIL_API_BASE",
+    "RESYNC_MAX_MESSAGES",
+    "REVOKE_URL",
+    "TOKEN_URL",
+    "GoogleGmailClient",
+    "build_gmail_client",
+]

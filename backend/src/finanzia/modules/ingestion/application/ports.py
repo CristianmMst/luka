@@ -121,7 +121,9 @@ class GmailClientPort(Protocol):
         """Canjea un `serverAuthCode` por `(refresh_token, email de la cuenta Gmail)`.
 
         `GmailAuthRevoked` si el codigo es invalido o ya se uso;
-        `GmailRefreshTokenMissing` si Google no entrego refresh token.
+        `GmailRefreshTokenMissing` si Google no entrego refresh token;
+        `GmailScopeNotGranted` si el usuario no concedio `gmail.readonly` (el
+        adaptador ya intento revocar el grant recien emitido).
         """
         ...
 
@@ -149,8 +151,12 @@ class GmailClientPort(Protocol):
         """
         ...
 
-    async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
-        """Ids de los mensajes de los ultimos `days` dias (resync, spec 006 §2.1)."""
+    async def recent_message_ids(
+        self, access_token: str, days: int = 7, limit: int = 500
+    ) -> list[str]:
+        """Ids de los mensajes de INBOX de los ultimos `days` dias, del mas nuevo al
+        mas viejo y a lo sumo `limit` (resync, spec 006 §2.1).
+        """
         ...
 
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:

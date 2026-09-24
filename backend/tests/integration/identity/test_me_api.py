@@ -9,6 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
+from support.gmail_connections import insert_gmail_connection
 
 from finanzia.shared.security import encode_access_token
 
@@ -87,3 +88,20 @@ async def test_usuario_borrado_tras_login_devuelve_401(
     response = await client.get("/v1/me", headers=user.headers)
 
     assert response.status_code == 401
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("stored_status", ["active", "revoked", "error"])
+async def test_connections_gmail_refleja_el_estado_de_la_conexion(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    stored_status: str,
+) -> None:
+    user = await user_factory()
+    await insert_gmail_connection(session_factory, user_id=user.id, status=stored_status)
+
+    response = await client.get("/v1/me", headers=user.headers)
+
+    assert response.status_code == 200
+    assert response.json()["connections"]["gmail"] == stored_status

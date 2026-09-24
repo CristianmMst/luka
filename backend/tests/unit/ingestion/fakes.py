@@ -237,7 +237,9 @@ class FakeGmailClient:
     ) -> tuple[list[str], int]:
         raise NotImplementedError
 
-    async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
+    async def recent_message_ids(
+        self, access_token: str, days: int = 7, limit: int = 500
+    ) -> list[str]:
         raise NotImplementedError
 
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
