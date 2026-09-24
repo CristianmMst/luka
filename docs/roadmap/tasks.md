@@ -1,6 +1,6 @@
 # Roadmap de implementación
 
-> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing` (mergeada a `main` el 2026-09-22). App Flutter F0.6 (scaffold) y F1.9 (auth) completadas el 2026-09-22 en la rama `CristianmMst/app-login`. F4.1 (esquema Drift completo + `SyncCoordinator` con push/pull y outbox) completada el 2026-09-23 en la rama `f4.1-sync-offline`. F4.2 (feature transactions: lista por día, filtros, detalle con fuentes, edición de categoría y marcar transfer) completada el 2026-09-23 en la rama `f4.2-movimientos` (integrada a `main`). Pendientes: F2.7 (bancos restantes, diferido), Fase 3 (Gmail) y el resto de Fase 4 a partir de F4.3. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
+> **Estado**: Fase 0 backend (F0.1–F0.5) y Fase 1 backend (F1.1–F1.8) completadas el 2026-09-20 en la rama `CristianmMst/backend-architecture-setup` (mergeada a `main`). Fase 2 backend (F2.1–F2.6, parsing Bancolombia) completada el 2026-09-21 en la rama `CristianmMst/fase2-parsing` (mergeada a `main` el 2026-09-22). App Flutter F0.6 (scaffold) y F1.9 (auth) completadas el 2026-09-22 en la rama `CristianmMst/app-login`. F4.1 (esquema Drift completo + `SyncCoordinator` con push/pull y outbox) completada el 2026-09-23 en la rama `f4.1-sync-offline`. F4.2 (feature transactions: lista por día, filtros, detalle con fuentes, edición de categoría y marcar transfer) completada el 2026-09-23 en la rama `f4.2-movimientos` (integrada a `main`). Fase 3 (Gmail, F3.1–F3.6) completada el 2026-09-24 en la rama local `f3-gmail` (aún sin integrar a `main`): watch/sync, cifrado del refresh token, endpoints de conexión, webhook con verificación OIDC y el paso de onboarding + fila en Ajustes de la app, verificado en modo de prueba de Google con el túnel de desarrollo (`just tunnel`, backend/README §16); la suscripción push la crea el controlador en la consola, fuera de este repo. Pendientes: F2.7 (bancos restantes, diferido), la verificación DKIM del remitente de correo (spec 009 §1), el resto de Fase 4 a partir de F4.3 y Fase 5+. Cada tarea referencia los specs que implementa; una tarea está "hecha" cuando sus criterios de aceptación pasan en CI.
 
 Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
@@ -43,15 +43,15 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
 ## Fase 3 — Gmail (RF-2 completo)
 
-| ID | Tarea | Specs | Deps |
-|---|---|---|---|
-| F3.1 | Proyecto GCP: consent screen (scopes), credenciales OAuth, topic Pub/Sub + permiso a gmail-api-push, subscription push con OIDC | 006 §2, 010 §1 | — |
-| F3.2 | Migración gmail_connections; cifrado AES-GCM de refresh tokens (`shared/crypto`) + tests | 004 §2.3, 009 §3 | F1.1 |
-| F3.3 | `POST /gmail/connect` (canje de serverAuthCode), DELETE, status; creación de watch | 005 §3 | F3.2 |
-| F3.4 | Webhook `/webhooks/gmail`: verificación OIDC + history.list + filtro remitentes + encolar; tests con payloads simulados | 005 §4, 006 §2 | F3.3, F2.2 |
-| F3.5 | Cron renovación de watches + resync tras cursor inválido | 006 §2.1 | F3.4 |
-| F3.6 | App: paso de onboarding Gmail con autorización incremental + estado en Ajustes | 008 §3.1 | F1.9, F3.3 |
-| F3.7 | Job de purga de raw_messages a 90 días (✅ adelantado en F2, Task 10) | 004 §6 | F2.1 |
+| ID | Tarea | Specs | Deps | Estado |
+|---|---|---|---|---|
+| F3.1 | Proyecto GCP: consent screen (scopes), credenciales OAuth, topic Pub/Sub + permiso a gmail-api-push, subscription push con OIDC | 006 §2, 010 §1 | — | ✅ hecho en la consola (consent screen en modo de prueba, credenciales OAuth, topic + permiso a `gmail-api-push@system.gserviceaccount.com`); la suscripción push (`gmail-push-dev`, OIDC, audiencia `finanzia-gmail-push`) la crea el controlador en la consola, fuera de este repo |
+| F3.2 | Migración gmail_connections; cifrado AES-GCM de refresh tokens (`shared/crypto`) + tests | 004 §2.3, 009 §3 | F1.1 | ✅ sin rotación de clave (`FINANZIA_GMAIL_TOKEN_KEY`) en el MVP; diferida a Fase 6 |
+| F3.3 | `POST /gmail/connect` (canje de serverAuthCode), DELETE, status; creación de watch | 005 §3 | F3.2 | ✅ |
+| F3.4 | Webhook `/webhooks/gmail`: verificación OIDC + history.list + filtro remitentes + encolar; tests con payloads simulados | 005 §4, 006 §2 | F3.3, F2.2 | ✅ verificado en desarrollo con el túnel `cloudflared` (`just tunnel`) y su audiencia OIDC fija (`FINANZIA_GMAIL_PUSH_AUDIENCE`), reapuntando la suscripción a la URL del túnel en cada corrida; pendiente exigir `dkim=pass`/`dmarc=pass` del remitente antes de confiar en el `From` (spec 009 §1) |
+| F3.5 | Cron renovación de watches + resync tras cursor inválido | 006 §2.1 | F3.4 | ✅ |
+| F3.6 | App: paso de onboarding Gmail con autorización incremental + estado en Ajustes | 008 §3.1 | F1.9, F3.3 | ✅ |
+| F3.7 | Job de purga de raw_messages a 90 días (✅ adelantado en F2, Task 10) | 004 §6 | F2.1 | ✅ |
 
 ## Fase 4 — App completa (RF-3, RF-4, RF-9)
 

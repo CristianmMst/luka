@@ -48,6 +48,16 @@ coverage-domain:
 # Pipeline de CI: lint + tests + cobertura de dominio.
 ci: lint test coverage-domain
 
+# Tunel de desarrollo para el webhook de Gmail (F3.4): expone localhost:8000 con
+# una URL publica https://<random>.trycloudflare.com. Cada corrida genera una URL
+# nueva porque es un "quick tunnel" sin cuenta de Cloudflare, asi que hay que
+# actualizar el endpoint de la suscripcion push `gmail-push-dev` (Pub/Sub ->
+# Suscripciones -> gmail-push-dev -> Editar -> URL del extremo) a
+# "<url>/v1/webhooks/gmail" cada vez que se corre este comando. La audiencia OIDC
+# (`gmail_push_audience`, default `finanzia-gmail-push`) no cambia, solo el host.
+tunnel:
+	cloudflared tunnel --url http://localhost:8000
+
 # --- App Flutter (app/, spec 008) ---
 
 # Regenera codigo (freezed, json_serializable, drift) y textos l10n.

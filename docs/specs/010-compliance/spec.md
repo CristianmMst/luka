@@ -11,6 +11,20 @@ App de uso masivo: estas obligaciones son bloqueantes de lanzamiento, no opciona
 | Desarrollo/MVP | ≤ 100 usuarios con Gmail conectado, consent screen "no verificada" | Ninguno formal; pantalla muestra advertencia |
 | Lanzamiento público | Sin límite | **Verificación OAuth de Google** + **auditoría CASA** anual |
 
+### Modo de prueba (desarrollo, F3.1–F3.6)
+
+Mientras la pantalla de consentimiento del proyecto GCP (`finanzia-509500`) esté en modo de prueba
+("Público en prueba" en Google Auth Platform):
+
+- Solo los usuarios de prueba declarados en la consola pueden completar el consentimiento y
+  conectar Gmail; cualquier otra cuenta de Google lo rechaza antes de llegar al backend.
+- Google muestra el aviso "esta app no está verificada" durante el flujo: es el comportamiento
+  esperado de un scope restringido sin verificar, no un error de configuración.
+- Los grants de scopes restringidos en modo de prueba **vencen a los 7 días**, sin importar la
+  actividad del usuario; pasado ese plazo, la próxima llamada a Google falla con `invalid_grant`,
+  la conexión pasa a `revoked` (spec 006 §2.1) y el usuario reconecta desde Ajustes (spec 008
+  §3.7). El límite de 7 días desaparece al pasar a producción verificada (§Lanzamiento público).
+
 ### Verificación OAuth
 - Solicitar en Google Cloud Console: video demo del flujo, justificación del scope ("leer únicamente correos de notificaciones bancarias para registrar transacciones del propio usuario"), política de privacidad pública en dominio propio, homepage del producto.
 - Principio de **scope mínimo**: solo `gmail.readonly` + `openid email profile`. Nunca pedir scopes de escritura.

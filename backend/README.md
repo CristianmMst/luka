@@ -2,7 +2,7 @@
 
 Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md).
 
-Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) también en `main`. La app Flutter (F0.6, F1.9) inicia sesión con Google real contra esta API. Pendiente: F2.7 (bancos restantes, diferido) y Fases 3+ (Gmail, fiscal, producción).
+Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) también en `main`. La app Flutter (F0.6, F1.9) inicia sesión con Google real contra esta API. Fase 3 (Gmail, F3.1–F3.6) está en la rama local `f3-gmail`: watch/sync, cifrado del refresh token, endpoints de conexión, webhook y paso de onboarding en la app, verificado en modo de prueba de Google con túnel de desarrollo (§16). Pendiente: F2.7 (bancos restantes, diferido), la verificación DKIM del remitente (spec 009 §1) y Fases 5+ (fiscal, producción).
 
 ## 1. Prerrequisitos
 
@@ -203,7 +203,7 @@ El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación 
 
 ## 10. Variables de entorno (`.env`)
 
-Todas tienen el prefijo `FINANZIA_`. Solo las 4 marcadas como **obligatoria** van en [`.env.example`](.env.example); el resto tiene default en `src/finanzia/shared/settings.py` y se define únicamente para cambiarlo:
+Todas tienen el prefijo `FINANZIA_`. Solo las 6 marcadas como **obligatoria** van en [`.env.example`](.env.example); el resto tiene default en `src/finanzia/shared/settings.py` y se define únicamente para cambiarlo:
 
 | Variable | Significado |
 |---|---|
@@ -214,6 +214,11 @@ Todas tienen el prefijo `FINANZIA_`. Solo las 4 marcadas como **obligatoria** va
 | `FINANZIA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
 | `FINANZIA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
 | `FINANZIA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `finanzia-509500`) |
+| `FINANZIA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
+| `FINANZIA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3) |
+| `FINANZIA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/finanzia-509500/topics/gmail-push`) |
+| `FINANZIA_GMAIL_PUSH_AUDIENCE` | Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail` (default fijo `finanzia-gmail-push`; no cambia con la URL del túnel, ver §16) |
+| `FINANZIA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com`) |
 | `FINANZIA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
 | `FINANZIA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
 | `FINANZIA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás de Caddy en producción) |
@@ -559,3 +564,80 @@ uv run alembic upgrade head && uv run alembic check
 El recorrido en vivo de §14 no se repitió en esta ola (no cambió ningún endpoint); sí cambió el
 esquema (migración `0004`, columna `raw_messages.requeue_attempts`) y el horario del cron de purga
 (08:00 UTC = 03:00 en Colombia).
+
+## 16. Gmail (Fase 3) — túnel de desarrollo y modo de prueba
+
+Implementa spec 006 §2 (watch/sync), spec 005 §3/§4 (endpoints y webhook) y spec 004 §2.3
+(`gmail_connections`). En Google Cloud (proyecto `finanzia-509500`) ya están habilitadas la Gmail
+API y la Pub/Sub API, el topic `projects/finanzia-509500/topics/gmail-push` (con
+`gmail-api-push@system.gserviceaccount.com` como Publisher), la cuenta de servicio
+`gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com` (sin llaves) y el scope
+`gmail.readonly` en la pantalla de consentimiento, que está en modo de prueba.
+
+### 16.1 Variables obligatorias
+
+Las dos nuevas de Fase 3 (§10), ya en [`.env.example`](.env.example):
+
+- `FINANZIA_GOOGLE_CLIENT_SECRET`: secreto del cliente OAuth web (consola de Google Cloud →
+  Credenciales → el cliente web usado como `FINANZIA_GOOGLE_CLIENT_ID`). Genera uno nuevo si no lo
+  tienes a mano.
+- `FINANZIA_GMAIL_TOKEN_KEY`: 32 bytes aleatorios en base64, para AES-256-GCM. Se genera con:
+
+  ```sh
+  openssl rand -base64 32
+  ```
+
+### 16.2 Flujo de desarrollo local
+
+El webhook `POST /v1/webhooks/gmail` lo llama Google (Pub/Sub), así que necesita una URL pública;
+en desarrollo se usa un túnel de Cloudflare (`cloudflared`, sin cuenta):
+
+```sh
+just up       # Postgres + Redis
+just dev      # API en :8000
+just worker   # worker arq (sync_gmail, renew_gmail_watches)
+just tunnel   # cloudflared tunnel --url http://localhost:8000
+```
+
+`just tunnel` imprime una URL `https://<random>.trycloudflare.com`. Con ella, en la consola
+(Pub/Sub → Suscripciones → `gmail-push-dev` → Editar → URL del extremo) pega
+`https://<random>.trycloudflare.com/v1/webhooks/gmail` y guarda. La suscripción
+`gmail-push-dev` misma (nombre, OIDC con la cuenta `gmail-push-invoker`, audiencia
+`finanzia-gmail-push`) se crea una sola vez en la consola (fuera de este repo); solo la URL del
+extremo cambia en cada corrida de `just tunnel`, porque un "quick tunnel" no tiene dominio fijo —
+la audiencia OIDC (`FINANZIA_GMAIL_PUSH_AUDIENCE`, default fijo `finanzia-gmail-push`) no cambia
+con la URL, así que no hay que tocar nada del lado del backend.
+
+Con la API, el worker y el túnel corriendo, `just app-run` lanza la app contra el backend local.
+
+### 16.3 Modo de prueba de Google
+
+Mientras la pantalla de consentimiento siga en modo de prueba (Google Auth Platform → Público en
+prueba):
+
+- Solo los usuarios de prueba declarados en la consola (hoy: `cristianmmst@gmail.com`) pueden
+  conectar Gmail; cualquier otra cuenta ve un error de Google al autorizar.
+- Google muestra el aviso "Google no verificó esta app" durante el consentimiento: es esperado, no
+  un error (spec 010 §1); hay que continuar el flujo igual ("Avanzado" → "Ir a finanzia (no
+  seguro)").
+- Los grants de un scope restringido en modo de prueba **vencen a los 7 días**: pasado ese plazo,
+  `sync_gmail`/`renew_gmail_watches` reciben `invalid_grant` de Google, la conexión pasa a
+  `revoked` (spec 006 §2.1) y el usuario tiene que reconectar desde Ajustes (spec 008 §3.7). No es
+  un bug del backend ni de la app.
+
+### 16.4 Ver los logs de sincronización
+
+Con el worker corriendo (§12.2), cada aviso push produce `gmail_sync_finished` (contadores
+`fetched`/`accepted`/`duplicates`/`discarded`/`skipped`, nunca la cuenta ni contenido) y, por cada
+mensaje, un `parsing_metric` (§12.4). El webhook en sí loguea `gmail_push_received` con
+`jobs_enqueued`. Filtra la salida del worker, por ejemplo:
+
+```sh
+uv run arq finanzia.worker.WorkerSettings | grep -E "gmail_|parsing_metric"
+```
+
+### 16.5 Producción
+
+En producción la pantalla de consentimiento pasa a público verificado (Verificación OAuth de
+Google + auditoría CASA, spec 010 §1, roadmap F6.7) — sin el límite de usuarios de prueba ni el
+vencimiento a 7 días — y la suscripción push apunta al dominio real de la API en vez de un túnel.

@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), la base local con sync offline (F4.1) y la pantalla de movimientos (F4.2); el resto del shell son marcadores.
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1) y la pantalla de movimientos (F4.2); el resto del shell son marcadores.
 
 ## Requisitos
 
@@ -44,6 +44,12 @@ El proyecto de Google Cloud es `finanzia-509500` (Google Auth Platform, público
 Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.
 
 Pendiente para iOS: crear el cliente OAuth de iOS y añadir `GIDClientID` y el URL scheme en `ios/Runner/Info.plist`.
+
+### Gmail (F3.6)
+
+Tras el login, si Gmail no está activo (nunca conectado, revocado o con error) y el usuario no eligió "Ahora no" antes, el gate de sesión (`redirectFor`, spec 008 §2) lleva a `/onboarding/gmail` (`lib/features/gmail/presentation/gmail_onboarding_page.dart`) en vez de a Inicio. La pantalla explica con el lenguaje "Veta esmeralda" qué lee (solo alertas de bancos) y qué nunca lee (correo personal, contactos, adjuntos); "Conectar Gmail" pide el scope `gmail.readonly` con autorización incremental (`google_sign_in`, `authorizeServer`) y envía el `serverAuthCode` a `POST /gmail/connect`; "Ahora no" solo pospone la invitación (se guarda en `sync_state` hasta el próximo login) y ambos botones llevan a Inicio. Contra el backend local en modo de prueba de Google, hace falta el túnel de desarrollo (`backend/README.md` §16) para que el consentimiento complete el canje.
+
+En Ajustes, la fila "Gmail" (`lib/features/gmail/presentation/widgets/gmail_settings_tile.dart`) muestra el estado real (`GET /gmail/status`): conectado ("Conectado · `<email>`" + botón "Desconectar" con diálogo de confirmación), revocado o con error ("Reconectar"), sin conectar ("Conectar") o sin poder consultarlo ("Reintentar"). Como el consent screen sigue en modo de prueba, un grant vencido a los 7 días también aparece como revocado — se resuelve reconectando desde aquí, no es un error de la app.
 
 ## Arquitectura
 
