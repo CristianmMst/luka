@@ -1,3 +1,4 @@
+import 'package:finanzia/core/google/google_sign_in_setup.dart';
 import 'package:finanzia/features/auth/domain/auth_failure.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,34 +12,30 @@ abstract interface class IdTokenProvider {
 }
 
 /// Google Sign-In real (google_sign_in 7, Credential Manager en Android).
+///
+/// Usa la instancia compartida de [GoogleSignInSetup]: la conexión de Gmail
+/// la reutiliza y `initialize` solo puede llamarse una vez.
 class GoogleIdTokenProvider implements IdTokenProvider {
-  GoogleIdTokenProvider({required String? serverClientId, GoogleSignIn? client})
-    : _serverClientId = serverClientId,
-      _client = client ?? GoogleSignIn.instance;
+  GoogleIdTokenProvider(this._setup);
 
-  final String? _serverClientId;
-  final GoogleSignIn _client;
-  Future<void>? _initialized;
-
-  Future<void> _ensureInitialized() =>
-      _initialized ??= _client.initialize(serverClientId: _serverClientId);
+  final GoogleSignInSetup _setup;
 
   @override
   Future<String> obtainIdToken() async {
-    if (_serverClientId == null) {
+    if (_setup.serverClientId == null) {
       debugPrint('[auth] GOOGLE_SERVER_CLIENT_ID vacío en este build');
       throw const AuthMisconfigured(
         'Falta --dart-define=GOOGLE_SERVER_CLIENT_ID',
       );
     }
     try {
-      await _ensureInitialized();
-      if (!_client.supportsAuthenticate()) {
+      final client = await _setup.ensureInitialized();
+      if (!client.supportsAuthenticate()) {
         throw const AuthMisconfigured(
           'Esta plataforma no soporta authenticate()',
         );
       }
-      final account = await _client.authenticate();
+      final account = await client.authenticate();
       final idToken = account.authentication.idToken;
       if (idToken == null) throw const AuthUnexpected('Google sin id_token');
       return idToken;
@@ -62,7 +59,7 @@ class GoogleIdTokenProvider implements IdTokenProvider {
 
   @override
   Future<void> signOut() async {
-    await _ensureInitialized();
-    await _client.signOut();
+    final client = await _setup.ensureInitialized();
+    await client.signOut();
   }
 }

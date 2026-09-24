@@ -12,6 +12,9 @@ enum ApiErrorCode {
   rateLimited,
   internal,
 
+  /// `503`: un servicio externo (Google) no respondió; se puede reintentar.
+  upstreamUnavailable,
+
   /// Sin conexión, timeout o DNS: la petición no llegó al servidor.
   network,
 
@@ -27,6 +30,7 @@ enum ApiErrorCode {
     'conflict' => conflict,
     'rate_limited' => rateLimited,
     'internal' => internal,
+    'upstream_unavailable' => upstreamUnavailable,
     _ => unknown,
   };
 }

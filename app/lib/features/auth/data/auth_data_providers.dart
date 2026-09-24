@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:finanzia/core/config/app_config.dart';
+import 'package:finanzia/core/google/google_sign_in_setup.dart';
 import 'package:finanzia/core/network/dio_providers.dart';
 import 'package:finanzia/core/storage/secure_storage_provider.dart';
 import 'package:finanzia/features/auth/data/auth_api.dart';
@@ -35,9 +35,7 @@ final sessionManagerProvider = Provider<SessionManager>((ref) {
 });
 
 final idTokenProviderProvider = Provider<IdTokenProvider>(
-  (ref) => GoogleIdTokenProvider(
-    serverClientId: ref.watch(appConfigProvider).googleServerClientId,
-  ),
+  (ref) => GoogleIdTokenProvider(ref.watch(googleSignInSetupProvider)),
 );
 
 final authRepositoryImplProvider = Provider<AuthRepositoryImpl>(

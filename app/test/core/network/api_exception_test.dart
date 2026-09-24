@@ -60,6 +60,15 @@ void main() {
     );
   });
 
+  test('503 upstream_unavailable se reconoce', () async {
+    expect(
+      (await failWith(
+        (_) => StubResponse.error(503, 'upstream_unavailable'),
+      )).code,
+      ApiErrorCode.upstreamUnavailable,
+    );
+  });
+
   test('sin conexión es network', () async {
     expect(
       (await failWith((r) => throw connectionError(r))).code,

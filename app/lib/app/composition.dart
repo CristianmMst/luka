@@ -1,6 +1,8 @@
 import 'package:finanzia/core/network/dio_providers.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
+import 'package:finanzia/features/gmail/application/gmail_controller.dart';
+import 'package:finanzia/features/gmail/data/gmail_data_providers.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/data/sync_data_providers.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
@@ -16,6 +18,12 @@ List<Override> get appOverrides => [
   ),
   authRepositoryProvider.overrideWith(
     (ref) => ref.watch(authRepositoryImplProvider),
+  ),
+  gmailRepositoryProvider.overrideWith(
+    (ref) => ref.watch(gmailRepositoryImplProvider),
+  ),
+  gmailPromptStoreProvider.overrideWith(
+    (ref) => ref.watch(driftGmailPromptStoreProvider),
   ),
   syncStoreProvider.overrideWith((ref) => ref.watch(driftSyncStoreProvider)),
   syncRemoteProvider.overrideWith((ref) => ref.watch(syncApiProvider)),
