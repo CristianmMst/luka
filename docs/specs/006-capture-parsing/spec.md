@@ -17,6 +17,8 @@
 2. Cron diario (worker): renueva todo watch con `watch_expires_at < now()+48h`.
 3. Push recibido: `history.list(startHistoryId=cursor)` → solo mensajes nuevos → avanza cursor. Si el cursor es muy viejo (404 de Gmail), resync con `messages.list` de los últimos 7 días.
 
+Cliente (`GmailClientPort`, adaptador httpx `ingestion/infrastructure/gmail_client.py`): el `serverAuthCode` se canjea en `oauth2.googleapis.com/token` con `redirect_uri=""` (códigos de Android) y el email de la cuenta sale de `users.getProfile`; el `watch` es sobre `INBOX`. Errores de dominio: `invalid_grant` → `GmailAuthRevoked` (no se reintenta; la conexión pasa a `revoked`), 404 de `history.list` → `GmailHistoryExpired` (resync), timeout/red/5xx/429 → `GmailTransientError` (reintentable), cualquier otro 4xx o respuesta ilegible → `GmailRequestRejected`. `revoke` es idempotente (un 400 de token ya inválido no es error) y manda el token en el cuerpo, nunca en la URL. Logs: solo `gmail_request` con `operation`, `status_code` y `latency_ms`.
+
 ### 2.2 Filtro de remitentes
 Lista blanca de dominios/remitentes por banco (config versionada, `parsing/config/senders.yaml`,
 `version: 1`, un mapa `banks:` con `verified`/`senders` por banco):
@@ -44,7 +46,7 @@ otros cinco bancos quedan **sin verificar con fixture** — el filtro los acepta
 tener plantilla (F2.7, diferido) siempre caen al LLM genérico.
 
 ### 2.3 Extracción del cuerpo
-- Preferir `text/plain`; si solo hay HTML, convertir a texto (strip de tags, conservar tablas como líneas).
+- Preferir `text/plain`; si solo hay HTML, convertir a texto (strip de tags, conservar tablas como líneas). Implementado en `ingestion/domain/gmail_message.py` (stdlib `html.parser`): se toma la primera parte `text/plain` no vacía (recorrido en profundidad) y si no hay, la primera `text/html`; las partes con `filename` (adjuntos) nunca son cuerpo; se decodifica con el `charset` de la parte (UTF-8 con reemplazo si falta o es desconocido). En el HTML, los tags de bloque (`p`, `div`, `br`, `tr`, `li`, `h1`–`h6`, …) cortan línea, las celdas de una fila se unen con un espacio (cada fila de tabla es una línea), se descartan `head`/`script`/`style` y comentarios, y se colapsan espacios y líneas vacías.
 - Truncar a 8 KB antes de persistir (los correos bancarios relevantes son cortos; evita almacenar adjuntos/branding).
 - El cuerpo se compone como `título\n\ntexto` para notificaciones/SMS (correos no tienen título propio, solo `texto`); truncado a 8 KB en frontera de carácter (nunca parte un carácter multibyte). `bank` se resuelve al ingerir (filtro de remitente/paquete) y queda guardado en la fila, no se recalcula después.
 

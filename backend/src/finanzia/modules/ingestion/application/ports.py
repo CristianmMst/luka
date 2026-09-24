@@ -10,6 +10,7 @@ from uuid import UUID
 from finanzia.modules.ingestion.application.dto import BankDecision
 from finanzia.modules.ingestion.domain.entities import RawMessage
 from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from finanzia.modules.ingestion.domain.gmail_message import GmailMessage
 
 
 class RawMessageRepositoryPort(Protocol):
@@ -78,6 +79,53 @@ class EventPublisherPort(Protocol):
     async def publish(self, event: object) -> None: ...
 
 
+class GmailClientPort(Protocol):
+    """Google OAuth + Gmail API (spec 006 §2, spec 005 §3/§4).
+
+    Errores (dominio, `ingestion.domain.errors`): `GmailAuthRevoked` ante
+    `invalid_grant`, `GmailHistoryExpired` ante el 404 de `history.list`,
+    `GmailTransientError` ante timeout/red/5xx/429 (reintentable) y
+    `GmailRequestRejected` ante cualquier otro rechazo o respuesta ilegible.
+    Ningun metodo loguea tokens, codigos, emails ni contenido de mensajes.
+    """
+
+    async def exchange_code(self, code: str) -> tuple[str, str]:
+        """Canjea un `serverAuthCode` por `(refresh_token, email de la cuenta Gmail)`."""
+        ...
+
+    async def access_token(self, refresh_token: str) -> str:
+        """Access token de corta vida a partir del refresh token."""
+        ...
+
+    async def watch(self, access_token: str, topic: str) -> tuple[int, datetime]:
+        """`users.watch` sobre INBOX hacia `topic` → `(history_id, expires_at aware UTC)`."""
+        ...
+
+    async def stop(self, access_token: str) -> None:
+        """`users.stop`: deja de recibir avisos push."""
+        ...
+
+    async def revoke(self, refresh_token: str) -> None:
+        """Revoca el refresh token en Google (idempotente si ya era invalido)."""
+        ...
+
+    async def history_new_message_ids(
+        self, access_token: str, start_history_id: int
+    ) -> tuple[list[str], int]:
+        """Ids de mensajes agregados desde `start_history_id` (todas las paginas, sin
+        repetir, en orden) y el `historyId` actual del buzon.
+        """
+        ...
+
+    async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
+        """Ids de los mensajes de los ultimos `days` dias (resync, spec 006 §2.1)."""
+        ...
+
+    async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
+        """Mensaje completo (`format=full`): remitente, `internalDate` y partes MIME."""
+        ...
+
+
 class ClockPort(Protocol):
     """Fuente de tiempo inyectable (siempre aware, UTC)."""
 
@@ -99,6 +147,7 @@ class UnitOfWorkPort(Protocol):
 __all__ = [
     "ClockPort",
     "EventPublisherPort",
+    "GmailClientPort",
     "IdGeneratorPort",
     "RawMessageRepositoryPort",
     "SenderPolicyPort",

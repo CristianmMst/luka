@@ -17,4 +17,41 @@ class RawMessageNotFound(IngestionError):  # noqa: N818
     """No existe un `raw_message` con el identificador solicitado."""
 
 
-__all__ = ["IngestionError", "InvalidChannel", "InvalidExternalId", "RawMessageNotFound"]
+class GmailError(IngestionError):
+    """Base de los fallos al hablar con Google (OAuth o Gmail API, spec 006 §2)."""
+
+
+class GmailAuthRevoked(GmailError):  # noqa: N818
+    """Google respondio `invalid_grant`: el refresh token (o el `serverAuthCode` al
+    canjearlo) fue revocado, expiro o es invalido. No se reintenta: la conexion
+    pasa a `revoked` y el usuario debe reconectar.
+    """
+
+
+class GmailHistoryExpired(GmailError):  # noqa: N818
+    """`history.list` respondio 404: el cursor `startHistoryId` es demasiado viejo;
+    toca resync con `messages.list` de los ultimos 7 dias (spec 006 §2.1).
+    """
+
+
+class GmailTransientError(GmailError):
+    """Fallo transitorio (timeout, red, 5xx o 429): el llamador puede reintentar."""
+
+
+class GmailRequestRejected(GmailError):  # noqa: N818
+    """Google rechazo la peticion (4xx distinto de los anteriores) o respondio algo
+    que no se puede interpretar. Reintentar no lo arregla.
+    """
+
+
+__all__ = [
+    "GmailAuthRevoked",
+    "GmailError",
+    "GmailHistoryExpired",
+    "GmailRequestRejected",
+    "GmailTransientError",
+    "IngestionError",
+    "InvalidChannel",
+    "InvalidExternalId",
+    "RawMessageNotFound",
+]
