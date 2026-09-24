@@ -610,6 +610,10 @@ con la URL, así que no hay que tocar nada del lado del backend.
 
 Con la API, el worker y el túnel corriendo, `just app-run` lanza la app contra el backend local.
 
+La captura es solo de INBOX (spec 006 §2): un correo del banco que un filtro de Gmail archiva o
+mueve a otra etiqueta sin pasar por la bandeja de entrada no llega a finanzia. Para probar, el
+correo tiene que quedar en la bandeja de entrada.
+
 ### 16.3 Modo de prueba de Google
 
 Mientras la pantalla de consentimiento siga en modo de prueba (Google Auth Platform → Público en

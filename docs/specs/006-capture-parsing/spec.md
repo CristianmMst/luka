@@ -12,6 +12,8 @@
 
 ## 2. Gmail (server-side)
 
+Alcance: la captura es solo de **INBOX** (watch, `history.list` y resync filtran por esa etiqueta, ver el cliente al final de §2.1). Un correo del banco que un filtro del usuario archiva o manda a otra etiqueta sin pasar por la bandeja de entrada no se captura. Es una decisión consciente (menos ruido y menos correo leído); la app no lo explica en pantalla, solo esta spec y la guía del backend.
+
 ### 2.1 Ciclo del watch
 1. Al conectar Gmail: `users.watch` con el topic Pub/Sub → guarda `history_id` inicial y `watch_expires_at` (7 días). Si es una reconexión de la **misma** cuenta y ya había cursor, se conserva ese cursor (no el del watch): el próximo sync sigue desde ahí y, si venció, el 404 de `history.list` cae al resync de 7 días. Si el watch falla, la conexión queda `error` con `watch_expires_at = null` (spec 005 §3) y el cron del paso 2 la recupera.
 2. Cron diario (worker): renueva todo watch `active` con `watch_expires_at < now()+48h` y reintenta las conexiones `error` sin watch o por vencer.
