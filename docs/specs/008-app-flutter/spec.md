@@ -29,7 +29,7 @@ flowchart TD
     ST --> PRIV[Privacidad: exportar / borrar cuenta]
 ```
 
-El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.6–F4.8. Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard.
+El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.5–F4.8 (Registrar en F4.5). Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard.
 
 ## 3. Especificación por pantalla
 

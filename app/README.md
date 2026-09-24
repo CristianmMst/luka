@@ -97,7 +97,7 @@ El archivo (`finanzia.sqlite`) suele vivir en `app_flutter` (carpeta de document
 
 ### Movimientos (F4.2)
 
-Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones tiene pantalla real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
+Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre sus 5 rutas: `/` (Inicio), `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2; el detalle `/movimientos/:id` se abre a pantalla completa, sin la barra): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones tiene pantalla real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
 
 `lib/features/transactions/` trae las dos pantallas nuevas (spec 008 §3.3, diseño en el canvas F4.2 enlazado en spec 008 §7.1):
 
