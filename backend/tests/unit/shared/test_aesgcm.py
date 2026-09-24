@@ -46,3 +46,26 @@ def test_llave_incorrecta_lanza_decryption_error() -> None:
 
     with pytest.raises(DecryptionError):
         decrypt(_OTRA_KEY, blob)
+
+
+@pytest.mark.unit
+def test_datos_asociados_iguales_permiten_descifrar() -> None:
+    blob = encrypt(_KEY, b"refresh-token", associated_data=b"user-1")
+
+    assert decrypt(_KEY, blob, associated_data=b"user-1") == b"refresh-token"
+
+
+@pytest.mark.unit
+def test_datos_asociados_distintos_lanzan_decryption_error() -> None:
+    blob = encrypt(_KEY, b"refresh-token", associated_data=b"user-1")
+
+    with pytest.raises(DecryptionError):
+        decrypt(_KEY, blob, associated_data=b"user-2")
+
+
+@pytest.mark.unit
+def test_blob_con_datos_asociados_no_descifra_sin_ellos() -> None:
+    blob = encrypt(_KEY, b"refresh-token", associated_data=b"user-1")
+
+    with pytest.raises(DecryptionError):
+        decrypt(_KEY, blob)

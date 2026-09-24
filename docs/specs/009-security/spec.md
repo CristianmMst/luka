@@ -34,7 +34,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 | Dato | Mecanismo |
 |---|---|
 | Tránsito | TLS 1.2+ obligatorio (Caddy, HSTS); certificados automáticos Let's Encrypt |
-| Gmail refresh tokens | AES-256-GCM; clave `FINANZIA_GMAIL_TOKEN_KEY` (32 bytes aleatorios en base64) solo en env del servidor (secret del compose); el blob guardado es `nonce (12 B) \|\| ciphertext+tag` (`shared/crypto/aesgcm.py`); sin rotación de clave en el MVP |
+| Gmail refresh tokens | AES-256-GCM; clave `FINANZIA_GMAIL_TOKEN_KEY` (32 bytes aleatorios en base64) solo en env del servidor (secret del compose); el blob guardado es `nonce (12 B) \|\| ciphertext+tag` (`shared/crypto/aesgcm.py`), con `str(user_id)` como datos asociados (AAD): un blob copiado a la fila de otro usuario no descifra; sin rotación de clave en el MVP |
 | Backups | `pg_dump` cifrado con age (clave pública; privada fuera del VPS); retención 30 días |
 | Contraseñas | N/A — no existen contraseñas propias (ADR-8) |
 

@@ -115,14 +115,15 @@ class SqlAlchemyGmailConnectionRepository:
         self._session = session
 
     async def upsert(self, connection: GmailConnection) -> None:
-        """Inserta la conexion o, si ya existia para `user_id`, la reemplaza entera.
+        """Inserta la conexion o, si ya existia para `user_id`, la reemplaza.
 
         `user_id` es PK (relacion 1:1 con `users`): reconectar Gmail tras una
         revocacion sobrescribe la fila anterior en vez de fallar por duplicado.
+        `created_at` no se pisa: conserva la fecha de la primera conexion.
         """
         values = gmail_connection_entity_to_values(connection)
         stmt = pg_insert(GmailConnectionRow).values(**values)
-        update_values = {k: v for k, v in values.items() if k != "user_id"}
+        update_values = {k: v for k, v in values.items() if k not in {"user_id", "created_at"}}
         stmt = stmt.on_conflict_do_update(index_elements=["user_id"], set_=update_values)
         await self._session.execute(stmt)
 

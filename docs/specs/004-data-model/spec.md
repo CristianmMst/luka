@@ -58,7 +58,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | watch_expires_at | TIMESTAMPTZ NULL | cron renueva si < 48 h |
 | status | TEXT | `active` / `revoked` / `error`; `CHECK` |
 | last_sync_at | TIMESTAMPTZ NULL | |
-| created_at / updated_at | TIMESTAMPTZ | |
+| created_at / updated_at | TIMESTAMPTZ | reconectar (upsert) conserva `created_at` |
 
 ### 2.4 `linked_accounts` (ledger) — cuentas/tarjetas propias
 

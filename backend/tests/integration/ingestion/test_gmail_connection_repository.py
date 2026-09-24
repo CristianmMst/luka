@@ -125,3 +125,27 @@ async def test_delete_de_usuario_sin_conexion_devuelve_false(
         repo = SqlAlchemyGmailConnectionRepository(session)
         deleted = await repo.delete(uuid4())
     assert deleted is False
+
+
+async def test_upsert_sobre_una_fila_existente_conserva_created_at(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    user = await user_factory()
+    later = datetime(2026, 6, 1, 12, 0, tzinfo=UTC)
+
+    async with session_factory() as session:
+        repo = SqlAlchemyGmailConnectionRepository(session)
+        await repo.upsert(_connection(user_id=user.id, created_at=NOW, updated_at=NOW))
+        await session.commit()
+
+        await repo.upsert(_connection(user_id=user.id, created_at=later, updated_at=later))
+        await session.commit()
+
+    async with session_factory() as session:
+        repo = SqlAlchemyGmailConnectionRepository(session)
+        found = await repo.get(user.id)
+
+    assert found is not None
+    assert found.created_at == NOW
+    assert found.updated_at == later
