@@ -12,17 +12,19 @@ from datetime import datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, select, update
+from sqlalchemy import CursorResult, delete, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from finanzia.modules.ingestion.domain.entities import RawMessage
+from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
 from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
 from finanzia.modules.ingestion.infrastructure.mappers import (
+    gmail_connection_entity_to_values,
+    gmail_connection_row_to_entity,
     raw_message_entity_to_values,
     raw_message_row_to_entity,
 )
-from finanzia.modules.ingestion.infrastructure.orm import RawMessageRow
+from finanzia.modules.ingestion.infrastructure.orm import GmailConnectionRow, RawMessageRow
 
 
 class SqlAlchemyRawMessageRepository:
@@ -106,4 +108,33 @@ class SqlAlchemyRawMessageRepository:
         await self._session.execute(stmt)
 
 
-__all__ = ["SqlAlchemyRawMessageRepository"]
+class SqlAlchemyGmailConnectionRepository:
+    """Implementacion SQLAlchemy de la persistencia de `gmail_connections` (spec 004 §2.3)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def upsert(self, connection: GmailConnection) -> None:
+        """Inserta la conexion o, si ya existia para `user_id`, la reemplaza entera.
+
+        `user_id` es PK (relacion 1:1 con `users`): reconectar Gmail tras una
+        revocacion sobrescribe la fila anterior en vez de fallar por duplicado.
+        """
+        values = gmail_connection_entity_to_values(connection)
+        stmt = pg_insert(GmailConnectionRow).values(**values)
+        update_values = {k: v for k, v in values.items() if k != "user_id"}
+        stmt = stmt.on_conflict_do_update(index_elements=["user_id"], set_=update_values)
+        await self._session.execute(stmt)
+
+    async def get(self, user_id: UUID) -> GmailConnection | None:
+        stmt = select(GmailConnectionRow).where(GmailConnectionRow.user_id == user_id)
+        row = (await self._session.execute(stmt)).scalar_one_or_none()
+        return gmail_connection_row_to_entity(row) if row is not None else None
+
+    async def delete(self, user_id: UUID) -> bool:
+        stmt = delete(GmailConnectionRow).where(GmailConnectionRow.user_id == user_id)
+        result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
+        return result.rowcount > 0
+
+
+__all__ = ["SqlAlchemyGmailConnectionRepository", "SqlAlchemyRawMessageRepository"]

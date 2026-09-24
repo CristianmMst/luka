@@ -6,11 +6,13 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Text,
     UniqueConstraint,
     text,
@@ -22,6 +24,7 @@ from finanzia.shared.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 _CHANNEL_VALUES = "'email','notification','sms_notification'"
 _BANK_VALUES = "'bancolombia','nequi','davivienda','daviplata','bbva','banco_bogota','other'"
 _STATUS_VALUES = "'pending','parsed','failed','discarded','reviewed'"
+_GMAIL_CONNECTION_STATUS_VALUES = "'active','revoked','error'"
 
 
 class RawMessageRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -57,3 +60,28 @@ class RawMessageRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # Veces que el cron de reencolado republico `RawMessageReceived` para esta fila
     # (riesgo 4 / D9): acota el ciclo cron -> DLQ -> sigue `pending` -> cron ...
     requeue_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+
+
+class GmailConnectionRow(Base, TimestampMixin):
+    """Tabla `gmail_connections`: conexion Gmail 1:1 con `users` (spec 004 §2.3, F3.2)."""
+
+    __tablename__ = "gmail_connections"
+    __table_args__ = (
+        CheckConstraint(f"status IN ({_GMAIL_CONNECTION_STATUS_VALUES})", name="status_valido"),
+    )
+
+    # PK y FK a la vez (relacion 1:1): no usa `UUIDPrimaryKeyMixin`, que genera un
+    # `id` propio.
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    # Blob AES-256-GCM (`shared/crypto/aesgcm.py`): nonce (12 B) + ciphertext con
+    # tag. El refresh token en claro nunca llega a esta fila (spec 009 §1/§3).
+    refresh_token_enc: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    history_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    watch_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'active'"))
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -186,6 +186,11 @@ async def test_nombres_de_constraints_e_indices_siguen_la_convencion(
         )
         constraints_review_queue = {row[0] for row in result}
 
+        result = await conn.execute(
+            text("SELECT conname FROM pg_constraint WHERE conrelid = 'gmail_connections'::regclass")
+        )
+        constraints_gmail_connections = {row[0] for row in result}
+
     assert {
         "uq_transactions_user_id_dedupe_key",
         "fk_transactions_category_id_categories",
@@ -198,6 +203,11 @@ async def test_nombres_de_constraints_e_indices_siguen_la_convencion(
         "pk_review_queue",
         "ck_review_queue_resolucion_consistente",
     } <= constraints_review_queue
+    assert {
+        "pk_gmail_connections",
+        "fk_gmail_connections_user_id_users",
+        "ck_gmail_connections_status_valido",
+    } <= constraints_gmail_connections
     assert {
         "pk_users",
         "uq_users_google_sub",

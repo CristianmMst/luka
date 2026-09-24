@@ -24,7 +24,7 @@ from types import ModuleType
 import pytest
 
 from finanzia.modules.ingestion.domain.enums import Channel as IngestionChannel
-from finanzia.modules.ingestion.domain.enums import RawMessageStatus
+from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus, RawMessageStatus
 from finanzia.modules.ingestion.infrastructure import orm as ingestion_orm
 from finanzia.modules.ledger.domain.enums import Bank
 from finanzia.modules.ledger.domain.enums import Channel as LedgerChannel
@@ -53,6 +53,7 @@ def _load_migration(filename: str) -> ModuleType:
 
 _M0002 = _load_migration("0002_ledger_core.py")
 _M0003 = _load_migration("0003_raw_messages_review.py")
+_M0005 = _load_migration("0005_gmail_connections.py")
 
 
 def _values(sql_list: str) -> tuple[str, ...]:
@@ -101,3 +102,10 @@ def test_estados_de_raw_message_coinciden_con_orm_y_migracion() -> None:
 
     assert _values(ingestion_orm._STATUS_VALUES) == esperado
     assert _values(_M0003._STATUS_VALUES) == esperado
+
+
+def test_estados_de_gmail_connection_coinciden_con_orm_y_migracion() -> None:
+    esperado = tuple(s.value for s in GmailConnectionStatus)
+
+    assert _values(ingestion_orm._GMAIL_CONNECTION_STATUS_VALUES) == esperado
+    assert _values(_M0005._STATUS_VALUES) == esperado

@@ -52,11 +52,13 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | Columna | Tipo | Notas |
 |---|---|---|
 | user_id | UUID PK/FK | 1:1 con users |
-| refresh_token_enc | BYTEA | cifrado AES-GCM (spec 009) |
-| history_id | BIGINT | cursor de `history.list` |
-| watch_expires_at | TIMESTAMPTZ | cron renueva si < 48 h |
-| status | TEXT | `active` / `revoked` / `error` |
-| last_sync_at | TIMESTAMPTZ | |
+| email | TEXT NOT NULL | cuenta Gmail conectada (puede diferir del email de `users`) |
+| refresh_token_enc | BYTEA | cifrado AES-256-GCM: `nonce (12 B) \|\| ciphertext+tag` (spec 009 §3, `shared/crypto/aesgcm.py`) |
+| history_id | BIGINT NULL | cursor de `history.list` |
+| watch_expires_at | TIMESTAMPTZ NULL | cron renueva si < 48 h |
+| status | TEXT | `active` / `revoked` / `error`; `CHECK` |
+| last_sync_at | TIMESTAMPTZ NULL | |
+| created_at / updated_at | TIMESTAMPTZ | |
 
 ### 2.4 `linked_accounts` (ledger) — cuentas/tarjetas propias
 

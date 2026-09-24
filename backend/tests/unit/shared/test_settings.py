@@ -5,11 +5,15 @@ from pydantic import ValidationError
 
 from finanzia.shared.settings import Settings
 
+_GMAIL_TOKEN_KEY_VALIDA = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="  # 32 bytes en base64
+
 _ENV_VALIDO = {
     "FINANZIA_DATABASE_URL": "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test",
     "FINANZIA_REDIS_URL": "redis://localhost:6379/1",
     "FINANZIA_JWT_SECRET": "a" * 32,
     "FINANZIA_GOOGLE_CLIENT_ID": "test-client",
+    "FINANZIA_GOOGLE_CLIENT_SECRET": "test-google-client-secret",
+    "FINANZIA_GMAIL_TOKEN_KEY": _GMAIL_TOKEN_KEY_VALIDA,
 }
 
 
@@ -81,6 +85,12 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.llm_confidence_threshold == 0.8
     assert settings.raw_message_retention_days == 90
     assert settings.raw_message_body_max_bytes == 8192
+    assert settings.gmail_pubsub_topic == "projects/finanzia-509500/topics/gmail-push"
+    assert settings.gmail_push_audience == "finanzia-gmail-push"
+    assert (
+        settings.gmail_push_service_account
+        == "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
+    )
 
 
 @pytest.mark.unit
@@ -139,6 +149,36 @@ def test_raw_message_retention_days_menor_a_uno_falla(monkeypatch: pytest.Monkey
 def test_raw_message_body_max_bytes_menor_a_512_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
     monkeypatch.setenv("FINANZIA_RAW_MESSAGE_BODY_MAX_BYTES", "511")
+
+    with pytest.raises(ValidationError):
+        _construir_settings()
+
+
+@pytest.mark.unit
+def test_gmail_token_key_valida_pasa(monkeypatch: pytest.MonkeyPatch) -> None:
+    _setear_env_valido(monkeypatch)
+
+    settings = _construir_settings()
+
+    assert settings.gmail_token_key.get_secret_value() == _GMAIL_TOKEN_KEY_VALIDA
+    assert settings.google_client_secret.get_secret_value() == "test-google-client-secret"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "valor",
+    [
+        "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB",  # 24 bytes decodificados: muy corto
+        "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",  # 33 bytes: muy largo
+        "no-es-base64-valido-!!!",
+        "",
+    ],
+)
+def test_gmail_token_key_que_no_decodifica_a_32_bytes_falla(
+    monkeypatch: pytest.MonkeyPatch, valor: str
+) -> None:
+    _setear_env_valido(monkeypatch)
+    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", valor)
 
     with pytest.raises(ValidationError):
         _construir_settings()

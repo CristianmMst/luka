@@ -39,6 +39,9 @@ def settings() -> Settings:
         redis_url=os.environ.get("FINANZIA_TEST_REDIS_URL", "redis://localhost:6379/1"),
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
+        google_client_secret="test-google-client-secret",
+        # 32 bytes en base64 (F3.2); no es un secreto real, solo de test.
+        gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
         # Limites altos por defecto (Task 8/F1.4, subidos en review final item J):
         # el resto de la suite hace muchos logins/llamadas autenticadas desde la
         # misma IP de test y no debe toparse con el rate limiting real. Los limites

@@ -21,4 +21,12 @@ class RawMessageStatus(StrEnum):
     REVIEWED = "reviewed"
 
 
-__all__ = ["Channel", "RawMessageStatus"]
+class GmailConnectionStatus(StrEnum):
+    """Estados de una `gmail_connections` (spec 004 §2.3, F3.2)."""
+
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    ERROR = "error"
+
+
+__all__ = ["Channel", "GmailConnectionStatus", "RawMessageStatus"]

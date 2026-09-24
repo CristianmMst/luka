@@ -27,6 +27,7 @@ _DELETES = (
     "DELETE FROM linked_accounts",
     "DELETE FROM categories WHERE user_id IS NOT NULL",
     "DELETE FROM raw_messages",
+    "DELETE FROM gmail_connections",
     "DELETE FROM refresh_tokens",
     "DELETE FROM users",
 )

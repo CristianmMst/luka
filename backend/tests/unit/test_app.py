@@ -12,6 +12,8 @@ _DEV_SETTINGS = Settings(
     redis_url="redis://localhost:6379/1",
     jwt_secret="test-secret-test-secret-test-secret-1234",
     google_client_id="test-client",
+    google_client_secret="test-google-client-secret",
+    gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
 )
 
 

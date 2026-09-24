@@ -1,5 +1,7 @@
 """Configuracion de la aplicacion via variables de entorno (spec 003 F0.4)."""
 
+import base64
+import binascii
 from functools import lru_cache
 from typing import Literal, Self
 
@@ -8,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _JWT_SECRET_MIN_LENGTH = 32
 _RAW_MESSAGE_BODY_MAX_BYTES_MINIMO = 512
+_GMAIL_TOKEN_KEY_LENGTH_BYTES = 32
 
 
 class Settings(BaseSettings):
@@ -29,6 +32,13 @@ class Settings(BaseSettings):
     refresh_ttl_days: int = 60
 
     google_client_id: str
+    google_client_secret: SecretStr
+
+    # Cifrado AES-256-GCM de `gmail_connections.refresh_token_enc` (spec 009 §3, F3.2).
+    gmail_token_key: SecretStr
+    gmail_pubsub_topic: str = "projects/finanzia-509500/topics/gmail-push"
+    gmail_push_audience: str = "finanzia-gmail-push"
+    gmail_push_service_account: str = "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
 
     log_level: str = "INFO"
     log_json: bool | None = None
@@ -84,6 +94,19 @@ class Settings(BaseSettings):
     def _raw_message_body_max_bytes_minimo(cls, value: int) -> int:
         if value < _RAW_MESSAGE_BODY_MAX_BYTES_MINIMO:
             msg = "raw_message_body_max_bytes debe ser >= 512"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("gmail_token_key")
+    @classmethod
+    def _gmail_token_key_debe_decodificar_a_32_bytes(cls, value: SecretStr) -> SecretStr:
+        try:
+            decodificada = base64.b64decode(value.get_secret_value(), validate=True)
+        except (binascii.Error, ValueError) as exc:
+            msg = "gmail_token_key debe ser base64 valido"
+            raise ValueError(msg) from exc
+        if len(decodificada) != _GMAIL_TOKEN_KEY_LENGTH_BYTES:
+            msg = f"gmail_token_key debe decodificar a {_GMAIL_TOKEN_KEY_LENGTH_BYTES} bytes"
             raise ValueError(msg)
         return value
 
