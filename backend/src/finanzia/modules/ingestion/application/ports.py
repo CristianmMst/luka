@@ -9,6 +9,7 @@ from uuid import UUID
 
 from finanzia.modules.ingestion.application.dto import (
     BankDecision,
+    GmailGrant,
     IngestOutcome,
     RawMessageInput,
 )
@@ -80,8 +81,12 @@ class GmailConnectionRepositoryPort(Protocol):
         """La conexion del usuario, o `None` si no tiene."""
         ...
 
-    async def delete(self, user_id: UUID) -> bool:
-        """Borra la conexion del usuario; `True` si existia."""
+    async def delete(self, user_id: UUID, email: str | None = None) -> bool:
+        """Borra la conexion del usuario; `True` si existia.
+
+        Con `email`, solo si la fila sigue siendo de esa cuenta: una reconexion con
+        otra cuenta concurrente al `DisconnectGmail` no se borra.
+        """
         ...
 
     async def list_active_user_ids_by_email(self, email: str) -> list[UUID]:
@@ -158,13 +163,15 @@ class GmailClientPort(Protocol):
     Ningun metodo loguea tokens, codigos, emails ni contenido de mensajes.
     """
 
-    async def exchange_code(self, code: str) -> tuple[str, str]:
-        """Canjea un `serverAuthCode` por `(refresh_token, email de la cuenta Gmail)`.
+    async def exchange_code(self, code: str) -> GmailGrant:
+        """Canjea un `serverAuthCode` por el refresh token y el email de la cuenta.
 
         `GmailAuthRevoked` si el codigo es invalido o ya se uso;
-        `GmailRefreshTokenMissing` si Google no entrego refresh token;
-        `GmailScopeNotGranted` si el usuario no concedio `gmail.readonly` (el
-        adaptador ya intento revocar el grant recien emitido).
+        `GmailRefreshTokenMissing` si Google no entrego refresh token. Si el `scope`
+        del grant no trae lectura de Gmail devuelve `scope_granted=False` sin
+        revocar nada: decide el caso de uso. Un 403 de `users.getProfile` no se
+        interpreta como permiso denegado (puede ser cuota o API sin habilitar):
+        es `GmailTransientError`.
         """
         ...
 
@@ -205,7 +212,11 @@ class GmailClientPort(Protocol):
         ...
 
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
-        """Mensaje completo (`format=full`): remitente, `internalDate` y partes MIME."""
+        """Mensaje completo (`format=full`): remitente, `internalDate` y partes MIME.
+
+        `GmailMessageNotFound` si el mensaje ya no existe (404/400); un 403 (cuota
+        por usuario, `userRateLimitExceeded`) es `GmailTransientError`.
+        """
         ...
 
 
@@ -222,8 +233,12 @@ class PushTokenVerifierPort(Protocol):
 class GmailSyncQueuePort(Protocol):
     """Cola del job `sync_gmail` (arq, spec 006 §2.1)."""
 
-    async def enqueue_sync(self, user_id: UUID, history_id: int | None) -> None:
-        """Encola un sync; `GmailSyncEnqueueFailed` si la cola no responde."""
+    async def enqueue_sync(
+        self, user_id: UUID, history_id: int | None, *, defer_s: float | None = None
+    ) -> None:
+        """Encola un sync (diferido `defer_s` segundos si se pide);
+        `GmailSyncEnqueueFailed` si la cola no responde.
+        """
         ...
 
 

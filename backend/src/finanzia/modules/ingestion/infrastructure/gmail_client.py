@@ -10,22 +10,21 @@ from __future__ import annotations
 
 import base64
 import binascii
-import contextlib
 import re
 import time
 from datetime import UTC, datetime
-from typing import Any, NoReturn
+from typing import Any, cast
 
 import httpx
 import structlog
 
+from finanzia.modules.ingestion.application.dto import GmailGrant
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
-    GmailError,
     GmailHistoryExpired,
+    GmailMessageNotFound,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
-    GmailScopeNotGranted,
     GmailTransientError,
 )
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
@@ -42,6 +41,10 @@ _PAGE_SIZE = 100
 #: viejo, asi que el tope conserva los mas recientes.
 RESYNC_MAX_MESSAGES = 500
 #: Cualquiera de estos scopes permite leer el buzon; la app pide `gmail.readonly`.
+#: `error.errors[].reason` de los 403 de cuota de la Gmail API: son reintentables.
+_RATE_LIMIT_REASONS = frozenset(
+    {"userRateLimitExceeded", "rateLimitExceeded", "dailyLimitExceeded", "quotaExceeded"}
+)
 _GMAIL_READ_SCOPES = frozenset(
     {
         "https://www.googleapis.com/auth/gmail.readonly",
@@ -76,7 +79,7 @@ class GoogleGmailClient:
 
     # --- OAuth ---------------------------------------------------------------
 
-    async def exchange_code(self, code: str) -> tuple[str, str]:
+    async def exchange_code(self, code: str) -> GmailGrant:
         grant = await self._token_request(
             {
                 "grant_type": "authorization_code",
@@ -96,27 +99,20 @@ class GoogleGmailClient:
             raise GmailRequestRejected("token: respuesta sin access_token")
         scope = grant.get("scope")
         if isinstance(scope, str) and _GMAIL_READ_SCOPES.isdisjoint(scope.split()):
-            await self._reject_scope(refresh_token)
+            # Permiso de Gmail desmarcado: el caso de uso decide si revocar.
+            return GmailGrant(refresh_token=refresh_token, email=None, scope_granted=False)
         response = await self._send(
             "profile", "GET", f"{GMAIL_API_BASE}/profile", headers=_bearer(access_token)
         )
         if response.status_code == httpx.codes.FORBIDDEN:
-            await self._reject_scope(refresh_token)
+            # Con el scope concedido, un 403 es cuota, API sin habilitar u otro fallo
+            # del lado de Google, nunca "permiso denegado": no se revoca nada.
+            raise GmailTransientError("profile: 403")
         profile = _json_object("profile", response)
         email = profile.get("emailAddress")
         if not isinstance(email, str) or not email:
             raise GmailRequestRejected("profile: respuesta sin emailAddress")
-        return refresh_token, email
-
-    async def _reject_scope(self, refresh_token: str) -> NoReturn:
-        """Revoca (best effort) el grant sin permiso de Gmail y lanza `GmailScopeNotGranted`.
-
-        Sin el revoke, el refresh token recien emitido quedaria vivo en Google sin
-        que el backend lo guarde nunca.
-        """
-        with contextlib.suppress(GmailError):
-            await self.revoke(refresh_token)
-        raise GmailScopeNotGranted("token: sin permiso gmail.readonly")
+        return GmailGrant(refresh_token=refresh_token, email=email)
 
     async def access_token(self, refresh_token: str) -> str:
         grant = await self._token_request(
@@ -218,13 +214,20 @@ class GoogleGmailClient:
             raise GmailRequestRejected("profile: respuesta ilegible") from exc
 
     async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
-        data = await self._api(
+        response = await self._send(
             "messages.get",
             "GET",
-            f"/messages/{message_id}",
-            access_token,
+            f"{GMAIL_API_BASE}/messages/{message_id}",
+            headers=_bearer(access_token),
             params={"format": "full"},
         )
+        if response.status_code in {httpx.codes.NOT_FOUND, httpx.codes.BAD_REQUEST}:
+            raise GmailMessageNotFound(f"messages.get: {response.status_code}")
+        if response.status_code == httpx.codes.FORBIDDEN:
+            # Cuota por usuario u otro 403: reintentar (la ingesta es idempotente)
+            # en vez de saltar el mensaje y avanzar el cursor sin el.
+            raise GmailTransientError("messages.get: 403")
+        data = _json_object("messages.get", response)
         try:
             payload = data["payload"]
             internal_date = datetime.fromtimestamp(int(data["internalDate"]) / 1000, tz=UTC)
@@ -284,6 +287,9 @@ class GoogleGmailClient:
             # Access token vencido a mitad del job: reintentar genera uno nuevo. El 401
             # del endpoint de token (`invalid_client`) no pasa por aqui: es rechazo.
             raise GmailTransientError(f"{operation}: {response.status_code}")
+        if response.status_code == httpx.codes.FORBIDDEN and _is_rate_limited(response):
+            # La Gmail API responde la cuota por usuario como 403, no 429.
+            raise GmailTransientError(f"{operation}: 403 rate limit")
         return response
 
 
@@ -318,6 +324,27 @@ def _json_object(operation: str, response: httpx.Response) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise GmailRequestRejected(f"{operation}: cuerpo no es un objeto")
     return data  # pyright: ignore[reportUnknownVariableType]
+
+
+def _is_rate_limited(response: httpx.Response) -> bool:
+    """`True` si el cuerpo del error es de cuota (`reason` o `RESOURCE_EXHAUSTED`)."""
+    try:
+        data: object = response.json()
+    except ValueError:
+        return False
+    error = cast("dict[str, Any]", data).get("error") if isinstance(data, dict) else None
+    if not isinstance(error, dict):
+        return False
+    error = cast("dict[str, Any]", error)
+    if error.get("status") == "RESOURCE_EXHAUSTED":
+        return True
+    details = error.get("errors")
+    if not isinstance(details, list):
+        return False
+    return any(
+        isinstance(item, dict) and cast("dict[str, Any]", item).get("reason") in _RATE_LIMIT_REASONS
+        for item in cast("list[object]", details)
+    )
 
 
 def _oauth_error(response: httpx.Response) -> str | None:

@@ -45,6 +45,7 @@ from arq.connections import RedisSettings
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
 from finanzia.modules.ingestion import public as ingestion_public
 from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
+from finanzia.modules.ingestion.infrastructure.gmail_sync import ArqGmailSyncQueue
 from finanzia.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
@@ -204,7 +205,14 @@ async def sync_gmail(ctx: dict[str, Any], user_id: str, history_id: int | None =
     bus = ctx.get("events_bus")
     redis_client = ctx.get("events_redis")
     gmail = ctx.get("gmail_client")
-    if session_factory is None or bus is None or redis_client is None or gmail is None:
+    arq_redis = ctx.get("redis")  # pool de colas de arq: para reencolar el sync
+    if (
+        session_factory is None
+        or bus is None
+        or redis_client is None
+        or gmail is None
+        or arq_redis is None
+    ):
         _logger.warning("job_sin_contexto", job="sync_gmail")
         return
     try:
@@ -215,6 +223,7 @@ async def sync_gmail(ctx: dict[str, Any], user_id: str, history_id: int | None =
             gmail=gmail,
             clock=SystemClock(),
             settings=get_settings(),
+            requeue=ArqGmailSyncQueue(arq_redis),
             user_id=UUID(user_id),
             history_id=history_id,
         )

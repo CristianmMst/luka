@@ -51,9 +51,14 @@ class GmailRefreshTokenMissing(GmailRequestRejected):
 
 
 class GmailScopeNotGranted(GmailRequestRejected):
-    """El canje salio bien pero el usuario no concedio `gmail.readonly` en la
-    pantalla de consentimiento (el `scope` del grant no lo trae o `users.getProfile`
-    responde 403). El adaptador ya intento revocar el grant recien emitido.
+    """El canje salio bien pero el `scope` del grant no trae `gmail.readonly`: el
+    usuario lo desmarco en la pantalla de consentimiento.
+    """
+
+
+class GmailMessageNotFound(GmailRequestRejected):
+    """`messages.get` respondio 404 (o 400 por id invalido): el mensaje se borro
+    entre `history.list` y la lectura. Es el unico rechazo que el sync salta.
     """
 
 
@@ -81,6 +86,7 @@ __all__ = [
     "GmailAuthRevoked",
     "GmailError",
     "GmailHistoryExpired",
+    "GmailMessageNotFound",
     "GmailRefreshTokenMissing",
     "GmailRequestRejected",
     "GmailScopeNotGranted",

@@ -136,8 +136,10 @@ class SqlAlchemyGmailConnectionRepository:
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         return gmail_connection_row_to_entity(row) if row is not None else None
 
-    async def delete(self, user_id: UUID) -> bool:
+    async def delete(self, user_id: UUID, email: str | None = None) -> bool:
         stmt = delete(GmailConnectionRow).where(GmailConnectionRow.user_id == user_id)
+        if email is not None:
+            stmt = stmt.where(GmailConnectionRow.email == email)
         result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
         return result.rowcount > 0
 

@@ -16,6 +16,7 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
+    GmailScopeNotGranted,
     GmailTransientError,
     InvalidServerAuthCode,
 )
@@ -251,6 +252,45 @@ async def test_connect_no_llama_a_google_con_la_transaccion_de_lectura_abierta()
     assert all(commits >= 1 for commits in commits_at_google_call)
 
 
+@pytest.mark.parametrize("previous_status", [None, GmailConnectionStatus.REVOKED])
+async def test_connect_sin_scope_de_gmail_revoca_el_grant_nuevo_y_no_guarda(
+    previous_status: GmailConnectionStatus | None,
+) -> None:
+    deps = _Deps()
+    if previous_status is not None:
+        await deps.seed(status=previous_status)
+    before = dict(deps.repo.by_user)
+    deps.gmail.scope_granted = False
+
+    with pytest.raises(GmailScopeNotGranted):
+        await deps.connect().execute(USER, "code-1")
+
+    assert deps.gmail.calls == [("exchange_code", "code-1"), ("revoke", "refresh-1")]
+    assert deps.repo.by_user == before
+
+
+async def test_connect_sin_scope_con_conexion_activa_no_revoca() -> None:
+    # Google revoca el grant completo: revocar mataria la conexion activa del usuario.
+    deps = _Deps()
+    await deps.seed()
+    deps.gmail.scope_granted = False
+
+    with pytest.raises(GmailScopeNotGranted):
+        await deps.connect().execute(USER, "code-1")
+
+    assert [op for op, _ in deps.gmail.calls] == ["exchange_code"]
+    assert deps.repo.by_user[USER].status is GmailConnectionStatus.ACTIVE
+
+
+async def test_connect_sin_scope_y_revoke_fallido_igual_lanza_scope_not_granted() -> None:
+    deps = _Deps()
+    deps.gmail.scope_granted = False
+    deps.gmail.errors["revoke"] = GmailTransientError("revoke: 503")
+
+    with pytest.raises(GmailScopeNotGranted):
+        await deps.connect().execute(USER, "code-1")
+
+
 # --- DisconnectGmail ------------------------------------------------------------------
 
 
@@ -315,6 +355,23 @@ async def test_disconnect_con_token_indescifrable_borra_sin_llamar_a_google() ->
     assert deps.gmail.calls == []
     assert deps.uow.commits == 2
     assert result.remote_cleanup is False
+
+
+async def test_disconnect_no_borra_una_reconexion_concurrente_con_otra_cuenta() -> None:
+    deps = _Deps()
+    await deps.seed()
+    original_revoke = deps.gmail.revoke
+
+    async def revoke_then_reconnect(refresh_token: str) -> None:
+        await original_revoke(refresh_token)
+        await deps.seed(email="nueva@gmail.com")  # llega un connect mientras tanto
+
+    deps.gmail.revoke = revoke_then_reconnect  # type: ignore[method-assign]
+
+    result = await deps.disconnect().execute(USER)
+
+    assert result.existed is True
+    assert deps.repo.by_user[USER].email == "nueva@gmail.com"
 
 
 async def test_disconnect_sin_conexion_no_hace_nada() -> None:

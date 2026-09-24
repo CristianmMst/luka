@@ -98,22 +98,41 @@ async def user(
 RunSync = Callable[..., Awaitable[list[ingestion_public.GmailSyncResult]]]
 
 
+class _RecordingQueue:
+    """`GmailSyncQueuePort` que guarda los reencolados de `run_gmail_sync`."""
+
+    def __init__(self) -> None:
+        self.jobs: list[tuple[UUID, int | None, float | None]] = []
+
+    async def enqueue_sync(
+        self, user_id: UUID, history_id: int | None, *, defer_s: float | None = None
+    ) -> None:
+        self.jobs.append((user_id, history_id, defer_s))
+
+
 @pytest.fixture
-def run_sync(
+def requeue() -> _RecordingQueue:
+    return _RecordingQueue()
+
+
+@pytest.fixture
+def run_sync(  # noqa: PLR0913, PLR0917 - un parametro por fixture
     session_factory: async_sessionmaker[AsyncSession],
     redis_client: Redis,
     bus: InMemoryEventBus,
     gmail: GoogleGmailClient,
     settings: Settings,
+    requeue: _RecordingQueue,
 ) -> RunSync:
-    async def run(user_id: UUID, history_id: int | None = None) -> list[Any]:
+    async def run(user_id: UUID, history_id: int | None = None, *, client: Any = None) -> list[Any]:
         return await ingestion_public.run_gmail_sync(
             session_factory=session_factory,
             redis_client=redis_client,
             event_bus=bus,
-            gmail=gmail,
+            gmail=client or gmail,
             clock=SystemClock(),
             settings=settings,
+            requeue=requeue,
             user_id=user_id,
             history_id=history_id,
         )
@@ -319,8 +338,8 @@ async def test_aviso_durante_un_sync_provoca_otra_pasada(  # noqa: PLR0913, PLR0
     user: AuthedUser,
     gmail: GoogleGmailClient,
     redis_client: Redis,
-    bus: InMemoryEventBus,
-    settings: Settings,
+    run_sync: RunSync,
+    requeue: _RecordingQueue,
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     first_cursor = google.mailbox_history_id
@@ -329,19 +348,91 @@ async def test_aviso_durante_un_sync_provoca_otra_pasada(  # noqa: PLR0913, PLR0
     google.add_message("m-1", _BANK, _BANK_BODY)
     google.add_message("m-2", _BANK, "Bancolombia: Transferiste $10.000")
 
-    results = await ingestion_public.run_gmail_sync(
-        session_factory=session_factory,
-        redis_client=redis_client,
-        event_bus=bus,
-        gmail=_PushDuringSync(gmail, redis_client, user.id),  # type: ignore[arg-type]
-        clock=SystemClock(),
-        settings=settings,
-        user_id=user.id,
-        history_id=None,
-    )
+    results = await run_sync(user.id, client=_PushDuringSync(gmail, redis_client, user.id))
 
     assert [(r.status, r.accepted) for r in results] == [("synced", 1), ("synced", 1)]
     rows = await _raw_messages(session_factory, user.id)
     assert [row["external_id"] for row in rows] == ["m-1", "m-2"]
     assert await redis_client.exists(f"gmail_sync:pending:{user.id}") == 0
     assert await redis_client.exists(f"gmail_sync:lock:{user.id}") == 0
+    assert requeue.jobs == []
+
+
+class _PushEveryPass:
+    """Cada `access_token` (una vez por pasada) simula otro push: `pending` nunca se
+    vacia. Con `steal_lock`, ademas borra el lock como si hubiera vencido.
+    """
+
+    def __init__(
+        self, inner: GoogleGmailClient, redis_client: Redis, user_id: UUID, *, steal_lock: bool
+    ) -> None:
+        self._inner = inner
+        self._redis = redis_client
+        self._user_id = user_id
+        self._steal_lock = steal_lock
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    async def access_token(self, refresh_token: str) -> str:
+        await self._redis.set(f"gmail_sync:pending:{self._user_id}", b"1", ex=60)
+        if self._steal_lock:
+            await self._redis.delete(f"gmail_sync:lock:{self._user_id}")
+        return await self._inner.access_token(refresh_token)
+
+
+@pytest.mark.parametrize(("steal_lock", "passes"), [(False, 3), (True, 1)])
+async def test_aviso_pendiente_tras_el_tope_o_lock_vencido_se_reencola_diferido(  # noqa: PLR0913, PLR0917 - fixtures
+    google: FakeGoogle,
+    user: AuthedUser,
+    gmail: GoogleGmailClient,
+    redis_client: Redis,
+    run_sync: RunSync,
+    requeue: _RecordingQueue,
+    steal_lock: bool,
+    passes: int,
+) -> None:
+    google.history[HISTORY_ID] = []
+    google.history[google.mailbox_history_id] = []
+    client = _PushEveryPass(gmail, redis_client, user.id, steal_lock=steal_lock)
+
+    results = await run_sync(user.id, client=client)
+
+    assert len(results) == passes
+    assert requeue.jobs == [(user.id, None, 30.0)]
+
+
+async def test_cuota_403_en_messages_get_reintenta_sin_avanzar_el_cursor(
+    google: FakeGoogle,
+    user: AuthedUser,
+    run_sync: RunSync,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    google.history[HISTORY_ID] = ["m-banco"]
+    google.add_message("m-banco", _BANK, _BANK_BODY)
+    google.status_by_operation["message"] = 403
+
+    with pytest.raises(ingestion_public.GmailTransientError):
+        await run_sync(user.id)
+
+    assert (await _connection(session_factory, user.id)).history_id == HISTORY_ID
+    assert await _raw_messages(session_factory, user.id) == []
+    # Cuando la cuota vuelve, el reintento ingiere el mensaje.
+    del google.status_by_operation["message"]
+    (result,) = await run_sync(user.id)
+    assert result.accepted == 1
+
+
+async def test_mensaje_borrado_404_se_salta_y_el_cursor_avanza(
+    google: FakeGoogle,
+    user: AuthedUser,
+    run_sync: RunSync,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    google.history[HISTORY_ID] = ["borrado", "m-banco"]
+    google.add_message("m-banco", _BANK, _BANK_BODY)
+
+    (result,) = await run_sync(user.id)
+
+    assert (result.skipped, result.accepted) == (1, 1)
+    assert (await _connection(session_factory, user.id)).history_id == google.mailbox_history_id

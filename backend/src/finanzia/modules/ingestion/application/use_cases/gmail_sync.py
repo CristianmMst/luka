@@ -35,6 +35,7 @@ from finanzia.modules.ingestion.domain.enums import Channel, GmailConnectionStat
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
+    GmailMessageNotFound,
     GmailRequestRejected,
     GmailTokenUndecryptable,
 )
@@ -175,7 +176,9 @@ class SyncGmail:
         for message_id in message_ids:
             try:
                 message = await self._gmail.get_message(access_token, message_id)
-            except GmailRequestRejected:
+            except GmailMessageNotFound:
+                # Solo el 404 (mensaje borrado) se salta; una cuota (403) es
+                # `GmailTransientError` y se propaga sin avanzar el cursor.
                 skipped += 1
                 continue
             outcome = await self._ingest.execute(

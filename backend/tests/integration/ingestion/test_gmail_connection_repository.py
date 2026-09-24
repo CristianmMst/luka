@@ -335,3 +335,25 @@ async def test_renew_watch_no_toca_la_conexion_de_otra_cuenta(
 
     stored = await _get(session_factory, user.id)
     assert (stored.history_id, stored.watch_expires_at) == (10, None)
+
+
+async def test_delete_con_email_solo_borra_si_la_fila_es_de_esa_cuenta(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    user = await user_factory()
+    await _seed(session_factory, _connection(user_id=user.id, email="nueva@gmail.com"))
+
+    async with session_factory() as session:
+        repo = SqlAlchemyGmailConnectionRepository(session)
+        wrong = await repo.delete(user.id, "vieja@gmail.com")
+        await session.commit()
+    assert wrong is False
+    assert (await _get(session_factory, user.id)).email == "nueva@gmail.com"
+
+    async with session_factory() as session:
+        right = await SqlAlchemyGmailConnectionRepository(session).delete(
+            user.id, "nueva@gmail.com"
+        )
+        await session.commit()
+    assert right is True

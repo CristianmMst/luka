@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import redis.exceptions
+import structlog
 
 from finanzia.modules.ingestion.application.dto import GmailSyncResult, IngestOutcome
 from finanzia.modules.ingestion.application.use_cases.gmail_sync import SyncGmail
@@ -43,9 +44,15 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from finanzia.modules.ingestion.application.dto import RawMessageInput
-    from finanzia.modules.ingestion.application.ports import ClockPort, GmailClientPort
+    from finanzia.modules.ingestion.application.ports import (
+        ClockPort,
+        GmailClientPort,
+        GmailSyncQueuePort,
+    )
     from finanzia.shared.events.port import EventBusPort
     from finanzia.shared.settings import Settings
+
+_logger = structlog.get_logger()
 
 #: Nombre del job en arq: el de la funcion `finanzia.worker.sync_gmail`.
 SYNC_GMAIL_JOB = "sync_gmail"
@@ -55,6 +62,8 @@ _ENQUEUE_TIMEOUT_S = 2.0
 _LOCK_TTL_S = 330
 #: Pasadas extra por avisos que llegaron durante un sync; el resto lo cubre el proximo push.
 _MAX_ROUNDS = 3
+#: Espera del sync reencolado cuando quedo un aviso pendiente tras el tope de pasadas.
+_REQUEUE_DEFER_S = 30.0
 _RELEASE_IF_OWNER = """
 if redis.call('get', KEYS[1]) == ARGV[1] then
     return redis.call('del', KEYS[1])
@@ -77,10 +86,12 @@ class ArqGmailSyncQueue:
     def __init__(self, arq_redis: ArqRedis) -> None:
         self._arq = arq_redis
 
-    async def enqueue_sync(self, user_id: UUID, history_id: int | None) -> None:
+    async def enqueue_sync(
+        self, user_id: UUID, history_id: int | None, *, defer_s: float | None = None
+    ) -> None:
         try:
             await asyncio.wait_for(
-                self._arq.enqueue_job(SYNC_GMAIL_JOB, str(user_id), history_id),
+                self._arq.enqueue_job(SYNC_GMAIL_JOB, str(user_id), history_id, _defer_by=defer_s),
                 timeout=_ENQUEUE_TIMEOUT_S,
             )
         except (redis.exceptions.RedisError, OSError, TimeoutError) as exc:
@@ -137,6 +148,7 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
     gmail: GmailClientPort,
     clock: ClockPort,
     settings: Settings,
+    requeue: GmailSyncQueuePort,
     user_id: UUID,
     history_id: int | None,
 ) -> list[GmailSyncResult]:
@@ -144,6 +156,8 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
 
     Devuelve una entrada por pasada (vacia si otro job tenia el lock). Los errores
     de `SyncGmail` (p. ej. `GmailTransientError`) se propagan tras soltar el lock.
+    Si se agotan las pasadas, o el lock vencio a mitad de una, con `pending` aun
+    marcado, se reencola un `sync_gmail` diferido (`requeue`) para no perder el aviso.
     """
     cipher = AesGcmTokenCipher.from_settings(settings)
     lock_key, pending_key = _lock_key(user_id), _pending_key(user_id)
@@ -153,7 +167,8 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
     for _ in range(_MAX_ROUNDS):
         owner = secrets.token_hex(16)
         if not await redis_client.set(lock_key, owner, nx=True, ex=_LOCK_TTL_S):
-            break  # el dueno actual vera `pending` al soltar el lock
+            return results  # el dueno actual vera `pending` al soltar el lock
+        lock_kept = False
         try:
             await redis_client.delete(pending_key)
             async with session_factory() as session:
@@ -168,10 +183,19 @@ async def run_gmail_sync(  # noqa: PLR0913 - un parametro por dependencia extern
                 results.append(await sync.execute(user_id, notified))
         finally:
             release: Any = redis_client.eval(_RELEASE_IF_OWNER, 1, lock_key, owner)
-            await release
+            lock_kept = bool(await release)
         notified = None  # las pasadas extra no tienen un historyId de aviso
         if not await redis_client.exists(pending_key):
-            break
+            return results
+        if not lock_kept:
+            break  # el lock vencio a mitad de la pasada: no se sabe quien lo tiene
+    # Tope de pasadas (o lock vencido) con un aviso aun pendiente: reencolar.
+    try:
+        await requeue.enqueue_sync(user_id, None, defer_s=_REQUEUE_DEFER_S)
+    except GmailSyncEnqueueFailed as exc:
+        _logger.warning("gmail_sync_requeue_failed", error_type=type(exc).__name__)
+    else:
+        _logger.info("gmail_sync_requeued", defer_s=_REQUEUE_DEFER_S)
     return results
 
 

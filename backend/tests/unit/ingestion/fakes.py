@@ -10,7 +10,7 @@ from uuid import UUID
 
 from support.clock import FixedClock
 
-from finanzia.modules.ingestion.application.dto import BankDecision
+from finanzia.modules.ingestion.application.dto import BankDecision, GmailGrant
 from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
 from finanzia.modules.ingestion.domain.enums import (
     Channel,
@@ -19,7 +19,7 @@ from finanzia.modules.ingestion.domain.enums import (
 )
 from finanzia.modules.ingestion.domain.errors import (
     GmailHistoryExpired,
-    GmailRequestRejected,
+    GmailMessageNotFound,
     GmailTokenUndecryptable,
 )
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
@@ -177,8 +177,12 @@ class InMemoryGmailConnectionRepo:
     async def get(self, user_id: UUID) -> GmailConnection | None:
         return self.by_user.get(user_id)
 
-    async def delete(self, user_id: UUID) -> bool:
-        return self.by_user.pop(user_id, None) is not None
+    async def delete(self, user_id: UUID, email: str | None = None) -> bool:
+        current = self.by_user.get(user_id)
+        if current is None or (email is not None and current.email != email):
+            return False
+        del self.by_user[user_id]
+        return True
 
     async def list_active_user_ids_by_email(self, email: str) -> list[UUID]:
         return [
@@ -233,12 +237,16 @@ class RecordingSyncQueue:
 
     def __init__(self) -> None:
         self.jobs: list[tuple[UUID, int | None]] = []
+        self.deferred: list[float | None] = []
         self.error: Exception | None = None
 
-    async def enqueue_sync(self, user_id: UUID, history_id: int | None) -> None:
+    async def enqueue_sync(
+        self, user_id: UUID, history_id: int | None, *, defer_s: float | None = None
+    ) -> None:
         if self.error is not None:
             raise self.error
         self.jobs.append((user_id, history_id))
+        self.deferred.append(defer_s)
 
 
 class FakeTokenCipher:
@@ -276,6 +284,8 @@ class FakeGmailClient:
         self.watch_expires_at = watch_expires_at or datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
         self.errors: dict[str, Exception] = {}
         self.calls: list[tuple[str, str]] = []
+        #: `False` simula un grant cuyo `scope` no trae `gmail.readonly`.
+        self.scope_granted = True
         #: Buzon falso: `history` = ids nuevos por `start_history_id`; `messages` por id.
         self.mailbox_history_id = history_id
         self.history: dict[int, list[str]] = {}
@@ -288,9 +298,11 @@ class FakeGmailClient:
         if error is not None:
             raise error
 
-    async def exchange_code(self, code: str) -> tuple[str, str]:
+    async def exchange_code(self, code: str) -> GmailGrant:
         self._record("exchange_code", code)
-        return self.refresh_token, self.email
+        if not self.scope_granted:
+            return GmailGrant(refresh_token=self.refresh_token, email=None, scope_granted=False)
+        return GmailGrant(refresh_token=self.refresh_token, email=self.email)
 
     async def access_token(self, refresh_token: str) -> str:
         self._record("access_token", refresh_token)
@@ -328,7 +340,7 @@ class FakeGmailClient:
         self._record("get_message", message_id)
         message = self.messages.get(message_id)
         if message is None:
-            raise GmailRequestRejected("messages.get: 404")
+            raise GmailMessageNotFound("messages.get: 404")
         return message
 
     def add_message(

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
@@ -165,6 +165,20 @@ class RenewWatchesSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class GmailGrant:
+    """Resultado del canje del `serverAuthCode` (`GmailClientPort.exchange_code`).
+
+    `scope_granted=False` cuando el `scope` del grant no trae permiso de lectura de
+    Gmail; en ese caso `email` es `None` (no se llama a `users.getProfile`). Nunca
+    se loguea ni se devuelve por la API: lleva el refresh token en claro.
+    """
+
+    refresh_token: str = field(repr=False)
+    email: str | None
+    scope_granted: bool = True
+
+
+@dataclass(frozen=True, slots=True)
 class DisconnectResult:
     """Resultado de `DisconnectGmail`: si habia conexion y si Google confirmo stop/revoke."""
 
@@ -203,6 +217,7 @@ __all__ = [
     "DisconnectResult",
     "Duplicate",
     "GmailConnectionView",
+    "GmailGrant",
     "GmailSyncResult",
     "IngestOutcome",
     "NotificationItemInput",

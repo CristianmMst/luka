@@ -42,6 +42,8 @@ class FakeGoogle:
     """
 
     refresh_token: str | None = REFRESH_TOKEN
+    #: `scope` del grant del canje; `None` lo omite (como Google en algunas respuestas).
+    grant_scope: str | None = None
     status_by_operation: dict[str, int] = field(default_factory=dict[str, int])
     requests: list[tuple[str, dict[str, Any]]] = field(
         default_factory=list[tuple[str, dict[str, Any]]]
@@ -105,6 +107,8 @@ class FakeGoogle:
             grant: dict[str, Any] = {"access_token": ACCESS_TOKEN, "expires_in": 3599}
             if self.refresh_token is not None:
                 grant["refresh_token"] = self.refresh_token
+            if self.grant_scope is not None:
+                grant["scope"] = self.grant_scope
             return httpx.Response(200, json=grant)
         if operation == "refresh":
             return httpx.Response(200, json={"access_token": ACCESS_TOKEN, "expires_in": 3599})

@@ -199,9 +199,9 @@ async def test_connect_sin_permiso_de_gmail_responde_400_revoca_y_no_guarda(
     settings: Settings,
     google: FakeGoogle,
 ) -> None:
-    # El usuario desmarco gmail.readonly: el canje sale bien pero `/profile` da 403.
+    # El usuario desmarco gmail.readonly: el `scope` del grant no lo trae.
     user = await user_factory()
-    google.status_by_operation["profile"] = 403
+    google.grant_scope = "openid https://www.googleapis.com/auth/userinfo.email"
 
     response = await client.post(
         "/v1/gmail/connect", json={"server_auth_code": _CODE}, headers=user.headers
@@ -211,8 +211,47 @@ async def test_connect_sin_permiso_de_gmail_responde_400_revoca_y_no_guarda(
     error = response.json()["error"]
     assert (error["code"], error["field"]) == ("validation_error", "server_auth_code")
     assert "permiso de Gmail" in error["message"]
-    assert google.operations() == ["exchange", "profile", "revoke"]
-    assert google.requests[2][1]["token"] == REFRESH_TOKEN
+    assert google.operations() == ["exchange", "revoke"]
+    assert google.requests[1][1]["token"] == REFRESH_TOKEN
+    assert await _stored_refresh_token(session_factory, settings, user) is None
+
+
+async def test_connect_sin_scope_con_conexion_activa_no_revoca_el_grant(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    google: FakeGoogle,
+) -> None:
+    user = await user_factory()
+    await insert_gmail_connection(session_factory, user_id=user.id, email=ACCOUNT_EMAIL)
+    google.grant_scope = "openid email"
+
+    response = await client.post(
+        "/v1/gmail/connect", json={"server_auth_code": _CODE}, headers=user.headers
+    )
+
+    assert response.status_code == 400
+    assert google.operations() == ["exchange"]
+
+
+async def test_connect_con_403_del_perfil_responde_503_sin_revocar(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    google: FakeGoogle,
+) -> None:
+    # Cuota o API sin habilitar: no es un permiso denegado.
+    user = await user_factory()
+    google.status_by_operation["profile"] = 403
+
+    response = await client.post(
+        "/v1/gmail/connect", json={"server_auth_code": _CODE}, headers=user.headers
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "upstream_unavailable"
+    assert "revoke" not in google.operations()
     assert await _stored_refresh_token(session_factory, settings, user) is None
 
 

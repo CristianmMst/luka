@@ -8,6 +8,7 @@ antes de la primera llamada de red; la escritura final abre una transaccion nuev
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import replace
 from uuid import UUID
 
@@ -28,6 +29,7 @@ from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailError,
+    GmailScopeNotGranted,
     GmailTokenUndecryptable,
     InvalidServerAuthCode,
 )
@@ -76,12 +78,16 @@ class ConnectGmail:
 
     async def execute(self, user_id: UUID, server_auth_code: str) -> GmailConnectionView:
         try:
-            refresh_token, email = await self._gmail.exchange_code(server_auth_code)
+            grant = await self._gmail.exchange_code(server_auth_code)
         except GmailAuthRevoked as exc:
             raise InvalidServerAuthCode from exc
 
         previous = await self._repo.get(user_id)
         await self._uow.commit()  # cierra la lectura antes de volver a llamar a Google
+        refresh_token, email = grant.refresh_token, grant.email
+        if not grant.scope_granted or email is None:
+            await self._reject_scope(refresh_token, previous)
+            raise GmailScopeNotGranted("token: sin permiso gmail.readonly")
         if previous is not None and previous.email.casefold() != email.casefold():
             await _cleanup_remote(self._gmail, self._cipher, previous)
 
@@ -110,6 +116,16 @@ class ConnectGmail:
         await self._repo.upsert(connection)
         await self._uow.commit()
         return _view(connection)
+
+    async def _reject_scope(self, refresh_token: str, previous: GmailConnection | None) -> None:
+        """Revoca (best effort) el grant sin permiso de Gmail, salvo que el usuario
+        tenga una conexion activa: Google revoca el grant completo del par
+        usuario-cliente, asi que revocar mataria tambien esa conexion.
+        """
+        if previous is not None and previous.status is GmailConnectionStatus.ACTIVE:
+            return
+        with contextlib.suppress(GmailError):
+            await self._gmail.revoke(refresh_token)
 
 
 class DisconnectGmail:
@@ -142,7 +158,9 @@ class DisconnectGmail:
 
         remote_cleanup = await _cleanup_remote(self._gmail, self._cipher, connection)
 
-        await self._repo.delete(user_id)
+        # Guarda por email: si el usuario reconecto con otra cuenta mientras se
+        # limpiaba el grant viejo, la conexion nueva no se borra.
+        await self._repo.delete(user_id, connection.email)
         await self._uow.commit()
         return DisconnectResult(existed=True, remote_cleanup=remote_cleanup)
 

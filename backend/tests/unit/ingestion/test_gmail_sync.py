@@ -386,3 +386,19 @@ async def test_push_propaga_el_fallo_al_encolar() -> None:
         await HandleGmailPush(repo=deps.connections, queue=queue, uow=deps.uow).execute(
             GmailPushNotification("ana@gmail.com", 777)
         )
+
+
+async def test_otro_rechazo_de_messages_get_no_se_salta_ni_avanza_el_cursor() -> None:
+    # Solo el 404 se salta: cualquier otro rechazo detiene la pasada sin perder el
+    # mensaje (el cursor queda donde estaba y el proximo aviso lo reintenta).
+    deps = _Deps()
+    await deps.seed()
+    deps.gmail.history[CURSOR] = ["m1"]
+    deps.gmail.add_message("m1", BANK, "Compra")
+    deps.gmail.errors["get_message"] = GmailRequestRejected("messages.get: respuesta ilegible")
+
+    with pytest.raises(GmailRequestRejected):
+        await deps.sync().execute(USER)
+
+    assert deps.stored().history_id == CURSOR
+    assert deps.stored().status is GmailConnectionStatus.ACTIVE

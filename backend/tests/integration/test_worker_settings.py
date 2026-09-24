@@ -478,7 +478,13 @@ async def test_renew_gmail_watches_renueva_y_loguea_solo_contadores(  # noqa: PL
 
 # --- sync_gmail (F3.4) ----------------------------------------------------------------
 
-_FULL_SYNC_CTX_KEYS = ("events_session_factory", "events_bus", "events_redis", "gmail_client")
+_FULL_SYNC_CTX_KEYS = (
+    "events_session_factory",
+    "events_bus",
+    "events_redis",
+    "gmail_client",
+    "redis",
+)
 
 
 def _sync_ctx(**extra: Any) -> dict[str, Any]:

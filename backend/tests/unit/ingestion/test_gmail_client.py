@@ -19,9 +19,9 @@ from finanzia.modules.ingestion.application.ports import GmailClientPort
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
+    GmailMessageNotFound,
     GmailRefreshTokenMissing,
     GmailRequestRejected,
-    GmailScopeNotGranted,
     GmailTransientError,
 )
 from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
@@ -89,9 +89,9 @@ class TestOAuth:
 
         client = make_client(handler)
 
-        refresh, email = await client.exchange_code(_SECRET_CODE)
+        grant = await client.exchange_code(_SECRET_CODE)
 
-        assert (refresh, email) == (_SECRET_REFRESH, _ACCOUNT_EMAIL)
+        assert (grant.refresh_token, grant.email) == (_SECRET_REFRESH, _ACCOUNT_EMAIL)
         token_req = seen[0]
         assert token_req.method == "POST"
         assert _form(token_req) == {
@@ -135,58 +135,61 @@ class TestOAuth:
         with pytest.raises(GmailRefreshTokenMissing, match="refresh_token"):
             await client.exchange_code(_SECRET_CODE)
 
+    async def test_exchange_code_sin_scope_de_gmail_no_revoca_ni_lee_el_perfil(
+        self, make_client: ClientFactory
+    ) -> None:
+        seen: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(str(request.url))
+            return httpx.Response(
+                200,
+                json={
+                    "access_token": _SECRET_ACCESS,
+                    "refresh_token": _SECRET_REFRESH,
+                    "scope": "openid https://www.googleapis.com/auth/userinfo.email",
+                },
+            )
+
+        client = make_client(handler)
+
+        grant = await client.exchange_code(_SECRET_CODE)
+
+        assert (grant.scope_granted, grant.email) == (False, None)
+        assert grant.refresh_token == _SECRET_REFRESH
+        # Revocar lo decide el caso de uso (spec 005 §3): el adaptador solo canjea.
+        assert seen == [_TOKEN_URL]
+        assert _SECRET_REFRESH not in repr(grant)
+
     @pytest.mark.parametrize(
-        ("grant_scope", "profile_status"),
+        "error_body",
         [
-            # Scope explicito sin gmail.readonly: ni siquiera se llama a `/profile`.
-            ("openid https://www.googleapis.com/auth/userinfo.email", None),
-            # Sin `scope` en la respuesta: el 403 de `/profile` delata el permiso faltante.
-            (None, 403),
+            {"error": {"code": 403, "errors": [{"reason": "userRateLimitExceeded"}]}},
+            {"error": {"code": 403, "errors": [{"reason": "accessNotConfigured"}]}},
+            {"error": {"code": 403}},
         ],
+        ids=["cuota", "api_sin_habilitar", "sin_detalle"],
     )
-    async def test_exchange_code_sin_permiso_de_gmail_revoca_y_lanza_scope_not_granted(
-        self, make_client: ClientFactory, grant_scope: str | None, profile_status: int | None
+    async def test_exchange_code_con_403_del_perfil_es_transitorio_y_no_revoca(
+        self, make_client: ClientFactory, error_body: dict[str, Any]
     ) -> None:
         seen: list[str] = []
 
         def handler(request: httpx.Request) -> httpx.Response:
             url = str(request.url)
+            seen.append(url)
             if url == _TOKEN_URL:
-                seen.append("token")
-                grant: dict[str, Any] = {"access_token": _SECRET_ACCESS}
-                grant["refresh_token"] = _SECRET_REFRESH
-                if grant_scope is not None:
-                    grant["scope"] = grant_scope
-                return httpx.Response(200, json=grant)
-            if url == _REVOKE_URL:
-                seen.append(f"revoke:{_form(request)['token']}")
-                return httpx.Response(200)
-            seen.append("profile")
-            return httpx.Response(profile_status or 200, json={"error": {"code": 403}})
-
-        client = make_client(handler)
-
-        with pytest.raises(GmailScopeNotGranted):
-            await client.exchange_code(_SECRET_CODE)
-
-        assert seen[-1] == f"revoke:{_SECRET_REFRESH}"
-        assert ("profile" in seen) is (profile_status is not None)
-
-    async def test_exchange_code_sin_permiso_y_revoke_fallido_igual_lanza_scope_not_granted(
-        self, make_client: ClientFactory
-    ) -> None:
-        def handler(request: httpx.Request) -> httpx.Response:
-            if str(request.url) == _TOKEN_URL:
                 return httpx.Response(
-                    200,
-                    json={"access_token": "a", "refresh_token": "r", "scope": "openid email"},
+                    200, json={"access_token": _SECRET_ACCESS, "refresh_token": _SECRET_REFRESH}
                 )
-            return httpx.Response(503)
+            return httpx.Response(403, json=error_body)
 
         client = make_client(handler)
 
-        with pytest.raises(GmailScopeNotGranted):
+        with pytest.raises(GmailTransientError):
             await client.exchange_code(_SECRET_CODE)
+
+        assert _REVOKE_URL not in seen
 
     async def test_exchange_code_con_scope_de_gmail_sigue_al_perfil(
         self, make_client: ClientFactory
@@ -201,7 +204,13 @@ class TestOAuth:
 
         client = make_client(handler)
 
-        assert await client.exchange_code(_SECRET_CODE) == ("r", _ACCOUNT_EMAIL)
+        grant = await client.exchange_code(_SECRET_CODE)
+
+        assert (grant.refresh_token, grant.email, grant.scope_granted) == (
+            "r",
+            _ACCOUNT_EMAIL,
+            True,
+        )
 
     async def test_access_token_refresca(self, make_client: ClientFactory) -> None:
         captured: dict[str, str] = {}
@@ -521,6 +530,50 @@ class TestGetMessage:
 
         assert msg.sender == ""
         assert msg.body() == ""
+
+    @pytest.mark.parametrize("status", [404, 400])
+    async def test_get_message_borrado_lanza_message_not_found(
+        self, make_client: ClientFactory, status: int
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(status, json={"error": {"code": status}}))
+        with pytest.raises(GmailMessageNotFound):
+            await client.get_message(_SECRET_ACCESS, "m1")
+
+    @pytest.mark.parametrize(
+        "error_body",
+        [
+            {"error": {"code": 403, "errors": [{"reason": "userRateLimitExceeded"}]}},
+            {"error": {"code": 403, "status": "PERMISSION_DENIED"}},
+        ],
+        ids=["cuota", "otro_403"],
+    )
+    async def test_get_message_con_403_es_transitorio(
+        self, make_client: ClientFactory, error_body: dict[str, Any]
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(403, json=error_body))
+        with pytest.raises(GmailTransientError):
+            await client.get_message(_SECRET_ACCESS, "m1")
+
+    @pytest.mark.parametrize(
+        "error_body",
+        [
+            {"error": {"code": 403, "errors": [{"reason": "rateLimitExceeded"}]}},
+            {"error": {"code": 403, "status": "RESOURCE_EXHAUSTED"}},
+        ],
+    )
+    async def test_403_de_cuota_en_history_es_transitorio(
+        self, make_client: ClientFactory, error_body: dict[str, Any]
+    ) -> None:
+        client = make_client(lambda _: httpx.Response(403, json=error_body))
+        with pytest.raises(GmailTransientError):
+            await client.history_new_message_ids(_SECRET_ACCESS, 1)
+
+    async def test_403_sin_cuota_en_history_es_rechazo(self, make_client: ClientFactory) -> None:
+        client = make_client(
+            lambda _: httpx.Response(403, json={"error": {"errors": [{"reason": "forbidden"}]}})
+        )
+        with pytest.raises(GmailRequestRejected):
+            await client.history_new_message_ids(_SECRET_ACCESS, 1)
 
     async def test_get_message_malformado_es_rechazo(self, make_client: ClientFactory) -> None:
         client = make_client(lambda _: httpx.Response(200, json={"id": "x"}))
