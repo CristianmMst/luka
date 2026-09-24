@@ -8,7 +8,7 @@ from typing import Protocol
 from uuid import UUID
 
 from finanzia.modules.ingestion.application.dto import BankDecision
-from finanzia.modules.ingestion.domain.entities import RawMessage
+from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
 from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage
 
@@ -61,6 +61,34 @@ class RawMessageRepositoryPort(Protocol):
         ...
 
 
+class GmailConnectionRepositoryPort(Protocol):
+    """Persistencia de `gmail_connections`, 1:1 con el usuario (spec 004 §2.3)."""
+
+    async def upsert(self, connection: GmailConnection) -> None:
+        """Inserta o reemplaza la conexion del usuario; conserva `created_at`."""
+        ...
+
+    async def get(self, user_id: UUID) -> GmailConnection | None:
+        """La conexion del usuario, o `None` si no tiene."""
+        ...
+
+    async def delete(self, user_id: UUID) -> bool:
+        """Borra la conexion del usuario; `True` si existia."""
+        ...
+
+
+class TokenCipherPort(Protocol):
+    """Cifrado en reposo del refresh token de Gmail, atado al usuario (spec 009 §3)."""
+
+    def encrypt(self, user_id: UUID, plaintext: str) -> bytes:
+        """Blob cifrado de `plaintext`; solo descifra con el mismo `user_id`."""
+        ...
+
+    def decrypt(self, user_id: UUID, blob: bytes) -> str:
+        """Texto en claro; lanza `GmailTokenUndecryptable` si la autenticacion falla."""
+        ...
+
+
 class SenderPolicyPort(Protocol):
     """Allowlists de remitentes/paquetes de captura, delegadas en `parsing.public` (D6)."""
 
@@ -90,7 +118,11 @@ class GmailClientPort(Protocol):
     """
 
     async def exchange_code(self, code: str) -> tuple[str, str]:
-        """Canjea un `serverAuthCode` por `(refresh_token, email de la cuenta Gmail)`."""
+        """Canjea un `serverAuthCode` por `(refresh_token, email de la cuenta Gmail)`.
+
+        `GmailAuthRevoked` si el codigo es invalido o ya se uso;
+        `GmailRefreshTokenMissing` si Google no entrego refresh token.
+        """
         ...
 
     async def access_token(self, refresh_token: str) -> str:
@@ -148,8 +180,10 @@ __all__ = [
     "ClockPort",
     "EventPublisherPort",
     "GmailClientPort",
+    "GmailConnectionRepositoryPort",
     "IdGeneratorPort",
     "RawMessageRepositoryPort",
     "SenderPolicyPort",
+    "TokenCipherPort",
     "UnitOfWorkPort",
 ]

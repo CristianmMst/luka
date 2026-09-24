@@ -43,6 +43,7 @@ from arq.connections import RedisSettings
 
 from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
 from finanzia.modules.ingestion import public as ingestion_public
+from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
 from finanzia.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
@@ -225,6 +226,10 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     clock = SystemClock()
     http_client = httpx.AsyncClient(timeout=settings.llm_timeout_seconds)
     llm = parsing_public.build_llm_parser(settings, http_client)
+    # Mismo cliente httpx: `GoogleGmailClient` fija su propio timeout por request.
+    # Lo usaran los jobs de Gmail (renovar watch, sync); se construye aqui para
+    # que el worker tenga un unico punto de composicion (F3.3).
+    gmail_client = build_gmail_client(settings, http_client)
     budget = parsing_public.RedisLlmBudget(redis_client)
     metrics = parsing_public.StructlogMetrics()
     config = parsing_public.load_parsing_config()
@@ -301,6 +306,7 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     # consumers; se guardan aqui (additive, no restructura lo de arriba).
     ctx["events_session_factory"] = session_factory
     ctx["events_bus"] = bus
+    ctx["gmail_client"] = gmail_client
 
 
 async def on_shutdown(ctx: dict[str, Any]) -> None:

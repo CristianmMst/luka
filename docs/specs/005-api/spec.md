@@ -21,6 +21,7 @@
 | 409 | `conflict` | p. ej. cuenta duplicada |
 | 429 | `rate_limited` | header `Retry-After` |
 | 500 | `internal` | sin detalles internos |
+| 503 | `upstream_unavailable` | un servicio externo (Google) falló de forma transitoria (timeout, 5xx, 429); el cliente puede reintentar |
 
 - Idempotencia en mutaciones de la app: header `Idempotency-Key: <uuid>`, solo en `POST` (el outbox offline reintenta sin duplicar). Clave en Redis: `(user_id, key)`, TTL 24 h. La misma clave con el mismo cuerpo (hash) reproduce la respuesta original (status, `content-type`, body) agregando `Idempotency-Replayed: true`; la misma clave con un cuerpo distinto responde 409 `conflict` (conflicto real, sin `Retry-After`); mientras la primera solicitud con esa clave sigue en vuelo (candado de 30 s), responde 409 `conflict` con `Retry-After: 1` y el cliente reintenta con la misma key. Solo se persisten respuestas con status < 500.
 - Paginación por cursor: el cursor es opaco (`base64url(json)`); orden por defecto `(occurred_at DESC, id DESC)`; con `updated_since`, orden `(updated_at ASC, id ASC)`. `limit` entre 1 y 200 (default 50). Un cursor inválido, vencido o del orden equivocado responde 400 `validation_error` con `field: "cursor"`.
@@ -41,9 +42,28 @@
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/gmail/connect` | Body `{ "server_auth_code": "..." }` (código de autorización incremental obtenido en la app) → backend lo canjea por refresh token, lo cifra, guarda y crea el watch. AC-1.2 |
-| DELETE | `/gmail/connect` | Revoca token en Google, borra conexión, detiene watch (AC-11.1) |
-| GET | `/gmail/status` | `{ status, last_sync_at, watch_expires_at }` |
+| POST | `/gmail/connect` | Body `{ "server_auth_code": "..." }` (código de autorización incremental obtenido en la app, 1–2048 caracteres) → el backend lo canjea por refresh token, lo cifra (AES-GCM atado al `user_id`, spec 009 §3), crea el watch y guarda la conexión. Respuesta 200 `{ status, email, watch_expires_at }`. AC-1.2 |
+| DELETE | `/gmail/connect` | Detiene el watch y revoca el token en Google (best effort) y borra la conexión; las transacciones no se tocan. 204 siempre, exista o no la conexión (AC-11.1) |
+| GET | `/gmail/status` | 200 `{ status, email, last_sync_at, watch_expires_at }` |
+
+Todas las rutas exigen el Bearer y operan solo sobre la conexión del usuario del token. Ninguna respuesta incluye el refresh token.
+
+- `status`: `active` / `revoked` / `error` (estado guardado, spec 004 §2.3) o `disconnected` si el usuario no tiene conexión; en ese caso `email`, `last_sync_at` y `watch_expires_at` son `null`.
+- `email` es la cuenta Gmail conectada, que puede diferir del email del usuario.
+- Reconectar (`POST` con conexión previa) reemplaza token, email y watch, y conserva `created_at`.
+
+```json
+{ "status": "active", "email": "ana@gmail.com", "watch_expires_at": "2026-05-08T12:00:00Z" }
+```
+
+Errores de `POST /gmail/connect`:
+
+| Caso | Respuesta |
+|---|---|
+| Código inválido, vencido o ya usado (`invalid_grant`) | 400 `validation_error`, `field: "server_auth_code"`. No se guarda nada |
+| Google no entregó refresh token (la app no pidió acceso offline o no forzó el consentimiento) | 400 `validation_error`, `field: "server_auth_code"`, con un mensaje que lo indica. No se guarda nada |
+| Google caído en el canje (timeout, 5xx, 429) | 503 `upstream_unavailable`. No se guarda nada |
+| El canje salió bien pero `watch` falló | 200 con `status: "error"` y `watch_expires_at: null`: la conexión (con el token cifrado) queda guardada, porque el código ya se consumió y no se puede volver a canjear; la renovación de watch o una reconexión la recuperan. Si Google revocó el token recién emitido, `status: "revoked"` |
 
 ## 4. Webhook Pub/Sub (ingestion) — **público con OIDC**
 

@@ -79,8 +79,42 @@ class CaptureConfigResponse(BaseModel):
     email_senders: dict[str, list[str]]
 
 
+# --- Conexion Gmail (spec 005 §3, F3.3) ----------------------------------------------
+
+#: Un `serverAuthCode` de Google ronda los 70-100 caracteres; el tope solo evita abuso.
+_MAX_SERVER_AUTH_CODE_LEN = 2048
+
+
+class GmailConnectRequest(BaseModel):
+    """Body de `POST /v1/gmail/connect`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    server_auth_code: str = Field(min_length=1, max_length=_MAX_SERVER_AUTH_CODE_LEN)
+
+
+class GmailConnectResponse(BaseModel):
+    """200 de `POST /v1/gmail/connect`: nunca incluye el refresh token."""
+
+    status: Literal["active", "revoked", "error"]
+    email: str
+    watch_expires_at: datetime | None
+
+
+class GmailStatusResponse(BaseModel):
+    """200 de `GET /v1/gmail/status`; `email` es `null` si no hay conexion."""
+
+    status: Literal["active", "revoked", "error", "disconnected"]
+    email: str | None
+    last_sync_at: datetime | None
+    watch_expires_at: datetime | None
+
+
 __all__ = [
     "CaptureConfigResponse",
+    "GmailConnectRequest",
+    "GmailConnectResponse",
+    "GmailStatusResponse",
     "IngestNotificationsRequest",
     "IngestNotificationsResponse",
     "NotificationItem",

@@ -1,16 +1,42 @@
-"""Mapa de errores de dominio de ingestion -> `AppError` HTTP (spec 005 §1, controller ruling 3)."""
+"""Mapa de errores de dominio de ingestion -> `AppError` HTTP (spec 005 §1, controller ruling 3).
+
+Los mensajes son fijos: nunca incluyen el codigo, el token ni el detalle de Google.
+Starlette elige el handler de la clase mas especifica (MRO), asi que
+`IngestionError` solo atrapa lo que no tenga una entrada propia.
+"""
 
 from finanzia.modules.ingestion.domain.errors import (
+    GmailRefreshTokenMissing,
+    GmailTransientError,
     IngestionError,
     InvalidChannel,
     InvalidExternalId,
+    InvalidServerAuthCode,
 )
-from finanzia.shared.errors import ExceptionMap, InternalError, ValidationAppError
+from finanzia.shared.crypto.aesgcm import DecryptionError
+from finanzia.shared.errors import (
+    ExceptionMap,
+    InternalError,
+    UpstreamUnavailableError,
+    ValidationAppError,
+)
 
 INGESTION_EXCEPTION_MAP: ExceptionMap = {
     InvalidExternalId: lambda e: ValidationAppError(
         message="client_hash invalido", field="items.client_hash"
     ),
     InvalidChannel: lambda e: ValidationAppError(message="channel invalido", field="items.channel"),
+    InvalidServerAuthCode: lambda e: ValidationAppError(
+        message="server_auth_code invalido, vencido o ya usado", field="server_auth_code"
+    ),
+    GmailRefreshTokenMissing: lambda e: ValidationAppError(
+        message=(
+            "Google no entrego refresh token: la app debe pedir acceso offline "
+            "y forzar el consentimiento"
+        ),
+        field="server_auth_code",
+    ),
+    GmailTransientError: lambda e: UpstreamUnavailableError(),
+    DecryptionError: lambda e: InternalError(),
     IngestionError: lambda e: InternalError(),
 }

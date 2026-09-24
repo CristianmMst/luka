@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
+from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
 from finanzia.shared.settings import Settings, get_settings
 
 pytestmark = pytest.mark.integration
@@ -198,6 +199,7 @@ async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabili
     try:
         assert len(ctx["events_tasks"]) == 4
         assert all(isinstance(task, asyncio.Task) for task in ctx["events_tasks"])
+        assert isinstance(ctx["gmail_client"], GoogleGmailClient)
 
         status_logs = [e for e in captured if e.get("event") == "worker_llm_status"]
         assert len(status_logs) == 1

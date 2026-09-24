@@ -11,12 +11,17 @@ from uuid import UUID
 from support.clock import FixedClock
 
 from finanzia.modules.ingestion.application.dto import BankDecision
-from finanzia.modules.ingestion.domain.entities import RawMessage
+from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
 from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from finanzia.modules.ingestion.domain.errors import GmailTokenUndecryptable
+from finanzia.modules.ingestion.domain.gmail_message import GmailMessage
 
 __all__ = [
+    "FakeGmailClient",
     "FakeSenderPolicy",
+    "FakeTokenCipher",
     "FixedClock",
+    "InMemoryGmailConnectionRepo",
     "InMemoryRawMessageRepo",
     "NoopUoW",
     "RecordingPublisher",
@@ -143,3 +148,97 @@ class NoopUoW:
 
     async def commit(self) -> None:
         self.commits += 1
+
+
+class InMemoryGmailConnectionRepo:
+    """Doble de `GmailConnectionRepositoryPort`: un dict por `user_id`.
+
+    Igual que el adapter SQL, `upsert` conserva el `created_at` de la fila previa.
+    """
+
+    def __init__(self) -> None:
+        self.by_user: dict[UUID, GmailConnection] = {}
+
+    async def upsert(self, connection: GmailConnection) -> None:
+        previous = self.by_user.get(connection.user_id)
+        if previous is not None:
+            connection = replace(connection, created_at=previous.created_at)
+        self.by_user[connection.user_id] = connection
+
+    async def get(self, user_id: UUID) -> GmailConnection | None:
+        return self.by_user.get(user_id)
+
+    async def delete(self, user_id: UUID) -> bool:
+        return self.by_user.pop(user_id, None) is not None
+
+
+class FakeTokenCipher:
+    """Doble reversible de `TokenCipherPort`: `user_id|token` en claro, atado al usuario."""
+
+    def encrypt(self, user_id: UUID, plaintext: str) -> bytes:
+        return f"{user_id}|{plaintext}".encode()
+
+    def decrypt(self, user_id: UUID, blob: bytes) -> str:
+        prefix = f"{user_id}|"
+        decoded = blob.decode(errors="replace")
+        if not decoded.startswith(prefix):
+            raise GmailTokenUndecryptable
+        return decoded[len(prefix) :]
+
+
+class FakeGmailClient:
+    """Doble de `GmailClientPort`: respuestas fijas y errores inyectables por metodo.
+
+    `errors["watch"] = GmailTransientError(...)` hace fallar esa operacion; `calls`
+    registra `(operacion, argumento)` en orden para las aserciones.
+    """
+
+    def __init__(
+        self,
+        *,
+        refresh_token: str = "refresh-1",  # noqa: S107 - valor de prueba
+        email: str = "ana@gmail.com",
+        history_id: int = 4242,
+        watch_expires_at: datetime | None = None,
+    ) -> None:
+        self.refresh_token = refresh_token
+        self.email = email
+        self.history_id = history_id
+        self.watch_expires_at = watch_expires_at or datetime(2026, 5, 8, 12, 0, tzinfo=UTC)
+        self.errors: dict[str, Exception] = {}
+        self.calls: list[tuple[str, str]] = []
+
+    def _record(self, operation: str, argument: str) -> None:
+        self.calls.append((operation, argument))
+        error = self.errors.get(operation)
+        if error is not None:
+            raise error
+
+    async def exchange_code(self, code: str) -> tuple[str, str]:
+        self._record("exchange_code", code)
+        return self.refresh_token, self.email
+
+    async def access_token(self, refresh_token: str) -> str:
+        self._record("access_token", refresh_token)
+        return f"access-for-{refresh_token}"
+
+    async def watch(self, access_token: str, topic: str) -> tuple[int, datetime]:
+        self._record("watch", topic)
+        return self.history_id, self.watch_expires_at
+
+    async def stop(self, access_token: str) -> None:
+        self._record("stop", access_token)
+
+    async def revoke(self, refresh_token: str) -> None:
+        self._record("revoke", refresh_token)
+
+    async def history_new_message_ids(
+        self, access_token: str, start_history_id: int
+    ) -> tuple[list[str], int]:
+        raise NotImplementedError
+
+    async def recent_message_ids(self, access_token: str, days: int = 7) -> list[str]:
+        raise NotImplementedError
+
+    async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
+        raise NotImplementedError

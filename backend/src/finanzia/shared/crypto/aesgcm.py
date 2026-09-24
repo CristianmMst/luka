@@ -17,6 +17,7 @@ from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 _NONCE_LENGTH_BYTES = 12
+_TAG_LENGTH_BYTES = 16
 
 
 class DecryptionError(Exception):
@@ -42,11 +43,15 @@ def decrypt(key: bytes, blob: bytes, associated_data: bytes | None = None) -> by
     distinta o ciphertext/tag alterado); nunca deja pasar un dato manipulado en
     silencio.
     """
+    msg = "no se pudo descifrar: llave incorrecta o dato alterado"
+    if len(blob) < _NONCE_LENGTH_BYTES + _TAG_LENGTH_BYTES:
+        # Un blob truncado haria que `cryptography` lanzara `ValueError` (nonce
+        # corto) en vez de `InvalidTag`: se trata igual que un dato alterado.
+        raise DecryptionError(msg)
     nonce, ciphertext = blob[:_NONCE_LENGTH_BYTES], blob[_NONCE_LENGTH_BYTES:]
     try:
         return AESGCM(key).decrypt(nonce, ciphertext, associated_data)
     except InvalidTag as exc:
-        msg = "no se pudo descifrar: llave incorrecta o dato alterado"
         raise DecryptionError(msg) from exc
 
 

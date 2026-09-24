@@ -69,3 +69,10 @@ def test_blob_con_datos_asociados_no_descifra_sin_ellos() -> None:
 
     with pytest.raises(DecryptionError):
         decrypt(_KEY, blob)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("blob", [b"", b"basura", b"x" * 27])
+def test_blob_truncado_lanza_decryption_error(blob: bytes) -> None:
+    with pytest.raises(DecryptionError):
+        decrypt(_KEY, blob)

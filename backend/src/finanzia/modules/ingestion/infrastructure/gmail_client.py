@@ -21,10 +21,12 @@ import structlog
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
+    GmailRefreshTokenMissing,
     GmailRequestRejected,
     GmailTransientError,
 )
 from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
+from finanzia.shared.settings import Settings
 
 _logger = structlog.get_logger()
 
@@ -75,7 +77,7 @@ class GoogleGmailClient:
         if not isinstance(refresh_token, str) or not refresh_token:
             # Google solo entrega refresh token en el primer consentimiento (o con
             # `forceCodeForRefreshToken`); sin el no hay conexion posible.
-            raise GmailRequestRejected("token: respuesta sin refresh_token")
+            raise GmailRefreshTokenMissing("token: respuesta sin refresh_token")
         if not isinstance(access_token, str) or not access_token:
             raise GmailRequestRejected("token: respuesta sin access_token")
         profile = await self._api("profile", "GET", "/profile", access_token)
@@ -233,6 +235,19 @@ class GoogleGmailClient:
         return response
 
 
+def build_gmail_client(settings: Settings, http_client: httpx.AsyncClient) -> GoogleGmailClient:
+    """`GoogleGmailClient` real con el cliente OAuth web de `settings`.
+
+    Lo usan los composition roots (`finanzia.app`, `finanzia.worker`); el llamador
+    es dueno de `http_client` y lo cierra al apagar el proceso.
+    """
+    return GoogleGmailClient(
+        http_client,
+        client_id=settings.google_client_id,
+        client_secret=settings.google_client_secret.get_secret_value(),
+    )
+
+
 def _bearer(access_token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -285,4 +300,4 @@ def _parse_part(part: dict[str, Any]) -> MimePart:
     )
 
 
-__all__ = ["GMAIL_API_BASE", "REVOKE_URL", "TOKEN_URL", "GoogleGmailClient"]
+__all__ = ["GMAIL_API_BASE", "REVOKE_URL", "TOKEN_URL", "GoogleGmailClient", "build_gmail_client"]

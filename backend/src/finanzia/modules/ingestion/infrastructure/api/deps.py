@@ -16,8 +16,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.identity.public import get_current_user_id
 from finanzia.modules.ingestion import public as ingestion_public
+from finanzia.modules.ingestion.application.ports import GmailClientPort
+from finanzia.modules.ingestion.application.use_cases.gmail_connection import (
+    ConnectGmail,
+    DisconnectGmail,
+    GetGmailStatus,
+)
 from finanzia.modules.ingestion.infrastructure.api.schemas import CaptureConfigResponse
+from finanzia.modules.ingestion.infrastructure.repositories import (
+    SqlAlchemyGmailConnectionRepository,
+)
 from finanzia.modules.ingestion.infrastructure.sender_policy import ParsingSenderPolicy
+from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
+from finanzia.modules.ingestion.infrastructure.uow import SqlAlchemyUnitOfWork
 from finanzia.shared.clock import SystemClock
 
 if TYPE_CHECKING:
@@ -76,3 +87,48 @@ def get_capture_config() -> CaptureConfigResponse:
         sms_sender_patterns=[str(entry["pattern"]) for entry in raw["sms_sender_patterns"]],
         email_senders={bank: list(patterns) for bank, patterns in raw["email_senders"].items()},
     )
+
+
+# --- Conexion Gmail (F3.3) ------------------------------------------------------------
+
+
+def get_gmail_client(request: Request) -> GmailClientPort:
+    """`GmailClientPort` construido una sola vez en el lifespan (`app.state.gmail_client`)."""
+    return request.app.state.gmail_client  # type: ignore[no-any-return]
+
+
+def get_token_cipher(request: Request) -> AesGcmTokenCipher:
+    return AesGcmTokenCipher.from_settings(request.app.state.settings)
+
+
+def get_connect_gmail(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    gmail: GmailClientPort = Depends(get_gmail_client),
+    cipher: AesGcmTokenCipher = Depends(get_token_cipher),
+) -> ConnectGmail:
+    return ConnectGmail(
+        repo=SqlAlchemyGmailConnectionRepository(session),
+        gmail=gmail,
+        cipher=cipher,
+        clock=SystemClock(),
+        uow=SqlAlchemyUnitOfWork(session),
+        topic=request.app.state.settings.gmail_pubsub_topic,
+    )
+
+
+def get_disconnect_gmail(
+    session: AsyncSession = Depends(get_session),
+    gmail: GmailClientPort = Depends(get_gmail_client),
+    cipher: AesGcmTokenCipher = Depends(get_token_cipher),
+) -> DisconnectGmail:
+    return DisconnectGmail(
+        repo=SqlAlchemyGmailConnectionRepository(session),
+        gmail=gmail,
+        cipher=cipher,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_gmail_status(session: AsyncSession = Depends(get_session)) -> GetGmailStatus:
+    return GetGmailStatus(repo=SqlAlchemyGmailConnectionRepository(session))

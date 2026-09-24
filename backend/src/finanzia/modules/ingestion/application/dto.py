@@ -129,12 +129,43 @@ class BankDecision:
     bank: str | None
 
 
+# --- Conexion Gmail (F3.3, spec 005 §3) -----------------------------------------------
+
+#: Estado de `GET /v1/gmail/status` cuando el usuario no tiene fila en `gmail_connections`.
+GMAIL_DISCONNECTED = "disconnected"
+
+
+@dataclass(frozen=True, slots=True)
+class GmailConnectionView:
+    """Estado visible de la conexion Gmail de un usuario; nunca lleva el token.
+
+    `status` es `active`/`revoked`/`error` (`GmailConnectionStatus`) o
+    `disconnected` si no hay conexion.
+    """
+
+    status: str
+    email: str | None
+    last_sync_at: datetime | None
+    watch_expires_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class DisconnectResult:
+    """Resultado de `DisconnectGmail`: si habia conexion y si Google confirmo stop/revoke."""
+
+    existed: bool
+    remote_cleanup: bool
+
+
 __all__ = [
+    "GMAIL_DISCONNECTED",
     "Accepted",
     "BankDecision",
     "BatchResult",
     "Discarded",
+    "DisconnectResult",
     "Duplicate",
+    "GmailConnectionView",
     "IngestOutcome",
     "NotificationItemInput",
     "RawMessageInput",

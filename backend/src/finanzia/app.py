@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import httpx
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 import structlog
@@ -16,13 +17,18 @@ from finanzia.modules.identity.infrastructure.api.errors import (
 )
 from finanzia.modules.identity.infrastructure.api.router import router as identity_router
 from finanzia.modules.identity.infrastructure.google_verifier import GoogleAuthIdTokenVerifier
+from finanzia.modules.ingestion.application.ports import GmailClientPort
 from finanzia.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
 from finanzia.modules.ingestion.infrastructure.api.router_config import (
     router as ingestion_config_router,
 )
+from finanzia.modules.ingestion.infrastructure.api.router_gmail import (
+    router as ingestion_gmail_router,
+)
 from finanzia.modules.ingestion.infrastructure.api.router_ingest import (
     router as ingestion_ingest_router,
 )
+from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
 from finanzia.modules.ledger.infrastructure.api.errors import LEDGER_EXCEPTION_MAP
 from finanzia.modules.ledger.infrastructure.api.router_accounts import (
     router as ledger_accounts_router,
@@ -82,11 +88,13 @@ def create_app(
     settings: Settings | None = None,
     *,
     google_verifier: GoogleIdTokenVerifierPort | None = None,
+    gmail_client: GmailClientPort | None = None,
 ) -> FastAPI:
     """Crea la aplicacion FastAPI, cableando settings, DB y Redis en `app.state`.
 
-    `google_verifier` solo lo pasan los tests (un stub que no llama a Google);
-    en ejecucion normal se usa siempre `GoogleAuthIdTokenVerifier`.
+    `google_verifier` y `gmail_client` solo los pasan los tests (dobles que no
+    llaman a Google); en ejecucion normal se usan siempre
+    `GoogleAuthIdTokenVerifier` y `GoogleGmailClient`.
     """
     resolved_settings = settings if settings is not None else get_settings()
     configure_logging(resolved_settings)
@@ -127,10 +135,20 @@ def create_app(
         app.state.google_verifier = google_verifier or GoogleAuthIdTokenVerifier(
             resolved_settings.google_client_id
         )
+        # Un solo `httpx.AsyncClient` por proceso para Google OAuth + Gmail API
+        # (F3.3): reusa conexiones entre requests y se cierra al apagar.
+        gmail_http_client: httpx.AsyncClient | None = None
+        if gmail_client is None:
+            gmail_http_client = httpx.AsyncClient()
+            app.state.gmail_client = build_gmail_client(resolved_settings, gmail_http_client)
+        else:
+            app.state.gmail_client = gmail_client
 
         try:
             yield
         finally:
+            if gmail_http_client is not None:
+                await gmail_http_client.aclose()
             await redis_client.aclose()
             await engine.dispose()
 
@@ -182,4 +200,5 @@ def create_app(
     app.include_router(ledger_review_router, prefix="/v1")
     app.include_router(ingestion_ingest_router, prefix="/v1")
     app.include_router(ingestion_config_router, prefix="/v1")
+    app.include_router(ingestion_gmail_router, prefix="/v1")
     return app

@@ -44,14 +44,31 @@ class GmailRequestRejected(GmailError):  # noqa: N818
     """
 
 
+class GmailRefreshTokenMissing(GmailRequestRejected):
+    """El canje del `serverAuthCode` no trajo refresh token: Google solo lo entrega
+    con acceso offline en el primer consentimiento (o forzando el consentimiento).
+    """
+
+
+class InvalidServerAuthCode(IngestionError):  # noqa: N818
+    """El `serverAuthCode` es invalido, expiro o ya se uso (`invalid_grant` al canjear)."""
+
+
+class GmailTokenUndecryptable(IngestionError):  # noqa: N818
+    """El refresh token guardado no descifra: llave distinta, otro usuario o dato alterado."""
+
+
 __all__ = [
     "GmailAuthRevoked",
     "GmailError",
     "GmailHistoryExpired",
+    "GmailRefreshTokenMissing",
     "GmailRequestRejected",
+    "GmailTokenUndecryptable",
     "GmailTransientError",
     "IngestionError",
     "InvalidChannel",
     "InvalidExternalId",
+    "InvalidServerAuthCode",
     "RawMessageNotFound",
 ]

@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from finanzia.app import create_app
 from finanzia.modules.identity.domain.entities import GoogleIdentity
 from finanzia.modules.identity.domain.errors import InvalidGoogleToken
+from finanzia.modules.ingestion.application.ports import GmailClientPort
 from finanzia.shared.settings import Settings
 
 _PARTS_WITH_FLAG = 4
@@ -46,6 +47,13 @@ class StubGoogleIdTokenVerifier:
         )
 
 
-def create_test_app(settings: Settings) -> FastAPI:
-    """`create_app` con el verificador stub cableado en el lifespan."""
-    return create_app(settings, google_verifier=StubGoogleIdTokenVerifier())
+def create_test_app(settings: Settings, *, gmail_client: GmailClientPort | None = None) -> FastAPI:
+    """`create_app` con el verificador stub cableado en el lifespan.
+
+    `gmail_client` permite inyectar un doble de Gmail (p. ej. `GoogleGmailClient`
+    sobre `httpx.MockTransport`); sin el, la app arma el cliente real, que no
+    llama a Google mientras ningun test toque `/v1/gmail/*`.
+    """
+    return create_app(
+        settings, google_verifier=StubGoogleIdTokenVerifier(), gmail_client=gmail_client
+    )

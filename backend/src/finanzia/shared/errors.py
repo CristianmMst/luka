@@ -93,6 +93,13 @@ class RateLimitedError(AppError):
         )
 
 
+class UpstreamUnavailableError(AppError):
+    """503 - un servicio externo (p. ej. Google) fallo de forma transitoria; reintentar."""
+
+    def __init__(self, message: str = "Servicio externo no disponible, reintenta") -> None:
+        super().__init__(503, "upstream_unavailable", message)
+
+
 class InternalError(AppError):
     """500 - error interno; el mensaje nunca debe incluir detalles internos."""
 

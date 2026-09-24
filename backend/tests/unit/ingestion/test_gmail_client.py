@@ -18,6 +18,7 @@ from finanzia.modules.ingestion.application.ports import GmailClientPort
 from finanzia.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
+    GmailRefreshTokenMissing,
     GmailRequestRejected,
     GmailTransientError,
 )
@@ -123,11 +124,11 @@ class TestOAuth:
         with pytest.raises(GmailAuthRevoked):
             await client.exchange_code(_SECRET_CODE)
 
-    async def test_exchange_code_sin_refresh_token_es_rechazo(
+    async def test_exchange_code_sin_refresh_token_lanza_refresh_token_missing(
         self, make_client: ClientFactory
     ) -> None:
         client = make_client(lambda _: httpx.Response(200, json={"access_token": "a"}))
-        with pytest.raises(GmailRequestRejected, match="refresh_token"):
+        with pytest.raises(GmailRefreshTokenMissing, match="refresh_token"):
             await client.exchange_code(_SECRET_CODE)
 
     async def test_access_token_refresca(self, make_client: ClientFactory) -> None:
