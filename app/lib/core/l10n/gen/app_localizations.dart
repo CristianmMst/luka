@@ -256,17 +256,185 @@ abstract class AppLocalizations {
   /// **'Hola, {name}'**
   String homeGreeting(String name);
 
-  /// No description provided for @homePlaceholderBody.
-  ///
-  /// In es, this message translates to:
-  /// **'Ya iniciaste sesión. El resumen de tus gastos llega en la siguiente fase.'**
-  String get homePlaceholderBody;
-
   /// No description provided for @homeSignOut.
   ///
   /// In es, this message translates to:
   /// **'Cerrar sesión'**
   String get homeSignOut;
+
+  /// No description provided for @dashboardPreviousMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes anterior'**
+  String get dashboardPreviousMonth;
+
+  /// No description provided for @dashboardNextMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes siguiente'**
+  String get dashboardNextMonth;
+
+  /// No description provided for @dashboardBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Balance del mes'**
+  String get dashboardBalance;
+
+  /// No description provided for @dashboardBalanceSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{sign, select, positive{Balance del mes: más {amount} pesos} negative{Balance del mes: menos {amount} pesos} other{Balance del mes: {amount} pesos}}'**
+  String dashboardBalanceSemantics(String sign, String amount);
+
+  /// No description provided for @dashboardExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos'**
+  String get dashboardExpenses;
+
+  /// No description provided for @dashboardIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresos'**
+  String get dashboardIncome;
+
+  /// No description provided for @dashboardTileSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{label}: {amount} pesos. {delta}'**
+  String dashboardTileSemantics(String label, String amount, String delta);
+
+  /// No description provided for @dashboardDeltaUp.
+  ///
+  /// In es, this message translates to:
+  /// **'↑ {percent} % vs {month}'**
+  String dashboardDeltaUp(int percent, String month);
+
+  /// No description provided for @dashboardDeltaDown.
+  ///
+  /// In es, this message translates to:
+  /// **'↓ {percent} % vs {month}'**
+  String dashboardDeltaDown(int percent, String month);
+
+  /// No description provided for @dashboardDeltaSame.
+  ///
+  /// In es, this message translates to:
+  /// **'= igual que {month}'**
+  String dashboardDeltaSame(String month);
+
+  /// No description provided for @dashboardDeltaNoData.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin datos de {month}'**
+  String dashboardDeltaNoData(String month);
+
+  /// No description provided for @dashboardDeltaUpSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent} % más que {month}'**
+  String dashboardDeltaUpSemantics(int percent, String month);
+
+  /// No description provided for @dashboardDeltaDownSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent} % menos que {month}'**
+  String dashboardDeltaDownSemantics(int percent, String month);
+
+  /// No description provided for @dashboardDeltaSameSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Igual que {month}'**
+  String dashboardDeltaSameSemantics(String month);
+
+  /// No description provided for @dashboardTopTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'En qué se fue'**
+  String get dashboardTopTitle;
+
+  /// No description provided for @dashboardTopSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Top 5 del gasto'**
+  String get dashboardTopSubtitle;
+
+  /// No description provided for @dashboardCategoryPercent.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent} %'**
+  String dashboardCategoryPercent(int percent);
+
+  /// No description provided for @dashboardCategorySemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{name}, {percent} % del gasto, {amount}'**
+  String dashboardCategorySemantics(String name, int percent, String amount);
+
+  /// No description provided for @dashboardOtherCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Otras categorías'**
+  String get dashboardOtherCategories;
+
+  /// No description provided for @dashboardOtherAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'{amount} · {percent} %'**
+  String dashboardOtherAmount(String amount, int percent);
+
+  /// No description provided for @dashboardOtherSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Otras categorías, {percent} % del gasto, {amount}'**
+  String dashboardOtherSemantics(int percent, String amount);
+
+  /// No description provided for @dashboardNoExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastos en {month}.'**
+  String dashboardNoExpenses(String month);
+
+  /// No description provided for @dashboardEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin movimientos en {month}'**
+  String dashboardEmptyTitle(String month);
+
+  /// No description provided for @dashboardEmptyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando lleguen pagos o ingresos de ese mes, aquí verás en qué se fue tu plata.'**
+  String get dashboardEmptyBody;
+
+  /// No description provided for @dashboardBackToMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a {month}'**
+  String dashboardBackToMonth(String month);
+
+  /// No description provided for @dashboardFirstSyncTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Trayendo tus movimientos'**
+  String get dashboardFirstSyncTitle;
+
+  /// No description provided for @dashboardFirstSyncBody.
+  ///
+  /// In es, this message translates to:
+  /// **'La primera vez tarda un poco. Tu resumen aparece apenas termine.'**
+  String get dashboardFirstSyncBody;
+
+  /// No description provided for @dashboardOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión — datos locales'**
+  String get dashboardOffline;
+
+  /// No description provided for @dashboardLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos leer el resumen guardado en el teléfono.'**
+  String get dashboardLoadError;
 
   /// No description provided for @syncStatusSynced.
   ///

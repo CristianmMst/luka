@@ -2,9 +2,12 @@ import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 
-/// "Sin conexión · ves tus datos guardados" (diseño "Estados").
+/// "Sin conexión · ves tus datos guardados" (diseño "Estados"); el Inicio
+/// pasa su propio [message].
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key});
+  const OfflineBanner({this.message, super.key});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +36,7 @@ class OfflineBanner extends StatelessWidget {
             ),
             Expanded(
               child: Text(
-                l10n.offlineBanner,
+                message ?? l10n.offlineBanner,
                 style: textTheme.titleSmall?.copyWith(color: scheme.onSurface),
               ),
             ),

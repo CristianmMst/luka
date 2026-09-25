@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:finanzia/app/app.dart';
 import 'package:finanzia/app/router.dart';
+import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
+import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
+import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
@@ -26,6 +30,13 @@ class _MockTransactionsRepository extends Mock
 class _MockGmail extends Mock implements GmailRepository {}
 
 class _MockPrompts extends Mock implements GmailPromptStore {}
+
+/// Inicio se queda cargando: estas pruebas son de la barra inferior.
+class _PendingInsights extends Fake implements InsightsRepository {
+  @override
+  Stream<MonthlySummary> watchMonth(ColombiaMonth month) =>
+      const Stream.empty();
+}
 
 class _FixedAuthController extends AuthController {
   _FixedAuthController(this._state);
@@ -95,6 +106,7 @@ void main() {
         transactionsRepositoryProvider.overrideWithValue(transactions),
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
+        insightsRepositoryProvider.overrideWithValue(_PendingInsights()),
       ],
     );
     addTearDown(container.dispose);

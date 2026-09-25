@@ -203,6 +203,40 @@ void main() {
     expect(state().canGoNext, isFalse);
   });
 
+  test('showCurrentMonth vuelve al mes en curso y recarga', () {
+    start();
+    controller()
+      ..previousMonth()
+      ..previousMonth();
+    expect(state().month, july);
+    clearInteractions(repository);
+
+    controller().showCurrentMonth();
+
+    expect(state().month, september);
+    expect(state().canGoNext, isFalse);
+    expect(state().summary, isA<AsyncLoading<Object?>>());
+    verify(() => repository.watchMonth(september)).called(1);
+  });
+
+  test('retry se vuelve a suscribir al mismo mes tras un error', () async {
+    start();
+    controller().previousMonth();
+    streamOf(august).addError(StateError('db'));
+    await pumpEventQueue();
+    expect(state().summary, isA<AsyncError<Object?>>());
+    clearInteractions(repository);
+
+    controller().retry();
+
+    expect(state().month, august);
+    expect(state().summary, isA<AsyncLoading<Object?>>());
+    verify(() => repository.watchMonth(august)).called(1);
+    streamOf(august).add(_summary(august, expensesPesos: 3));
+    await pumpEventQueue();
+    expect(state().summary.requireValue.totals.expenses, Cop.pesos(3));
+  });
+
   test('dispose cancela la suscripcion', () async {
     start();
     await pumpEventQueue();

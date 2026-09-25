@@ -2,7 +2,7 @@ import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
-import 'package:finanzia/features/dashboard/presentation/dashboard_placeholder_page.dart';
+import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/gmail/application/gmail_gate.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
 import 'package:finanzia/features/review/presentation/review_detail_page.dart';
@@ -92,7 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.home,
-                builder: (context, state) => const DashboardPlaceholderPage(),
+                builder: (context, state) => const DashboardPage(),
               ),
             ],
           ),

@@ -48,8 +48,181 @@
       }
     }
   },
-  "homePlaceholderBody": "Ya iniciaste sesión. El resumen de tus gastos llega en la siguiente fase.",
   "homeSignOut": "Cerrar sesión",
+  "dashboardPreviousMonth": "Mes anterior",
+  "dashboardNextMonth": "Mes siguiente",
+  "dashboardBalance": "Balance del mes",
+  "dashboardBalanceSemantics": "{sign, select, positive{Balance del mes: más {amount} pesos} negative{Balance del mes: menos {amount} pesos} other{Balance del mes: {amount} pesos}}",
+  "@dashboardBalanceSemantics": {
+    "placeholders": {
+      "sign": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardExpenses": "Gastos",
+  "dashboardIncome": "Ingresos",
+  "dashboardTileSemantics": "{label}: {amount} pesos. {delta}",
+  "@dashboardTileSemantics": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaUp": "↑ {percent} % vs {month}",
+  "@dashboardDeltaUp": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaDown": "↓ {percent} % vs {month}",
+  "@dashboardDeltaDown": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaSame": "= igual que {month}",
+  "@dashboardDeltaSame": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaNoData": "Sin datos de {month}",
+  "@dashboardDeltaNoData": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaUpSemantics": "{percent} % más que {month}",
+  "@dashboardDeltaUpSemantics": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaDownSemantics": "{percent} % menos que {month}",
+  "@dashboardDeltaDownSemantics": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardDeltaSameSemantics": "Igual que {month}",
+  "@dashboardDeltaSameSemantics": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardTopTitle": "En qué se fue",
+  "dashboardTopSubtitle": "Top 5 del gasto",
+  "dashboardCategoryPercent": "{percent} %",
+  "@dashboardCategoryPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardCategorySemantics": "{name}, {percent} % del gasto, {amount}",
+  "@dashboardCategorySemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardOtherCategories": "Otras categorías",
+  "dashboardOtherAmount": "{amount} · {percent} %",
+  "@dashboardOtherAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardOtherSemantics": "Otras categorías, {percent} % del gasto, {amount}",
+  "@dashboardOtherSemantics": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardNoExpenses": "Sin gastos en {month}.",
+  "@dashboardNoExpenses": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardEmptyTitle": "Sin movimientos en {month}",
+  "@dashboardEmptyTitle": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardEmptyBody": "Cuando lleguen pagos o ingresos de ese mes, aquí verás en qué se fue tu plata.",
+  "dashboardBackToMonth": "Volver a {month}",
+  "@dashboardBackToMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardFirstSyncTitle": "Trayendo tus movimientos",
+  "dashboardFirstSyncBody": "La primera vez tarda un poco. Tu resumen aparece apenas termine.",
+  "dashboardOffline": "Sin conexión — datos locales",
+  "dashboardLoadError": "No pudimos leer el resumen guardado en el teléfono.",
   "syncStatusSynced": "Sincronizado · {pending, plural, =0{al día} =1{1 pendiente} other{{pending} pendientes}}",
   "@syncStatusSynced": {
     "placeholders": {

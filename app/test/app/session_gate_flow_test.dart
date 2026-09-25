@@ -2,11 +2,16 @@ import 'dart:async';
 
 import 'package:finanzia/app/app.dart';
 import 'package:finanzia/app/router.dart';
+import 'package:finanzia/core/format/money.dart';
+import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
-import 'package:finanzia/features/dashboard/presentation/dashboard_placeholder_page.dart';
+import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
+import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
+import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
+import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/application/gmail_gate.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
@@ -40,6 +45,8 @@ class _MockPrompts extends Mock implements GmailPromptStore {}
 
 class _MockReview extends Mock implements ReviewRepository {}
 
+class _MockInsights extends Mock implements InsightsRepository {}
+
 class _StartingAuthController extends AuthController {
   _StartingAuthController(this._initial);
 
@@ -67,8 +74,12 @@ void main() {
   late _MockGmail gmail;
   late _MockPrompts prompts;
   late _MockReview review;
+  late _MockInsights insights;
 
-  setUpAll(() => registerFallbackValue(const TransactionFilter()));
+  setUpAll(() {
+    registerFallbackValue(const TransactionFilter());
+    registerFallbackValue(ColombiaMonth(2000, 1));
+  });
 
   setUp(() {
     store = _MockSyncStore();
@@ -76,6 +87,18 @@ void main() {
     gmail = _MockGmail();
     prompts = _MockPrompts();
     review = _MockReview();
+    insights = _MockInsights();
+    when(() => insights.watchMonth(any())).thenAnswer(
+      (i) => Stream.value(
+        MonthlySummary(
+          month: i.positionalArguments.single as ColombiaMonth,
+          totals: const MonthlyTotals(),
+          previousTotals: const MonthlyTotals(),
+          topCategories: const [],
+          otherAmount: const Cop(0),
+        ),
+      ),
+    );
     when(() => review.watchOpen()).thenAnswer((_) => Stream.value(const []));
     when(() => review.watchOne(any())).thenAnswer(
       (_) => Stream.value(
@@ -118,6 +141,7 @@ void main() {
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
         reviewRepositoryProvider.overrideWithValue(review),
+        insightsRepositoryProvider.overrideWithValue(insights),
       ],
     );
     addTearDown(container.dispose);
@@ -134,7 +158,7 @@ void main() {
     return container;
   }
 
-  final home = find.byType(DashboardPlaceholderPage);
+  final home = find.byType(DashboardPage);
   final onboarding = find.byType(GmailOnboardingPage);
 
   testWidgets('tras el login sin Gmail pasa por el splash al paso de Gmail, '

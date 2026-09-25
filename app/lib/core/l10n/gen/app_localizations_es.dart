@@ -103,11 +103,137 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get homePlaceholderBody =>
-      'Ya iniciaste sesión. El resumen de tus gastos llega en la siguiente fase.';
+  String get homeSignOut => 'Cerrar sesión';
 
   @override
-  String get homeSignOut => 'Cerrar sesión';
+  String get dashboardPreviousMonth => 'Mes anterior';
+
+  @override
+  String get dashboardNextMonth => 'Mes siguiente';
+
+  @override
+  String get dashboardBalance => 'Balance del mes';
+
+  @override
+  String dashboardBalanceSemantics(String sign, String amount) {
+    String _temp0 = intl.Intl.selectLogic(
+      sign,
+      {
+        'positive': 'Balance del mes: más $amount pesos',
+        'negative': 'Balance del mes: menos $amount pesos',
+        'other': 'Balance del mes: $amount pesos',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dashboardExpenses => 'Gastos';
+
+  @override
+  String get dashboardIncome => 'Ingresos';
+
+  @override
+  String dashboardTileSemantics(String label, String amount, String delta) {
+    return '$label: $amount pesos. $delta';
+  }
+
+  @override
+  String dashboardDeltaUp(int percent, String month) {
+    return '↑ $percent % vs $month';
+  }
+
+  @override
+  String dashboardDeltaDown(int percent, String month) {
+    return '↓ $percent % vs $month';
+  }
+
+  @override
+  String dashboardDeltaSame(String month) {
+    return '= igual que $month';
+  }
+
+  @override
+  String dashboardDeltaNoData(String month) {
+    return 'Sin datos de $month';
+  }
+
+  @override
+  String dashboardDeltaUpSemantics(int percent, String month) {
+    return '$percent % más que $month';
+  }
+
+  @override
+  String dashboardDeltaDownSemantics(int percent, String month) {
+    return '$percent % menos que $month';
+  }
+
+  @override
+  String dashboardDeltaSameSemantics(String month) {
+    return 'Igual que $month';
+  }
+
+  @override
+  String get dashboardTopTitle => 'En qué se fue';
+
+  @override
+  String get dashboardTopSubtitle => 'Top 5 del gasto';
+
+  @override
+  String dashboardCategoryPercent(int percent) {
+    return '$percent %';
+  }
+
+  @override
+  String dashboardCategorySemantics(String name, int percent, String amount) {
+    return '$name, $percent % del gasto, $amount';
+  }
+
+  @override
+  String get dashboardOtherCategories => 'Otras categorías';
+
+  @override
+  String dashboardOtherAmount(String amount, int percent) {
+    return '$amount · $percent %';
+  }
+
+  @override
+  String dashboardOtherSemantics(int percent, String amount) {
+    return 'Otras categorías, $percent % del gasto, $amount';
+  }
+
+  @override
+  String dashboardNoExpenses(String month) {
+    return 'Sin gastos en $month.';
+  }
+
+  @override
+  String dashboardEmptyTitle(String month) {
+    return 'Sin movimientos en $month';
+  }
+
+  @override
+  String get dashboardEmptyBody =>
+      'Cuando lleguen pagos o ingresos de ese mes, aquí verás en qué se fue tu plata.';
+
+  @override
+  String dashboardBackToMonth(String month) {
+    return 'Volver a $month';
+  }
+
+  @override
+  String get dashboardFirstSyncTitle => 'Trayendo tus movimientos';
+
+  @override
+  String get dashboardFirstSyncBody =>
+      'La primera vez tarda un poco. Tu resumen aparece apenas termine.';
+
+  @override
+  String get dashboardOffline => 'Sin conexión — datos locales';
+
+  @override
+  String get dashboardLoadError =>
+      'No pudimos leer el resumen guardado en el teléfono.';
 
   @override
   String syncStatusSynced(int pending) {

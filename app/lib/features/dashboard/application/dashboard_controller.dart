@@ -70,6 +70,15 @@ class DashboardController extends Notifier<DashboardState> {
     _show(next, current);
   }
 
+  /// Vuelve al mes en curso ("Volver a septiembre" del mes vacío).
+  void showCurrentMonth() {
+    final current = _currentMonth();
+    _show(current, current);
+  }
+
+  /// Vuelve a suscribirse al mes mostrado (tras un error de la base local).
+  void retry() => _show(state.month, _currentMonth());
+
   void _show(ColombiaMonth month, ColombiaMonth current) {
     state = state.copyWith(
       month: month,
