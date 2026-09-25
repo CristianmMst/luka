@@ -1,6 +1,8 @@
 # Recetas de desarrollo para finanzia. Ver backend/README.md para detalle.
 
 set shell := ["bash", "-uc"]
+# En Windows, `bash` del PATH es el de WSL (no ve uv ni flutter); se usa Git Bash.
+set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-uc"]
 
 # Levanta la infra de desarrollo (Postgres + Redis).
 up:
