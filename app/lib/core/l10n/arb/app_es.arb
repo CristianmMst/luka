@@ -447,5 +447,86 @@
   "settingsGmailDisconnectTitle": "¿Desconectar Gmail?",
   "settingsGmailDisconnectBody": "Dejamos de leer los correos de tus bancos. Los movimientos que ya tienes se quedan.",
   "settingsGmailDisconnectConfirm": "Desconectar",
-  "settingsGmailDisconnectCancel": "Cancelar"
+  "settingsGmailDisconnectCancel": "Cancelar",
+  "reviewSubtitle": "{count, plural, =0{Todo al día} =1{1 mensaje por revisar} other{{count} mensajes por revisar}}",
+  "@reviewSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewReasonNoTemplate": "No reconocimos el formato",
+  "reviewReasonLlmDisabled": "Falta lectura automática",
+  "reviewReasonLlmUnreliable": "La lectura no fue confiable",
+  "reviewReasonOther": "Necesita tu ayuda",
+  "reviewNoText": "El texto de este mensaje ya no está disponible.",
+  "reviewEmptyTitle": "Nada por revisar",
+  "reviewEmptyBody": "Cuando no podamos leer solos un mensaje de tu banco, aparece aquí para que lo completes.",
+  "reviewLoadError": "No pudimos cargar los mensajes por revisar.",
+  "reviewRetry": "Reintentar",
+  "reviewCardSemantics": "Revisar mensaje de {source}, {date}. {reason}",
+  "@reviewCardSemantics": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewDetailTitle": "Revisar mensaje",
+  "reviewNotFound": "Este mensaje ya no está por revisar.",
+  "reviewMessageLabel": "Mensaje del banco",
+  "reviewAmountsHint": "Toca un monto para usarlo",
+  "reviewAmountSemantics": "{amount} pesos",
+  "@reviewAmountSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewUseAmountSemantics": "Usar {amount} pesos como monto",
+  "@reviewUseAmountSemantics": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewFormTitle": "Crear movimiento",
+  "reviewAmountLabel": "Monto",
+  "reviewAmountRequired": "Escribe el monto",
+  "reviewDirectionRequired": "Elige si es un gasto o un ingreso",
+  "reviewDateLabel": "Fecha",
+  "reviewTimeLabel": "Hora",
+  "reviewDateRequired": "Elige la fecha",
+  "reviewDateFromReceived": "Es la fecha en que llegó el mensaje; cámbiala si no coincide.",
+  "reviewChangeSemantics": "{field}: {value}. Cambiar",
+  "@reviewChangeSemantics": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewMerchantLabel": "Comercio",
+  "reviewMerchantHint": "Opcional",
+  "reviewConvert": "Crear movimiento",
+  "reviewDiscard": "Descartar",
+  "reviewDiscardTitle": "¿Descartar este mensaje?",
+  "reviewDiscardBody": "Sale de Revisión y no se crea ningún movimiento.",
+  "reviewDiscardConfirm": "Descartar",
+  "reviewDiscardCancel": "Cancelar",
+  "reviewConverted": "Movimiento creado",
+  "reviewDiscarded": "Descartado",
+  "reviewSaveError": "No pudimos guardar el cambio. Intenta de nuevo."
 }

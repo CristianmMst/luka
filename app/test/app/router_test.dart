@@ -28,11 +28,13 @@ void main() {
       (signedOut, '${Routes.transactions}/tx1', Routes.login),
       (signedOut, Routes.register, Routes.login),
       (signedOut, Routes.review, Routes.login),
+      (signedOut, '${Routes.review}/m1', Routes.login),
       (signedOut, Routes.settings, Routes.login),
       (signedIn, Routes.transactions, null),
       (signedIn, '${Routes.transactions}/tx1', null),
       (signedIn, Routes.register, null),
       (signedIn, Routes.review, null),
+      (signedIn, '${Routes.review}/m1', null),
       (signedIn, Routes.settings, null),
       // El onboarding de Gmail también pide sesión.
       (signedOut, Routes.onboardingGmail, Routes.login),
@@ -67,6 +69,7 @@ void main() {
       (GmailGate.prompt, Routes.settings, null),
       (GmailGate.pending, Routes.home, null),
       (GmailGate.pending, '${Routes.transactions}/tx1', null),
+      (GmailGate.prompt, '${Routes.review}/m1', null),
     ];
 
     for (final (gmail, location, expected) in table) {

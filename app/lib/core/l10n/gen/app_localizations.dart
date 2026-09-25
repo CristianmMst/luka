@@ -1263,6 +1263,228 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cancelar'**
   String get settingsGmailDisconnectCancel;
+
+  /// No description provided for @reviewSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Todo al día} =1{1 mensaje por revisar} other{{count} mensajes por revisar}}'**
+  String reviewSubtitle(int count);
+
+  /// No description provided for @reviewReasonNoTemplate.
+  ///
+  /// In es, this message translates to:
+  /// **'No reconocimos el formato'**
+  String get reviewReasonNoTemplate;
+
+  /// No description provided for @reviewReasonLlmDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta lectura automática'**
+  String get reviewReasonLlmDisabled;
+
+  /// No description provided for @reviewReasonLlmUnreliable.
+  ///
+  /// In es, this message translates to:
+  /// **'La lectura no fue confiable'**
+  String get reviewReasonLlmUnreliable;
+
+  /// No description provided for @reviewReasonOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesita tu ayuda'**
+  String get reviewReasonOther;
+
+  /// No description provided for @reviewNoText.
+  ///
+  /// In es, this message translates to:
+  /// **'El texto de este mensaje ya no está disponible.'**
+  String get reviewNoText;
+
+  /// No description provided for @reviewEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nada por revisar'**
+  String get reviewEmptyTitle;
+
+  /// No description provided for @reviewEmptyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando no podamos leer solos un mensaje de tu banco, aparece aquí para que lo completes.'**
+  String get reviewEmptyBody;
+
+  /// No description provided for @reviewLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar los mensajes por revisar.'**
+  String get reviewLoadError;
+
+  /// No description provided for @reviewRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get reviewRetry;
+
+  /// No description provided for @reviewCardSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisar mensaje de {source}, {date}. {reason}'**
+  String reviewCardSemantics(String source, String date, String reason);
+
+  /// No description provided for @reviewDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisar mensaje'**
+  String get reviewDetailTitle;
+
+  /// No description provided for @reviewNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Este mensaje ya no está por revisar.'**
+  String get reviewNotFound;
+
+  /// No description provided for @reviewMessageLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Mensaje del banco'**
+  String get reviewMessageLabel;
+
+  /// No description provided for @reviewAmountsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca un monto para usarlo'**
+  String get reviewAmountsHint;
+
+  /// No description provided for @reviewAmountSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{amount} pesos'**
+  String reviewAmountSemantics(String amount);
+
+  /// No description provided for @reviewUseAmountSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar {amount} pesos como monto'**
+  String reviewUseAmountSemantics(String amount);
+
+  /// No description provided for @reviewFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear movimiento'**
+  String get reviewFormTitle;
+
+  /// No description provided for @reviewAmountLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto'**
+  String get reviewAmountLabel;
+
+  /// No description provided for @reviewAmountRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe el monto'**
+  String get reviewAmountRequired;
+
+  /// No description provided for @reviewDirectionRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige si es un gasto o un ingreso'**
+  String get reviewDirectionRequired;
+
+  /// No description provided for @reviewDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get reviewDateLabel;
+
+  /// No description provided for @reviewTimeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Hora'**
+  String get reviewTimeLabel;
+
+  /// No description provided for @reviewDateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige la fecha'**
+  String get reviewDateRequired;
+
+  /// No description provided for @reviewDateFromReceived.
+  ///
+  /// In es, this message translates to:
+  /// **'Es la fecha en que llegó el mensaje; cámbiala si no coincide.'**
+  String get reviewDateFromReceived;
+
+  /// No description provided for @reviewChangeSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{field}: {value}. Cambiar'**
+  String reviewChangeSemantics(String field, String value);
+
+  /// No description provided for @reviewMerchantLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Comercio'**
+  String get reviewMerchantLabel;
+
+  /// No description provided for @reviewMerchantHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional'**
+  String get reviewMerchantHint;
+
+  /// No description provided for @reviewConvert.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear movimiento'**
+  String get reviewConvert;
+
+  /// No description provided for @reviewDiscard.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartar'**
+  String get reviewDiscard;
+
+  /// No description provided for @reviewDiscardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Descartar este mensaje?'**
+  String get reviewDiscardTitle;
+
+  /// No description provided for @reviewDiscardBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Sale de Revisión y no se crea ningún movimiento.'**
+  String get reviewDiscardBody;
+
+  /// No description provided for @reviewDiscardConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartar'**
+  String get reviewDiscardConfirm;
+
+  /// No description provided for @reviewDiscardCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get reviewDiscardCancel;
+
+  /// No description provided for @reviewConverted.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento creado'**
+  String get reviewConverted;
+
+  /// No description provided for @reviewDiscarded.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartado'**
+  String get reviewDiscarded;
+
+  /// No description provided for @reviewSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar el cambio. Intenta de nuevo.'**
+  String get reviewSaveError;
 }
 
 class _AppLocalizationsDelegate

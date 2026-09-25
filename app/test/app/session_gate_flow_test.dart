@@ -14,6 +14,12 @@ import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
+import 'package:finanzia/features/review/application/review_providers.dart';
+import 'package:finanzia/features/review/domain/review_item.dart';
+import 'package:finanzia/features/review/domain/review_repository.dart';
+import 'package:finanzia/features/review/presentation/review_detail_page.dart';
+import 'package:finanzia/features/review/presentation/review_page.dart';
+import 'package:finanzia/features/shell/presentation/home_shell.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
@@ -31,6 +37,8 @@ class _MockTransactions extends Mock implements TransactionsRepository {}
 class _MockGmail extends Mock implements GmailRepository {}
 
 class _MockPrompts extends Mock implements GmailPromptStore {}
+
+class _MockReview extends Mock implements ReviewRepository {}
 
 class _StartingAuthController extends AuthController {
   _StartingAuthController(this._initial);
@@ -58,6 +66,7 @@ void main() {
   late _MockTransactions transactions;
   late _MockGmail gmail;
   late _MockPrompts prompts;
+  late _MockReview review;
 
   setUpAll(() => registerFallbackValue(const TransactionFilter()));
 
@@ -66,6 +75,20 @@ void main() {
     transactions = _MockTransactions();
     gmail = _MockGmail();
     prompts = _MockPrompts();
+    review = _MockReview();
+    when(() => review.watchOpen()).thenAnswer((_) => Stream.value(const []));
+    when(() => review.watchOne(any())).thenAnswer(
+      (_) => Stream.value(
+        ReviewItem(
+          rawMessageId: 'm-1',
+          channel: 'email',
+          sender: 'alertas@bancolombia.com.co',
+          receivedAt: DateTime.utc(2026, 9, 23, 17),
+          reason: 'no_template',
+          partialExtract: const {},
+        ),
+      ),
+    );
     when(() => store.watchOpenReviewCount()).thenAnswer((_) => Stream.value(0));
     when(
       () => transactions.watch(any(), limit: any(named: 'limit')),
@@ -94,6 +117,7 @@ void main() {
         transactionsRepositoryProvider.overrideWithValue(transactions),
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
+        reviewRepositoryProvider.overrideWithValue(review),
       ],
     );
     addTearDown(container.dispose);
@@ -208,5 +232,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(onboarding, findsOneWidget);
+  });
+
+  testWidgets('Revisión vive en el shell y su detalle va a pantalla completa', (
+    tester,
+  ) async {
+    when(() => prompts.isDismissed('u-1')).thenAnswer((_) async => true);
+    final container = await pumpApp(tester);
+    await tester.pumpAndSettle();
+
+    container.read(routerProvider).go(Routes.review);
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewPage), findsOneWidget);
+    expect(find.byType(HomeShell), findsOneWidget);
+
+    container.read(routerProvider).go('${Routes.review}/m-1');
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewDetailPage), findsOneWidget);
+    expect(find.byType(HomeShell), findsNothing);
+    verify(() => review.watchOne('m-1')).called(1);
+
+    await tester.tap(find.byTooltip('Volver'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReviewPage), findsOneWidget);
   });
 }

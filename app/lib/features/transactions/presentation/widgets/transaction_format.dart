@@ -33,13 +33,16 @@ String timeOfDay(DateTime instant) {
 String _shortMonth(DateTime local) =>
     DateFormat('MMMM', dateLocale).format(local).substring(0, 3);
 
-/// "Martes 23 sep 2026 · 12:41", hora de Colombia.
-String longDateTime(DateTime instant) {
+/// "Martes 23 sep 2026", fecha de Colombia.
+String longDate(DateTime instant) {
   final local = colombiaLocal(instant);
   final weekday = capitalize(DateFormat('EEEE', dateLocale).format(local));
-  return '$weekday ${local.day} ${_shortMonth(local)} ${local.year} · '
-      '${timeOfDay(instant)}';
+  return '$weekday ${local.day} ${_shortMonth(local)} ${local.year}';
 }
+
+/// "Martes 23 sep 2026 · 12:41", hora de Colombia.
+String longDateTime(DateTime instant) =>
+    '${longDate(instant)} · ${timeOfDay(instant)}';
 
 /// "23 sep · 12:41", hora de Colombia.
 String shortDateTime(DateTime instant) {

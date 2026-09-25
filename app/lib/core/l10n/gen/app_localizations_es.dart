@@ -744,4 +744,136 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsGmailDisconnectCancel => 'Cancelar';
+
+  @override
+  String reviewSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mensajes por revisar',
+      one: '1 mensaje por revisar',
+      zero: 'Todo al día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewReasonNoTemplate => 'No reconocimos el formato';
+
+  @override
+  String get reviewReasonLlmDisabled => 'Falta lectura automática';
+
+  @override
+  String get reviewReasonLlmUnreliable => 'La lectura no fue confiable';
+
+  @override
+  String get reviewReasonOther => 'Necesita tu ayuda';
+
+  @override
+  String get reviewNoText => 'El texto de este mensaje ya no está disponible.';
+
+  @override
+  String get reviewEmptyTitle => 'Nada por revisar';
+
+  @override
+  String get reviewEmptyBody =>
+      'Cuando no podamos leer solos un mensaje de tu banco, aparece aquí para que lo completes.';
+
+  @override
+  String get reviewLoadError => 'No pudimos cargar los mensajes por revisar.';
+
+  @override
+  String get reviewRetry => 'Reintentar';
+
+  @override
+  String reviewCardSemantics(String source, String date, String reason) {
+    return 'Revisar mensaje de $source, $date. $reason';
+  }
+
+  @override
+  String get reviewDetailTitle => 'Revisar mensaje';
+
+  @override
+  String get reviewNotFound => 'Este mensaje ya no está por revisar.';
+
+  @override
+  String get reviewMessageLabel => 'Mensaje del banco';
+
+  @override
+  String get reviewAmountsHint => 'Toca un monto para usarlo';
+
+  @override
+  String reviewAmountSemantics(String amount) {
+    return '$amount pesos';
+  }
+
+  @override
+  String reviewUseAmountSemantics(String amount) {
+    return 'Usar $amount pesos como monto';
+  }
+
+  @override
+  String get reviewFormTitle => 'Crear movimiento';
+
+  @override
+  String get reviewAmountLabel => 'Monto';
+
+  @override
+  String get reviewAmountRequired => 'Escribe el monto';
+
+  @override
+  String get reviewDirectionRequired => 'Elige si es un gasto o un ingreso';
+
+  @override
+  String get reviewDateLabel => 'Fecha';
+
+  @override
+  String get reviewTimeLabel => 'Hora';
+
+  @override
+  String get reviewDateRequired => 'Elige la fecha';
+
+  @override
+  String get reviewDateFromReceived =>
+      'Es la fecha en que llegó el mensaje; cámbiala si no coincide.';
+
+  @override
+  String reviewChangeSemantics(String field, String value) {
+    return '$field: $value. Cambiar';
+  }
+
+  @override
+  String get reviewMerchantLabel => 'Comercio';
+
+  @override
+  String get reviewMerchantHint => 'Opcional';
+
+  @override
+  String get reviewConvert => 'Crear movimiento';
+
+  @override
+  String get reviewDiscard => 'Descartar';
+
+  @override
+  String get reviewDiscardTitle => '¿Descartar este mensaje?';
+
+  @override
+  String get reviewDiscardBody =>
+      'Sale de Revisión y no se crea ningún movimiento.';
+
+  @override
+  String get reviewDiscardConfirm => 'Descartar';
+
+  @override
+  String get reviewDiscardCancel => 'Cancelar';
+
+  @override
+  String get reviewConverted => 'Movimiento creado';
+
+  @override
+  String get reviewDiscarded => 'Descartado';
+
+  @override
+  String get reviewSaveError =>
+      'No pudimos guardar el cambio. Intenta de nuevo.';
 }

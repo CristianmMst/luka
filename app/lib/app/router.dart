@@ -5,10 +5,11 @@ import 'package:finanzia/features/auth/presentation/splash_page.dart';
 import 'package:finanzia/features/dashboard/presentation/dashboard_placeholder_page.dart';
 import 'package:finanzia/features/gmail/application/gmail_gate.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
+import 'package:finanzia/features/review/presentation/review_detail_page.dart';
+import 'package:finanzia/features/review/presentation/review_page.dart';
 import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
 import 'package:finanzia/features/shell/presentation/home_shell.dart';
 import 'package:finanzia/features/shell/presentation/registrar_page.dart';
-import 'package:finanzia/features/shell/presentation/revision_page.dart';
 import 'package:finanzia/features/transactions/presentation/transaction_detail_page.dart';
 import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
 import 'package:flutter/widgets.dart';
@@ -57,8 +58,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     ..listen(gmailGateProvider, (_, _) => refresh.value++)
     ..onDispose(refresh.dispose);
 
-  // El detalle se apila sobre el navegador raíz: a pantalla completa, sin
-  // la barra inferior del shell (diseño DetalleA).
+  // Los detalles (movimiento y mensaje en revisión) se apilan sobre el
+  // navegador raíz: a pantalla completa, sin la barra inferior del shell
+  // (diseño DetalleA).
   final rootNavigatorKey = GlobalKey<NavigatorState>();
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -123,7 +125,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: Routes.review,
-                builder: (context, state) => const RevisionPage(),
+                builder: (context, state) => const ReviewPage(),
+                routes: [
+                  GoRoute(
+                    path: ':rawMessageId',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => ReviewDetailPage(
+                      rawMessageId: state.pathParameters['rawMessageId']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
