@@ -83,7 +83,9 @@ class DashboardController extends Notifier<DashboardState> {
     state = state.copyWith(
       month: month,
       currentMonth: current,
-      summary: const AsyncLoading(),
+      // Conserva las cifras mostradas hasta que Drift emita el mes nuevo
+      // (casi inmediato), para que la franja no se encoja un cuadro.
+      summary: state.summary.hasValue ? state.summary : const AsyncLoading(),
     );
     _subscribe(month);
   }

@@ -4,6 +4,7 @@ import 'package:finanzia/core/theme/app_theme.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/application/transaction_actions.dart';
+import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
@@ -479,6 +480,23 @@ void main() {
 
     expect(find.text('Éxito Calle 80'), findsOneWidget);
     expect(find.text('Terpel'), findsNothing);
+  });
+
+  testWidgets('si otra pantalla reemplaza el filtro, el buscador se limpia', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+    await tester.enterText(find.byType(TextField), 'Terpel');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    ProviderScope.containerOf(tester.element(find.byType(TransactionsPage)))
+        .read(transactionsListControllerProvider.notifier)
+        .setFilter(const TransactionFilter(categoryId: 'cat-mercado'));
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, isEmpty);
   });
 
   testWidgets('sin conexión muestra el aviso', (tester) async {

@@ -111,10 +111,19 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
       now,
       categoryName: categoryName,
     );
-    ref.listen(
-      transactionsListControllerProvider.select((s) => s.filter),
-      (_, _) => _requestedAt = null,
-    );
+    ref
+      ..listen(
+        transactionsListControllerProvider.select((s) => s.filter),
+        (_, _) => _requestedAt = null,
+      )
+      // Si otra pantalla (el Inicio) reemplaza el filtro, el buscador muestra
+      // el texto que de verdad filtra.
+      ..listen(
+        transactionsListControllerProvider.select((s) => s.filter.text),
+        (_, next) {
+          if (_search.text != next) _search.text = next;
+        },
+      );
 
     return Scaffold(
       body: SafeArea(

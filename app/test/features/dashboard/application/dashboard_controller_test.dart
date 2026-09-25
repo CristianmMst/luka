@@ -128,7 +128,8 @@ void main() {
     controller().previousMonth();
 
     expect(state().month, august);
-    expect(state().summary, isA<AsyncLoading<Object?>>());
+    // Mientras llega agosto se conservan las cifras de septiembre.
+    expect(state().summary.requireValue.month, september);
     expect(state().canGoNext, isTrue);
     verify(() => repository.watchMonth(august)).called(1);
 
