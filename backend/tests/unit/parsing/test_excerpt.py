@@ -73,6 +73,102 @@ class TestExtractExcerptParrafoDesenvuelto:
         excerpt = extract_excerpt(body, PREFIX)
         assert "Compraste $10.000 en TIENDA" in excerpt
 
+    def test_body_con_crlf_se_desenvuelve_igual(self) -> None:
+        """`splitlines()` ya trata `\\r\\n` como un solo salto de linea; el
+        parrafo se desenvuelve igual que con `\\n` (correo real de Outlook/
+        Exchange, spec 006 §4.1).
+        """
+        body = (
+            "Hola Bancolombia: Compraste $10.000 en\r\n"
+            "TIENDA el 01/05/2026 a las\r\n"
+            "16:00\r\n"
+            "\r\n"
+            "Otro parrafo.\r\n"
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert excerpt == "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00"
+
+    def test_rama_de_prefijo_tambien_trunca_a_max_chars(self) -> None:
+        body = f"Bancolombia: Compraste $10.000 en {'A' * 2000} el 01/05/2026 a las 16:00"
+        excerpt = extract_excerpt(body, PREFIX, max_chars=50)
+        assert len(excerpt) == 50
+        assert excerpt == body[:50]
+
+
+@pytest.mark.unit
+class TestExtractExcerptRecortaBoilerplateTrasLaHora:
+    """Regla de oro (revision Task 1, ronda 1): lo que sigue a la hora
+    `HH:MM` de la transaccion se recorta en la primera URL/`[` y se le quitan
+    secuencias tipo telefono (RNF-5, minimalidad del extracto para el LLM).
+    El texto ANTES de la hora (monto, llave/last4, comerciante) no se toca,
+    porque ahi puede vivir una llave Bre-B puramente numerica indistinguible
+    de un telefono.
+    """
+
+    @pytest.mark.parametrize(
+        "fixture",
+        [f for f in bancolombia_fixtures() if f.name.endswith("_wrap.txt")],
+        ids=lambda f: f.name,
+    )
+    def test_fixtures_reales_cortados_excluyen_boilerplate_y_conservan_fecha_hora(
+        self, fixture
+    ) -> None:
+        excerpt = extract_excerpt(fixture.body, PREFIX)
+        assert "http://" not in excerpt
+        assert "https://" not in excerpt
+        assert "lamp.png" not in excerpt
+        assert "018000912345" not in excerpt
+        assert "seguridad" not in excerpt
+        assert "Para que enviar" not in excerpt
+        expected = fixture.expected
+        occurred_at = expected["occurred_at"]
+        assert occurred_at.strftime("%d/%m/%y") in excerpt
+        assert occurred_at.strftime("%H:%M") in excerpt
+
+    def test_url_tras_la_hora_se_recorta(self) -> None:
+        body = (
+            "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00. "
+            "Visita https://banco.com/seguridad para mas info."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert "https://banco.com" not in excerpt
+        assert "01/05/2026" in excerpt
+        assert "16:00" in excerpt
+
+    def test_imagen_entre_corchetes_tras_la_hora_se_recorta(self) -> None:
+        body = (
+            "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00. "
+            "Icon 1 [https://banco.com/img/lamp.png] Para que enviar plata sea un exito."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert "[" not in excerpt
+        assert "lamp.png" not in excerpt
+        assert "Para que enviar" not in excerpt
+        assert "16:00" in excerpt
+
+    def test_telefono_tras_la_hora_se_quita(self) -> None:
+        body = (
+            "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00. "
+            "Dudas al 018000912345."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert "018000912345" not in excerpt
+        assert "16:00" in excerpt
+
+    def test_llave_numerica_antes_de_la_hora_no_se_toca(self) -> None:
+        """La llave Bre-B (puramente numerica, formato de telefono) vive
+        ANTES de la hora y debe sobrevivir intacta para que la plantilla
+        `transferencia_llave` la siga capturando.
+        """
+        body = (
+            "Bancolombia: ANA, transferiste $1,820,000.00 a la llave 3001234567 "
+            "desde tu cuenta *4455 a MARIA PEREZ el 01/05/26 a las 16:28. "
+            "Con Bre-b es de una y gratis. Dudas al 018000912345."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert "3001234567" in excerpt
+        assert "018000912345" not in excerpt
+
 
 @pytest.mark.unit
 class TestExtractExcerptFallback:

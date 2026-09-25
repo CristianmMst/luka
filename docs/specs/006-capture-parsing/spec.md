@@ -153,9 +153,13 @@ templates:
   sola, por espacio) y se busca el prefijo en **cualquier posición** de cada párrafo desenvuelto,
   no solo al inicio de línea — así se reconoce el correo que el proveedor corta a ~76 caracteres y
   cuya frase útil empieza a mitad de línea (p. ej. tras "¡Listo! Todo salió bien con tus
-  movimientos"). El extracto es el texto desde el prefijo hasta el final de ese párrafo. Sin match
-  en ningún párrafo cae a un fallback (líneas no vacías sin URLs/teléfonos, truncado a 1500
-  caracteres).
+  movimientos"). El extracto arranca en el prefijo. Lo que sigue a la hora `HH:MM` de la transacción
+  (el boilerplate: "Dudas al `<teléfono>`", imágenes tipo `Icon 1 [https://...]`, el inicio del pie
+  de seguridad) se recorta en la primera URL o el primer `[`, lo que aparezca antes, y además se le
+  quitan secuencias tipo teléfono; el texto **antes** de la hora (monto, llave/last4, comerciante)
+  nunca se toca, porque ahí puede vivir una llave Bre-B puramente numérica (formato de teléfono) que
+  la plantilla necesita capturar intacta. Sin match en ningún párrafo cae a un fallback (líneas no
+  vacías sin URLs/teléfonos, truncado a 1500 caracteres).
 - Plantillas Bancolombia vigentes (`parsing/config/templates/bancolombia.yaml`, v1): `compra_tdeb`,
   `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
   (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`) y `nomina`.

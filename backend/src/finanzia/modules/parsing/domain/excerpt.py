@@ -13,6 +13,7 @@ _PHONE_RE = re.compile(
     r"\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}"  # 3-3-4: local/celular, con/sin separador (incl. punto)
     r"|\d{3}[\s.\-]\d{3}[\s.\-]\d{3}[\s.\-]\d{3}"  # 3-3-3-3: gratuita espaciada (018 000 931 987)
 )
+_TIME_RE = re.compile(r"\d{2}:\d{2}")
 _CURRENCY_MARKER_RE = re.compile(r"\$\s?\d|COP")
 _THOUSANDS_RE = re.compile(
     r"\d{1,3}(?:[.,]\d{3}){2,}"  # miles sin decimales pero con >=2 grupos (1.234.567)
@@ -53,22 +54,48 @@ def _unwrapped_paragraphs(body: str) -> list[str]:
     return paragraphs
 
 
+def _clean_tail(tail: str) -> str:
+    """Recorta `tail` (lo que sigue a la hora `HH:MM` de la transaccion) en la
+    primera URL o `[` (imagenes tipo `Icon 1 [https://...]`, RNF-5) y le quita
+    secuencias tipo telefono. Nunca toca el texto ANTES de la hora: ahi puede
+    vivir una llave Bre-B puramente numerica, indistinguible de un telefono
+    para `_PHONE_RE` (spec 006 §4.1).
+    """
+    cut = len(tail)
+    url_match = _URL_RE.search(tail)
+    if url_match:
+        cut = min(cut, url_match.start())
+    bracket_idx = tail.find("[")
+    if bracket_idx != -1:
+        cut = min(cut, bracket_idx)
+    return _PHONE_RE.sub("", tail[:cut])
+
+
 def extract_excerpt(body: str, relevant_line_prefix: str | None, max_chars: int = 1500) -> str:
     """Reduce `body` al fragmento util, truncado a `max_chars`.
 
     Si `relevant_line_prefix` esta configurado, `body` se parte en parrafos
     (separados por lineas vacias) y cada parrafo se desenvuelve (une sus
     lineas fisicas en una sola, por espacio). En el primer parrafo donde el
-    prefijo aparezca, en cualquier posicion, el extracto es el texto desde el
-    prefijo hasta el final del parrafo. Si ningun parrafo lo contiene (o no
-    hay prefijo configurado) cae al fallback: lineas no vacias sin URLs ni
-    secuencias tipo telefono.
+    prefijo aparezca, en cualquier posicion, el extracto arranca en el
+    prefijo. Lo que sigue a la hora `HH:MM` de la transaccion (boilerplate:
+    "Dudas al <telefono>", imagenes, el inicio del pie de seguridad) se
+    recorta en la primera URL/`[` y se le quitan secuencias tipo telefono
+    (`_clean_tail`); el texto ANTES de la hora (donde vive el monto, la
+    llave/last4 y el comerciante) no se toca. Si ningun parrafo contiene el
+    prefijo (o no hay prefijo configurado) cae al fallback: lineas no vacias
+    sin URLs ni secuencias tipo telefono.
     """
     if relevant_line_prefix:
         for paragraph in _unwrapped_paragraphs(body):
             idx = paragraph.find(relevant_line_prefix)
             if idx != -1:
-                return paragraph[idx:][:max_chars]
+                matched = paragraph[idx:]
+                time_match = _TIME_RE.search(matched)
+                if time_match:
+                    head, tail = matched[: time_match.end()], matched[time_match.end() :]
+                    matched = head + _clean_tail(tail)
+                return matched[:max_chars]
 
     fallback = [
         stripped
