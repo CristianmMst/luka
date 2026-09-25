@@ -156,7 +156,8 @@ templates:
   movimientos"). El extracto arranca en el prefijo. Lo que sigue a la hora `HH:MM` de la transacción
   (el boilerplate: "Dudas al `<teléfono>`", imágenes tipo `Icon 1 [https://...]`, el inicio del pie
   de seguridad) se recorta en la primera URL o el primer `[`, lo que aparezca antes, y además se le
-  quitan secuencias tipo teléfono; el texto **antes** de la hora (monto, llave/last4, comerciante)
+  quitan secuencias tipo teléfono completas (3-3-4, 3-3-3-3 espaciada o gratuita pegada
+  `01[89]000` + 6 dígitos, sin dígitos vecinos: nunca queda un resto como `45`); el texto **antes** de la hora (monto, llave/last4, comerciante)
   nunca se toca, porque ahí puede vivir una llave Bre-B puramente numérica (formato de teléfono) que
   la plantilla necesita capturar intacta. Sin match en ningún párrafo cae a un fallback (líneas no
   vacías sin URLs/teléfonos, truncado a 1500 caracteres).

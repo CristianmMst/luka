@@ -9,9 +9,15 @@ from __future__ import annotations
 import re
 
 _URL_RE = re.compile(r"(?i)https?://|www\.")
+# Las anclas `(?<!\d)`/`(?!\d)` exigen consumir el telefono entero: sin ellas,
+# `018000912345` (12 digitos) matcheaba solo sus primeros 10 y dejaba `45`.
+# La app replica este patron byte a byte (`amount_highlight.dart`).
 _PHONE_RE = re.compile(
-    r"\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}"  # 3-3-4: local/celular, con/sin separador (incl. punto)
+    r"(?<!\d)(?:"
+    r"01[89]000\d{6}"  # gratuita pegada, 12 digitos (018000912345 / 019000...)
+    r"|\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}"  # 3-3-4: local/celular, con/sin separador (incl. punto)
     r"|\d{3}[\s.\-]\d{3}[\s.\-]\d{3}[\s.\-]\d{3}"  # 3-3-3-3: gratuita espaciada (018 000 931 987)
+    r")(?!\d)"
 )
 _TIME_RE = re.compile(r"\d{2}:\d{2}")
 _CURRENCY_MARKER_RE = re.compile(r"\$\s?\d|COP")

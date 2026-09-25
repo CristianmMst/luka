@@ -1,5 +1,7 @@
 """Tests unitarios de extraccion de extracto (spec 006 §2.3/§4.1)."""
 
+import re
+
 import pytest
 from support.email_fixtures import bancolombia_fixtures
 
@@ -124,6 +126,44 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
         occurred_at = expected["occurred_at"]
         assert occurred_at.strftime("%d/%m/%y") in excerpt
         assert occurred_at.strftime("%H:%M") in excerpt
+
+    @pytest.mark.parametrize(
+        "fixture", bancolombia_fixtures(), ids=lambda f: f.name if hasattr(f, "name") else str(f)
+    )
+    def test_quitar_telefonos_no_deja_digitos_sueltos(self, fixture) -> None:
+        """`_PHONE_RE` consume el telefono entero: `018000912345` no puede dejar
+        `45` ni `018000931987` dejar `87` (revision F4.7).
+        """
+        excerpt = extract_excerpt(fixture.body, PREFIX)
+        tail = excerpt[re.search(r"\d{2}:\d{2}", excerpt).end() :]  # type: ignore[union-attr]
+        # `Icon 1` (etiqueta de imagen de los `_wrap`) es el unico digito legitimo.
+        assert not re.search(r"\d{2,}", tail), tail
+
+    @pytest.mark.parametrize(
+        ("name", "expected"),
+        [
+            (
+                "transferencia_llave_wrap.txt",
+                "Bancolombia: DIANA, transferiste $215,300.00 a la llave 3007654321 desde tu "
+                "cuenta *5533 a CARLOS RUIZ el 15/06/26 a las 11:24. Con Bre-b es de una y "
+                "gratis. Dudas al . Icon 1 ",
+            ),
+            (
+                "transferencia_llave_recibida_wrap.txt",
+                "Bancolombia: DIANA, recibiste una transferencia de CARLOS RUIZ por $482,500.00 "
+                "en tu cuenta *9081 conectada a la llave @druiz882 el 15/06/26 a las 11:24. Con "
+                "llaves es de una y gratis. Dudas al . Icon 1 ",
+            ),
+        ],
+    )
+    def test_extracto_exacto_de_los_fixtures_cortados(self, name: str, expected: str) -> None:
+        fixture = next(f for f in bancolombia_fixtures() if f.name == name)
+        assert extract_excerpt(fixture.body, PREFIX) == expected
+
+    @pytest.mark.parametrize("phone", ["604 510 9095", "018 000 931 987", "018000912345"])
+    def test_telefonos_espaciados_y_gratuitos_tras_la_hora_se_quitan(self, phone: str) -> None:
+        head = "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00. Dudas al "
+        assert extract_excerpt(f"{head}{phone}.", PREFIX) == f"{head}."
 
     def test_url_tras_la_hora_se_recorta(self) -> None:
         body = (
