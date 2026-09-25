@@ -803,6 +803,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reviewAmountsHint => 'Toca un monto para usarlo';
 
   @override
+  String get reviewShowFullMessage => 'Ver mensaje completo';
+
+  @override
+  String get reviewShowLessMessage => 'Ver menos';
+
+  @override
   String reviewAmountSemantics(String amount) {
     return '$amount pesos';
   }

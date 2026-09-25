@@ -53,42 +53,46 @@ TextStyle highlightStyle(ColorScheme scheme) => amountTextStyle.copyWith(
 );
 
 /// [text] como spans, con los montos de [highlightAmounts] resaltados. Con
-/// [onAmount], tocar un monto lo entrega ya convertido en [Cop]; los
-/// reconocedores quedan en [recognizers] para que quien los crea los
-/// libere.
+/// [recognizers], el monto i-ésimo lleva el reconocedor i-ésimo; quien los
+/// crea los libera.
 List<InlineSpan> highlightedSpans(
   AppLocalizations l10n,
   String text,
   TextStyle highlight, {
-  ValueChanged<Cop>? onAmount,
   List<GestureRecognizer>? recognizers,
 }) {
   final spans = <InlineSpan>[];
   var cursor = 0;
+  var index = 0;
   for (final range in highlightAmounts(text)) {
     if (range.start > cursor) {
       spans.add(TextSpan(text: text.substring(cursor, range.start)));
     }
     final raw = text.substring(range.start, range.end);
     final amount = parseAmount(raw)!;
-    TapGestureRecognizer? recognizer;
-    if (onAmount != null) {
-      recognizer = TapGestureRecognizer()..onTap = () => onAmount(amount);
-      recognizers?.add(recognizer);
-    }
     spans.add(
       TextSpan(
         text: raw,
         style: highlight,
-        recognizer: recognizer,
+        recognizer: recognizers != null && index < recognizers.length
+            ? recognizers[index]
+            : null,
         semanticsLabel: l10n.reviewAmountSemantics(spokenAmount(amount)),
       ),
     );
+    index++;
     cursor = range.end;
   }
   if (cursor < text.length) spans.add(TextSpan(text: text.substring(cursor)));
   return spans;
 }
+
+/// Montos de [text] en el orden de [highlightAmounts], repetidos incluidos:
+/// uno por cada monto resaltado.
+List<Cop> highlightedAmounts(String text) => [
+  for (final range in highlightAmounts(text))
+    parseAmount(text.substring(range.start, range.end))!,
+];
 
 /// Montos distintos de [text], en orden de aparición.
 List<Cop> distinctAmounts(String text) => {

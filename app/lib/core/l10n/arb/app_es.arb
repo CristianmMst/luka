@@ -483,6 +483,8 @@
   "reviewNotFound": "Este mensaje ya no está por revisar.",
   "reviewMessageLabel": "Mensaje del banco",
   "reviewAmountsHint": "Toca un monto para usarlo",
+  "reviewShowFullMessage": "Ver mensaje completo",
+  "reviewShowLessMessage": "Ver menos",
   "reviewAmountSemantics": "{amount} pesos",
   "@reviewAmountSemantics": {
     "placeholders": {

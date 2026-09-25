@@ -25,10 +25,13 @@ const _suffix = r'\s?COP\b';
 
 final _amount = RegExp('$_prefix$_number|$_number$_suffix|$_bare');
 
-// Mismo patrón de teléfonos que `excerpt.py` (spec 006 §4.1): 3-3-4
-// (local o celular) y 3-3-3-3 (línea gratuita).
+// Mismo patrón de teléfonos que `_PHONE_RE` de `excerpt.py` (spec 006
+// §4.1): línea gratuita pegada (`018000912345`), 3-3-4 (local o celular) y
+// 3-3-3-3 (línea gratuita con separadores). Nunca empieza ni termina
+// pegado a otra cifra.
 final _phone = RegExp(
-  r'\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}|\d{3}[\s.\-]\d{3}[\s.\-]\d{3}[\s.\-]\d{3}',
+  r'(?<!\d)(?:01[89]000\d{6}|\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}'
+  r'|\d{3}[\s.\-]\d{3}[\s.\-]\d{3}[\s.\-]\d{3})(?!\d)',
 );
 
 /// Rangos de [text] que parecen montos, en orden: los que llevan `$` o

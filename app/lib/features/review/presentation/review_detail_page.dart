@@ -299,6 +299,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
       _failed(saveFailed: true);
       return;
     }
+    if (!mounted) return;
     messenger.showSnackBar(SnackBar(content: Text(done)));
     if (router.canPop()) {
       router.pop();
@@ -392,13 +393,37 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
   }
 }
 
-/// Encabezado del mensaje y su texto completo, seleccionable, con los
-/// montos resaltados; debajo, los montos como botones de 48 dp.
-class _MessageCard extends StatelessWidget {
+/// Encabezado del mensaje y su texto, seleccionable, con los montos
+/// resaltados; debajo, los montos como botones de 48 dp en una fila que se
+/// desplaza de lado. Un texto largo se muestra recortado hasta que se pide
+/// completo: así el formulario queda cerca y no hay un desplazamiento
+/// vertical dentro de otro.
+class _MessageCard extends StatefulWidget {
   const _MessageCard({required this.item, required this.onAmount});
 
   final ReviewItem item;
   final ValueChanged<Cop> onAmount;
+
+  @override
+  State<_MessageCard> createState() => _MessageCardState();
+}
+
+class _MessageCardState extends State<_MessageCard> {
+  /// Alto del texto recortado.
+  static const _collapsedHeight = 320.0;
+
+  var _expanded = false;
+  var _overflows = false;
+
+  bool _onMetrics(ScrollMetricsNotification notification) {
+    final overflows = notification.metrics.maxScrollExtent > 0;
+    if (overflows != _overflows) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _overflows = overflows);
+      });
+    }
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -409,8 +434,12 @@ class _MessageCard extends StatelessWidget {
       fontWeight: FontWeight.w400,
       color: scheme.onSurfaceVariant,
     );
+    final item = widget.item;
     final text = item.text;
     final amounts = text == null ? const <Cop>[] : distinctAmounts(text);
+    final highlighted = text == null
+        ? null
+        : _HighlightedText(text: text, onAmount: widget.onAmount);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -425,30 +454,56 @@ class _MessageCard extends StatelessWidget {
           children: [
             ReviewHeader(item: item),
             Text(l10n.reviewMessageLabel, style: muted),
-            if (text != null)
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: Scrollbar(
-                  child: SingleChildScrollView(
-                    child: _HighlightedText(text: text, onAmount: onAmount),
-                  ),
-                ),
-              )
-            else
+            if (highlighted == null)
               Text(
                 l10n.reviewNoText,
                 style: textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
+              )
+            else if (_expanded)
+              highlighted
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: _collapsedHeight),
+                // Solo recorta: no se desplaza por dentro.
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: _onMetrics,
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: highlighted,
+                  ),
+                ),
+              ),
+            if (highlighted != null && (_overflows || _expanded))
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, minTouchTarget),
+                  ),
+                  child: Text(
+                    _expanded
+                        ? l10n.reviewShowLessMessage
+                        : l10n.reviewShowFullMessage,
+                  ),
+                ),
               ),
             if (amounts.isNotEmpty) ...[
               Text(l10n.reviewAmountsHint, style: muted),
-              Wrap(
-                spacing: Space.xs,
-                children: [
-                  for (final amount in amounts)
-                    _AmountChip(amount: amount, onTap: () => onAmount(amount)),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  spacing: Space.xs,
+                  children: [
+                    for (final amount in amounts)
+                      _AmountChip(
+                        amount: amount,
+                        onTap: () => widget.onAmount(amount),
+                      ),
+                  ],
+                ),
               ),
             ],
           ],
@@ -458,7 +513,8 @@ class _MessageCard extends StatelessWidget {
   }
 }
 
-/// El texto con los montos tocables. Maneja sus reconocedores de toque.
+/// El texto con los montos tocables. Crea sus reconocedores de toque una
+/// vez, los rehace solo si cambia el texto y los libera al salir.
 class _HighlightedText extends StatefulWidget {
   const _HighlightedText({required this.text, required this.onAmount});
 
@@ -470,7 +526,38 @@ class _HighlightedText extends StatefulWidget {
 }
 
 class _HighlightedTextState extends State<_HighlightedText> {
-  final _recognizers = <GestureRecognizer>[];
+  final _recognizers = <TapGestureRecognizer>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _buildRecognizers();
+  }
+
+  @override
+  void didUpdateWidget(_HighlightedText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _disposeRecognizers();
+      _buildRecognizers();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeRecognizers();
+    super.dispose();
+  }
+
+  void _buildRecognizers() {
+    for (final amount in highlightedAmounts(widget.text.trim())) {
+      // Lee `widget` al tocar: el callback puede cambiar sin cambiar el
+      // texto.
+      _recognizers.add(
+        TapGestureRecognizer()..onTap = () => widget.onAmount(amount),
+      );
+    }
+  }
 
   void _disposeRecognizers() {
     for (final recognizer in _recognizers) {
@@ -480,16 +567,9 @@ class _HighlightedTextState extends State<_HighlightedText> {
   }
 
   @override
-  void dispose() {
-    _disposeRecognizers();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    _disposeRecognizers();
 
     return SelectionArea(
       child: Text.rich(
@@ -498,7 +578,6 @@ class _HighlightedTextState extends State<_HighlightedText> {
             l10n,
             widget.text.trim(),
             highlightStyle(scheme),
-            onAmount: widget.onAmount,
             recognizers: _recognizers,
           ),
         ),

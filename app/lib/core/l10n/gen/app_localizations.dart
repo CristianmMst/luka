@@ -1354,6 +1354,18 @@ abstract class AppLocalizations {
   /// **'Toca un monto para usarlo'**
   String get reviewAmountsHint;
 
+  /// No description provided for @reviewShowFullMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mensaje completo'**
+  String get reviewShowFullMessage;
+
+  /// No description provided for @reviewShowLessMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver menos'**
+  String get reviewShowLessMessage;
+
   /// No description provided for @reviewAmountSemantics.
   ///
   /// In es, this message translates to:

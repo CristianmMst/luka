@@ -56,6 +56,23 @@ void main() {
       );
     });
 
+    test('no resalta lineas gratuitas ni fijos, ni siquiera en parte', () {
+      for (final phone in ['018000912345', '604 510 9095', '018 000 931 987']) {
+        expect(highlightAmounts('Llama al $phone hoy'), isEmpty, reason: phone);
+        expect(highlightAmounts(phone), isEmpty, reason: phone);
+      }
+    });
+
+    test('resalta los montos pegados a esos telefonos', () {
+      expect(
+        highlighted(
+          r'Pago $42.900 linea 018000912345 saldo $1.200,50 fijo '
+          r'604 510 9095 y 12.000 COP o 018 000 931 987 y $3.500',
+        ),
+        [r'$42.900', r'$1.200,50', '12.000 COP', r'$3.500'],
+      );
+    });
+
     test('no resalta un telefono con signo de pesos', () {
       expect(highlighted(r'Codigo $3001234567'), isEmpty);
     });

@@ -14,6 +14,7 @@ import 'package:finanzia/features/transactions/application/transactions_provider
 import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,27 @@ const _categories = [
   ),
 ];
 
+const _line =
+    'CALLE 80 desde tu cuenta *4821. Dudas al 604 510 9095 o al '
+    '018000912345.';
+
+/// Correo de unos 8 KB: líneas con montos y teléfonos, y un final
+/// reconocible.
+final ReviewItem _longItem = ReviewItem(
+  rawMessageId: 'm-long',
+  channel: 'email',
+  sender: 'alertas@bancolombia.com.co',
+  bank: 'bancolombia',
+  receivedAt: bogota(23, 12, 41),
+  reason: 'no_template',
+  partialExtract: const {},
+  text: [
+    for (var i = 0; i < 75; i++)
+      'Bancolombia te informa una compra por \$${i + 1}2.400 en EXITO $_line',
+    'FIN DEL MENSAJE',
+  ].join('\n'),
+);
+
 void main() {
   late _Repository repository;
   late _Transactions transactions;
@@ -59,7 +81,7 @@ void main() {
     transactions = _Transactions();
     actions = _Actions();
     final rows = {
-      for (final item in [emailItem, notificationItem, purgedItem])
+      for (final item in [emailItem, notificationItem, purgedItem, _longItem])
         item.rawMessageId: item,
     };
     streams = {};
@@ -444,6 +466,76 @@ void main() {
 
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
+  });
+
+  group('con un texto de 8 KB en un teléfono', () {
+    const phone = Size(390, 844);
+
+    /// Posición global del final del texto largo.
+    Offset textEnd(WidgetTester tester) {
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.textContaining('FIN DEL MENSAJE', findRichText: true),
+      );
+      final length = paragraph.text.toPlainText().length;
+      final caret = paragraph.getOffsetForCaret(
+        TextPosition(offset: length),
+        Rect.zero,
+      );
+      return paragraph.localToGlobal(caret);
+    }
+
+    bool onScreen(Offset point, {double bottom = 844}) =>
+        point.dy >= 0 && point.dy <= bottom;
+
+    testWidgets('no desborda y deja llegar al final y al botón', (
+      tester,
+    ) async {
+      expect(_longItem.text!.length, greaterThan(8000));
+      await pumpDetail(tester, id: 'm-long', size: phone);
+      expect(tester.takeException(), isNull);
+
+      // Recortado, el formulario queda cerca y el texto no se desplaza por
+      // dentro.
+      expect(find.text('Monto'), findsOneWidget);
+      await tapVisible(tester, find.text('Ver mensaje completo'));
+      expect(find.text('Ver menos'), findsOneWidget);
+
+      // A mitad de pantalla queda "Ver menos", justo debajo del final.
+      await tester.dragUntilVisible(
+        find.text('Ver menos'),
+        find.byType(ListView),
+        const Offset(0, -300),
+      );
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Ver menos')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
+      expect(onScreen(textEnd(tester)), isTrue);
+
+      await tapVisible(tester, find.text('Crear movimiento').last);
+      expect(tester.takeException(), isNull);
+      expect(find.text('Escribe el monto'), findsOneWidget);
+    });
+
+    testWidgets('con el teclado abierto el monto sigue a la vista', (
+      tester,
+    ) async {
+      await pumpDetail(tester, id: 'm-long', size: phone);
+      final amount = find.byType(TextField).first;
+
+      await tapVisible(tester, amount);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final field = tester.getRect(amount);
+      expect(field.top, greaterThanOrEqualTo(0));
+      expect(field.bottom, lessThanOrEqualTo(844 - 300));
+      await tester.enterText(amount, '5000');
+      await tester.pump();
+      expect(amountText(tester), '5.000');
+    });
   });
 
   group('goldens', () {
