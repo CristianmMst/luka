@@ -78,6 +78,33 @@ void main() {
       expect(highlighted(r'$1.234.567.890.123'), isEmpty);
     });
 
+    test(r'resalta $45.5 como 455 pesos y no una cola ambigua sin signo', () {
+      const text = r'Pago $45.5 y saldo 1.234.567.5 hoy';
+      expect(highlighted(text), [r'$45.5']);
+      final range = highlightAmounts(text).single;
+      expect(
+        parseAmount(text.substring(range.start, range.end)),
+        Cop.pesos(455),
+      );
+    });
+
+    test('un texto de 8 KB se resalta rápido y completo', () {
+      const line =
+          r'Compra por $126.400 en EXITO. Llama al 604 510 9095. '
+          'Saldo 1.254.300,50 y ref 1234567.\n';
+      final text = line * (8192 ~/ line.length + 1);
+      expect(text.length, greaterThanOrEqualTo(8192));
+      final watch = Stopwatch()..start();
+      final found = highlighted(text);
+      watch.stop();
+
+      final lines = text.split('\n').where((l) => l.isNotEmpty).length;
+      expect(found, [
+        for (var i = 0; i < lines; i++) ...[r'$126.400', '1.254.300,50'],
+      ]);
+      expect(watch.elapsed, lessThan(const Duration(milliseconds: 500)));
+    });
+
     test('da rangos en orden y sin texto', () {
       expect(highlightAmounts(''), isEmpty);
       expect(highlightAmounts(r'a $1 b $2'), [
@@ -101,6 +128,19 @@ void main() {
       '1.234.567': Cop.pesos(1234567),
       '45.900,00': Cop.pesos(45900),
       r'$1234.56': const Cop(123456),
+      // Casos cruzados con `parse_amount` del backend (normalizers.py): un
+      // solo tipo de separador es decimal solo una vez y con dos cifras.
+      r'$45.5': const Cop(45500),
+      '1.234.56': const Cop(12345600),
+      '45.900': Cop.pesos(45900),
+      '1,5': Cop.pesos(15),
+      r'$1.2.3': Cop.pesos(123),
+      '0,005': Cop.pesos(5),
+      r'$1.234.567.5': Cop.pesos(12345675),
+      // Con los dos, el de la derecha es el decimal; redondeo desde la mitad.
+      '1.234,567': const Cop(123457),
+      '1,234.565': const Cop(123457),
+      '1,234.564': const Cop(123456),
     };
     for (final MapEntry(key: raw, value: cents) in cases.entries) {
       test('"$raw" -> ${cents.cents} centavos', () {
@@ -113,7 +153,10 @@ void main() {
       'COP',
       r'$',
       'abc',
-      r'$1.2.3',
+      r'$0',
+      '0,00',
+      '1.2,3.4',
+      // Más de 12 cifras de pesos no cabe en el wire de `Cop`.
       '1.234.567.890.123',
     ]) {
       test('"$raw" no es un monto', () => expect(parseAmount(raw), isNull));

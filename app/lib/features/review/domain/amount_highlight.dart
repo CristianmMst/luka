@@ -12,10 +12,11 @@ const _number =
     r'(?![.,]?\d)';
 
 // Miles agrupados sin signo, igual que `looks_monetary` del backend: dos
-// grupos o más (`1.234.567`), o uno con centavos (`45.900,00`).
+// grupos o más sin decimales (`1.234.567`), o grupos con centavos de dos
+// cifras (`45.900,00`). Una cola ambigua (`1.234.567.5`) no se resalta.
 const _bare =
     r'(?<![\d.,])'
-    r'(?:\d{1,3}(?:[.,]\d{3}){2,}(?:[.,]\d{1,2})?|\d{1,3}(?:[.,]\d{3})+[.,]\d{2})'
+    r'(?:\d{1,3}(?:[.,]\d{3}){2,}|\d{1,3}(?:[.,]\d{3})+[.,]\d{2})'
     r'(?![.,]?\d)';
 
 // `$` o `COP` antes del número, o `COP` después.
@@ -45,25 +46,60 @@ List<AmountRange> highlightAmounts(String text) {
   ];
 }
 
-final _grouped = RegExp(r'^\d{1,3}(?:[.,]\d{3})*$');
-final _plain = RegExp(r'^\d+$');
-final _decimals = RegExp(r'[.,](\d{1,2})$');
+final _valid = RegExp(r'^\d+(?:[.,]\d+)*$');
+final _digits = RegExp(r'^\d+$');
+final _currency = RegExp('cop', caseSensitive: false);
 
-/// Convierte un monto resaltado (`$3,000.00`, `$3.000,00`, `COP 45.900`,
-/// `12.000 COP`) en [Cop]; `null` si no es un monto.
+/// Pesos más grandes que caben en el wire de [Cop] (12 cifras).
+const _maxPesos = 999999999999;
+
+/// Convierte un monto (`$3,000.00`, `$3.000,00`, `COP 45.900`, `12.000 COP`)
+/// en [Cop]; `null` si no es un monto o no es mayor que cero.
 ///
-/// Un separador final seguido de una o dos cifras es el decimal, sea punto
-/// o coma; los demás separan miles en grupos de tres.
+/// Es la misma regla que `parse_amount` del backend
+/// (`parsing/domain/normalizers.py`): si hay `.` y `,`, el de más a la
+/// derecha es el decimal; si hay un solo tipo de separador, es decimal solo
+/// si aparece una vez seguido de exactamente dos cifras, y si no separa
+/// miles (`$45.5` son 455 pesos). Los centavos se redondean a dos cifras
+/// hacia arriba desde la mitad.
 Cop? parseAmount(String raw) {
-  final digits = raw.replaceAll(RegExp(r'\$|COP|\s'), '');
-  final decimals = _decimals.firstMatch(digits);
-  final whole = decimals == null ? digits : digits.substring(0, decimals.start);
-  if (!_plain.hasMatch(whole) && !_grouped.hasMatch(whole)) return null;
-  final pesos = whole.replaceAll(RegExp('[.,]'), '');
-  final fraction = decimals == null ? '' : '.${decimals[1]}';
-  try {
-    return Cop.parse('$pesos$fraction');
-  } on FormatException {
-    return null;
+  final cleaned = raw
+      .replaceAll(_currency, '')
+      .replaceAll(r'$', '')
+      .replaceAll(RegExp(r'\s+'), '');
+  if (cleaned.isEmpty || !_valid.hasMatch(cleaned)) return null;
+  final hasDot = cleaned.contains('.');
+  final hasComma = cleaned.contains(',');
+  String whole;
+  var fraction = '';
+  if (hasDot && hasComma) {
+    final decimal = cleaned.lastIndexOf('.') > cleaned.lastIndexOf(',')
+        ? '.'
+        : ',';
+    final thousands = decimal == '.' ? ',' : '.';
+    final at = cleaned.lastIndexOf(decimal);
+    whole = cleaned.substring(0, at).replaceAll(thousands, '');
+    fraction = cleaned.substring(at + 1);
+  } else if (hasDot || hasComma) {
+    final parts = cleaned.split(hasDot ? '.' : ',');
+    if (parts.length == 2 && parts[1].length == 2) {
+      whole = parts[0];
+      fraction = parts[1];
+    } else {
+      whole = parts.join();
+    }
+  } else {
+    whole = cleaned;
   }
+  // `1.2,3.4`: al quitar los miles queda otro punto; el backend lo rechaza.
+  if (!_digits.hasMatch(whole)) return null;
+  final pesosDigits = whole.replaceFirst(RegExp(r'^0+(?=\d)'), '');
+  if (pesosDigits.length > 12) return null;
+  final roundUp = fraction.length > 2 && fraction.codeUnitAt(2) >= 0x35;
+  final cents =
+      int.parse(pesosDigits) * 100 +
+      int.parse(fraction.padRight(2, '0').substring(0, 2)) +
+      (roundUp ? 1 : 0);
+  if (cents <= 0 || cents ~/ 100 > _maxPesos) return null;
+  return Cop(cents);
 }
