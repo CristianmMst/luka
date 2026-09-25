@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), la pantalla de movimientos (F4.2) y la de revisión (F4.7); el resto del shell son marcadores.
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2) y la de revisión (F4.7); Registrar y Ajustes siguen siendo marcadores.
 
 ## Requisitos
 
@@ -68,7 +68,7 @@ lib/
     ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
     ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Revisión/Ajustes
-    └── dashboard/         # placeholder post-login hasta F4.6
+    └── dashboard/         # Inicio (F4.6): resumen del mes calculado en local
 ```
 
 `test/architecture_test.dart` verifica las reglas de capas: `domain` puro, `application` sin `data` ni `presentation`, `core` sin features.
@@ -103,12 +103,20 @@ El archivo (`finanzia.sqlite`) suele vivir en `app_flutter` (carpeta de document
 
 ### Movimientos (F4.2)
 
-Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre sus 5 rutas: `/` (Inicio), `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2; el detalle `/movimientos/:id` se abre a pantalla completa, sin la barra): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones y Revisión tienen pantalla real; Dashboard, Registrar y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
+Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre sus 5 rutas: `/` (Inicio), `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2; el detalle `/movimientos/:id` se abre a pantalla completa, sin la barra): la barra inferior de 5 pestañas ya está completa, pero Registrar y Ajustes siguen siendo marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
 
 `lib/features/transactions/` trae las dos pantallas nuevas (spec 008 §3.3, diseño en el canvas F4.2 enlazado en spec 008 §7.1):
 
 - **Lista** (`transactions_page.dart`, diseño B "Tarjetas por día"): tarjetas por día con paginación creciente sobre `TransactionsRepository.watch`, buscador con debounce y hoja de filtros. Periodo, tipo, banco y categoría filtran en SQL; fuente (canal) y texto se aplican en el cliente. Cubre los 5 estados sin filas (vacío total, vacío del mes, sin resultados, error de lectura local y primera sincronización) más el aviso de sin conexión y el de operaciones rechazadas (reintentar o dejar como estaba).
 - **Detalle** (`transaction_detail_page.dart`, diseño A "Monto protagonista"): monto con decimales, campos editables, fuentes del servidor (`GET /transactions/{id}`, con reintento automático al recuperar la red), par de transferencia navegable, marcar/desmarcar transfer y notas con guardado automático.
+
+### Inicio (F4.6)
+
+`lib/features/dashboard/` muestra el resumen del mes (spec 008 §3.2, diseño A "Balance protagonista").
+
+- **Cálculo local.** Todo se calcula en el teléfono: `DriftInsightsRepository` hace un SQL agregado sobre `local_transactions` y `local_categories`, sin transfers, en el rango del mes en hora de Colombia (`lib/core/time/colombia_month.dart`). Funciona sin red y reacciona al instante a un cambio de categoría. `GET /insights/monthly` no existe; queda diferido.
+- **Franja superior.** Saludo, línea de sync, selector de mes (sin meses futuros), balance, y Gastos/Ingresos con su delta frente al mes anterior.
+- **"En qué se fue".** El top 5 de categorías, con barras hechas con widgets propios y sin `fl_chart`, más "Otras". Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes.
 
 ### Revisión (F4.7)
 

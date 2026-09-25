@@ -2,7 +2,7 @@
 
 ## 1. Estructura y stack
 
-Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `fl_chart` (dashboard), `intl` (formato COP).
+Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `intl` (formato COP).
 
 ## 2. Mapa de navegación
 
@@ -29,7 +29,7 @@ flowchart TD
     ST --> PRIV[Privacidad: exportar / borrar cuenta]
 ```
 
-El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha (F4.2) solo Transacciones es real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto") que completan F4.5–F4.8 (Registrar en F4.5). Ajustes ya adelantó el cierre de sesión, que antes vivía en el placeholder del dashboard, y la fila de Gmail (F3.6, §3.7).
+El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha, Inicio (F4.6), Transacciones (F4.2) y Revisión (F4.7) son reales; Registrar y Ajustes son marcadores ("Llega pronto") que completan F4.5 y F4.8. Ajustes ya adelantó el cierre de sesión y la fila de Gmail (F3.6, §3.7).
 
 Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). A la fecha (F3.6) el onboarding tiene solo el paso de Gmail (`/onboarding/gmail`); notificaciones y cuentas llegan en F4.4.
 - Sin sesión, cualquier ruta va a `/login`; mientras se restaura la sesión, a `/splash`.
@@ -53,7 +53,20 @@ Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). 
 - Paso cuentas: formulario simple banco + últimos 4 + alias, repetible; explica su uso (detectar transferencias propias).
 
 ### 3.2 Dashboard (RF-9)
-- Mes seleccionable; tarjetas: gastos, ingresos, balance; gráfico de top 5 categorías; delta vs mes anterior. Excluye transfers. Datos de `insights` con caché local; estado offline visible (banner discreto "sin conexión — datos locales").
+Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2stoe8zQwaXFhUPz8h1UKy).
+
+- **Cálculo local.** Las cifras se calculan en el teléfono con SQL agregado sobre Drift (`local_transactions` + `local_categories`, `lib/features/dashboard/data/drift_insights_repository.dart`). Por eso funcionan sin red y un cambio de categoría se ve al instante (AC-APP-3). `GET /insights/monthly` (005 §8) queda diferido.
+- **Mes.** Es un mes calendario en hora de Colombia (UTC−5 fija, `ColombiaMonth`), de las 00:00 del día 1 a las 00:00 del día 1 del mes siguiente. Se elige con flechas de 48 dp y no se puede ir a meses futuros.
+- **Franja esmeralda (`hero`).** Muestra el saludo, la línea provisional de sync (§5), el selector de mes y el balance del mes (ingresos − gastos, con signo). Debajo lleva dos tarjetas, Gastos (−, color gasto) e Ingresos (+, color ingreso), cada una con su delta frente al mes anterior: "↓ 9 % vs agosto" o "= igual que agosto". Si el mes anterior está en 0, dice "Sin datos de {mes}" en vez de un porcentaje.
+- **"En qué se fue".** Muestra las 5 categorías con más gasto, cada una con su ícono, una barra relativa a la mayor y el % del gasto total. Los empates se ordenan por nombre. El resto se agrupa en la línea "Otras categorías $X · N %", y las 5 más "Otras" suman exactamente el gasto total. Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes; el buscador de Movimientos se limpia porque el filtro se reemplaza.
+- **Transferencias.** Las `kind = transfer` no suman en ninguna cifra (AC-6.2).
+- **Estados:**
+  - mes sin movimientos, con "Volver a {mes actual}" si no se está en el mes actual;
+  - primera sincronización;
+  - sin conexión, con el banner "Sin conexión — datos locales";
+  - error de la base local, con reintento.
+
+  Al cambiar de mes se conservan las cifras hasta que llega el mes nuevo.
 
 ### 3.3 Transacciones (RF-9)
 - Lista infinita (paginada de Drift), agrupada por día; cada ítem: comercio, categoría (chip editable inline), monto con signo/color, íconos de fuente (correo/notif/SMS/manual/NFC) y badge `transfer`.
@@ -99,7 +112,7 @@ Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). 
 - Ids locales: una creación offline nace con un UUID local; al confirmarse en el servidor, ese id se canjea en `local_transactions` y en `target_id`/`related_id` del outbox (spec 004 §5).
 - Conflictos: gana `updated_at` más reciente, salvo que la fila tenga una edición local aún sin enviar (outbox pendiente), que siempre prevalece sobre el pull (spec 003 §3).
 - Privacidad: la base local se borra por completo (incluido el outbox sin enviar, P6) solo cuando la sesión pasa de autenticada a cerrada por el propio usuario en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. `claimFor` también la borra si el usuario que inicia sesión es distinto al que la dejó. Antes de borrar o de reclamar la base para un usuario nuevo, el coordinador espera a que termine cualquier ciclo de sync en curso, para que no se crucen escrituras tardías entre usuarios.
-- Indicador de estado de sync: línea provisional en el placeholder del dashboard, por prioridad: "sincronizando…" / "sin conexión" / "{n} cambios no se pudieron enviar" (operaciones `rejected`) / "aún no sincronizado" (nunca hubo un ciclo completo) / "al día" o el conteo de pendientes; se traslada a Ajustes en F4.8.
+- Indicador de estado de sync: línea provisional en la franja del Inicio, por prioridad: "sincronizando…" / "sin conexión" / "{n} cambios no se pudieron enviar" (operaciones `rejected`) / "aún no sincronizado" (nunca hubo un ciclo completo) / "al día" o el conteo de pendientes; se traslada a Ajustes en F4.8.
 
 ## 6. Permisos y plataforma
 

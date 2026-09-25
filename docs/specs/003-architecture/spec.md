@@ -53,7 +53,7 @@ backend/
 │   │   ├── parsing/        # plantillas por banco + adapter LLM; corre en workers
 │   │   ├── ledger/         # transacciones, dedupe, transferencias, categorías, cuentas vinculadas, revisión
 │   │   ├── fiscal/         # reglas 210, tablas UVT, generación de reportes
-│   │   └── insights/       # resúmenes mensuales, agregados del dashboard
+│   │   └── insights/       # resúmenes mensuales (vacío: el dashboard se calcula en la app, 008 §3.2)
 │   ├── app.py              # FastAPI factory (composition root del API)
 │   ├── main.py             # entrypoint ASGI
 │   ├── worker.py           # entrypoint del worker arq

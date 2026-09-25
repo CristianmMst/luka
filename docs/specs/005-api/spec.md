@@ -185,7 +185,7 @@ Logs: solo `gmail_push_received` con `jobs_enqueued`; nunca el `emailAddress` ni
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/insights/monthly?year=2026&month=8` | Totales, por categoría, comparativa mes anterior (AC-9.1). Excluye transfers |
+| GET | `/insights/monthly?year=2026&month=8` | Totales, por categoría, comparativa mes anterior (AC-9.1). Excluye transfers. **Diferido:** la app calcula el dashboard en local sobre Drift (008 §3.2), y el endpoint queda para un segundo cliente (web) |
 | GET | `/fiscal/report?tax_year=2025` | Reporte por cédulas/renglones (spec 007) + `rules_version` + trazabilidad (`transaction_ids` por cifra) |
 | GET | `/fiscal/report.xlsx?tax_year=2025` | Excel (job async si >5 s; respuesta 202 + job) |
 | GET | `/fiscal/thresholds?tax_year=2025` | Topes de obligación de declarar en UVT y COP (AC-10.2) |
