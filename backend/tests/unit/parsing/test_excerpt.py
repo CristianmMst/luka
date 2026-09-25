@@ -160,7 +160,10 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
         fixture = next(f for f in bancolombia_fixtures() if f.name == name)
         assert extract_excerpt(fixture.body, PREFIX) == expected
 
-    @pytest.mark.parametrize("phone", ["604 510 9095", "018 000 931 987", "018000912345"])
+    @pytest.mark.parametrize(
+        "phone",
+        ["604 510 9095", "018 000 931 987", "018000912345", "+573001234567", "57 300 123 4567"],
+    )
     def test_telefonos_espaciados_y_gratuitos_tras_la_hora_se_quitan(self, phone: str) -> None:
         head = "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00. Dudas al "
         assert extract_excerpt(f"{head}{phone}.", PREFIX) == f"{head}."
@@ -264,6 +267,15 @@ class TestExtractExcerptFallback:
         assert "01/05/26" in excerpt
         assert "604.510.9095" not in excerpt
         assert "018 000 931 987" not in excerpt
+
+    @pytest.mark.parametrize("phone", ["+573001234567", "57 300 123 4567"])
+    def test_fallback_descarta_telefonos_con_prefijo_57(self, phone: str) -> None:
+        body = f"Compraste $10.000 en TIENDA\nLlamanos al {phone}"
+        assert extract_excerpt(body, None) == "Compraste $10.000 en TIENDA"
+
+    def test_fallback_descarta_referencias_largas(self) -> None:
+        body = "Compraste $10.000 en TIENDA\nReferencia 123456789012"
+        assert extract_excerpt(body, None) == "Compraste $10.000 en TIENDA"
 
     def test_fallback_descarta_lineas_vacias(self) -> None:
         body = "Compraste $10.000 en TIENDA\n\n\nGracias"

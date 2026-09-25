@@ -157,10 +157,12 @@ templates:
   (el boilerplate: "Dudas al `<teléfono>`", imágenes tipo `Icon 1 [https://...]`, el inicio del pie
   de seguridad) se recorta en la primera URL o el primer `[`, lo que aparezca antes, y además se le
   quitan secuencias tipo teléfono completas (3-3-4, 3-3-3-3 espaciada o gratuita pegada
-  `01[89]000` + 6 dígitos, sin dígitos vecinos: nunca queda un resto como `45`); el texto **antes** de la hora (monto, llave/last4, comerciante)
+  `01[89]000` + 6 dígitos, con prefijo de país opcional `+57`/`57` y sin dígitos vecinos: nunca
+  queda un resto como `45` ni un `+57` suelto); el texto **antes** de la hora (monto, llave/last4, comerciante)
   nunca se toca, porque ahí puede vivir una llave Bre-B puramente numérica (formato de teléfono) que
   la plantilla necesita capturar intacta. Sin match en ningún párrafo cae a un fallback (líneas no
-  vacías sin URLs/teléfonos, truncado a 1500 caracteres).
+  vacías sin URLs, sin teléfonos y sin corridas de 10 o más dígitos (`\d{10,}`: referencias o
+  cuentas completas no llegan al LLM, RNF-5), truncado a 1500 caracteres).
 - Plantillas Bancolombia vigentes (`parsing/config/templates/bancolombia.yaml`, v1): `compra_tdeb`,
   `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
   (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`) y `nomina`.
@@ -234,6 +236,9 @@ MVP, riesgo §4.8 del plan). Superado el presupuesto → directo a `review_queue
 - El matcher de transferencias corre tras cada inserción (spec 004 §4).
 - Mitigación adicional a la falta de outbox (riesgo 4, F3.7 adelantado en F2 — Task 10): el cron `requeue_pending_raw_messages` corre cada 15 min (`minute={0,15,30,45}`) y republica `RawMessageReceived` para toda fila `raw_messages` que siga `status='pending'` con `updated_at` de más de 10 min (cubre el caso "commit ok, publish falló" incluso sin una ingesta duplicada que lo dispare). Cada fila reencolada se "toca" (`updated_at = now()`) para no volver a republicarse en la misma ventana. Es idempotente: `ParseRawMessage` (F2.2) descarta con `Skipped(not_pending)` cualquier evento cuyo `raw_message_id` ya no esté `pending` al momento de procesarlo, así que una reentrega tras un procesamiento exitoso no duplica nada.
 - Reproceso de fallidos (spec 005 §7, `finanzia.tools.reparse`): `ReparseFailedRawMessages` (ingestion) toma filas `status='failed'` con `body` no nulo, opcionalmente filtradas por usuario y por `received_at >= since`, y las pasa a `pending` con un UPDATE condicional (`WHERE status='failed'`), que además pone `requeue_attempts = 0`. Luego comitea y **después** publica `RawMessageReceived` por el mismo camino que el cron de reencolado. Es el orden inverso al del cron porque la fila tiene que estar `pending` cuando parsing lea el evento, o saldría `Skipped(not_pending)`. Si el publish falla tras el commit, el cron de arriba la republica. Del lado de ledger, `RecordCapturedTransaction` resuelve como `reparsed` el item de revisión abierto del `raw_message_id` (UPDATE condicional `resolved_at IS NULL`), tanto si crea la transacción como si cae en dedupe. Ese UPDATE va **antes** de cualquier otra escritura, así que toma el lock de la fila y se serializa contra convertir/descartar, que usan el mismo UPDATE condicional. Si no cierra nada porque el usuario ya dejó el item `converted` o `discarded` (convirtió entre el reparse y el parseo), la captura se rechaza (`CaptureAlreadyResolved`) sin escribir nada: la transacción convertida usa un `dedupe_key` manual aleatorio y el dedupe no la vería, así que registrarla la duplicaría. El consumer de `TransactionParsed` da el evento por atendido (sin reintento) y loguea `ledger_capture_skipped` con `reason`, `bank` y `channel`, sin ids ni montos. Un item ya `reparsed` (reentrega) sigue el dedupe normal.
+- Limitaciones aceptadas del reproceso:
+  - Si el mensaje vuelve a fallar, el item de revisión abierto conserva su primer motivo y su `partial_extract`.
+  - Si el usuario convierte mientras un reparse está en vuelo, el `raw_message` puede quedar otra vez `failed`. Un `just reparse` posterior lo reintenta sin daño, porque `CaptureAlreadyResolved` impide el duplicado.
 
 ## 5. NFC (app)
 

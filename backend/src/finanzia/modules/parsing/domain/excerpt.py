@@ -11,14 +11,19 @@ import re
 _URL_RE = re.compile(r"(?i)https?://|www\.")
 # Las anclas `(?<!\d)`/`(?!\d)` exigen consumir el telefono entero: sin ellas,
 # `018000912345` (12 digitos) matcheaba solo sus primeros 10 y dejaba `45`.
-# La app replica este patron byte a byte (`amount_highlight.dart`).
+# El prefijo de pais opcional (`+57`, `57 `) vive dentro de las anclas: sin
+# el, `+573001234567` no matcheaba entero. La app replica este patron byte a
+# byte (`amount_highlight.dart`).
 _PHONE_RE = re.compile(
-    r"(?<!\d)(?:"
+    r"(?<!\d)(?:\+?57[\s.\-]?)?(?:"
     r"01[89]000\d{6}"  # gratuita pegada, 12 digitos (018000912345 / 019000...)
     r"|\d{3}[\s.\-]?\d{3}[\s.\-]?\d{4}"  # 3-3-4: local/celular, con/sin separador (incl. punto)
     r"|\d{3}[\s.\-]\d{3}[\s.\-]\d{3}[\s.\-]\d{3}"  # 3-3-3-3: gratuita espaciada (018 000 931 987)
     r")(?!\d)"
 )
+# Corridas de 10+ cifras (referencias, cuentas completas): el fallback descarta
+# la linea entera para que no lleguen al LLM (RNF-5).
+_LONG_DIGITS_RE = re.compile(r"\d{10,}")
 _TIME_RE = re.compile(r"\d{2}:\d{2}")
 _CURRENCY_MARKER_RE = re.compile(r"\$\s?\d|COP")
 _THOUSANDS_RE = re.compile(
@@ -90,7 +95,7 @@ def extract_excerpt(body: str, relevant_line_prefix: str | None, max_chars: int 
     (`_clean_tail`); el texto ANTES de la hora (donde vive el monto, la
     llave/last4 y el comerciante) no se toca. Si ningun parrafo contiene el
     prefijo (o no hay prefijo configurado) cae al fallback: lineas no vacias
-    sin URLs ni secuencias tipo telefono.
+    sin URLs, secuencias tipo telefono ni corridas de 10+ cifras.
     """
     if relevant_line_prefix:
         for paragraph in _unwrapped_paragraphs(body):
@@ -109,6 +114,7 @@ def extract_excerpt(body: str, relevant_line_prefix: str | None, max_chars: int 
         if (stripped := line.strip())
         and not _URL_RE.search(stripped)
         and not _PHONE_RE.search(stripped)
+        and not _LONG_DIGITS_RE.search(stripped)
     ]
     return "\n".join(fallback)[:max_chars]
 
