@@ -2,6 +2,7 @@ import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
 import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter/material.dart';
@@ -253,6 +254,19 @@ String periodHeading(
   final from = colombiaLocal(filter.range(now).from);
   if (filter.period == PeriodPreset.thisYear) return '${from.year}';
   return capitalize(DateFormat('MMMM y', dateLocale).format(from));
+}
+
+/// Nombre de la categoría del filtro: null sin filtro o mientras cargan las
+/// categorías. Un id fuera de la lista es `sin_categoria` (no se asigna a
+/// mano, pero el Inicio filtra por ella) y se lee "Sin categoría".
+String? filterCategoryName(
+  AppLocalizations l10n,
+  String? categoryId,
+  List<CategoryOption>? categories,
+) {
+  if (categoryId == null || categories == null) return null;
+  return categories.where((c) => c.id == categoryId).firstOrNull?.name ??
+      l10n.txNoCategory;
 }
 
 /// Resumen del filtro activo: "Este mes · Solo gastos".

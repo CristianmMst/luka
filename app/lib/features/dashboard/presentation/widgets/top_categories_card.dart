@@ -10,7 +10,8 @@ import 'package:flutter/material.dart';
 
 /// "En qué se fue": top 5 del gasto con barras relativas a la mayor, el %
 /// del gasto total y "Otras categorías". Tocar una fila llama a [onOpen]
-/// con su `categoryId` (las que no tienen id no se pueden abrir).
+/// con su `categoryId` (las que no tienen id no se pueden abrir, y ninguna
+/// si [onOpen] es null).
 class TopCategoriesCard extends StatelessWidget {
   const TopCategoriesCard({
     required this.summary,
@@ -19,7 +20,7 @@ class TopCategoriesCard extends StatelessWidget {
   });
 
   final MonthlySummary summary;
-  final ValueChanged<String> onOpen;
+  final ValueChanged<String>? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +81,9 @@ class TopCategoriesCard extends StatelessWidget {
                 spend: spend,
                 percent: sharePercent(spend.amount, total),
                 fraction: largest <= 0 ? 0 : spend.amount.cents / largest,
-                onTap: switch (spend.categoryId) {
-                  final id? => () => onOpen(id),
-                  null => null,
+                onTap: switch ((spend.categoryId, onOpen)) {
+                  (final id?, final open?) => () => open(id),
+                  _ => null,
                 },
               ),
             if (other.cents > 0) _OtherRow(amount: other, total: total),

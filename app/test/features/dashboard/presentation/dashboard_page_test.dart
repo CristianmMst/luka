@@ -13,8 +13,10 @@ import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
+import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
 import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
+import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -437,6 +439,110 @@ void main() {
         categoryId: 'restaurantes',
       ),
     );
+  });
+
+  testWidgets('mientras llega el mes nuevo las categorías no se abren', (
+    tester,
+  ) async {
+    final august = StreamController<MonthlySummary>();
+    addTearDown(august.close);
+    when(() => insights.watchMonth(_august)).thenAnswer((_) => august.stream);
+    await pumpPage(tester);
+
+    await tester.tap(find.byTooltip('Mes anterior'));
+    await tester.pump();
+    expect(find.text('Agosto 2026'), findsOneWidget);
+    // Las cifras siguen siendo las de septiembre, con su comparación.
+    expect(find.text('Restaurantes'), findsOneWidget);
+    expect(find.textContaining('agosto'), findsWidgets);
+    expect(find.textContaining('julio'), findsNothing);
+
+    await tester.tap(find.text('Restaurantes'));
+    await tester.pump();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(DashboardPage)),
+    );
+    expect(
+      container.read(transactionsListControllerProvider).filter,
+      const TransactionFilter(),
+    );
+  });
+
+  testWidgets('tocar "Sin categoría" abre Movimientos con ese filtro legible', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 844) * 3
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    summaryFor = (month) => MonthlySummary(
+      month: month,
+      totals: MonthlyTotals(expenses: Cop.pesos(60000)),
+      previousTotals: const MonthlyTotals(),
+      topCategories: [
+        _spend('mercado', 'Mercado', 40000),
+        const CategorySpend(
+          categoryId: 'cat-sin',
+          slug: uncategorizedSlug,
+          name: 'Sin categoría',
+          amount: Cop(2000000),
+        ),
+      ],
+      otherAmount: const Cop(0),
+    );
+    // La lista de categorías de Movimientos no trae `sin_categoria`.
+    when(() => transactions.watchCategories()).thenAnswer(
+      (_) => Stream.value(const [
+        CategoryOption(
+          id: 'mercado',
+          name: 'Mercado',
+          isSystem: true,
+          slug: 'mercado',
+        ),
+      ]),
+    );
+    final container = ProviderContainer(overrides: overrides(_synced));
+    addTearDown(container.dispose);
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const DashboardPage()),
+        GoRoute(
+          path: '/movimientos',
+          builder: (_, _) => const TransactionsPage(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          locale: const Locale('es', 'CO'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sin categoría'));
+    await tester.pumpAndSettle();
+
+    final range = _september.range();
+    expect(
+      container.read(transactionsListControllerProvider).filter,
+      TransactionFilter(
+        period: PeriodPreset.custom,
+        from: range.from,
+        to: range.to,
+        categoryId: 'cat-sin',
+      ),
+    );
+    expect(find.byType(TransactionsPage), findsOneWidget);
+    expect(find.textContaining('· Sin categoría'), findsOneWidget);
   });
 
   for (final mode in [ThemeMode.light, ThemeMode.dark]) {

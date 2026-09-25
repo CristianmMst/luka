@@ -67,7 +67,7 @@ lib/
     │   └── presentation/  # SplashPage, LoginPage, ticker de captura, botón de Google
     ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
-    ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Revisión/Ajustes
+    ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Ajustes
     └── dashboard/         # Inicio (F4.6): resumen del mes calculado en local
 ```
 

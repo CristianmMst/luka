@@ -387,6 +387,25 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('una categoría fuera de la lista se lee "Sin categoría"', (
+    tester,
+  ) async {
+    // `sin_categoria` no está en la lista de categorías (no se asigna a
+    // mano), pero el Inicio puede filtrar por ella.
+    await pumpPage(tester);
+    ProviderScope.containerOf(tester.element(find.byType(TransactionsPage)))
+        .read(transactionsListControllerProvider.notifier)
+        .setFilter(const TransactionFilter(categoryId: 'cat-sin'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Este mes · Sin categoría'), findsOneWidget);
+
+    await tester.tap(find.text('Filtros'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sin categoría'), findsOneWidget);
+    expect(find.text('Categoría'), findsOneWidget);
+  });
+
   testWidgets('"Limpiar" vuelve el borrador al filtro por defecto', (
     tester,
   ) async {

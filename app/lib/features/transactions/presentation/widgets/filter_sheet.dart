@@ -96,10 +96,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     final categories = ref.watch(transactionCategoriesProvider).value;
     final categoryName = _draft.categoryId == null
         ? l10n.filterCategoryAll
-        : categories
-                  ?.where((c) => c.id == _draft.categoryId)
-                  .firstOrNull
-                  ?.name ??
+        : filterCategoryName(l10n, _draft.categoryId, categories) ??
               l10n.filterCategory;
 
     return Column(

@@ -120,6 +120,21 @@ void main() {
     expect(state().summary, isA<AsyncError<Object?>>());
   });
 
+  test('un error del mes nuevo no arrastra las cifras del anterior', () async {
+    start();
+    streamOf(september).add(_summary(september, expensesPesos: 10));
+    await pumpEventQueue();
+
+    controller().previousMonth();
+    streamOf(august).addError(StateError('db'));
+    await pumpEventQueue();
+
+    // Sin valor, el Inicio pinta el error y no las cifras de septiembre.
+    expect(state().month, august);
+    expect(state().summary.hasError, isTrue);
+    expect(state().summary.hasValue, isFalse);
+  });
+
   test('previousMonth retrocede, recarga y habilita el siguiente', () async {
     start();
     streamOf(september).add(_summary(september));

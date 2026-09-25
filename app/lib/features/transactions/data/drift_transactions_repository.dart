@@ -52,8 +52,8 @@ class DriftTransactionsRepository implements TransactionsRepository {
       query.where(t.kind.isIn([for (final k in filter.kinds) k.name]));
     }
     if (filter.banks.isNotEmpty) query.where(t.bank.isIn(filter.banks));
-    if (filter.categoryId != null) {
-      query.where(t.categoryId.equals(filter.categoryId!));
+    if (filter.categoryId case final categoryId?) {
+      query.where(_inCategory(categoryId));
     }
     query.orderBy([
       OrderingTerm.desc(t.occurredAt),
@@ -79,6 +79,29 @@ class DriftTransactionsRepository implements TransactionsRepository {
           .take(limit)
           .toList();
     });
+  }
+
+  /// `category_id = :id`, y si :id es la fila `sin_categoria` también
+  /// `category_id IS NULL`: el mismo reparto del Inicio
+  /// (`DriftInsightsRepository` + `buildSummary`), así "Sin categoría"
+  /// abre los mismos movimientos que suma.
+  ///
+  /// ```sql
+  /// t.category_id = :id
+  /// OR (t.category_id IS NULL AND :id = (SELECT id FROM local_categories
+  ///       WHERE slug = 'sin_categoria' LIMIT 1))
+  /// ```
+  Expression<bool> _inCategory(String categoryId) {
+    final t = _db.localTransactions;
+    final u = _db.alias(_db.localCategories, 'uncategorized');
+    final uncategorizedId = subqueryExpression<String>(
+      _db.selectOnly(u)
+        ..addColumns([u.id])
+        ..where(u.slug.equals(_uncategorizedSlug))
+        ..limit(1),
+    );
+    return t.categoryId.equals(categoryId) |
+        (t.categoryId.isNull() & uncategorizedId.equals(categoryId));
   }
 
   // -------------------------------------------------------------- detalle

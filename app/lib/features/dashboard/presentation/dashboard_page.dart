@@ -85,9 +85,14 @@ class DashboardPage extends ConsumerWidget {
   ) {
     final controller = ref.read(dashboardControllerProvider.notifier);
     if (shown != null) {
+      // Mientras Drift emite el mes nuevo se ven las cifras del anterior:
+      // abrir una categoría mezclaría ese gasto con el mes del encabezado.
+      final stale = shown.month != state.month;
       return TopCategoriesCard(
         summary: shown,
-        onOpen: (id) => _openCategory(context, ref, state.month, id),
+        onOpen: stale
+            ? null
+            : (id) => _openCategory(context, ref, shown.month, id),
       );
     }
     final firstSync = sync.lastSyncedAt == null && sync.running;

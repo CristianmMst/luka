@@ -99,12 +99,11 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
     final categoryId = state.filter.categoryId;
     final categoryName = categoryId == null
         ? null
-        : ref
-              .watch(transactionCategoriesProvider)
-              .value
-              ?.where((c) => c.id == categoryId)
-              .firstOrNull
-              ?.name;
+        : filterCategoryName(
+            l10n,
+            categoryId,
+            ref.watch(transactionCategoriesProvider).value,
+          );
     final summary = filterSummary(
       l10n,
       state.filter,

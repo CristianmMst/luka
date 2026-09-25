@@ -58,7 +58,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - **Cálculo local.** Las cifras se calculan en el teléfono con SQL agregado sobre Drift (`local_transactions` + `local_categories`, `lib/features/dashboard/data/drift_insights_repository.dart`). Por eso funcionan sin red y un cambio de categoría se ve al instante (AC-APP-3). `GET /insights/monthly` (005 §8) queda diferido.
 - **Mes.** Es un mes calendario en hora de Colombia (UTC−5 fija, `ColombiaMonth`), de las 00:00 del día 1 a las 00:00 del día 1 del mes siguiente. Se elige con flechas de 48 dp y no se puede ir a meses futuros.
 - **Franja esmeralda (`hero`).** Muestra el saludo, la línea provisional de sync (§5), el selector de mes y el balance del mes (ingresos − gastos, con signo). Debajo lleva dos tarjetas, Gastos (−, color gasto) e Ingresos (+, color ingreso), cada una con su delta frente al mes anterior: "↓ 9 % vs agosto" o "= igual que agosto". Si el mes anterior está en 0, dice "Sin datos de {mes}" en vez de un porcentaje.
-- **"En qué se fue".** Muestra las 5 categorías con más gasto, cada una con su ícono, una barra relativa a la mayor y el % del gasto total. Los empates se ordenan por nombre. El resto se agrupa en la línea "Otras categorías $X · N %", y las 5 más "Otras" suman exactamente el gasto total. Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes; el buscador de Movimientos se limpia porque el filtro se reemplaza.
+- **"En qué se fue".** Muestra las 5 categorías con más gasto, cada una con su ícono, una barra relativa a la mayor y el % del gasto total. Los empates se ordenan por nombre. El resto se agrupa en la línea "Otras categorías $X · N %", y las 5 más "Otras" suman exactamente el gasto total. Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes; el buscador de Movimientos se limpia porque el filtro se reemplaza. "Sin categoría" también se abre: el filtro por la fila `sin_categoria` incluye los movimientos con `category_id` nulo (el mismo reparto de las cifras) y Movimientos la nombra "Sin categoría" aunque no esté en la hoja de categorías.
 - **Transferencias.** Las `kind = transfer` no suman en ninguna cifra (AC-6.2).
 - **Estados:**
   - mes sin movimientos, con "Volver a {mes actual}" si no se está en el mes actual;
@@ -66,7 +66,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
   - sin conexión, con el banner "Sin conexión — datos locales";
   - error de la base local, con reintento.
 
-  Al cambiar de mes se conservan las cifras hasta que llega el mes nuevo.
+  Al cambiar de mes se conservan las cifras (con la comparación de su propio mes) hasta que llega el mes nuevo; mientras tanto las categorías no se abren, y si el mes nuevo falla se muestra el error, no las cifras del anterior.
 
 ### 3.3 Transacciones (RF-9)
 - Lista infinita (paginada de Drift), agrupada por día; cada ítem: comercio, categoría (chip editable inline), monto con signo/color, íconos de fuente (correo/notif/SMS/manual/NFC) y badge `transfer`.
