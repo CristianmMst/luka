@@ -1,6 +1,8 @@
 import 'package:finanzia/core/network/dio_providers.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
+import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
+import 'package:finanzia/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/data/gmail_data_providers.dart';
 import 'package:finanzia/features/review/application/review_providers.dart';
@@ -40,5 +42,8 @@ List<Override> get appOverrides => [
   ),
   reviewRepositoryProvider.overrideWith(
     (ref) => ref.watch(driftReviewRepositoryProvider),
+  ),
+  insightsRepositoryProvider.overrideWith(
+    (ref) => ref.watch(driftInsightsRepositoryProvider),
   ),
 ];

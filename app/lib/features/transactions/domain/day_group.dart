@@ -1,17 +1,15 @@
 import 'package:finanzia/core/format/money.dart';
+import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'day_group.freezed.dart';
 
-/// Colombia no tiene horario de verano: hora local = UTC−5 siempre.
-const _colombiaOffset = Duration(hours: 5);
-
 /// Día local (America/Bogota) de [instant], como un `DateTime` UTC con hora
 /// 00:00 (solo se usa como llave de calendario, no como instante real).
 DateTime _colombiaDay(DateTime instant) {
-  final local = instant.toUtc().subtract(_colombiaOffset);
+  final local = toColombiaLocal(instant);
   return DateTime.utc(local.year, local.month, local.day);
 }
 
