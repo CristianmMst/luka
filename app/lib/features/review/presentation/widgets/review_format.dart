@@ -45,6 +45,31 @@ String reviewSource(AppLocalizations l10n, ReviewItem item) =>
 String collapseWhitespace(String text) =>
     text.replaceAll(RegExp(r'\s+'), ' ').trim();
 
+final _bracketed = RegExp(r'\[[^\]]*\]');
+final _url = RegExp(r'(?:https?://|www\.)\S+');
+final _sentenceEnd = RegExp(r'[.!?]\s');
+const _previewLead = 60;
+
+/// Extracto de la lista: sin enlaces (`[http…]` de los correos en texto
+/// plano ni URLs sueltas) y empezando en la frase del primer monto, para que
+/// la tarjeta no muestre el logo o el encabezado del correo.
+String reviewPreview(String text) {
+  final clean = collapseWhitespace(
+    text.replaceAll(_bracketed, ' ').replaceAll(_url, ' '),
+  );
+  final amounts = highlightAmounts(clean);
+  if (amounts.isEmpty) return clean;
+  final first = amounts.first.start;
+  var start = 0;
+  for (final m in _sentenceEnd.allMatches(clean.substring(0, first))) {
+    start = m.end;
+  }
+  if (first - start <= _previewLead) return clean.substring(start);
+  final cut = clean.indexOf(' ', first - _previewLead);
+  final from = cut < 0 || cut >= first ? first - _previewLead : cut + 1;
+  return '…${clean.substring(from)}';
+}
+
 /// Estilo del monto resaltado: fondo `primaryContainer` y la fuente mono,
 /// con contraste AA sobre la tarjeta.
 TextStyle highlightStyle(ColorScheme scheme) => amountTextStyle.copyWith(

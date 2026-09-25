@@ -31,7 +31,7 @@ class ReviewCard extends StatelessWidget {
       excludeSemantics: true,
       label: [
         l10n.reviewCardSemantics(source, date, reason),
-        if (text != null) collapseWhitespace(text),
+        if (text != null) reviewPreview(text),
       ].join('. '),
       onTap: onOpen,
       child: Material(
@@ -52,7 +52,7 @@ class ReviewCard extends StatelessWidget {
                     TextSpan(
                       children: highlightedSpans(
                         l10n,
-                        collapseWhitespace(text),
+                        reviewPreview(text),
                         highlightStyle(scheme),
                       ),
                     ),
