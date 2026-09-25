@@ -73,6 +73,17 @@ void main() {
       );
     });
 
+    test('no resalta telefonos con prefijo de pais', () {
+      for (final phone in ['+573001234567', '57 300 123 4567']) {
+        expect(highlightAmounts('Llama al $phone hoy'), isEmpty, reason: phone);
+        expect(highlightAmounts(phone), isEmpty, reason: phone);
+      }
+    });
+
+    test('resalta el monto que sigue a un telefono sin perderlo', () {
+      expect(highlighted('Dudas al 018 000 931 987 COP 3.500'), ['COP 3.500']);
+    });
+
     test('no resalta un telefono con signo de pesos', () {
       expect(highlighted(r'Codigo $3001234567'), isEmpty);
     });

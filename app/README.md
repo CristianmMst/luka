@@ -116,7 +116,7 @@ Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.
 
 - **Lista** (`review_page.dart`): cada tarjeta muestra el canal, el banco, la fecha de recepción, el motivo en lenguaje claro y un extracto del mensaje con los montos resaltados. Los teléfonos no se resaltan. Tiene estado vacío ("Nada por revisar") y aviso de sin conexión.
 - **Detalle** (`/revision/:rawMessageId`, a pantalla completa, `review_detail_page.dart`):
-  - Muestra el texto completo, seleccionable y con desplazamiento. Tocar un monto resaltado lo copia al formulario.
+  - Muestra el texto seleccionable con los montos resaltados, recortado a 320 dp con "Ver mensaje completo" cuando es más largo. Los teléfonos se ignoran. Tocar un monto resaltado lo copia al formulario.
   - El formulario llega prellenado desde `partial_extract`. Si el mensaje no trae fecha, propone la de recepción.
   - "Crear movimiento" encola `convertReview` y "Descartar" encola `discardReview`, este último tras confirmar. Ambas pasan por el outbox, así que funcionan sin conexión.
 - **Montos:** `lib/features/review/domain/amount_highlight.dart` usa la misma regla de separadores que `parse_amount` del backend, y el mismo patrón de teléfonos que `parsing/domain/excerpt.py`.
