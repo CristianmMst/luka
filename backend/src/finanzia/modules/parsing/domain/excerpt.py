@@ -34,23 +34,45 @@ def looks_monetary(text: str) -> bool:
     return bool(_THOUSANDS_RE.search(stripped))
 
 
-def extract_excerpt(body: str, relevant_line_prefix: str | None, max_chars: int = 1500) -> str:
-    """Reduce `body` a las lineas relevantes, truncadas a `max_chars`.
-
-    Si `relevant_line_prefix` esta configurado y alguna linea empieza por el,
-    el extracto son exactamente esas lineas (join por `\\n`). En cualquier
-    otro caso (sin prefijo, o ninguna linea lo matchea) cae al fallback:
-    lineas no vacias sin URLs ni secuencias tipo telefono.
+def _unwrapped_paragraphs(body: str) -> list[str]:
+    """Parrafos de `body` (separados por lineas vacias), cada uno unido en una
+    sola linea (*unwrap*) para poder buscar `relevant_line_prefix` aunque el
+    proveedor de correo lo haya cortado a ~76 caracteres a mitad de frase.
     """
-    lines = body.splitlines()
+    paragraphs: list[str] = []
+    current: list[str] = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped:
+            current.append(stripped)
+        elif current:
+            paragraphs.append(" ".join(current))
+            current = []
+    if current:
+        paragraphs.append(" ".join(current))
+    return paragraphs
+
+
+def extract_excerpt(body: str, relevant_line_prefix: str | None, max_chars: int = 1500) -> str:
+    """Reduce `body` al fragmento util, truncado a `max_chars`.
+
+    Si `relevant_line_prefix` esta configurado, `body` se parte en parrafos
+    (separados por lineas vacias) y cada parrafo se desenvuelve (une sus
+    lineas fisicas en una sola, por espacio). En el primer parrafo donde el
+    prefijo aparezca, en cualquier posicion, el extracto es el texto desde el
+    prefijo hasta el final del parrafo. Si ningun parrafo lo contiene (o no
+    hay prefijo configurado) cae al fallback: lineas no vacias sin URLs ni
+    secuencias tipo telefono.
+    """
     if relevant_line_prefix:
-        matched = [line for line in lines if line.startswith(relevant_line_prefix)]
-        if matched:
-            return "\n".join(matched)[:max_chars]
+        for paragraph in _unwrapped_paragraphs(body):
+            idx = paragraph.find(relevant_line_prefix)
+            if idx != -1:
+                return paragraph[idx:][:max_chars]
 
     fallback = [
         stripped
-        for line in lines
+        for line in body.splitlines()
         if (stripped := line.strip())
         and not _URL_RE.search(stripped)
         and not _PHONE_RE.search(stripped)

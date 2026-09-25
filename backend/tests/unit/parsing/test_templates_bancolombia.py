@@ -27,6 +27,8 @@ TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb_2.txt": "compra_tdeb",
     "nomina.txt": "nomina",
     "transferencia_llave.txt": "transferencia_llave",
+    "transferencia_llave_wrap.txt": "transferencia_llave",
+    "transferencia_llave_recibida_wrap.txt": "transferencia_llave_recibida",
 }
 
 
@@ -86,13 +88,13 @@ class TestTemplateRegistryBancolombia:
         bank_config = registry.bank_config("bancolombia")
         assert bank_config is not None
         assert bank_config.version == 1
-        assert len(bank_config.templates) == 3
+        assert len(bank_config.templates) == 4
         assert registry.bank_config("nequi") is None
 
-    def test_config_real_tiene_exactamente_las_3_plantillas_esperadas(
+    def test_config_real_tiene_exactamente_las_4_plantillas_esperadas(
         self, registry: TemplateRegistry
     ) -> None:
-        """Guarda que `templates/bancolombia.yaml` siga declarando los 3 template
+        """Guarda que `templates/bancolombia.yaml` siga declarando los 4 template
         ids esperados en version 1 (si alguien borra/renombra uno, este test lo
         detecta sin depender de que un fixture tambien deje de matchear).
         """
@@ -102,6 +104,7 @@ class TestTemplateRegistryBancolombia:
         assert {t.id for t in bank_config.templates} == {
             "compra_tdeb",
             "transferencia_llave",
+            "transferencia_llave_recibida",
             "nomina",
         }
 

@@ -147,9 +147,18 @@ templates:
     suggested_category: nomina  # opcional
 ```
 
-- `relevant_line_prefix` reduce el cuerpo a las líneas que empiezan por ese prefijo antes de
-  matchear plantillas o llamar al LLM (`extract_excerpt`, `parsing/domain/excerpt.py`); sin
-  match cae a un fallback (líneas no vacías sin URLs/teléfonos, truncado a 1500 caracteres).
+- `relevant_line_prefix` reduce el cuerpo al fragmento útil antes de matchear plantillas o llamar
+  al LLM (`extract_excerpt`, `parsing/domain/excerpt.py`): el cuerpo se parte en párrafos
+  (separados por líneas vacías), cada párrafo se desenvuelve (sus líneas físicas se unen en una
+  sola, por espacio) y se busca el prefijo en **cualquier posición** de cada párrafo desenvuelto,
+  no solo al inicio de línea — así se reconoce el correo que el proveedor corta a ~76 caracteres y
+  cuya frase útil empieza a mitad de línea (p. ej. tras "¡Listo! Todo salió bien con tus
+  movimientos"). El extracto es el texto desde el prefijo hasta el final de ese párrafo. Sin match
+  en ningún párrafo cae a un fallback (líneas no vacías sin URLs/teléfonos, truncado a 1500
+  caracteres).
+- Plantillas Bancolombia vigentes (`parsing/config/templates/bancolombia.yaml`, v1): `compra_tdeb`,
+  `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
+  (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`) y `nomina`.
 
 ### 4.2 Fallback LLM — contrato DeepSeek
 

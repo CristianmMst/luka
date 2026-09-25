@@ -13,12 +13,65 @@ class TestExtractExcerptBancolombia:
     @pytest.mark.parametrize(
         "fixture", bancolombia_fixtures(), ids=lambda f: f.name if hasattr(f, "name") else str(f)
     )
-    def test_extracto_es_exactamente_la_linea_bancolombia(self, fixture) -> None:
+    def test_extracto_empieza_en_el_prefijo_y_es_una_sola_linea(self, fixture) -> None:
+        """Invariante para todos los fixtures reales: con o sin wrap, el
+        extracto arranca exactamente en `PREFIX` y queda desenvuelto (sin
+        saltos de linea), tanto si el prefijo empezaba una linea fisica como
+        si estaba a mitad de linea (correo cortado, spec 006 §4.1).
+        """
         excerpt = extract_excerpt(fixture.body, PREFIX)
-        lines = [line for line in fixture.body.splitlines() if line.startswith(PREFIX)]
-        assert lines, f"fixture {fixture.name} deberia tener una linea 'Bancolombia:'"
-        assert excerpt == "\n".join(lines)
+        assert excerpt.startswith(PREFIX)
         assert excerpt.count("\n") == 0
+
+
+@pytest.mark.unit
+class TestExtractExcerptParrafoDesenvuelto:
+    """`relevant_line_prefix` a mitad de parrafo o de linea (correo cortado a
+    ~76 caracteres): se busca en el parrafo ya desenvuelto, no en la linea
+    fisica (spec 006 §4.1).
+    """
+
+    def test_prefijo_al_inicio_de_linea_sigue_funcionando(self) -> None:
+        body = "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00\n\nOtro parrafo."
+        excerpt = extract_excerpt(body, PREFIX)
+        assert excerpt == "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00"
+
+    def test_prefijo_a_mitad_de_linea_se_extrae_desde_ahi(self) -> None:
+        body = (
+            "Hola Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00\n"
+            "\n"
+            "Otro parrafo sin el prefijo."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert excerpt == "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00"
+
+    def test_frase_cortada_en_varias_lineas_se_desenvuelve(self) -> None:
+        body = (
+            "Hola Bancolombia: Compraste $10.000 en\n"
+            "TIENDA el 01/05/2026 a las\n"
+            "16:00\n"
+            "\n"
+            "Otro parrafo."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert excerpt == "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00"
+
+    def test_solo_llega_hasta_el_final_del_parrafo_que_matchea(self) -> None:
+        body = (
+            "Parrafo irrelevante.\n"
+            "\n"
+            "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00\n"
+            "\n"
+            "Parrafo de seguridad que no debe quedar en el extracto."
+        )
+        excerpt = extract_excerpt(body, PREFIX)
+        assert excerpt == "Bancolombia: Compraste $10.000 en TIENDA el 01/05/2026 a las 16:00"
+        assert "seguridad" not in excerpt
+
+    def test_ningun_parrafo_con_prefijo_usa_fallback(self) -> None:
+        body = "Parrafo 1 sin el prefijo.\n\nCompraste $10.000 en TIENDA."
+        excerpt = extract_excerpt(body, PREFIX)
+        assert "Compraste $10.000 en TIENDA" in excerpt
 
 
 @pytest.mark.unit

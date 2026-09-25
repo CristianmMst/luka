@@ -43,6 +43,8 @@ def _template_id(fixture_name: str) -> str:
     """Deriva el `template_id` esperado del nombre del fixture (controller ruling 3)."""
     if fixture_name.startswith("compra_tdeb"):
         return "compra_tdeb"
+    if fixture_name.startswith("transferencia_llave_recibida"):
+        return "transferencia_llave_recibida"
     if fixture_name.startswith("transferencia_llave"):
         return "transferencia_llave"
     if fixture_name.startswith("nomina"):
@@ -52,8 +54,8 @@ def _template_id(fixture_name: str) -> str:
 
 
 async def _ensure_accounts(client: AsyncClient, headers: dict[str, str]) -> None:
-    """Cuentas `(bancolombia, 1234)`/`(bancolombia, 4455)` (usadas por los 4 fixtures)."""
-    for last4 in ("1234", "4455"):
+    """Cuentas `(bancolombia, <last4>)` usadas por los fixtures reales/anonimizados."""
+    for last4 in ("1234", "4455", "9081", "5533"):
         response = await client.post(
             "/v1/accounts",
             json={"bank": "bancolombia", "kind": "savings", "last4": last4},
@@ -84,8 +86,8 @@ async def test_fixture_bancolombia_produce_la_transaccion_esperada(  # noqa: PLR
         registry=registry,
         bus=bus,
         clock=clock,
-        # Los 4 fixtures matchean plantilla (F2.3): el LLM (y su presupuesto)
-        # nunca deberian invocarse.
+        # Todos los fixtures de Bancolombia matchean plantilla (F2.3): el LLM
+        # (y su presupuesto) nunca deberian invocarse.
         llm=DisabledLlmParser(),
         budget=InMemoryBudget(),
         settings=settings,

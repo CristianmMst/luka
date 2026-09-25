@@ -1,7 +1,7 @@
 """Tests unitarios de `ParseRawMessage` (spec 006 SS4/SS4.2, F2.2, D8/D11/D12).
 
 Cubre el pipeline completo (plantilla -> LLM -> revision) contra fakes puros:
-sin Docker, sin red, sin DB. Los 4 fixtures reales de Bancolombia se corren
+sin Docker, sin red, sin DB. Los fixtures reales de Bancolombia se corren
 contra el `TemplateRegistry` cargado del YAML empaquetado (via
 `parsing.fakes.make_use_case`), igual que `test_templates_bancolombia.py`.
 """
@@ -53,9 +53,11 @@ TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb_2.txt": "compra_tdeb",
     "nomina.txt": "nomina",
     "transferencia_llave.txt": "transferencia_llave",
+    "transferencia_llave_wrap.txt": "transferencia_llave",
+    "transferencia_llave_recibida_wrap.txt": "transferencia_llave_recibida",
 }
 
-# Extracto de Bancolombia que no matchea ninguna de las 3 plantillas conocidas
+# Extracto de Bancolombia que no matchea ninguna de las 4 plantillas conocidas
 # (retiro de cajero: variante especulativa explicitamente NO incluida, spec 006
 # SS4.1) pero contiene un monto -> cae al LLM.
 _UNRECOGNIZED_BODY = "Bancolombia: Retiraste $50.000 en el cajero de la Calle 10 con tu tarjeta."
@@ -148,6 +150,70 @@ async def test_fixture_bancolombia_matchea_por_plantilla(fixture) -> None:
             llm_tokens=None,
         )
     ]
+
+
+# --- Extracto cortado a mitad de linea (spec 006 §4.1) ------------------------------
+
+
+_WRAPPED_CREDIT_BODY = (
+    "Encabezado de plantilla del correo, con imagenes y textos alternativos.\n"
+    "¡Listo! Todo salió bien con tus movimientos Bancolombia: ANA, recibiste\n"
+    "una transferencia de PEDRO GOMEZ por $650,000.00 en tu cuenta *7788\n"
+    "conectada a la llave @pgomez99 el 21/09/26 a las 10:15. Con llaves es de\n"
+    "una y gratis. Dudas al 018000912345.\n"
+)
+
+_WRAPPED_DEBIT_BODY = (
+    "Encabezado de plantilla del correo, con imagenes y textos alternativos.\n"
+    "¡Listo! Todo salió bien con tus movimientos Bancolombia: ANA, transferiste\n"
+    "$650,000.00 a la llave 3009988776 desde tu cuenta *7788 a PEDRO GOMEZ el\n"
+    "21/09/26 a las 10:15. Con Bre-b es de una y gratis. Dudas al 018000912345.\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("body", "template_id", "direction", "merchant", "last4"),
+    [
+        (
+            _WRAPPED_CREDIT_BODY,
+            "transferencia_llave_recibida",
+            Direction.CREDIT,
+            "PEDRO GOMEZ",
+            "7788",
+        ),
+        (
+            _WRAPPED_DEBIT_BODY,
+            "transferencia_llave",
+            Direction.DEBIT,
+            "PEDRO GOMEZ",
+            "7788",
+        ),
+    ],
+)
+async def test_correo_cortado_a_mitad_de_linea_matchea_por_plantilla(
+    body: str, template_id: str, direction: Direction, merchant: str, last4: str
+) -> None:
+    """El correo llega cortado a ~76 caracteres y la frase util empieza a
+    mitad de la primera linea (tras el saludo): `extract_excerpt` debe seguir
+    encontrando la plantilla en ambas direcciones (credit/debit), no caer al
+    LLM (spec 006 §4.1).
+    """
+    view = _view(body=body)
+    gateway = FakeGateway({view.id: view})
+    llm = FakeLlmParser([])
+    events = RecordingPublisher()
+    use_case = make_use_case(gateway=gateway, llm=llm, events=events, clock=FixedClock(NOW))
+
+    outcome = await use_case.execute(view.id)
+
+    assert isinstance(outcome, Parsed)
+    assert outcome.parsed_by == f"rule:bancolombia:{template_id}:v1"
+    assert llm.calls == []
+    event = events.events[0]
+    assert isinstance(event, TransactionParsed)
+    assert event.direction == direction
+    assert event.merchant == merchant
+    assert event.last4 == last4
 
 
 async def test_plantilla_matchea_pero_extraccion_invalida_cae_a_llm() -> None:

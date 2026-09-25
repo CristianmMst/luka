@@ -52,7 +52,8 @@ def load_email_fixtures(directory: Path) -> list[EmailFixture]:
 
 
 def bancolombia_fixtures() -> list[EmailFixture]:
-    """Los 4 fixtures de Bancolombia (correo real, F2.3)."""
+    """Los fixtures de Bancolombia (correo real, F2.3), incluyendo variantes
+    `*_wrap.txt` cortadas a ~76 caracteres (spec 006 §4.1)."""
     return load_email_fixtures(FIXTURES_DIR / "bancolombia")
 
 

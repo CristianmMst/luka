@@ -9,9 +9,13 @@ templates:
     direction: debit
     pattern: 'Bancolombia: Compraste \$(?P<amount>[\d.,]+) en (?P<merchant>.+?) con tu T\.Deb \*(?P<last4>\d{4}), el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
     date_format: "%d/%m/%Y"
-  - id: transferencia_llave # fixture: transferencia_llave.txt
+  - id: transferencia_llave # fixture: transferencia_llave.txt, transferencia_llave_wrap.txt
     direction: debit
     pattern: 'Bancolombia: (?:(?P<holder>[^,]{1,80}), )?transferiste \$(?P<amount>[\d.,]+) a la llave (?P<key>\S+) desde tu cuenta \*(?P<last4>\d{4}) a (?P<merchant>.+?) el (?P<date>\d{2}/\d{2}/\d{2}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%y"
+  - id: transferencia_llave_recibida # fixture: transferencia_llave_recibida_wrap.txt
+    direction: credit
+    pattern: 'Bancolombia: (?:(?P<holder>[^,]{1,80}), )?recibiste una transferencia de (?P<merchant>.+?) por \$(?P<amount>[\d.,]+) en tu cuenta \*(?P<last4>\d{4}) conectada a la llave (?P<key>\S+) el (?P<date>\d{2}/\d{2}/\d{2}) a las (?P<time>\d{2}:\d{2})'
     date_format: "%d/%m/%y"
   - id: nomina # fixture: nomina.txt
     direction: credit
