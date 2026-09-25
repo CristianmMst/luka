@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1) y la pantalla de movimientos (F4.2); el resto del shell son marcadores.
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), la pantalla de movimientos (F4.2) y la de revisión (F4.7); el resto del shell son marcadores.
 
 ## Requisitos
 
@@ -103,14 +103,26 @@ El archivo (`finanzia.sqlite`) suele vivir en `app_flutter` (carpeta de document
 
 ### Movimientos (F4.2)
 
-Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre sus 5 rutas: `/` (Inicio), `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2; el detalle `/movimientos/:id` se abre a pantalla completa, sin la barra): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones tiene pantalla real; Dashboard, Registrar, Revisión y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
+Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.indexedStack` sobre sus 5 rutas: `/` (Inicio), `/movimientos`, `/registrar`, `/revision` y `/ajustes` — spec 008 §2; el detalle `/movimientos/:id` se abre a pantalla completa, sin la barra): la barra inferior de 5 pestañas ya está completa, pero solo Transacciones y Revisión tienen pantalla real; Dashboard, Registrar y Ajustes son marcadores ("Llega pronto"). Ajustes ya adelantó el cierre de sesión.
 
 `lib/features/transactions/` trae las dos pantallas nuevas (spec 008 §3.3, diseño en el canvas F4.2 enlazado en spec 008 §7.1):
 
 - **Lista** (`transactions_page.dart`, diseño B "Tarjetas por día"): tarjetas por día con paginación creciente sobre `TransactionsRepository.watch`, buscador con debounce y hoja de filtros. Periodo, tipo, banco y categoría filtran en SQL; fuente (canal) y texto se aplican en el cliente. Cubre los 5 estados sin filas (vacío total, vacío del mes, sin resultados, error de lectura local y primera sincronización) más el aviso de sin conexión y el de operaciones rechazadas (reintentar o dejar como estaba).
 - **Detalle** (`transaction_detail_page.dart`, diseño A "Monto protagonista"): monto con decimales, campos editables, fuentes del servidor (`GET /transactions/{id}`, con reintento automático al recuperar la red), par de transferencia navegable, marcar/desmarcar transfer y notas con guardado automático.
 
+### Revisión (F4.7)
+
+`lib/features/review/` muestra lo que el backend no pudo leer solo (spec 008 §3.5, AC-8.1). Lee la tabla `local_review` y la mantiene al día con el pull del `SyncCoordinator`.
+
+- **Lista** (`review_page.dart`): cada tarjeta muestra el canal, el banco, la fecha de recepción, el motivo en lenguaje claro y un extracto del mensaje con los montos resaltados. Los teléfonos no se resaltan. Tiene estado vacío ("Nada por revisar") y aviso de sin conexión.
+- **Detalle** (`/revision/:rawMessageId`, a pantalla completa, `review_detail_page.dart`):
+  - Muestra el texto completo, seleccionable y con desplazamiento. Tocar un monto resaltado lo copia al formulario.
+  - El formulario llega prellenado desde `partial_extract`. Si el mensaje no trae fecha, propone la de recepción.
+  - "Crear movimiento" encola `convertReview` y "Descartar" encola `discardReview`, este último tras confirmar. Ambas pasan por el outbox, así que funcionan sin conexión.
+- **Montos:** `lib/features/review/domain/amount_highlight.dart` usa la misma regla de separadores que `parse_amount` del backend, y el mismo patrón de teléfonos que `parsing/domain/excerpt.py`.
+- **Mensajes ya fallidos:** si una plantilla nueva ya los entiende, `just reparse` (backend/README) los reprocesa y cierra su revisión.
+
 ## Tests
 
 - **Unitarios y de widgets:** dominio, `SessionManager` (incluye el single-flight de punta a punta), repositorio, interceptor, controllers, redirects del router y estados del login.
-- **Goldens (`tag golden`):** `test/features/auth/presentation/goldens/`. Dependen del rasterizador de cada plataforma, así que CI no los corre. Se regeneran y revisan a mano.
+- **Goldens (`tag golden`):** `test/features/auth/presentation/goldens/` y `test/features/review/presentation/goldens/`. Dependen del rasterizador de cada plataforma, así que CI no los corre. Se regeneran y revisan a mano.
