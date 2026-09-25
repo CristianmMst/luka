@@ -23,6 +23,7 @@ from finanzia.modules.ledger.infrastructure.repositories import (
     SqlAlchemyCategoryRepository,
     SqlAlchemyLinkedAccountRepository,
     SqlAlchemyMerchantRuleRepository,
+    SqlAlchemyReviewQueueRepository,
     SqlAlchemyTransactionRepository,
     SqlAlchemyTransactionSourceRepository,
 )
@@ -61,6 +62,7 @@ async def record_captured_transaction(
         categories=SqlAlchemyCategoryRepository(session),
         accounts=SqlAlchemyLinkedAccountRepository(session),
         merchant_rules=SqlAlchemyMerchantRuleRepository(session),
+        review_queue=SqlAlchemyReviewQueueRepository(session),
         events=BusEventPublisher(event_bus),
         clock=clock,
         ids=SecretsIdGenerator(),

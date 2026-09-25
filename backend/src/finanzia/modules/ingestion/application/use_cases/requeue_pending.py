@@ -15,10 +15,12 @@ ciclo infinito cron -> 5 entregas -> DLQ -> sigue `pending` -> cron ...
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from finanzia.modules.ingestion.application.dto import RequeueSummary
+from finanzia.modules.ingestion.domain.entities import RawMessage
 from finanzia.modules.ingestion.domain.enums import RawMessageStatus
 from finanzia.modules.ingestion.events import RawMessageReceived
 
@@ -40,6 +42,21 @@ _LIMIT_DEFAULT = 500
 #: siempre. Con la cota, a la republicacion numero 6 la fila pasa a `failed`
 #: (5 x 5 entregas = 25 intentos reales de parseo antes de rendirse).
 _MAX_ATTEMPTS_DEFAULT = 5
+
+
+def received_event(row: RawMessage, event_id: UUID, now: datetime) -> RawMessageReceived:
+    """El `RawMessageReceived` que republica una fila ya persistida (reencolado y
+    reparse comparten este camino de publicacion).
+    """
+    return RawMessageReceived(
+        event_id=event_id,
+        occurred_at=now,
+        raw_message_id=row.id,
+        user_id=row.user_id,
+        channel=row.channel.value,
+        bank=row.bank,
+        received_at=row.received_at,
+    )
 
 
 class RequeuePendingRawMessages:
@@ -84,17 +101,7 @@ class RequeuePendingRawMessages:
                 await self._repo.set_status(row.id, RawMessageStatus.FAILED, now)
                 exhausted += 1
                 continue
-            await self._events.publish(
-                RawMessageReceived(
-                    event_id=self._ids.new_id(),
-                    occurred_at=now,
-                    raw_message_id=row.id,
-                    user_id=row.user_id,
-                    channel=row.channel.value,
-                    bank=row.bank,
-                    received_at=row.received_at,
-                )
-            )
+            await self._events.publish(received_event(row, self._ids.new_id(), now))
             await self._repo.mark_requeued(row.id, now)
             requeued += 1
 
@@ -102,4 +109,4 @@ class RequeuePendingRawMessages:
         return RequeueSummary(requeued=requeued, exhausted=exhausted)
 
 
-__all__ = ["RequeuePendingRawMessages", "RequeueSummary"]
+__all__ = ["RequeuePendingRawMessages", "RequeueSummary", "received_event"]

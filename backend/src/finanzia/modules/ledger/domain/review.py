@@ -33,10 +33,16 @@ class ReviewReason(StrEnum):
 
 
 class ReviewResolution(StrEnum):
-    """Como se cerro un item de revision."""
+    """Como se cerro un item de revision.
+
+    `converted`/`discarded` los decide el usuario (spec 005 SS7); `reparsed` lo pone
+    ledger cuando el mensaje, reprocesado (`finanzia.tools.reparse`), por fin
+    produce una transaccion.
+    """
 
     CONVERTED = "converted"
     DISCARDED = "discarded"
+    REPARSED = "reparsed"
 
 
 def _require_aware(value: datetime) -> None:

@@ -28,7 +28,7 @@ from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus, RawMe
 from finanzia.modules.ingestion.infrastructure import orm as ingestion_orm
 from finanzia.modules.ledger.domain.enums import Bank
 from finanzia.modules.ledger.domain.enums import Channel as LedgerChannel
-from finanzia.modules.ledger.domain.review import ReviewReason
+from finanzia.modules.ledger.domain.review import ReviewReason, ReviewResolution
 from finanzia.modules.ledger.infrastructure import orm as ledger_orm
 from finanzia.modules.parsing.domain.enums import Channel as ParsingChannel
 from finanzia.modules.parsing.domain.enums import ParseFailureReason
@@ -54,6 +54,7 @@ def _load_migration(filename: str) -> ModuleType:
 _M0002 = _load_migration("0002_ledger_core.py")
 _M0003 = _load_migration("0003_raw_messages_review.py")
 _M0005 = _load_migration("0005_gmail_connections.py")
+_M0007 = _load_migration("0007_review_resolution_reparsed.py")
 
 
 def _values(sql_list: str) -> tuple[str, ...]:
@@ -67,6 +68,17 @@ def test_motivos_de_revision_coinciden_en_los_cuatro_lugares() -> None:
     assert tuple(r.value for r in ReviewReason) == esperado
     assert _values(ledger_orm._REASON_VALUES) == esperado
     assert _values(_M0003._REASON_VALUES) == esperado
+
+
+def test_resoluciones_de_revision_coinciden_con_orm_y_ultima_migracion() -> None:
+    """0003 creo el `CHECK` con `converted`/`discarded`; 0007 lo reemplaza con
+    `reparsed` agregado, y es la que manda en `head`.
+    """
+    esperado = tuple(r.value for r in ReviewResolution)
+
+    assert _values(ledger_orm._RESOLUTION_VALUES) == esperado
+    assert _values(_M0007._RESOLUTION_VALUES) == esperado
+    assert _values(_M0007._PREVIOUS_RESOLUTION_VALUES) == _values(_M0003._RESOLUTION_VALUES)
 
 
 def test_bancos_coinciden_en_enum_orm_y_migraciones() -> None:

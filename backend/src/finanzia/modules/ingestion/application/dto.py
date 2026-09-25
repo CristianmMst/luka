@@ -101,6 +101,17 @@ class RequeueSummary:
     exhausted: int
 
 
+@dataclass(frozen=True, slots=True)
+class ReparseSummary:
+    """Resultado de una corrida de `ReparseFailedRawMessages` (spec 005 §7).
+
+    `reparsed` son las filas `failed` que volvieron a `pending` y cuyo
+    `RawMessageReceived` se republico. Solo conteos, nunca datos del mensaje (P1).
+    """
+
+    reparsed: int
+
+
 # --- Lectura (fachada, Fase 3) -------------------------------------------------------
 
 

@@ -38,7 +38,7 @@ _REASON_VALUES = (
     "'no_template','llm_disabled','llm_budget_exceeded','llm_invalid_json',"
     "'llm_invalid_output','llm_low_confidence','llm_error','body_purged'"
 )
-_RESOLUTION_VALUES = "'converted','discarded'"
+_RESOLUTION_VALUES = "'converted','discarded','reparsed'"
 
 
 class CategoryRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):

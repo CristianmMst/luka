@@ -69,6 +69,23 @@ class RawMessageRepositoryPort(Protocol):
         """
         ...
 
+    async def list_failed_for_reparse(
+        self, *, user_id: UUID | None, since: datetime | None, limit: int
+    ) -> list[RawMessage]:
+        """Filas `status='failed'` con `body` aun presente (no purgado), opcionalmente
+        de un usuario y con `received_at >= since`, mas antiguas primero (reparse,
+        spec 005 §7).
+        """
+        ...
+
+    async def reset_failed_to_pending(self, id: UUID, now: datetime) -> bool:
+        """`failed -> pending` condicional (`WHERE status='failed'`), con
+        `updated_at=now` y `requeue_attempts=0`; `False` si la fila ya no estaba
+        `failed` (p. ej. el usuario la convirtio o descarto entre la lectura y el
+        UPDATE).
+        """
+        ...
+
 
 class GmailConnectionRepositoryPort(Protocol):
     """Persistencia de `gmail_connections`, 1:1 con el usuario (spec 004 §2.3)."""

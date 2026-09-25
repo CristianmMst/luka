@@ -107,6 +107,28 @@ class InMemoryRawMessageRepo:
         if msg is not None:
             self.by_id[id] = replace(msg, requeue_attempts=msg.requeue_attempts + 1)
 
+    async def list_failed_for_reparse(
+        self, *, user_id: UUID | None, since: datetime | None, limit: int
+    ) -> list[RawMessage]:
+        rows = [
+            msg
+            for msg in self.by_id.values()
+            if msg.status is RawMessageStatus.FAILED
+            and msg.body is not None
+            and (user_id is None or msg.user_id == user_id)
+            and (since is None or msg.received_at >= since)
+        ]
+        rows.sort(key=lambda msg: msg.received_at)
+        return rows[:limit]
+
+    async def reset_failed_to_pending(self, id: UUID, now: datetime) -> bool:
+        msg = self.by_id.get(id)
+        if msg is None or msg.status is not RawMessageStatus.FAILED:
+            return False
+        self.by_id[id] = replace(msg, status=RawMessageStatus.PENDING, requeue_attempts=0)
+        self.updated_at[id] = now
+        return True
+
 
 class FakeSenderPolicy:
     """Doble de `SenderPolicyPort`: mapas fijos remitente/(paquete,canal) -> banco."""

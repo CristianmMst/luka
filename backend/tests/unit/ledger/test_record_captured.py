@@ -25,6 +25,7 @@ from finanzia.modules.ledger.domain.enums import (
     Kind,
 )
 from finanzia.modules.ledger.domain.merchant import normalize_merchant
+from finanzia.modules.ledger.domain.review import ReviewItem, ReviewReason, ReviewResolution
 from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
 from finanzia.modules.ledger.events import TransactionCaptured
 from ledger.fakes import FixedClock, InMemoryTransactionRepo, build_ledger_repos
@@ -72,6 +73,7 @@ def _make_use_case(
         categories=repos.categories,
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
+        review_queue=repos.review_queue,
         events=repos.events,
         clock=clock or FixedClock(NOW),
         ids=repos.ids,
@@ -364,3 +366,73 @@ async def test_carrera_de_insercion_adjunta_la_fuente_a_la_fila_existente() -> N
     assert len(repos.events.events) == 0
     assert race_repo.update_calls == []
     assert race_repo.touch_calls == [(USER, result.transaction.id, NOW)]
+
+
+# --- Cierre de la revision al reparsear (spec 005 SS7) ----------------------------
+
+
+def _open_review_item(raw_message_id: UUID) -> ReviewItem:
+    return ReviewItem(
+        raw_message_id=raw_message_id,
+        user_id=USER,
+        reason=ReviewReason.NO_TEMPLATE,
+        partial_extract={},
+        created_at=NOW - timedelta(days=2),
+        resolved_at=None,
+        resolution=None,
+    )
+
+
+@pytest.mark.unit
+async def test_captura_de_un_mensaje_en_revision_cierra_el_item_como_reparsed() -> None:
+    repos = await build_ledger_repos()
+    raw_message_id = uuid4()
+    await repos.review_queue.insert_if_absent(_open_review_item(raw_message_id))
+
+    recorded = await _make_use_case(repos).execute(
+        _cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW))
+    )
+
+    assert recorded.created is True
+    item = await repos.review_queue.get(USER, raw_message_id)
+    assert item is not None
+    assert item.resolution is ReviewResolution.REPARSED
+    assert item.resolved_at == NOW
+    assert await repos.review_queue.list_open(USER, None, 10) == []
+
+
+@pytest.mark.unit
+async def test_reparse_que_cae_en_dedupe_tambien_cierra_el_item() -> None:
+    """La transaccion ya existia (p. ej. llego tambien por notificacion): se adjunta
+    la fuente y el item de revision igual se cierra.
+    """
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    await use_case.execute(_cmd(source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW)))
+    raw_message_id = uuid4()
+    await repos.review_queue.insert_if_absent(_open_review_item(raw_message_id))
+
+    recorded = await use_case.execute(_cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW)))
+
+    assert recorded.created is False
+    item = await repos.review_queue.get(USER, raw_message_id)
+    assert item is not None
+    assert item.resolution is ReviewResolution.REPARSED
+
+
+@pytest.mark.unit
+async def test_item_ya_resuelto_por_el_usuario_conserva_su_resolucion() -> None:
+    repos = await build_ledger_repos()
+    raw_message_id = uuid4()
+    await repos.review_queue.insert_if_absent(_open_review_item(raw_message_id))
+    await repos.review_queue.resolve(
+        USER, raw_message_id, ReviewResolution.DISCARDED, NOW - timedelta(days=1)
+    )
+
+    await _make_use_case(repos).execute(
+        _cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW))
+    )
+
+    item = await repos.review_queue.get(USER, raw_message_id)
+    assert item is not None
+    assert item.resolution is ReviewResolution.DISCARDED

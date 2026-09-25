@@ -18,6 +18,11 @@ dev:
 worker:
 	cd backend && uv run arq finanzia.worker.WorkerSettings
 
+# Reprocesa los mensajes fallidos con cuerpo y cierra su revision (spec 005 §7).
+# Uso: `just reparse` o `just reparse --since 2026-09-01`. Requiere el worker en marcha.
+reparse *args:
+	cd backend && uv run python -m finanzia.tools.reparse {{args}}
+
 # Corre toda la suite de tests.
 test:
 	cd backend && uv run pytest -q

@@ -117,6 +117,7 @@ async def _capture(  # noqa: PLR0913 - builder de comando con un default por cam
         categories=repos.categories,
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
+        review_queue=repos.review_queue,
         events=repos.events,
         clock=FixedClock(NOW),
         ids=repos.ids,

@@ -1,4 +1,11 @@
-"""Caso de uso: registrar una transaccion capturada (spec 004 SS3, AC-5.1/5.2/5.3)."""
+"""Caso de uso: registrar una transaccion capturada (spec 004 SS3, AC-5.1/5.2/5.3).
+
+Si el `raw_message` de la captura tenia un item de revision abierto (un mensaje
+`failed` reprocesado con `finanzia.tools.reparse`), el item se cierra como
+`reparsed` en la misma unidad de trabajo que la transaccion (spec 005 SS7). El
+UPDATE es condicional (`resolved_at IS NULL`): un item que el usuario ya
+convirtio o descarto conserva su resolucion, y una captura sin item no cambia nada.
+"""
 
 from dataclasses import replace
 from uuid import UUID
@@ -11,6 +18,7 @@ from finanzia.modules.ledger.application.ports import (
     IdGeneratorPort,
     LinkedAccountRepositoryPort,
     MerchantRuleRepositoryPort,
+    ReviewQueueRepositoryPort,
     TransactionRepositoryPort,
     TransactionSourceRepositoryPort,
     UnitOfWorkPort,
@@ -25,6 +33,7 @@ from finanzia.modules.ledger.domain.entities import (
 )
 from finanzia.modules.ledger.domain.errors import CategoryNotFound, LedgerError
 from finanzia.modules.ledger.domain.merchant import match_rule, normalize_merchant
+from finanzia.modules.ledger.domain.review import ReviewResolution
 from finanzia.modules.ledger.events import TransactionCaptured
 
 
@@ -39,6 +48,7 @@ class RecordCapturedTransaction:
         categories: CategoryRepositoryPort,
         accounts: LinkedAccountRepositoryPort,
         merchant_rules: MerchantRuleRepositoryPort,
+        review_queue: ReviewQueueRepositoryPort,
         events: EventPublisherPort,
         clock: ClockPort,
         ids: IdGeneratorPort,
@@ -49,6 +59,7 @@ class RecordCapturedTransaction:
         self._categories = categories
         self._accounts = accounts
         self._merchant_rules = merchant_rules
+        self._review_queue = review_queue
         self._events = events
         self._clock = clock
         self._ids = ids
@@ -74,6 +85,7 @@ class RecordCapturedTransaction:
             attached = await self._attach_source(target.id, cmd)
             if attached:
                 target = await self._touch(target)
+            await self._close_review(cmd)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
@@ -111,12 +123,14 @@ class RecordCapturedTransaction:
             attached = await self._attach_source(target.id, cmd)
             if attached:
                 target = await self._touch(target)
+            await self._close_review(cmd)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
         await self._attach_source(tx.id, cmd)
         tx = await try_auto_pair(tx, transactions=self._transactions, clock=self._clock)
 
+        await self._close_review(cmd)
         await self._uow.commit()
         await self._events.publish(
             TransactionCaptured(
@@ -134,6 +148,14 @@ class RecordCapturedTransaction:
             )
         )
         return Recorded(transaction=tx, created=True, source_attached=True)
+
+    async def _close_review(self, cmd: CapturedTransactionCommand) -> None:
+        """Cierra como `reparsed` el item abierto del `raw_message`, si lo hay."""
+        if cmd.source.raw_message_id is None:
+            return
+        await self._review_queue.resolve(
+            cmd.user_id, cmd.source.raw_message_id, ReviewResolution.REPARSED, self._clock.now()
+        )
 
     async def _touch(self, target: Transaction) -> Transaction:
         """Marca `updated_at` (sync 005 SS9) sin reescribir las demas columnas: `target`

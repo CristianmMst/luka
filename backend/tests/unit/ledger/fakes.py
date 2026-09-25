@@ -414,6 +414,7 @@ class LedgerRepos:
         self.categories = InMemoryCategoryRepo()
         self.accounts = InMemoryLinkedAccountRepo()
         self.merchant_rules = InMemoryMerchantRuleRepo()
+        self.review_queue = InMemoryReviewQueueRepo()
         self.events = RecordingPublisher()
         self.ids = SequenceIdGenerator()
         self.uow = NoopUoW()

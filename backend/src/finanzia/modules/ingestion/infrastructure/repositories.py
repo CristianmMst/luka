@@ -111,6 +111,33 @@ class SqlAlchemyRawMessageRepository:
         )
         await self._session.execute(stmt)
 
+    async def list_failed_for_reparse(
+        self, *, user_id: UUID | None, since: datetime | None, limit: int
+    ) -> list[RawMessage]:
+        stmt = select(RawMessageRow).where(
+            RawMessageRow.status == RawMessageStatus.FAILED.value,
+            RawMessageRow.body.isnot(None),
+        )
+        if user_id is not None:
+            stmt = stmt.where(RawMessageRow.user_id == user_id)
+        if since is not None:
+            stmt = stmt.where(RawMessageRow.received_at >= since)
+        stmt = stmt.order_by(RawMessageRow.received_at.asc(), RawMessageRow.id.asc()).limit(limit)
+        result = await self._session.execute(stmt)
+        return [raw_message_row_to_entity(row) for row in result.scalars()]
+
+    async def reset_failed_to_pending(self, id: UUID, now: datetime) -> bool:
+        stmt = (
+            update(RawMessageRow)
+            .where(
+                RawMessageRow.id == id,
+                RawMessageRow.status == RawMessageStatus.FAILED.value,
+            )
+            .values(status=RawMessageStatus.PENDING.value, updated_at=now, requeue_attempts=0)
+        )
+        result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
+        return result.rowcount > 0
+
 
 class SqlAlchemyGmailConnectionRepository:
     """Implementacion SQLAlchemy de la persistencia de `gmail_connections` (spec 004 §2.3)."""

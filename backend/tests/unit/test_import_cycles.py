@@ -71,6 +71,8 @@ def _run_import(module: str) -> subprocess.CompletedProcess[str]:
         # identity entra a ingestion por su fachada (`/v1/me`, F3.3).
         "finanzia.modules.identity.public",
         "finanzia.modules.ingestion.public",
+        # CLI de reparse (spec 005 §7): entra a ingestion por su fachada, como el worker.
+        "finanzia.tools.reparse",
     ],
 )
 def test_import_en_proceso_limpio_no_revienta_por_ciclo(module: str) -> None:

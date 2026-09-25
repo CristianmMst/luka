@@ -26,6 +26,7 @@ from finanzia.modules.ingestion.application.dto import (
     RawMessageInput,
     RawMessageView,
     RenewWatchesSummary,
+    ReparseSummary,
     RequeueSummary,
 )
 from finanzia.modules.ingestion.application.use_cases.gmail_connection import GetGmailStatus
@@ -36,6 +37,9 @@ from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import 
 from finanzia.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
 from finanzia.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
 from finanzia.modules.ingestion.application.use_cases.renew_gmail_watches import RenewGmailWatches
+from finanzia.modules.ingestion.application.use_cases.reparse_failed import (
+    ReparseFailedRawMessages,
+)
 from finanzia.modules.ingestion.application.use_cases.requeue_pending import (
     RequeuePendingRawMessages,
 )
@@ -78,6 +82,7 @@ __all__ = [
     "RawMessageReceived",
     "RawMessageView",
     "RenewWatchesSummary",
+    "ReparseSummary",
     "RequeueSummary",
     "get_raw_message_for_parsing",
     "gmail_connection_status",
@@ -87,6 +92,7 @@ __all__ = [
     "mark_raw_message",
     "purge_expired_bodies",
     "renew_gmail_watches",
+    "reparse_failed_raw_messages",
     "requeue_pending_raw_messages",
     "run_gmail_sync",
 ]
@@ -95,6 +101,7 @@ _RETENTION_DAYS_DEFAULT = 90
 _BODY_MAX_BYTES_DEFAULT = 8192
 _REQUEUE_OLDER_THAN_DEFAULT = timedelta(minutes=10)
 _REQUEUE_LIMIT_DEFAULT = 500
+_REPARSE_LIMIT_DEFAULT = 500
 
 
 def _view(msg: RawMessage) -> RawMessageView:
@@ -233,6 +240,28 @@ async def requeue_pending_raw_messages(
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(older_than=older_than, limit=limit)
+
+
+async def reparse_failed_raw_messages(  # noqa: PLR0913 - un parametro por dependencia externa + filtros
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    *,
+    user_id: UUID | None = None,
+    since: datetime | None = None,
+    limit: int = _REPARSE_LIMIT_DEFAULT,
+) -> ReparseSummary:
+    """Devuelve a `pending` los `raw_messages` `failed` con cuerpo y republica su
+    `RawMessageReceived` (spec 005 §7, CLI `finanzia.tools.reparse`); comitea.
+    """
+    use_case = ReparseFailedRawMessages(
+        repo=SqlAlchemyRawMessageRepository(session),
+        events=BusEventPublisher(event_bus),
+        clock=clock,
+        ids=SecretsIdGenerator(),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await use_case.execute(user_id=user_id, since=since, limit=limit)
 
 
 async def renew_gmail_watches(

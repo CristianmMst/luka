@@ -205,7 +205,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | partial_extract | JSONB NOT NULL DEFAULT '{}' | lo que reglas/LLM sí extrajeron |
 | created_at / updated_at | TIMESTAMPTZ | |
 | resolved_at | TIMESTAMPTZ NULL | |
-| resolution | TEXT NULL | `converted` / `discarded` |
+| resolution | TEXT NULL | `converted` / `discarded` (el usuario, spec 005 §7) / `reparsed` (ledger, al parsear un mensaje reprocesado; migración 0007) |
 | CHECK | `(resolved_at IS NULL) = (resolution IS NULL)` | consistencia de resolución |
 | Índice parcial | `(user_id, created_at DESC, raw_message_id DESC) WHERE resolved_at IS NULL` | cola de pendientes por usuario, más recientes primero |
 
