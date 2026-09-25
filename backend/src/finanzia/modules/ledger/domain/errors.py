@@ -67,3 +67,9 @@ class ReviewItemNotFound(LedgerError):  # noqa: N818
 
 class ReviewAlreadyResolved(LedgerError):  # noqa: N818
     """El item de revision ya fue convertido o descartado."""
+
+
+class CaptureAlreadyResolved(LedgerError):  # noqa: N818
+    """La captura viene de un `raw_message` cuyo item de revision el usuario ya
+    convirtio o descarto: registrarla duplicaria la transaccion (spec 006 SS4.4).
+    """

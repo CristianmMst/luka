@@ -86,7 +86,7 @@ _SUPERVISOR_RESTART_DELAY_S = 1.0
 
 # `ensure_consumer_groups` no debe poder colgar el arranque del worker para siempre
 # (mismo riesgo/mitigacion que el lifespan de la API, ver `app.py`).
-_CONSUMER_GROUPS_TIMEOUT_S = 2.0
+CONSUMER_GROUPS_TIMEOUT_S = 2.0
 # `socket_connect_timeout` mismo valor que `app.py` (deferred finding Task 2): sin
 # el, un Redis que acepta la conexion TCP pero nunca responde deja al worker
 # colgado para siempre. `socket_timeout`, en cambio, NO puede copiar el de
@@ -98,8 +98,8 @@ _CONSUMER_GROUPS_TIMEOUT_S = 2.0
 # BLOCK antes de que el propio Redis la resuelva, spameando
 # `event_consumer_backend_error` cada ciclo de poll en vacio (visto en la
 # verificacion Docker de esta tarea). 10s deja margen sobre esos 6s.
-_REDIS_CONNECT_TIMEOUT_S = 2.0
-_REDIS_SOCKET_TIMEOUT_S = 10.0
+REDIS_CONNECT_TIMEOUT_S = 2.0
+REDIS_SOCKET_TIMEOUT_S = 10.0
 
 # Clave de `ctx` que un test puede precargar antes de llamar `on_startup(ctx)`
 # directo, para bajar el `block_ms` de sus `StreamConsumer` (ver el comentario en
@@ -305,13 +305,13 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     redis_client = redis_asyncio.from_url(
         str(settings.redis_url),
         decode_responses=False,
-        socket_connect_timeout=_REDIS_CONNECT_TIMEOUT_S,
-        socket_timeout=_REDIS_SOCKET_TIMEOUT_S,
+        socket_connect_timeout=REDIS_CONNECT_TIMEOUT_S,
+        socket_timeout=REDIS_SOCKET_TIMEOUT_S,
     )
     registry = build_registry()
     bus = RedisStreamsEventBus(redis_client, registry)
     try:
-        await asyncio.wait_for(ensure_consumer_groups(bus), timeout=_CONSUMER_GROUPS_TIMEOUT_S)
+        await asyncio.wait_for(ensure_consumer_groups(bus), timeout=CONSUMER_GROUPS_TIMEOUT_S)
     except (redis.exceptions.RedisError, OSError, TimeoutError) as exc:
         _logger.warning("consumer_groups_not_ensured", error_type=type(exc).__name__)
 

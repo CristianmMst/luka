@@ -33,6 +33,11 @@ from finanzia.shared.db.engine import create_engine, create_session_factory
 from finanzia.shared.events.redis_streams import RedisStreamsEventBus
 from finanzia.shared.logging import configure_logging
 from finanzia.shared.settings import get_settings
+from finanzia.worker import (
+    CONSUMER_GROUPS_TIMEOUT_S,
+    REDIS_CONNECT_TIMEOUT_S,
+    REDIS_SOCKET_TIMEOUT_S,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -41,9 +46,6 @@ if TYPE_CHECKING:
 
 _BOGOTA = timezone(timedelta(hours=-5))
 _LIMIT_DEFAULT = 500
-# Mismos valores que `finanzia.worker` (ver alli el por que de cada uno).
-_REDIS_CONNECT_TIMEOUT_S = 2.0
-_REDIS_SOCKET_TIMEOUT_S = 10.0
 
 
 def since_to_datetime(day: date) -> datetime:
@@ -86,13 +88,14 @@ async def run(
     redis_client = redis_asyncio.from_url(
         str(settings.redis_url),
         decode_responses=False,
-        socket_connect_timeout=_REDIS_CONNECT_TIMEOUT_S,
-        socket_timeout=_REDIS_SOCKET_TIMEOUT_S,
+        socket_connect_timeout=REDIS_CONNECT_TIMEOUT_S,
+        socket_timeout=REDIS_SOCKET_TIMEOUT_S,
     )
     bus = RedisStreamsEventBus(redis_client, build_registry())
     try:
-        # Sin el grupo `parsing`, un stream nuevo perderia los eventos (D10).
-        await ensure_consumer_groups(bus)
+        # Sin el grupo `parsing`, un stream nuevo perderia los eventos (D10). Con
+        # el mismo limite que el arranque del worker: un Redis mudo no cuelga el CLI.
+        await asyncio.wait_for(ensure_consumer_groups(bus), timeout=CONSUMER_GROUPS_TIMEOUT_S)
         async with session_factory() as session:
             return await ingestion_public.reparse_failed_raw_messages(
                 session,

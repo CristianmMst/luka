@@ -2,9 +2,13 @@
 
 Si el `raw_message` de la captura tenia un item de revision abierto (un mensaje
 `failed` reprocesado con `finanzia.tools.reparse`), el item se cierra como
-`reparsed` en la misma unidad de trabajo que la transaccion (spec 005 SS7). El
-UPDATE es condicional (`resolved_at IS NULL`): un item que el usuario ya
-convirtio o descarto conserva su resolucion, y una captura sin item no cambia nada.
+`reparsed` en la misma unidad de trabajo que la transaccion (spec 005 SS7), y
+ANTES de cualquier otra escritura: el UPDATE es condicional (`resolved_at IS
+NULL`) y toma el lock de la fila, asi que serializa contra `ConvertReviewItem`/
+`DiscardReviewItem` (que usan el mismo UPDATE condicional). Si el usuario ya
+convirtio o descarto el item, la captura se rechaza con `CaptureAlreadyResolved`
+sin escribir nada: la transaccion convertida usa un `dedupe_key` manual aleatorio
+y el dedupe no la veria (spec 006 SS4.4). Una captura sin item no cambia nada.
 """
 
 from dataclasses import replace
@@ -31,10 +35,17 @@ from finanzia.modules.ledger.domain.entities import (
     TransactionSource,
     new_captured_transaction,
 )
-from finanzia.modules.ledger.domain.errors import CategoryNotFound, LedgerError
+from finanzia.modules.ledger.domain.errors import (
+    CaptureAlreadyResolved,
+    CategoryNotFound,
+    LedgerError,
+)
 from finanzia.modules.ledger.domain.merchant import match_rule, normalize_merchant
 from finanzia.modules.ledger.domain.review import ReviewResolution
 from finanzia.modules.ledger.events import TransactionCaptured
+
+# Resoluciones que decide el usuario; `reparsed` (una reentrega) sigue el dedupe.
+_USER_RESOLUTIONS = frozenset({ReviewResolution.CONVERTED, ReviewResolution.DISCARDED})
 
 
 class RecordCapturedTransaction:
@@ -66,7 +77,12 @@ class RecordCapturedTransaction:
         self._uow = uow
 
     async def execute(self, cmd: CapturedTransactionCommand) -> Recorded:
-        """Deduplica, clasifica, inserta y empareja (si aplica) la captura entrante."""
+        """Deduplica, clasifica, inserta y empareja (si aplica) la captura entrante.
+
+        `CaptureAlreadyResolved` si el item de revision del `raw_message` ya lo
+        convirtio o descarto el usuario (no se escribe nada).
+        """
+        await self._claim_review(cmd)
         keys = candidate_keys(
             user_id=cmd.user_id,
             bank=cmd.bank,
@@ -85,7 +101,6 @@ class RecordCapturedTransaction:
             attached = await self._attach_source(target.id, cmd)
             if attached:
                 target = await self._touch(target)
-            await self._close_review(cmd)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
@@ -123,14 +138,12 @@ class RecordCapturedTransaction:
             attached = await self._attach_source(target.id, cmd)
             if attached:
                 target = await self._touch(target)
-            await self._close_review(cmd)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
 
         await self._attach_source(tx.id, cmd)
         tx = await try_auto_pair(tx, transactions=self._transactions, clock=self._clock)
 
-        await self._close_review(cmd)
         await self._uow.commit()
         await self._events.publish(
             TransactionCaptured(
@@ -149,13 +162,20 @@ class RecordCapturedTransaction:
         )
         return Recorded(transaction=tx, created=True, source_attached=True)
 
-    async def _close_review(self, cmd: CapturedTransactionCommand) -> None:
-        """Cierra como `reparsed` el item abierto del `raw_message`, si lo hay."""
-        if cmd.source.raw_message_id is None:
+    async def _claim_review(self, cmd: CapturedTransactionCommand) -> None:
+        """Cierra como `reparsed` el item abierto del `raw_message`, si lo hay, o
+        lanza `CaptureAlreadyResolved` si el usuario ya lo convirtio o descarto.
+        """
+        raw_message_id = cmd.source.raw_message_id
+        if raw_message_id is None:
             return
-        await self._review_queue.resolve(
-            cmd.user_id, cmd.source.raw_message_id, ReviewResolution.REPARSED, self._clock.now()
-        )
+        if await self._review_queue.resolve(
+            cmd.user_id, raw_message_id, ReviewResolution.REPARSED, self._clock.now()
+        ):
+            return
+        item = await self._review_queue.get(cmd.user_id, raw_message_id)
+        if item is not None and item.resolution in _USER_RESOLUTIONS:
+            raise CaptureAlreadyResolved
 
     async def _touch(self, target: Transaction) -> Transaction:
         """Marca `updated_at` (sync 005 SS9) sin reescribir las demas columnas: `target`

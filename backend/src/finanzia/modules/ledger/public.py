@@ -55,6 +55,8 @@ async def record_captured_transaction(
     Ensambla `RecordCapturedTransaction` con los repositorios SQLAlchemy y publica
     en `event_bus` (spec 004 SS3, AC-5.1/5.2). El llamador es responsable de la
     `session` (scope, cierre) igual que cualquier otro caso de uso de ledger.
+    Lanza `CaptureAlreadyResolved` si el usuario ya convirtio o descarto el item de
+    revision de ese `raw_message` (spec 006 SS4.4); no se escribe nada.
     """
     use_case = RecordCapturedTransaction(
         transactions=SqlAlchemyTransactionRepository(session),

@@ -25,6 +25,7 @@ from finanzia.modules.ledger.application.dto import (
 )
 from finanzia.modules.ledger.application.use_cases.enqueue_for_review import EnqueueForReview
 from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
+from finanzia.modules.ledger.domain.errors import CaptureAlreadyResolved
 from finanzia.modules.ledger.domain.review import ReviewReason
 from finanzia.modules.ledger.infrastructure.repositories.review_queue import (
     SqlAlchemyReviewQueueRepository,
@@ -86,10 +87,22 @@ def make_transaction_parsed_handler(
             ),
         )
 
-        async with session_factory() as session:
-            recorded = await ledger_public.record_captured_transaction(
-                session, event_bus, clock, cmd
+        try:
+            async with session_factory() as session:
+                recorded = await ledger_public.record_captured_transaction(
+                    session, event_bus, clock, cmd
+                )
+        except CaptureAlreadyResolved:
+            # Carrera reparse vs. convert/discard (spec 006 SS4.4): el usuario ya
+            # resolvio el item; el evento queda atendido (sin reintento). Sin ids,
+            # montos ni comercio (P1).
+            _logger.info(
+                "ledger_capture_skipped",
+                reason="review_already_resolved",
+                bank=bank.value,
+                channel=event.channel,
             )
+            return
 
         if not recorded.created:
             _logger.info(

@@ -6,7 +6,11 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import CapturedTransactionCommand, SourceInput
+from finanzia.modules.ledger.application.dto import (
+    CapturedTransactionCommand,
+    Filters,
+    SourceInput,
+)
 from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
@@ -24,6 +28,7 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
+from finanzia.modules.ledger.domain.errors import CaptureAlreadyResolved
 from finanzia.modules.ledger.domain.merchant import normalize_merchant
 from finanzia.modules.ledger.domain.review import ReviewItem, ReviewReason, ReviewResolution
 from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
@@ -420,19 +425,48 @@ async def test_reparse_que_cae_en_dedupe_tambien_cierra_el_item() -> None:
     assert item.resolution is ReviewResolution.REPARSED
 
 
+@pytest.mark.parametrize("resolution", [ReviewResolution.CONVERTED, ReviewResolution.DISCARDED])
 @pytest.mark.unit
-async def test_item_ya_resuelto_por_el_usuario_conserva_su_resolucion() -> None:
+async def test_item_ya_resuelto_por_el_usuario_no_registra_otra_transaccion(
+    resolution: ReviewResolution,
+) -> None:
+    """Carrera reparse vs. convert/discard (spec 006 SS4.4): el usuario resolvio el
+    item mientras el mensaje reprocesado seguia en el pipeline. La captura no crea
+    una segunda transaccion (la convertida usa un `dedupe_key` manual aleatorio y el
+    dedupe no la veria), no publica nada y el item conserva su resolucion.
+    """
     repos = await build_ledger_repos()
     raw_message_id = uuid4()
     await repos.review_queue.insert_if_absent(_open_review_item(raw_message_id))
-    await repos.review_queue.resolve(
-        USER, raw_message_id, ReviewResolution.DISCARDED, NOW - timedelta(days=1)
-    )
+    await repos.review_queue.resolve(USER, raw_message_id, resolution, NOW - timedelta(days=1))
 
-    await _make_use_case(repos).execute(
-        _cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW))
-    )
+    with pytest.raises(CaptureAlreadyResolved):
+        await _make_use_case(repos).execute(
+            _cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW))
+        )
 
+    assert await repos.transactions.list(USER, Filters(), None, 10) == []
+    assert repos.events.events == []
     item = await repos.review_queue.get(USER, raw_message_id)
     assert item is not None
-    assert item.resolution is ReviewResolution.DISCARDED
+    assert item.resolution is resolution
+    assert item.resolved_at == NOW - timedelta(days=1)
+
+
+@pytest.mark.unit
+async def test_item_ya_reparsed_no_bloquea_la_captura_repetida() -> None:
+    """Una reentrega del mismo `TransactionParsed` tras cerrar el item como
+    `reparsed` sigue el camino normal de dedupe (no es una resolucion del usuario).
+    """
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    raw_message_id = uuid4()
+    await repos.review_queue.insert_if_absent(_open_review_item(raw_message_id))
+    cmd = _cmd(source=SourceInput(Channel.EMAIL, raw_message_id, NOW))
+
+    first = await use_case.execute(cmd)
+    second = await use_case.execute(cmd)
+
+    assert first.created is True
+    assert second.created is False
+    assert second.transaction.id == first.transaction.id

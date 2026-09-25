@@ -209,3 +209,64 @@ async def test_handler_no_filtra_amount_merchant_ni_body_en_logs(
         assert _AMOUNT not in rendered
         assert "53900" not in rendered
         assert _MERCHANT not in rendered
+
+
+@pytest.mark.parametrize("resolution", ["converted", "discarded"])
+async def test_transaction_parsed_de_un_item_ya_resuelto_no_duplica(
+    resolution: str,
+    session_factory: async_sessionmaker[AsyncSession],
+    settings: Settings,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """Carrera reparse vs. convert/discard (spec 006 SS4.4): el `TransactionParsed`
+    del mensaje reprocesado llega despues de que el usuario resolvio el item. El
+    handler lo da por atendido (no lanza, sin reintento) y no crea transaccion.
+    """
+    user = await user_factory()
+    raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
+    async with session_factory() as session:
+        await session.execute(
+            text(
+                "INSERT INTO review_queue (raw_message_id, user_id, reason, resolution, "
+                "resolved_at) VALUES (:r, :u, 'no_template', :res, now())"
+            ),
+            {"r": raw_message_id, "u": user.id, "res": resolution},
+        )
+        await session.commit()
+
+    redis_client = redis_asyncio.from_url(str(settings.redis_url))
+    bus = RedisStreamsEventBus(redis_client, build_registry())
+    handler = make_transaction_parsed_handler(
+        session_factory=session_factory, event_bus=bus, clock=SystemClock()
+    )
+    try:
+        with structlog.testing.capture_logs() as captured:
+            await handler(_event(raw_message_id=raw_message_id, user_id=user.id))
+    finally:
+        await redis_client.aclose()
+
+    async with session_factory() as session:
+        tx_count = (
+            await session.execute(
+                text("SELECT count(*) FROM transactions WHERE user_id = :u"), {"u": str(user.id)}
+            )
+        ).scalar_one()
+        stored = (
+            await session.execute(
+                text("SELECT resolution FROM review_queue WHERE raw_message_id = :r"),
+                {"r": raw_message_id},
+            )
+        ).scalar_one()
+
+    assert tx_count == 0
+    assert stored == resolution
+    skipped = [e for e in captured if e["event"] == "ledger_capture_skipped"]
+    assert skipped == [
+        {
+            "event": "ledger_capture_skipped",
+            "log_level": "info",
+            "reason": "review_already_resolved",
+            "bank": "bancolombia",
+            "channel": "email",
+        }
+    ]
