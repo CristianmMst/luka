@@ -14,7 +14,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CategoryOption {
 
- String get id; String get name; bool get isSystem; String? get slug;
+ String get id; String get name; bool get isSystem; String? get slug;/// Clave del ícono y color `#RRGGBB` de una categoría propia.
+ String? get icon; String? get color; String? get fiscalTag;
 /// Create a copy of CategoryOption
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +26,16 @@ $CategoryOptionCopyWith<CategoryOption> get copyWith => _$CategoryOptionCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryOption&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.slug, slug) || other.slug == slug));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryOption&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,isSystem,slug);
+int get hashCode => Object.hash(runtimeType,id,name,isSystem,slug,icon,color,fiscalTag);
 
 @override
 String toString() {
-  return 'CategoryOption(id: $id, name: $name, isSystem: $isSystem, slug: $slug)';
+  return 'CategoryOption(id: $id, name: $name, isSystem: $isSystem, slug: $slug, icon: $icon, color: $color, fiscalTag: $fiscalTag)';
 }
 
 
@@ -45,7 +46,7 @@ abstract mixin class $CategoryOptionCopyWith<$Res>  {
   factory $CategoryOptionCopyWith(CategoryOption value, $Res Function(CategoryOption) _then) = _$CategoryOptionCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, bool isSystem, String? slug
+ String id, String name, bool isSystem, String? slug, String? icon, String? color, String? fiscalTag
 });
 
 
@@ -62,12 +63,15 @@ class _$CategoryOptionCopyWithImpl<$Res>
 
 /// Create a copy of CategoryOption
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? isSystem = null,Object? slug = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? isSystem = null,Object? slug = freezed,Object? icon = freezed,Object? color = freezed,Object? fiscalTag = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,isSystem: null == isSystem ? _self.isSystem : isSystem // ignore: cast_nullable_to_non_nullable
 as bool,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
+as String?,fiscalTag: freezed == fiscalTag ? _self.fiscalTag : fiscalTag // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -153,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  bool isSystem,  String? slug)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  bool isSystem,  String? slug,  String? icon,  String? color,  String? fiscalTag)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategoryOption() when $default != null:
-return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
+return $default(_that.id,_that.name,_that.isSystem,_that.slug,_that.icon,_that.color,_that.fiscalTag);case _:
   return orElse();
 
 }
@@ -174,10 +178,10 @@ return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  bool isSystem,  String? slug)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  bool isSystem,  String? slug,  String? icon,  String? color,  String? fiscalTag)  $default,) {final _that = this;
 switch (_that) {
 case _CategoryOption():
-return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
+return $default(_that.id,_that.name,_that.isSystem,_that.slug,_that.icon,_that.color,_that.fiscalTag);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +198,10 @@ return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  bool isSystem,  String? slug)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  bool isSystem,  String? slug,  String? icon,  String? color,  String? fiscalTag)?  $default,) {final _that = this;
 switch (_that) {
 case _CategoryOption() when $default != null:
-return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
+return $default(_that.id,_that.name,_that.isSystem,_that.slug,_that.icon,_that.color,_that.fiscalTag);case _:
   return null;
 
 }
@@ -209,13 +213,17 @@ return $default(_that.id,_that.name,_that.isSystem,_that.slug);case _:
 
 
 class _CategoryOption implements CategoryOption {
-  const _CategoryOption({required this.id, required this.name, required this.isSystem, this.slug});
+  const _CategoryOption({required this.id, required this.name, required this.isSystem, this.slug, this.icon, this.color, this.fiscalTag});
   
 
 @override final  String id;
 @override final  String name;
 @override final  bool isSystem;
 @override final  String? slug;
+/// Clave del ícono y color `#RRGGBB` de una categoría propia.
+@override final  String? icon;
+@override final  String? color;
+@override final  String? fiscalTag;
 
 /// Create a copy of CategoryOption
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +235,16 @@ _$CategoryOptionCopyWith<_CategoryOption> get copyWith => __$CategoryOptionCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryOption&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.slug, slug) || other.slug == slug));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryOption&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isSystem, isSystem) || other.isSystem == isSystem)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.fiscalTag, fiscalTag) || other.fiscalTag == fiscalTag));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,isSystem,slug);
+int get hashCode => Object.hash(runtimeType,id,name,isSystem,slug,icon,color,fiscalTag);
 
 @override
 String toString() {
-  return 'CategoryOption(id: $id, name: $name, isSystem: $isSystem, slug: $slug)';
+  return 'CategoryOption(id: $id, name: $name, isSystem: $isSystem, slug: $slug, icon: $icon, color: $color, fiscalTag: $fiscalTag)';
 }
 
 
@@ -247,7 +255,7 @@ abstract mixin class _$CategoryOptionCopyWith<$Res> implements $CategoryOptionCo
   factory _$CategoryOptionCopyWith(_CategoryOption value, $Res Function(_CategoryOption) _then) = __$CategoryOptionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, bool isSystem, String? slug
+ String id, String name, bool isSystem, String? slug, String? icon, String? color, String? fiscalTag
 });
 
 
@@ -264,12 +272,15 @@ class __$CategoryOptionCopyWithImpl<$Res>
 
 /// Create a copy of CategoryOption
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? isSystem = null,Object? slug = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? isSystem = null,Object? slug = freezed,Object? icon = freezed,Object? color = freezed,Object? fiscalTag = freezed,}) {
   return _then(_CategoryOption(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,isSystem: null == isSystem ? _self.isSystem : isSystem // ignore: cast_nullable_to_non_nullable
 as bool,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
+as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
+as String?,fiscalTag: freezed == fiscalTag ? _self.fiscalTag : fiscalTag // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

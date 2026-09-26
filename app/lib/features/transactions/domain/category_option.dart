@@ -10,5 +10,10 @@ abstract class CategoryOption with _$CategoryOption {
     required String name,
     required bool isSystem,
     String? slug,
+
+    /// Clave del ícono y color `#RRGGBB` de una categoría propia.
+    String? icon,
+    String? color,
+    String? fiscalTag,
   }) = _CategoryOption;
 }

@@ -26,6 +26,10 @@ class DriftSyncStore implements SyncStore {
   /// desordenaría la lista.
   DateTime _now() => _clock().toUtc();
 
+  /// Ids locales ya canjeados por el del servidor en este proceso (para
+  /// abrir un movimiento recién creado, [resolveId]).
+  final _swapped = <String, String>{};
+
   static const _pending = 'pending';
   static const _rejected = 'rejected';
 
@@ -213,6 +217,7 @@ class DriftSyncStore implements SyncStore {
   /// para ella (conserva su contenido optimista); si no, se borra y la
   /// reemplaza la fila del servidor.
   Future<void> _swapId({required String from, required String to}) async {
+    _swapped[from] = to;
     final ids = [Variable.withString(from), Variable.withString(to)];
     await _db.customUpdate(
       'UPDATE outbox SET '
@@ -364,6 +369,9 @@ class DriftSyncStore implements SyncStore {
       remoteUpdatedAt: item.updatedAt,
     );
   }
+
+  @override
+  String resolveId(String id) => _swapped[id] ?? id;
 
   @override
   Future<void> replaceCategories(List<SyncedCategory> items) =>

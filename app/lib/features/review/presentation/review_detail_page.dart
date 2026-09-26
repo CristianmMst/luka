@@ -15,6 +15,7 @@ import 'package:finanzia/features/review/presentation/widgets/review_card.dart';
 import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:finanzia/features/transactions/presentation/widgets/transaction_form_card.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -341,14 +342,22 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
             ),
           ),
         ),
-        _FormCard(
+        TransactionFormCard(
           amount: _amount,
           merchant: _merchant,
           direction: _direction,
           occurredAt: _occurredAt,
-          dateFromReceived: _dateFromReceived,
           categoryName: _categoryName,
-          errors: _errors,
+          amountError: _errors.contains(ReviewDraftError.amountRequired)
+              ? l10n.reviewAmountRequired
+              : null,
+          directionError: _errors.contains(ReviewDraftError.directionRequired)
+              ? l10n.reviewDirectionRequired
+              : null,
+          dateError: _errors.contains(ReviewDraftError.occurredAtRequired)
+              ? l10n.reviewDateRequired
+              : null,
+          dateHint: _dateFromReceived ? l10n.reviewDateFromReceived : null,
           onAmountChanged: () => _clearError(ReviewDraftError.amountRequired),
           onDirection: (direction) {
             setState(() => _direction = direction);
@@ -626,314 +635,6 @@ class _AmountChip extends StatelessWidget {
                     color: scheme.onPrimaryContainer,
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FormCard extends StatelessWidget {
-  const _FormCard({
-    required this.amount,
-    required this.merchant,
-    required this.direction,
-    required this.occurredAt,
-    required this.dateFromReceived,
-    required this.categoryName,
-    required this.errors,
-    required this.onAmountChanged,
-    required this.onDirection,
-    required this.onPickDate,
-    required this.onPickTime,
-    required this.onPickCategory,
-  });
-
-  final TextEditingController amount;
-  final TextEditingController merchant;
-  final TxDirection? direction;
-  final DateTime occurredAt;
-  final bool dateFromReceived;
-  final String? categoryName;
-  final Set<ReviewDraftError> errors;
-  final VoidCallback onAmountChanged;
-  final ValueChanged<TxDirection> onDirection;
-  final VoidCallback onPickDate;
-  final VoidCallback onPickTime;
-  final VoidCallback onPickCategory;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
-    final textTheme = Theme.of(context).textTheme;
-    final label = textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
-    final muted = textTheme.labelMedium?.copyWith(
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant,
-    );
-    final error = textTheme.bodySmall?.copyWith(color: scheme.error);
-    OutlineInputBorder border(Color color, [double width = 1]) =>
-        OutlineInputBorder(
-          borderRadius: Radii.noticeAll,
-          borderSide: BorderSide(color: color, width: width),
-        );
-    InputDecoration decoration({String? hint, String? errorText}) =>
-        InputDecoration(
-          hintText: hint,
-          hintStyle: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant,
-          ),
-          errorText: errorText,
-          filled: true,
-          fillColor: brand.tile,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: Space.sm,
-          ),
-          enabledBorder: border(scheme.outline),
-          focusedBorder: border(scheme.primary, 2),
-          errorBorder: border(scheme.error),
-          focusedErrorBorder: border(scheme.error, 2),
-        );
-    final amountColor = switch (direction) {
-      TxDirection.debit => brand.expense,
-      TxDirection.credit => brand.income,
-      null => scheme.onSurface,
-    };
-    final amountStyle = amountTextStyle.copyWith(
-      fontSize: 28,
-      color: amountColor,
-    );
-
-    return DecoratedBox(
-      decoration: BoxDecoration(color: brand.card, borderRadius: Radii.cardAll),
-      child: Padding(
-        padding: const EdgeInsets.all(Space.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: Space.xs,
-          children: [
-            Text(l10n.reviewAmountLabel, style: label),
-            TextField(
-              controller: amount,
-              onChanged: (_) => onAmountChanged(),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: const [CopInputFormatter()],
-              style: amountStyle,
-              decoration:
-                  decoration(
-                    errorText: errors.contains(ReviewDraftError.amountRequired)
-                        ? l10n.reviewAmountRequired
-                        : null,
-                  ).copyWith(
-                    hintText: '0',
-                    hintStyle: amountStyle.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(left: 14, right: 6),
-                      child: Text(r'$', style: amountStyle),
-                    ),
-                    prefixIconConstraints: const BoxConstraints(),
-                  ),
-            ),
-            const SizedBox(height: Space.xs),
-            SegmentedButton<TxDirection>(
-              segments: [
-                ButtonSegment(
-                  value: TxDirection.debit,
-                  label: Text(l10n.detailKindExpense),
-                  icon: const Icon(Icons.north_east_rounded, size: 18),
-                ),
-                ButtonSegment(
-                  value: TxDirection.credit,
-                  label: Text(l10n.detailKindIncome),
-                  icon: const Icon(Icons.south_west_rounded, size: 18),
-                ),
-              ],
-              selected: {?direction},
-              emptySelectionAllowed: true,
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) {
-                if (selection.isNotEmpty) onDirection(selection.first);
-              },
-              style: SegmentedButton.styleFrom(
-                minimumSize: const Size(0, minTouchTarget),
-                selectedBackgroundColor: scheme.primaryContainer,
-                selectedForegroundColor: scheme.onPrimaryContainer,
-              ),
-            ),
-            if (errors.contains(ReviewDraftError.directionRequired))
-              Semantics(
-                liveRegion: true,
-                child: Text(l10n.reviewDirectionRequired, style: error),
-              ),
-            const SizedBox(height: Space.xs),
-            Row(
-              spacing: Space.xs,
-              children: [
-                Expanded(
-                  child: _PickerTile(
-                    label: l10n.reviewDateLabel,
-                    value: longDate(occurredAt),
-                    onTap: onPickDate,
-                  ),
-                ),
-                SizedBox(
-                  width: 96,
-                  child: _PickerTile(
-                    label: l10n.reviewTimeLabel,
-                    value: timeOfDay(occurredAt),
-                    onTap: onPickTime,
-                  ),
-                ),
-              ],
-            ),
-            if (errors.contains(ReviewDraftError.occurredAtRequired))
-              Text(l10n.reviewDateRequired, style: error)
-            else if (dateFromReceived)
-              Text(l10n.reviewDateFromReceived, style: muted),
-            const SizedBox(height: Space.xs),
-            Text(l10n.reviewMerchantLabel, style: label),
-            TextField(
-              controller: merchant,
-              textCapitalization: TextCapitalization.words,
-              style: textTheme.bodyMedium,
-              decoration: decoration(hint: l10n.reviewMerchantHint),
-            ),
-            const SizedBox(height: Space.xs),
-            Row(
-              children: [
-                Expanded(child: Text(l10n.detailCategory, style: label)),
-                _CategoryButton(
-                  label: categoryName ?? l10n.txNoCategory,
-                  onTap: onPickCategory,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Fecha u hora del formulario: botón de 56 dp que abre su selector.
-class _PickerTile extends StatelessWidget {
-  const _PickerTile({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Semantics(
-      button: true,
-      excludeSemantics: true,
-      label: l10n.reviewChangeSemantics(label, value),
-      onTap: onTap,
-      child: Material(
-        color: context.finanziaColors.tile,
-        shape: RoundedRectangleBorder(
-          borderRadius: Radii.noticeAll,
-          side: BorderSide(color: scheme.outline),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 56),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Space.sm,
-                vertical: Space.xs,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Chip de categoría de 36 dp en un área táctil de 48 dp; abre la hoja.
-class _CategoryButton extends StatelessWidget {
-  const _CategoryButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final foreground = scheme.onPrimaryContainer;
-
-    return Semantics(
-      button: true,
-      container: true,
-      excludeSemantics: true,
-      label: l10n.txChangeCategorySemantics(label),
-      onTap: onTap,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: Radii.chipAll,
-        child: SizedBox(
-          height: minTouchTarget,
-          child: Center(
-            widthFactor: 1,
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.only(left: Space.sm, right: Space.xs),
-              decoration: BoxDecoration(
-                borderRadius: Radii.chipAll,
-                color: scheme.primaryContainer,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: Space.xxs,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: foreground,
-                    ),
-                  ),
-                  Icon(Icons.expand_more_rounded, size: 16, color: foreground),
-                ],
               ),
             ),
           ),

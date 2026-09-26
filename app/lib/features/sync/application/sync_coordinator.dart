@@ -225,6 +225,9 @@ class SyncCoordinator extends Notifier<SyncStatus> {
   }
 
   String newLocalId() => const Uuid().v4();
+
+  /// El id vigente de [id]: el del servidor si el sync ya canjeó el local.
+  String resolveId(String id) => _store.resolveId(id);
 }
 
 final syncCoordinatorProvider = NotifierProvider<SyncCoordinator, SyncStatus>(

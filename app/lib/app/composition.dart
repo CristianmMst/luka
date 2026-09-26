@@ -3,6 +3,8 @@ import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
 import 'package:finanzia/features/capture/application/capture_flusher.dart';
 import 'package:finanzia/features/capture/data/capture_data_providers.dart';
+import 'package:finanzia/features/categories/application/category_actions.dart';
+import 'package:finanzia/features/categories/data/categories_data_providers.dart';
 import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
 import 'package:finanzia/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
@@ -52,4 +54,10 @@ List<Override> get appOverrides => [
     (ref) => ref.watch(platformNotificationSourceProvider),
   ),
   captureRemoteProvider.overrideWith((ref) => ref.watch(captureApiProvider)),
+  categoriesRemoteProvider.overrideWith(
+    (ref) => ref.watch(categoriesApiProvider),
+  ),
+  categoriesStoreProvider.overrideWith(
+    (ref) => ref.watch(driftCategoriesStoreProvider),
+  ),
 ];

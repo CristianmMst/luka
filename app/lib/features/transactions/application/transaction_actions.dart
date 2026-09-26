@@ -1,11 +1,12 @@
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:finanzia/features/transactions/domain/manual_draft.dart';
 import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Ediciones del detalle de un movimiento. Todas son optimistas: se
-/// aplican en local y se encolan en el outbox (spec 005 §9).
+/// Registro manual y ediciones del detalle de un movimiento. Todas son
+/// optimistas: se aplican en local y se encolan en el outbox (spec 005 §9).
 class TransactionActions {
   TransactionActions(this._coordinator);
 
@@ -50,6 +51,21 @@ class TransactionActions {
       ),
     );
   }
+
+  /// Registra un movimiento manual (spec 008 §3.4) y devuelve su id local.
+  /// Funciona sin red: se envía cuando haya conexión.
+  Future<String> create(ManualDraft draft) async {
+    final data = draft.toNewTransaction();
+    final localId = _coordinator.newLocalId();
+    await _coordinator.enqueue(
+      OutboxOperation.createTransaction(localId: localId, data: data),
+    );
+    return localId;
+  }
+
+  /// El id vigente de un movimiento creado en este proceso: el del servidor
+  /// si el sync ya canjeó el local.
+  String resolveId(String id) => _coordinator.resolveId(id);
 
   Future<void> retryRejected(String id) => _coordinator.retryRejected(id);
 

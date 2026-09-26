@@ -716,6 +716,7 @@
   },
   "reviewMerchantLabel": "Comercio",
   "reviewMerchantHint": "Opcional",
+  "registerNotesLabel": "Nota",
   "reviewConvert": "Crear movimiento",
   "reviewDiscard": "Descartar",
   "reviewDiscardTitle": "¿Descartar este mensaje?",
@@ -724,5 +725,154 @@
   "reviewDiscardCancel": "Cancelar",
   "reviewConverted": "Movimiento creado",
   "reviewDiscarded": "Descartado",
-  "reviewSaveError": "No pudimos guardar el cambio. Intenta de nuevo."
+  "reviewSaveError": "No pudimos guardar el cambio. Intenta de nuevo.",
+  "registerSubtitle": "Anota un gasto o un ingreso a mano.",
+  "registerSave": "Guardar movimiento",
+  "registerSaved": "Movimiento guardado",
+  "registerSavedOffline": "Movimiento guardado. Se enviará cuando haya conexión.",
+  "registerView": "Ver",
+  "registerAmountRequired": "Escribe un monto mayor a $0.",
+  "registerSaveError": "No pudimos guardar el movimiento. Intenta de nuevo.",
+  "categoryFormNewTitle": "Nueva categoría",
+  "categoryFormEditTitle": "Editar categoría",
+  "categoryFormName": "Nombre",
+  "categoryFormNameHint": "Ej.: Mascotas",
+  "categoryFormIcon": "Ícono",
+  "categoryFormColor": "Color",
+  "categoryFormPurpose": "¿Para qué la usas?",
+  "categoryFormCreate": "Crear categoría",
+  "categoryFormSave": "Guardar cambios",
+  "categoryFormCancel": "Cancelar",
+  "categoryNameRequired": "Escribe un nombre.",
+  "categoryNameTooLong": "Máximo 80 caracteres.",
+  "categoryErrorDuplicate": "Ya existe una categoría con ese nombre (tuya o de finanzia).",
+  "categoryErrorOffline": "Necesitas conexión para crear, editar o borrar categorías.",
+  "categoryErrorGone": "Esa categoría ya no existe.",
+  "categoryErrorUnexpected": "No pudimos guardar la categoría. Intenta de nuevo.",
+  "categoryIconSemantics": "Ícono {name}",
+  "@categoryIconSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryColorSemantics": "Color {name}",
+  "@categoryColorSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryIconLabel": "Etiqueta",
+  "categoryIconPets": "Mascota",
+  "categoryIconCart": "Mercado",
+  "categoryIconHome": "Hogar",
+  "categoryIconHealth": "Salud",
+  "categoryIconCar": "Carro",
+  "categoryIconCoffee": "Café",
+  "categoryIconBook": "Libro",
+  "categoryIconGift": "Regalo",
+  "categoryIconFlight": "Viaje",
+  "categoryIconPhone": "Celular",
+  "categoryIconBolt": "Servicios",
+  "categoryIconMusic": "Música",
+  "categoryIconFitness": "Deporte",
+  "categoryIconClothes": "Ropa",
+  "categoryIconSchool": "Estudio",
+  "categoryColorEmerald": "Esmeralda",
+  "categoryColorGreen": "Verde",
+  "categoryColorSlate": "Pizarra",
+  "categoryColorTerracotta": "Terracota",
+  "categoryColorOchre": "Ocre",
+  "categoryColorPurple": "Morado",
+  "categoryColorRose": "Rosa",
+  "categoryColorGraphite": "Grafito",
+  "fiscalSheetTitle": "¿Para qué la usas?",
+  "fiscalSheetBody": "Define cómo cuenta en tu reporte de renta. Si no sabes, deja «Gasto personal».",
+  "fiscalGroupExpenses": "Gastos",
+  "fiscalGroupContributions": "Aportes",
+  "fiscalGroupIncome": "Ingresos",
+  "fiscalNoDeducible": "Gasto personal",
+  "fiscalNoDeducibleHint": "No cuenta en la declaración",
+  "fiscalDeducibleSalud": "Salud prepagada o seguros de salud",
+  "fiscalDeducibleSaludHint": "Puede restar en la renta",
+  "fiscalDeducibleVivienda": "Intereses de crédito de vivienda",
+  "fiscalDeducibleViviendaHint": "Puede restar en la renta",
+  "fiscalDonacion": "Donaciones",
+  "fiscalDonacionHint": "A entidades sin ánimo de lucro",
+  "fiscalAportePensionVoluntaria": "Pensión voluntaria",
+  "fiscalAportePensionVoluntariaHint": "Aportes a fondos voluntarios",
+  "fiscalAporteAfc": "Cuenta AFC",
+  "fiscalAporteAfcHint": "Ahorro para vivienda",
+  "fiscalAporteObligatorio": "Salud y pensión obligatorias",
+  "fiscalAporteObligatorioHint": "Seguridad social que pagas tú",
+  "fiscalIngresoLaboral": "Salario",
+  "fiscalIngresoLaboralHint": "Lo que te paga tu empleador",
+  "fiscalIngresoHonorarios": "Honorarios o servicios",
+  "fiscalIngresoHonorariosHint": "Trabajo independiente",
+  "fiscalIngresoCapital": "Arriendos, intereses o rendimientos",
+  "fiscalIngresoCapitalHint": "Rentas de capital",
+  "fiscalIngresoPension": "Pensión",
+  "fiscalIngresoPensionHint": "Mesadas pensionales",
+  "fiscalIngresoNoLaboral": "Otros ingresos",
+  "fiscalIngresoNoLaboralHint": "Premios, ventas, otros",
+  "settingsCategoriesTitle": "Mis categorías",
+  "settingsCategoriesSubtitle": "Crea y edita tus propias categorías",
+  "myCategoriesTitle": "Mis categorías",
+  "myCategoriesOwnSection": "Tuyas · solo las ves tú",
+  "myCategoriesEmpty": "Aún no tienes categorías propias. Crea una para ordenar tus gastos a tu manera.",
+  "myCategoriesNew": "Nueva categoría",
+  "myCategoriesSystemSection": "De finanzia",
+  "myCategoriesSystemNote": "Las categorías de finanzia se pueden usar, pero no editar ni borrar.",
+  "myCategoriesMeta": "{tag} · {count, plural, =0{sin movimientos} =1{1 movimiento} other{{count} movimientos}}",
+  "@myCategoriesMeta": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "myCategoriesEditSemantics": "Editar {name}",
+  "@myCategoriesEditSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "myCategoriesDeleteSemantics": "Borrar {name}",
+  "@myCategoriesDeleteSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryDeleteTitle": "¿Borrar «{name}»?",
+  "@categoryDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryDeleteBody": "{count, plural, =0{No tiene movimientos.} =1{Su movimiento pasa a Sin categoría.} other{Sus {count} movimientos pasan a Sin categoría.}} Las reglas que la asignaban solas también se borran. No se puede deshacer.",
+  "@categoryDeleteBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categoryDeleteConfirm": "Borrar categoría",
+  "categoryDeleteCancel": "Cancelar",
+  "categoryDeleted": "Categoría borrada",
+  "categoryCreated": "Categoría creada",
+  "categorySaved": "Cambios guardados",
+  "registerOfflineBanner": "Sin conexión. Lo que registres se envía al volver."
 }

@@ -2,6 +2,7 @@ import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
+import 'package:finanzia/features/categories/presentation/my_categories_page.dart';
 import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/gmail/application/gmail_gate.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
@@ -9,7 +10,7 @@ import 'package:finanzia/features/review/presentation/review_detail_page.dart';
 import 'package:finanzia/features/review/presentation/review_page.dart';
 import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
 import 'package:finanzia/features/shell/presentation/home_shell.dart';
-import 'package:finanzia/features/shell/presentation/registrar_page.dart';
+import 'package:finanzia/features/transactions/presentation/registrar_page.dart';
 import 'package:finanzia/features/transactions/presentation/transaction_detail_page.dart';
 import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
 import 'package:flutter/widgets.dart';
@@ -143,6 +144,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Routes.settings,
                 builder: (context, state) => const AjustesPage(),
+                routes: [
+                  GoRoute(
+                    path: 'categorias',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const MyCategoriesPage(),
+                  ),
+                ],
               ),
             ],
           ),

@@ -1696,6 +1696,12 @@ abstract class AppLocalizations {
   /// **'Opcional'**
   String get reviewMerchantHint;
 
+  /// No description provided for @registerNotesLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get registerNotesLabel;
+
   /// No description provided for @reviewConvert.
   ///
   /// In es, this message translates to:
@@ -1749,6 +1755,588 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No pudimos guardar el cambio. Intenta de nuevo.'**
   String get reviewSaveError;
+
+  /// No description provided for @registerSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Anota un gasto o un ingreso a mano.'**
+  String get registerSubtitle;
+
+  /// No description provided for @registerSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar movimiento'**
+  String get registerSave;
+
+  /// No description provided for @registerSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento guardado'**
+  String get registerSaved;
+
+  /// No description provided for @registerSavedOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento guardado. Se enviará cuando haya conexión.'**
+  String get registerSavedOffline;
+
+  /// No description provided for @registerView.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get registerView;
+
+  /// No description provided for @registerAmountRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un monto mayor a \$0.'**
+  String get registerAmountRequired;
+
+  /// No description provided for @registerSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar el movimiento. Intenta de nuevo.'**
+  String get registerSaveError;
+
+  /// No description provided for @categoryFormNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva categoría'**
+  String get categoryFormNewTitle;
+
+  /// No description provided for @categoryFormEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar categoría'**
+  String get categoryFormEditTitle;
+
+  /// No description provided for @categoryFormName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get categoryFormName;
+
+  /// No description provided for @categoryFormNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej.: Mascotas'**
+  String get categoryFormNameHint;
+
+  /// No description provided for @categoryFormIcon.
+  ///
+  /// In es, this message translates to:
+  /// **'Ícono'**
+  String get categoryFormIcon;
+
+  /// No description provided for @categoryFormColor.
+  ///
+  /// In es, this message translates to:
+  /// **'Color'**
+  String get categoryFormColor;
+
+  /// No description provided for @categoryFormPurpose.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Para qué la usas?'**
+  String get categoryFormPurpose;
+
+  /// No description provided for @categoryFormCreate.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear categoría'**
+  String get categoryFormCreate;
+
+  /// No description provided for @categoryFormSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get categoryFormSave;
+
+  /// No description provided for @categoryFormCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get categoryFormCancel;
+
+  /// No description provided for @categoryNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un nombre.'**
+  String get categoryNameRequired;
+
+  /// No description provided for @categoryNameTooLong.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 80 caracteres.'**
+  String get categoryNameTooLong;
+
+  /// No description provided for @categoryErrorDuplicate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe una categoría con ese nombre (tuya o de finanzia).'**
+  String get categoryErrorDuplicate;
+
+  /// No description provided for @categoryErrorOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas conexión para crear, editar o borrar categorías.'**
+  String get categoryErrorOffline;
+
+  /// No description provided for @categoryErrorGone.
+  ///
+  /// In es, this message translates to:
+  /// **'Esa categoría ya no existe.'**
+  String get categoryErrorGone;
+
+  /// No description provided for @categoryErrorUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar la categoría. Intenta de nuevo.'**
+  String get categoryErrorUnexpected;
+
+  /// No description provided for @categoryIconSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Ícono {name}'**
+  String categoryIconSemantics(String name);
+
+  /// No description provided for @categoryColorSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Color {name}'**
+  String categoryColorSemantics(String name);
+
+  /// No description provided for @categoryIconLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Etiqueta'**
+  String get categoryIconLabel;
+
+  /// No description provided for @categoryIconPets.
+  ///
+  /// In es, this message translates to:
+  /// **'Mascota'**
+  String get categoryIconPets;
+
+  /// No description provided for @categoryIconCart.
+  ///
+  /// In es, this message translates to:
+  /// **'Mercado'**
+  String get categoryIconCart;
+
+  /// No description provided for @categoryIconHome.
+  ///
+  /// In es, this message translates to:
+  /// **'Hogar'**
+  String get categoryIconHome;
+
+  /// No description provided for @categoryIconHealth.
+  ///
+  /// In es, this message translates to:
+  /// **'Salud'**
+  String get categoryIconHealth;
+
+  /// No description provided for @categoryIconCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Carro'**
+  String get categoryIconCar;
+
+  /// No description provided for @categoryIconCoffee.
+  ///
+  /// In es, this message translates to:
+  /// **'Café'**
+  String get categoryIconCoffee;
+
+  /// No description provided for @categoryIconBook.
+  ///
+  /// In es, this message translates to:
+  /// **'Libro'**
+  String get categoryIconBook;
+
+  /// No description provided for @categoryIconGift.
+  ///
+  /// In es, this message translates to:
+  /// **'Regalo'**
+  String get categoryIconGift;
+
+  /// No description provided for @categoryIconFlight.
+  ///
+  /// In es, this message translates to:
+  /// **'Viaje'**
+  String get categoryIconFlight;
+
+  /// No description provided for @categoryIconPhone.
+  ///
+  /// In es, this message translates to:
+  /// **'Celular'**
+  String get categoryIconPhone;
+
+  /// No description provided for @categoryIconBolt.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios'**
+  String get categoryIconBolt;
+
+  /// No description provided for @categoryIconMusic.
+  ///
+  /// In es, this message translates to:
+  /// **'Música'**
+  String get categoryIconMusic;
+
+  /// No description provided for @categoryIconFitness.
+  ///
+  /// In es, this message translates to:
+  /// **'Deporte'**
+  String get categoryIconFitness;
+
+  /// No description provided for @categoryIconClothes.
+  ///
+  /// In es, this message translates to:
+  /// **'Ropa'**
+  String get categoryIconClothes;
+
+  /// No description provided for @categoryIconSchool.
+  ///
+  /// In es, this message translates to:
+  /// **'Estudio'**
+  String get categoryIconSchool;
+
+  /// No description provided for @categoryColorEmerald.
+  ///
+  /// In es, this message translates to:
+  /// **'Esmeralda'**
+  String get categoryColorEmerald;
+
+  /// No description provided for @categoryColorGreen.
+  ///
+  /// In es, this message translates to:
+  /// **'Verde'**
+  String get categoryColorGreen;
+
+  /// No description provided for @categoryColorSlate.
+  ///
+  /// In es, this message translates to:
+  /// **'Pizarra'**
+  String get categoryColorSlate;
+
+  /// No description provided for @categoryColorTerracotta.
+  ///
+  /// In es, this message translates to:
+  /// **'Terracota'**
+  String get categoryColorTerracotta;
+
+  /// No description provided for @categoryColorOchre.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocre'**
+  String get categoryColorOchre;
+
+  /// No description provided for @categoryColorPurple.
+  ///
+  /// In es, this message translates to:
+  /// **'Morado'**
+  String get categoryColorPurple;
+
+  /// No description provided for @categoryColorRose.
+  ///
+  /// In es, this message translates to:
+  /// **'Rosa'**
+  String get categoryColorRose;
+
+  /// No description provided for @categoryColorGraphite.
+  ///
+  /// In es, this message translates to:
+  /// **'Grafito'**
+  String get categoryColorGraphite;
+
+  /// No description provided for @fiscalSheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Para qué la usas?'**
+  String get fiscalSheetTitle;
+
+  /// No description provided for @fiscalSheetBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Define cómo cuenta en tu reporte de renta. Si no sabes, deja «Gasto personal».'**
+  String get fiscalSheetBody;
+
+  /// No description provided for @fiscalGroupExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos'**
+  String get fiscalGroupExpenses;
+
+  /// No description provided for @fiscalGroupContributions.
+  ///
+  /// In es, this message translates to:
+  /// **'Aportes'**
+  String get fiscalGroupContributions;
+
+  /// No description provided for @fiscalGroupIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresos'**
+  String get fiscalGroupIncome;
+
+  /// No description provided for @fiscalNoDeducible.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto personal'**
+  String get fiscalNoDeducible;
+
+  /// No description provided for @fiscalNoDeducibleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'No cuenta en la declaración'**
+  String get fiscalNoDeducibleHint;
+
+  /// No description provided for @fiscalDeducibleSalud.
+  ///
+  /// In es, this message translates to:
+  /// **'Salud prepagada o seguros de salud'**
+  String get fiscalDeducibleSalud;
+
+  /// No description provided for @fiscalDeducibleSaludHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Puede restar en la renta'**
+  String get fiscalDeducibleSaludHint;
+
+  /// No description provided for @fiscalDeducibleVivienda.
+  ///
+  /// In es, this message translates to:
+  /// **'Intereses de crédito de vivienda'**
+  String get fiscalDeducibleVivienda;
+
+  /// No description provided for @fiscalDeducibleViviendaHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Puede restar en la renta'**
+  String get fiscalDeducibleViviendaHint;
+
+  /// No description provided for @fiscalDonacion.
+  ///
+  /// In es, this message translates to:
+  /// **'Donaciones'**
+  String get fiscalDonacion;
+
+  /// No description provided for @fiscalDonacionHint.
+  ///
+  /// In es, this message translates to:
+  /// **'A entidades sin ánimo de lucro'**
+  String get fiscalDonacionHint;
+
+  /// No description provided for @fiscalAportePensionVoluntaria.
+  ///
+  /// In es, this message translates to:
+  /// **'Pensión voluntaria'**
+  String get fiscalAportePensionVoluntaria;
+
+  /// No description provided for @fiscalAportePensionVoluntariaHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Aportes a fondos voluntarios'**
+  String get fiscalAportePensionVoluntariaHint;
+
+  /// No description provided for @fiscalAporteAfc.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta AFC'**
+  String get fiscalAporteAfc;
+
+  /// No description provided for @fiscalAporteAfcHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahorro para vivienda'**
+  String get fiscalAporteAfcHint;
+
+  /// No description provided for @fiscalAporteObligatorio.
+  ///
+  /// In es, this message translates to:
+  /// **'Salud y pensión obligatorias'**
+  String get fiscalAporteObligatorio;
+
+  /// No description provided for @fiscalAporteObligatorioHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguridad social que pagas tú'**
+  String get fiscalAporteObligatorioHint;
+
+  /// No description provided for @fiscalIngresoLaboral.
+  ///
+  /// In es, this message translates to:
+  /// **'Salario'**
+  String get fiscalIngresoLaboral;
+
+  /// No description provided for @fiscalIngresoLaboralHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que te paga tu empleador'**
+  String get fiscalIngresoLaboralHint;
+
+  /// No description provided for @fiscalIngresoHonorarios.
+  ///
+  /// In es, this message translates to:
+  /// **'Honorarios o servicios'**
+  String get fiscalIngresoHonorarios;
+
+  /// No description provided for @fiscalIngresoHonorariosHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Trabajo independiente'**
+  String get fiscalIngresoHonorariosHint;
+
+  /// No description provided for @fiscalIngresoCapital.
+  ///
+  /// In es, this message translates to:
+  /// **'Arriendos, intereses o rendimientos'**
+  String get fiscalIngresoCapital;
+
+  /// No description provided for @fiscalIngresoCapitalHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Rentas de capital'**
+  String get fiscalIngresoCapitalHint;
+
+  /// No description provided for @fiscalIngresoPension.
+  ///
+  /// In es, this message translates to:
+  /// **'Pensión'**
+  String get fiscalIngresoPension;
+
+  /// No description provided for @fiscalIngresoPensionHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Mesadas pensionales'**
+  String get fiscalIngresoPensionHint;
+
+  /// No description provided for @fiscalIngresoNoLaboral.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros ingresos'**
+  String get fiscalIngresoNoLaboral;
+
+  /// No description provided for @fiscalIngresoNoLaboralHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Premios, ventas, otros'**
+  String get fiscalIngresoNoLaboralHint;
+
+  /// No description provided for @settingsCategoriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis categorías'**
+  String get settingsCategoriesTitle;
+
+  /// No description provided for @settingsCategoriesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea y edita tus propias categorías'**
+  String get settingsCategoriesSubtitle;
+
+  /// No description provided for @myCategoriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis categorías'**
+  String get myCategoriesTitle;
+
+  /// No description provided for @myCategoriesOwnSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Tuyas · solo las ves tú'**
+  String get myCategoriesOwnSection;
+
+  /// No description provided for @myCategoriesEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes categorías propias. Crea una para ordenar tus gastos a tu manera.'**
+  String get myCategoriesEmpty;
+
+  /// No description provided for @myCategoriesNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva categoría'**
+  String get myCategoriesNew;
+
+  /// No description provided for @myCategoriesSystemSection.
+  ///
+  /// In es, this message translates to:
+  /// **'De finanzia'**
+  String get myCategoriesSystemSection;
+
+  /// No description provided for @myCategoriesSystemNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Las categorías de finanzia se pueden usar, pero no editar ni borrar.'**
+  String get myCategoriesSystemNote;
+
+  /// No description provided for @myCategoriesMeta.
+  ///
+  /// In es, this message translates to:
+  /// **'{tag} · {count, plural, =0{sin movimientos} =1{1 movimiento} other{{count} movimientos}}'**
+  String myCategoriesMeta(String tag, int count);
+
+  /// No description provided for @myCategoriesEditSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar {name}'**
+  String myCategoriesEditSemantics(String name);
+
+  /// No description provided for @myCategoriesDeleteSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar {name}'**
+  String myCategoriesDeleteSemantics(String name);
+
+  /// No description provided for @categoryDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Borrar «{name}»?'**
+  String categoryDeleteTitle(String name);
+
+  /// No description provided for @categoryDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{No tiene movimientos.} =1{Su movimiento pasa a Sin categoría.} other{Sus {count} movimientos pasan a Sin categoría.}} Las reglas que la asignaban solas también se borran. No se puede deshacer.'**
+  String categoryDeleteBody(int count);
+
+  /// No description provided for @categoryDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar categoría'**
+  String get categoryDeleteConfirm;
+
+  /// No description provided for @categoryDeleteCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get categoryDeleteCancel;
+
+  /// No description provided for @categoryDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría borrada'**
+  String get categoryDeleted;
+
+  /// No description provided for @categoryCreated.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría creada'**
+  String get categoryCreated;
+
+  /// No description provided for @categorySaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios guardados'**
+  String get categorySaved;
+
+  /// No description provided for @registerOfflineBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión. Lo que registres se envía al volver.'**
+  String get registerOfflineBanner;
 }
 
 class _AppLocalizationsDelegate

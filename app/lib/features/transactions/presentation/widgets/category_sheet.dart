@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
+import 'package:finanzia/features/categories/presentation/category_form_sheet.dart';
+import 'package:finanzia/features/categories/presentation/category_visuals.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:finanzia/features/transactions/domain/category_option.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/category_icon.dart';
@@ -13,7 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 typedef CategoryChoice = ({String? id, String? name});
 
 /// Hoja "Categoría" (diseño "Categoria"): rejilla de 3 columnas con las
-/// categorías y "+ Nueva categoría", deshabilitado hasta F4.8.
+/// categorías y "+ Nueva categoría" (F4.8a), que abre la hoja de crear y
+/// deja elegida la nueva. En el filtro ([allowAll]) no se ofrece crear.
 class CategorySheet extends ConsumerWidget {
   const CategorySheet({
     required this.selectedId,
@@ -102,7 +107,7 @@ class CategorySheet extends ConsumerWidget {
                 _CategoryTile(
                   icon: category.isSystem
                       ? categoryIcon(category.slug)
-                      : genericCategoryIcon,
+                      : ownCategoryIcon(category.icon),
                   label: category.name,
                   selected: category.id == selectedId,
                   onTap: () => Navigator.of(
@@ -111,19 +116,26 @@ class CategorySheet extends ConsumerWidget {
                 ),
             ],
           ),
-          Semantics(
-            hint: l10n.shellComingSoonBody,
-            child: OutlinedButton(
-              onPressed: null,
+          if (!allowAll)
+            OutlinedButton(
+              onPressed: () => unawaited(_create(context)),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: scheme.outlineVariant),
+                minimumSize: const Size.fromHeight(minTouchTarget),
+                side: BorderSide(color: scheme.outline),
               ),
               child: Text(l10n.categorySheetNew),
             ),
-          ),
         ],
       ),
     );
+  }
+}
+
+Future<void> _create(BuildContext context) async {
+  final navigator = Navigator.of(context);
+  final created = await CategoryFormSheet.show(context);
+  if (created != null && navigator.mounted) {
+    navigator.pop<CategoryChoice>((id: created.id, name: created.name));
   }
 }
 

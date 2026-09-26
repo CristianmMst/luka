@@ -3,6 +3,7 @@ import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/application/transaction_actions.dart';
+import 'package:finanzia/features/transactions/domain/manual_draft.dart';
 import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -183,5 +184,53 @@ void main() {
     await actions.discardRejected('t1');
 
     verify(() => coordinator.discardRejected('t1')).called(1);
+  });
+
+  group('create', () {
+    final at = DateTime.utc(2026, 9, 25, 20);
+
+    test('encola la creación con un id local nuevo y lo devuelve', () async {
+      when(() => coordinator.newLocalId()).thenReturn('local-1');
+
+      final id = await actions.create(
+        ManualDraft(
+          occurredAt: at,
+          amount: Cop.pesos(12500),
+          merchant: ' Panadería ',
+          categoryId: 'c-1',
+        ),
+      );
+
+      expect(id, 'local-1');
+      verify(
+        () => coordinator.enqueue(
+          OutboxOperation.createTransaction(
+            localId: 'local-1',
+            data: NewTransaction(
+              amount: Cop.pesos(12500),
+              direction: TxDirection.debit,
+              occurredAt: at,
+              merchant: 'Panadería',
+              categoryId: 'c-1',
+            ),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('un borrador sin monto no se encola', () async {
+      when(() => coordinator.newLocalId()).thenReturn('local-1');
+
+      await expectLater(
+        actions.create(ManualDraft(occurredAt: at)),
+        throwsA(isA<InvalidManualDraft>()),
+      );
+      verifyNever(() => coordinator.enqueue(any()));
+    });
+  });
+
+  test('resolveId delega en el coordinador', () {
+    when(() => coordinator.resolveId('local-1')).thenReturn('srv-1');
+    expect(actions.resolveId('local-1'), 'srv-1');
   });
 }

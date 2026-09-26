@@ -129,6 +129,9 @@ class DriftTransactionsRepository implements TransactionsRepository {
             name: row.name,
             isSystem: row.isSystem,
             slug: row.slug,
+            icon: row.icon,
+            color: row.color,
+            fiscalTag: row.fiscalTag,
           ),
       ]..sort(_categoryOrder);
     });

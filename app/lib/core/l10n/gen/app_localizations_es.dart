@@ -1031,6 +1031,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reviewMerchantHint => 'Opcional';
 
   @override
+  String get registerNotesLabel => 'Nota';
+
+  @override
   String get reviewConvert => 'Crear movimiento';
 
   @override
@@ -1058,4 +1061,334 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get reviewSaveError =>
       'No pudimos guardar el cambio. Intenta de nuevo.';
+
+  @override
+  String get registerSubtitle => 'Anota un gasto o un ingreso a mano.';
+
+  @override
+  String get registerSave => 'Guardar movimiento';
+
+  @override
+  String get registerSaved => 'Movimiento guardado';
+
+  @override
+  String get registerSavedOffline =>
+      'Movimiento guardado. Se enviará cuando haya conexión.';
+
+  @override
+  String get registerView => 'Ver';
+
+  @override
+  String get registerAmountRequired => 'Escribe un monto mayor a \$0.';
+
+  @override
+  String get registerSaveError =>
+      'No pudimos guardar el movimiento. Intenta de nuevo.';
+
+  @override
+  String get categoryFormNewTitle => 'Nueva categoría';
+
+  @override
+  String get categoryFormEditTitle => 'Editar categoría';
+
+  @override
+  String get categoryFormName => 'Nombre';
+
+  @override
+  String get categoryFormNameHint => 'Ej.: Mascotas';
+
+  @override
+  String get categoryFormIcon => 'Ícono';
+
+  @override
+  String get categoryFormColor => 'Color';
+
+  @override
+  String get categoryFormPurpose => '¿Para qué la usas?';
+
+  @override
+  String get categoryFormCreate => 'Crear categoría';
+
+  @override
+  String get categoryFormSave => 'Guardar cambios';
+
+  @override
+  String get categoryFormCancel => 'Cancelar';
+
+  @override
+  String get categoryNameRequired => 'Escribe un nombre.';
+
+  @override
+  String get categoryNameTooLong => 'Máximo 80 caracteres.';
+
+  @override
+  String get categoryErrorDuplicate =>
+      'Ya existe una categoría con ese nombre (tuya o de finanzia).';
+
+  @override
+  String get categoryErrorOffline =>
+      'Necesitas conexión para crear, editar o borrar categorías.';
+
+  @override
+  String get categoryErrorGone => 'Esa categoría ya no existe.';
+
+  @override
+  String get categoryErrorUnexpected =>
+      'No pudimos guardar la categoría. Intenta de nuevo.';
+
+  @override
+  String categoryIconSemantics(String name) {
+    return 'Ícono $name';
+  }
+
+  @override
+  String categoryColorSemantics(String name) {
+    return 'Color $name';
+  }
+
+  @override
+  String get categoryIconLabel => 'Etiqueta';
+
+  @override
+  String get categoryIconPets => 'Mascota';
+
+  @override
+  String get categoryIconCart => 'Mercado';
+
+  @override
+  String get categoryIconHome => 'Hogar';
+
+  @override
+  String get categoryIconHealth => 'Salud';
+
+  @override
+  String get categoryIconCar => 'Carro';
+
+  @override
+  String get categoryIconCoffee => 'Café';
+
+  @override
+  String get categoryIconBook => 'Libro';
+
+  @override
+  String get categoryIconGift => 'Regalo';
+
+  @override
+  String get categoryIconFlight => 'Viaje';
+
+  @override
+  String get categoryIconPhone => 'Celular';
+
+  @override
+  String get categoryIconBolt => 'Servicios';
+
+  @override
+  String get categoryIconMusic => 'Música';
+
+  @override
+  String get categoryIconFitness => 'Deporte';
+
+  @override
+  String get categoryIconClothes => 'Ropa';
+
+  @override
+  String get categoryIconSchool => 'Estudio';
+
+  @override
+  String get categoryColorEmerald => 'Esmeralda';
+
+  @override
+  String get categoryColorGreen => 'Verde';
+
+  @override
+  String get categoryColorSlate => 'Pizarra';
+
+  @override
+  String get categoryColorTerracotta => 'Terracota';
+
+  @override
+  String get categoryColorOchre => 'Ocre';
+
+  @override
+  String get categoryColorPurple => 'Morado';
+
+  @override
+  String get categoryColorRose => 'Rosa';
+
+  @override
+  String get categoryColorGraphite => 'Grafito';
+
+  @override
+  String get fiscalSheetTitle => '¿Para qué la usas?';
+
+  @override
+  String get fiscalSheetBody =>
+      'Define cómo cuenta en tu reporte de renta. Si no sabes, deja «Gasto personal».';
+
+  @override
+  String get fiscalGroupExpenses => 'Gastos';
+
+  @override
+  String get fiscalGroupContributions => 'Aportes';
+
+  @override
+  String get fiscalGroupIncome => 'Ingresos';
+
+  @override
+  String get fiscalNoDeducible => 'Gasto personal';
+
+  @override
+  String get fiscalNoDeducibleHint => 'No cuenta en la declaración';
+
+  @override
+  String get fiscalDeducibleSalud => 'Salud prepagada o seguros de salud';
+
+  @override
+  String get fiscalDeducibleSaludHint => 'Puede restar en la renta';
+
+  @override
+  String get fiscalDeducibleVivienda => 'Intereses de crédito de vivienda';
+
+  @override
+  String get fiscalDeducibleViviendaHint => 'Puede restar en la renta';
+
+  @override
+  String get fiscalDonacion => 'Donaciones';
+
+  @override
+  String get fiscalDonacionHint => 'A entidades sin ánimo de lucro';
+
+  @override
+  String get fiscalAportePensionVoluntaria => 'Pensión voluntaria';
+
+  @override
+  String get fiscalAportePensionVoluntariaHint =>
+      'Aportes a fondos voluntarios';
+
+  @override
+  String get fiscalAporteAfc => 'Cuenta AFC';
+
+  @override
+  String get fiscalAporteAfcHint => 'Ahorro para vivienda';
+
+  @override
+  String get fiscalAporteObligatorio => 'Salud y pensión obligatorias';
+
+  @override
+  String get fiscalAporteObligatorioHint => 'Seguridad social que pagas tú';
+
+  @override
+  String get fiscalIngresoLaboral => 'Salario';
+
+  @override
+  String get fiscalIngresoLaboralHint => 'Lo que te paga tu empleador';
+
+  @override
+  String get fiscalIngresoHonorarios => 'Honorarios o servicios';
+
+  @override
+  String get fiscalIngresoHonorariosHint => 'Trabajo independiente';
+
+  @override
+  String get fiscalIngresoCapital => 'Arriendos, intereses o rendimientos';
+
+  @override
+  String get fiscalIngresoCapitalHint => 'Rentas de capital';
+
+  @override
+  String get fiscalIngresoPension => 'Pensión';
+
+  @override
+  String get fiscalIngresoPensionHint => 'Mesadas pensionales';
+
+  @override
+  String get fiscalIngresoNoLaboral => 'Otros ingresos';
+
+  @override
+  String get fiscalIngresoNoLaboralHint => 'Premios, ventas, otros';
+
+  @override
+  String get settingsCategoriesTitle => 'Mis categorías';
+
+  @override
+  String get settingsCategoriesSubtitle =>
+      'Crea y edita tus propias categorías';
+
+  @override
+  String get myCategoriesTitle => 'Mis categorías';
+
+  @override
+  String get myCategoriesOwnSection => 'Tuyas · solo las ves tú';
+
+  @override
+  String get myCategoriesEmpty =>
+      'Aún no tienes categorías propias. Crea una para ordenar tus gastos a tu manera.';
+
+  @override
+  String get myCategoriesNew => 'Nueva categoría';
+
+  @override
+  String get myCategoriesSystemSection => 'De finanzia';
+
+  @override
+  String get myCategoriesSystemNote =>
+      'Las categorías de finanzia se pueden usar, pero no editar ni borrar.';
+
+  @override
+  String myCategoriesMeta(String tag, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count movimientos',
+      one: '1 movimiento',
+      zero: 'sin movimientos',
+    );
+    return '$tag · $_temp0';
+  }
+
+  @override
+  String myCategoriesEditSemantics(String name) {
+    return 'Editar $name';
+  }
+
+  @override
+  String myCategoriesDeleteSemantics(String name) {
+    return 'Borrar $name';
+  }
+
+  @override
+  String categoryDeleteTitle(String name) {
+    return '¿Borrar «$name»?';
+  }
+
+  @override
+  String categoryDeleteBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sus $count movimientos pasan a Sin categoría.',
+      one: 'Su movimiento pasa a Sin categoría.',
+      zero: 'No tiene movimientos.',
+    );
+    return '$_temp0 Las reglas que la asignaban solas también se borran. No se puede deshacer.';
+  }
+
+  @override
+  String get categoryDeleteConfirm => 'Borrar categoría';
+
+  @override
+  String get categoryDeleteCancel => 'Cancelar';
+
+  @override
+  String get categoryDeleted => 'Categoría borrada';
+
+  @override
+  String get categoryCreated => 'Categoría creada';
+
+  @override
+  String get categorySaved => 'Cambios guardados';
+
+  @override
+  String get registerOfflineBanner =>
+      'Sin conexión. Lo que registres se envía al volver.';
 }

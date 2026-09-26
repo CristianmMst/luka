@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2), la de revisión (F4.7) y la captura de notificaciones en Android (F4.3); Registrar sigue siendo marcador y Ajustes tiene Gmail, notificaciones y cierre de sesión.
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2), la de revisión (F4.7), la captura de notificaciones en Android (F4.3), Registrar manual (F4.5a) y las categorías propias (F4.8a); Ajustes tiene Gmail, notificaciones, Mis categorías y cierre de sesión.
 
 ## Requisitos
 
@@ -69,6 +69,7 @@ lib/
     ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
     ├── capture/           # Captura de notificaciones Android (F4.3): cola nativa → /ingest
+    ├── categories/        # Categorías propias (F4.8a): hoja crear/editar, Mis categorías
     ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Ajustes
     └── dashboard/         # Inicio (F4.6): resumen del mes calculado en local
 ```
@@ -142,6 +143,11 @@ El listener es nativo (`android/app/src/main/kotlin/co/finanzia/finanzia/capture
 - **Ajustes → "Notificaciones del banco"** muestra si hay acceso. "Activar" muestra la divulgación y abre el ajuste del sistema.
 
 Para probarla en un teléfono, con `just up`, `just dev`, `just worker` y `just app-run`: activar el acceso desde Ajustes y hacer un movimiento real con Bancolombia o Nequi. La cola se puede mirar con `adb shell run-as co.finanzia.finanzia ls databases` (`finanzia_capture.db`). Para un SMS, el título de la notificación de Mensajes tiene que coincidir con un patrón de `sms_sender_patterns` (`backend/.../parsing/config/capture.yaml`): si el SMS llega desde un número corto y no desde un nombre, el filtro lo ignora.
+
+### Registrar y categorías propias (F4.5a, F4.8a)
+
+- **Registrar** (`lib/features/transactions/presentation/registrar_page.dart`): el formulario de Revisión (`TransactionFormCard`) más la nota. Encola `createTransaction` por el outbox, así que funciona sin red. "Ver" abre el detalle con `resolveId`, que devuelve el id del servidor si el sync ya canjeó el local en este proceso.
+- **Categorías** (`lib/features/categories/`): crear, editar y borrar van directo a `/v1/categories`, sin outbox, y sin red avisan. Tras un éxito, `DriftCategoriesStore` actualiza la copia local; el pull de cada sync sigue siendo la verdad. El ícono se guarda por clave (`category_catalog.dart`) y el color como `#RRGGBB` de la paleta.
 
 ## Tests
 

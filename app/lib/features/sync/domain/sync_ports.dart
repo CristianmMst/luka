@@ -97,6 +97,10 @@ abstract interface class SyncStore {
   /// creación descartada se quita en local: el servidor no la tiene.
   Future<List<OutboxOperation>> discardRejected(String id);
 
+  /// El id vigente de [id]: si una creación local ya se canjeó por el id
+  /// del servidor en este proceso, ese; si no, el mismo [id].
+  String resolveId(String id);
+
   Future<DateTime?> transactionsCursor();
 
   /// Upsert con [shouldApplyRemote]; el cursor solo avanza.
