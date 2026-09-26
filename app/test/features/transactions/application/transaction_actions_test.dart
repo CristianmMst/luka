@@ -233,4 +233,30 @@ void main() {
     when(() => coordinator.resolveId('local-1')).thenReturn('srv-1');
     expect(actions.resolveId('local-1'), 'srv-1');
   });
+
+  group('delete', () {
+    test('encola el borrado con el id local si no se ha canjeado', () async {
+      when(() => coordinator.resolveId('local-1')).thenReturn('local-1');
+
+      await actions.delete('local-1');
+
+      verify(
+        () => coordinator.enqueue(
+          const OutboxOperation.deleteTransaction(id: 'local-1'),
+        ),
+      ).called(1);
+    });
+
+    test('con el id ya canjeado borra el del servidor', () async {
+      when(() => coordinator.resolveId('local-1')).thenReturn('srv-1');
+
+      await actions.delete('local-1');
+
+      verify(
+        () => coordinator.enqueue(
+          const OutboxOperation.deleteTransaction(id: 'srv-1'),
+        ),
+      ).called(1);
+    });
+  });
 }

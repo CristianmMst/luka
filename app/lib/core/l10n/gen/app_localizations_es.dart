@@ -1076,9 +1076,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Movimiento guardado. Se enviará cuando haya conexión.';
 
   @override
-  String get registerView => 'Ver';
-
-  @override
   String get registerAmountRequired => 'Escribe un monto mayor a \$0.';
 
   @override
@@ -1391,4 +1388,29 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get registerOfflineBanner =>
       'Sin conexión. Lo que registres se envía al volver.';
+
+  @override
+  String get registerUndo => 'Deshacer';
+
+  @override
+  String get registerUndone => 'Movimiento deshecho';
+
+  @override
+  String get detailDelete => 'Eliminar movimiento';
+
+  @override
+  String get detailDeleteTitle => '¿Eliminar este movimiento?';
+
+  @override
+  String get detailDeleteBody =>
+      'Se quita de tus movimientos y de tu reporte. No se puede deshacer.';
+
+  @override
+  String get detailDeleteConfirm => 'Eliminar';
+
+  @override
+  String get detailDeleteCancel => 'Cancelar';
+
+  @override
+  String get detailDeleted => 'Movimiento eliminado';
 }

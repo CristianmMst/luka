@@ -98,6 +98,18 @@ final _fromBancolombia = TransactionView(
   transferPairId: 'to-nequi',
 );
 
+final _manual = TransactionView(
+  id: 'manual',
+  amount: Cop.pesos(2000000),
+  direction: TxDirection.credit,
+  kind: TxKind.income,
+  occurredAt: _at(25, 15, 42),
+  channels: const {TxChannel.manual},
+  sync: SyncMark.none,
+  merchant: 'Prueba',
+  parsedBy: 'manual',
+);
+
 final List<TxSource> _twoSources = [
   (channel: TxChannel.email, receivedAt: _at(23, 12, 43)),
   (channel: TxChannel.notification, receivedAt: _at(23, 12, 41)),
@@ -120,6 +132,7 @@ void main() {
       _exito.id: _exito,
       _toNequi.id: _toNequi,
       _fromBancolombia.id: _fromBancolombia,
+      _manual.id: _manual,
     };
     sources = _twoSources;
     when(() => repository.watchOne(any())).thenAnswer(
@@ -139,6 +152,7 @@ void main() {
     when(() => actions.saveNotes(any(), any())).thenAnswer((_) async {});
     when(() => actions.retryRejected(any())).thenAnswer((_) async {});
     when(() => actions.discardRejected(any())).thenAnswer((_) async {});
+    when(() => actions.delete(any())).thenAnswer((_) async {});
   });
 
   /// El detalle de [id] dentro de un GoRouter, sobre la lista.
@@ -390,6 +404,57 @@ void main() {
 
       verifyNever(() => actions.saveNotes(any(), any()));
     });
+  });
+
+  group('eliminar', () {
+    testWidgets('uno manual pide confirmación, borra y vuelve', (
+      tester,
+    ) async {
+      await pumpDetail(tester, id: 'manual');
+
+      await tester.ensureVisible(find.text('Eliminar movimiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar movimiento'));
+      await tester.pumpAndSettle();
+      expect(find.text('¿Eliminar este movimiento?'), findsOneWidget);
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      verify(() => actions.delete('manual')).called(1);
+      expect(find.text('lista'), findsOneWidget);
+      expect(find.text('Movimiento eliminado'), findsOneWidget);
+    });
+
+    testWidgets('cancelar no borra', (tester) async {
+      await pumpDetail(tester, id: 'manual');
+
+      await tester.ensureVisible(find.text('Eliminar movimiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar movimiento'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => actions.delete(any()));
+      expect(find.text('Eliminar movimiento'), findsOneWidget);
+    });
+
+    testWidgets('el botón mide 48 dp o más', (tester) async {
+      await pumpDetail(tester, id: 'manual');
+
+      final button = find.ancestor(
+        of: find.text('Eliminar movimiento'),
+        matching: find.byWidgetPredicate((w) => w is TextButton),
+      );
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+    });
+
+    for (final id in ['exito', 'to-nequi']) {
+      testWidgets('uno capturado ($id) no se puede eliminar', (tester) async {
+        await pumpDetail(tester, id: id);
+        expect(find.text('Eliminar movimiento'), findsNothing);
+      });
+    }
   });
 
   testWidgets('un movimiento borrado lo dice', (tester) async {

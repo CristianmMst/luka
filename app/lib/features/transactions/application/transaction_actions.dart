@@ -67,6 +67,12 @@ class TransactionActions {
   /// si el sync ya canjeó el local.
   String resolveId(String id) => _coordinator.resolveId(id);
 
+  /// Elimina un movimiento manual (el backend rechaza los demás). Si su
+  /// creación todavía no se envió, se cancela y no viaja nada.
+  Future<void> delete(String id) => _coordinator.enqueue(
+    OutboxOperation.deleteTransaction(id: _coordinator.resolveId(id)),
+  );
+
   Future<void> retryRejected(String id) => _coordinator.retryRejected(id);
 
   Future<void> discardRejected(String id) => _coordinator.discardRejected(id);

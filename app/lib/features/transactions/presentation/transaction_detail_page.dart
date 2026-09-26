@@ -185,10 +185,56 @@ class _DetailBody extends ConsumerWidget {
               ),
             ),
             _NotesField(key: ValueKey('notes-${tx.id}'), tx: tx),
+            // Solo los manuales: el backend rechaza borrar lo capturado.
+            if (tx.parsedBy == 'manual')
+              TextButton.icon(
+                onPressed: () => unawaited(_delete(context, actions)),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(minTouchTarget),
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text(l10n.detailDelete),
+              ),
           ],
         ),
       ],
     );
+  }
+
+  /// Confirma, elimina por el outbox y vuelve a la lista.
+  Future<void> _delete(BuildContext context, TransactionActions actions) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.detailDeleteTitle),
+        content: Text(l10n.detailDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.detailDeleteCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(l10n.detailDeleteConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    await actions.delete(tx.id);
+    if (router.canPop()) {
+      router.pop();
+    } else {
+      router.go(Routes.transactions);
+    }
+    messenger.showSnackBar(SnackBar(content: Text(l10n.detailDeleted)));
   }
 }
 

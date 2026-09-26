@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/widgets/inline_notice.dart';
 import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
@@ -16,11 +15,10 @@ import 'package:finanzia/features/transactions/presentation/widgets/transaction_
 import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// "Registrar" (spec 008 §3.4, AC-4.4; diseño A "Formulario en tarjeta",
 /// F4.5a): un gasto o ingreso a mano. Va por el outbox, así que funciona
-/// sin red; al guardar avisa con "Ver" y deja el formulario limpio.
+/// sin red; al guardar avisa con "Deshacer" y deja el formulario limpio.
 class RegistrarPage extends ConsumerStatefulWidget {
   const RegistrarPage({super.key});
 
@@ -134,7 +132,6 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
 
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
     final actions = ref.read(transactionActionsProvider);
     final offline = ref.read(syncCoordinatorProvider).offline;
     setState(() => _busy = true);
@@ -159,11 +156,13 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
       SnackBar(
         content: Text(offline ? l10n.registerSavedOffline : l10n.registerSaved),
         action: SnackBarAction(
-          label: l10n.registerView,
-          // El sync pudo haber canjeado ya el id local por el del servidor.
-          onPressed: () => unawaited(
-            router.push('${Routes.transactions}/${actions.resolveId(localId)}'),
-          ),
+          label: l10n.registerUndo,
+          onPressed: () => unawaited(() async {
+            await actions.delete(localId);
+            messenger.showSnackBar(
+              SnackBar(content: Text(l10n.registerUndone)),
+            );
+          }()),
         ),
       ),
     );

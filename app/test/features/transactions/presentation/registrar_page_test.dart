@@ -41,7 +41,7 @@ void main() {
     actions = _Actions();
     transactions = _Transactions();
     when(() => actions.create(any())).thenAnswer((_) async => 'local-1');
-    when(() => actions.resolveId('local-1')).thenReturn('srv-1');
+    when(() => actions.delete(any())).thenAnswer((_) async {});
     when(() => transactions.watchCategories()).thenAnswer(
       (_) => Stream.value(const [
         CategoryOption(
@@ -151,16 +151,17 @@ void main() {
     expect(draft.direction, TxDirection.credit);
   });
 
-  testWidgets('"Ver" abre el movimiento con su id vigente', (tester) async {
+  testWidgets('"Deshacer" elimina lo recién guardado', (tester) async {
     await pumpRegistrar(tester);
 
     await tester.enterText(find.byType(TextField).at(0), '5000');
     await tester.tap(find.text('Guardar movimiento'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Ver'));
+    await tester.tap(find.text('Deshacer'));
     await tester.pumpAndSettle();
 
-    expect(find.text('detalle srv-1'), findsOneWidget);
+    verify(() => actions.delete('local-1')).called(1);
+    expect(find.text('Movimiento deshecho'), findsOneWidget);
   });
 
   testWidgets('sin conexión lo dice y guarda igual', (tester) async {

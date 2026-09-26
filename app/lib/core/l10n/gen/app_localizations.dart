@@ -1780,12 +1780,6 @@ abstract class AppLocalizations {
   /// **'Movimiento guardado. Se enviará cuando haya conexión.'**
   String get registerSavedOffline;
 
-  /// No description provided for @registerView.
-  ///
-  /// In es, this message translates to:
-  /// **'Ver'**
-  String get registerView;
-
   /// No description provided for @registerAmountRequired.
   ///
   /// In es, this message translates to:
@@ -2337,6 +2331,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin conexión. Lo que registres se envía al volver.'**
   String get registerOfflineBanner;
+
+  /// No description provided for @registerUndo.
+  ///
+  /// In es, this message translates to:
+  /// **'Deshacer'**
+  String get registerUndo;
+
+  /// No description provided for @registerUndone.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento deshecho'**
+  String get registerUndone;
+
+  /// No description provided for @detailDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar movimiento'**
+  String get detailDelete;
+
+  /// No description provided for @detailDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este movimiento?'**
+  String get detailDeleteTitle;
+
+  /// No description provided for @detailDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quita de tus movimientos y de tu reporte. No se puede deshacer.'**
+  String get detailDeleteBody;
+
+  /// No description provided for @detailDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get detailDeleteConfirm;
+
+  /// No description provided for @detailDeleteCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get detailDeleteCancel;
+
+  /// No description provided for @detailDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Movimiento eliminado'**
+  String get detailDeleted;
 }
 
 class _AppLocalizationsDelegate

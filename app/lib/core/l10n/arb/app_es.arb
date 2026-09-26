@@ -730,7 +730,6 @@
   "registerSave": "Guardar movimiento",
   "registerSaved": "Movimiento guardado",
   "registerSavedOffline": "Movimiento guardado. Se enviará cuando haya conexión.",
-  "registerView": "Ver",
   "registerAmountRequired": "Escribe un monto mayor a $0.",
   "registerSaveError": "No pudimos guardar el movimiento. Intenta de nuevo.",
   "categoryFormNewTitle": "Nueva categoría",
@@ -874,5 +873,13 @@
   "categoryDeleted": "Categoría borrada",
   "categoryCreated": "Categoría creada",
   "categorySaved": "Cambios guardados",
-  "registerOfflineBanner": "Sin conexión. Lo que registres se envía al volver."
+  "registerOfflineBanner": "Sin conexión. Lo que registres se envía al volver.",
+  "registerUndo": "Deshacer",
+  "registerUndone": "Movimiento deshecho",
+  "detailDelete": "Eliminar movimiento",
+  "detailDeleteTitle": "¿Eliminar este movimiento?",
+  "detailDeleteBody": "Se quita de tus movimientos y de tu reporte. No se puede deshacer.",
+  "detailDeleteConfirm": "Eliminar",
+  "detailDeleteCancel": "Cancelar",
+  "detailDeleted": "Movimiento eliminado"
 }
