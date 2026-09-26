@@ -5,6 +5,8 @@ import 'package:finanzia/app/router.dart';
 import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/capture/application/capture_flusher.dart';
+import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
 import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
 import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
 import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
@@ -106,6 +108,9 @@ void main() {
         transactionsRepositoryProvider.overrideWithValue(transactions),
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
+        notificationSourceProvider.overrideWithValue(
+          const NoopNotificationSource(),
+        ),
         insightsRepositoryProvider.overrideWithValue(_PendingInsights()),
       ],
     );

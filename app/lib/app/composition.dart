@@ -1,6 +1,8 @@
 import 'package:finanzia/core/network/dio_providers.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
+import 'package:finanzia/features/capture/application/capture_flusher.dart';
+import 'package:finanzia/features/capture/data/capture_data_providers.dart';
 import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
 import 'package:finanzia/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
@@ -46,4 +48,8 @@ List<Override> get appOverrides => [
   insightsRepositoryProvider.overrideWith(
     (ref) => ref.watch(driftInsightsRepositoryProvider),
   ),
+  notificationSourceProvider.overrideWith(
+    (ref) => ref.watch(platformNotificationSourceProvider),
+  ),
+  captureRemoteProvider.overrideWith((ref) => ref.watch(captureApiProvider)),
 ];

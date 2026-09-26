@@ -2,7 +2,7 @@
 
 ## 1. Estructura y stack
 
-Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `notification_listener_service`, `intl` (formato COP).
+Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `crypto` (`client_hash`), `intl` (formato COP); el listener de notificaciones es código nativo, sin plugin (§4.1).
 
 ## 2. Mapa de navegación
 
@@ -90,6 +90,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 
 ### 3.7 Ajustes
 - Perfil Google; estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
+  - Fila "Notificaciones del banco" (F4.3, solo Android): "Activo" ofrece "Administrar", que abre el ajuste del sistema; "Inactivo" ofrece "Activar", que primero muestra una hoja de divulgación prominente (spec 010 §2: qué se lee, qué se ignora y cómo quitar el permiso) y solo con "Ir a los ajustes" abre el ajuste del sistema. El estado se vuelve a leer al volver a primer plano (AC-3.4). En iOS la fila no existe.
   - Fila "Gmail" (F3.6, AC-1.3): conectado muestra la cuenta Gmail ("Conectado · email") y ofrece "Desconectar", que pide confirmación en un diálogo Material ("¿Desconectar Gmail?": deja de leer los correos, los movimientos se quedan); revocado o con error explica que la captura se detuvo y ofrece "Reconectar"; desconectado ofrece "Conectar"; sin poder consultar el estado, "Reintentar". Mientras corre una acción se ve un indicador en lugar del botón y un fallo se avisa bajo la fila. La acción mide 48 dp o más y su etiqueta accesible dice qué hace ("Desconectar Gmail").
 - Cuentas vinculadas (CRUD); categorías (CRUD de propias); escribir/gestionar tags NFC.
 - Privacidad: política, exportar datos (RF-11.2), borrar cuenta con doble confirmación + texto de irreversibilidad (RF-11.3).
@@ -97,9 +98,10 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 ## 4. Servicios de plataforma (feature `capture`)
 
 ### 4.1 NotificationCaptureService (Android)
-- Implementación con `notification_listener_service`; corre aunque la app esté cerrada (el sistema mantiene el listener).
-- Pipeline local: filtro por paquete (config remota cacheada) → filtro SMS por patrón de remitente → pre-filtro de monto → persistir en Drift outbox → flush batch a `/ingest/notifications` (inmediato con red; si no, al reconectar).
-- iOS: implementación no-op; la UI de onboarding/ajustes no muestra la sección.
+- `NotificationListenerService` nativo en Kotlin (`android/app/src/main/kotlin/co/finanzia/finanzia/capture/`), sin plugin; corre aunque la app esté cerrada (el sistema mantiene el listener).
+- Pipeline nativo: filtro por paquete (config remota guardada por la app) → filtro SMS por patrón de remitente → pre-filtro de monto → cola SQLite nativa (spec 006 §3.2). Dart la ve por `MethodChannel("co.finanzia/capture")` como el puerto `NotificationSource`.
+- Envío (`CaptureFlusher`): al entrar, al volver a primer plano, cada 15 min visible y al recuperar la red, lotes de hasta 50 a `/ingest/notifications`; con algo aceptado pide un sync a los 5 s para traer la transacción ya parseada. Sin envío en segundo plano: lo capturado con la app cerrada se envía al abrirla.
+- iOS: `NoopNotificationSource`; la UI de onboarding/ajustes no muestra la sección.
 
 ### 4.2 NfcService
 - Android: lectura NDEF por intent-filter (app cerrada) y en foreground; escritura de tags.

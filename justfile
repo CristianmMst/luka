@@ -93,3 +93,7 @@ app-goldens:
 
 # Pipeline de CI de la app.
 app-ci: app-lint app-test
+
+# Tests JUnit del listener nativo de notificaciones (JDK 17-21; gradlew lo genera flutter build apk).
+app-android-test:
+	cd app/android && ./gradlew :app:testDebugUnitTest

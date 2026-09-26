@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2) y la de revisión (F4.7); Registrar y Ajustes siguen siendo marcadores.
+App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2), la de revisión (F4.7) y la captura de notificaciones en Android (F4.3); Registrar sigue siendo marcador y Ajustes tiene Gmail, notificaciones y cierre de sesión.
 
 ## Requisitos
 
@@ -20,6 +20,7 @@ Desde la raíz del repo:
 | `just app-test` | Tests (sin goldens) + gate de cobertura de `domain`+`application` ≥ 90 % |
 | `just app-goldens` | Regenera los goldens visuales del login (claro y oscuro) |
 | `just app-ci` | Lo mismo que corre `App CI` en GitHub Actions |
+| `just app-android-test` | Tests JUnit del listener nativo (`CaptureFilter`); necesita JDK 17–21 y el `gradlew` que genera `flutter build apk` |
 
 El código generado (`*.g.dart`, `*.freezed.dart`, `lib/core/l10n/gen/`) se versiona. CI lo regenera y falla si cambia.
 
@@ -67,6 +68,7 @@ lib/
     │   └── presentation/  # SplashPage, LoginPage, ticker de captura, botón de Google
     ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
+    ├── capture/           # Captura de notificaciones Android (F4.3): cola nativa → /ingest
     ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Ajustes
     └── dashboard/         # Inicio (F4.6): resumen del mes calculado en local
 ```
@@ -129,6 +131,17 @@ Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.
   - "Crear movimiento" encola `convertReview` y "Descartar" encola `discardReview`, este último tras confirmar. Ambas pasan por el outbox, así que funcionan sin conexión.
 - **Montos:** `lib/features/review/domain/amount_highlight.dart` usa la misma regla de separadores que `parse_amount` del backend, y el mismo patrón de teléfonos que `parsing/domain/excerpt.py`.
 - **Mensajes ya fallidos:** si una plantilla nueva ya los entiende, `just reparse` (backend/README) los reprocesa y cierra su revisión.
+
+### Captura de notificaciones (F4.3, solo Android)
+
+El listener es nativo (`android/app/src/main/kotlin/co/finanzia/finanzia/capture/`, spec 006 §3.2 y spec 008 §4.1):
+
+- **`FinanziaNotificationListener`** recibe cada notificación, aunque la app esté cerrada. **`CaptureFilter`** decide con la config de `GET /v1/config/capture`: app bancaria o SMS de remitente bancario, y con monto. Lo que pasa va a **`CaptureStore`**, una cola SQLite propia (`finanzia_capture.db`). Lo demás no se guarda ni se loguea.
+- **`CaptureChannel`** (`MethodChannel("co.finanzia/capture")`) expone la cola y el permiso a Dart. En Dart, `lib/features/capture/` la ve como el puerto `NotificationSource` (no-op en iOS).
+- **`CaptureFlusher`** vacía la cola en lotes de 50 a `POST /v1/ingest/notifications` al entrar, al volver a primer plano, cada 15 min y al recuperar la red. Lo capturado con la app cerrada se envía al abrirla (sin envío en segundo plano todavía). Al cerrar sesión se borran la cola y la config.
+- **Ajustes → "Notificaciones del banco"** muestra si hay acceso. "Activar" muestra la divulgación y abre el ajuste del sistema.
+
+Para probarla en un teléfono, con `just up`, `just dev`, `just worker` y `just app-run`: activar el acceso desde Ajustes y hacer un movimiento real con Bancolombia o Nequi. La cola se puede mirar con `adb shell run-as co.finanzia.finanzia ls databases` (`finanzia_capture.db`). Para un SMS, el título de la notificación de Mensajes tiene que coincidir con un patrón de `sms_sender_patterns` (`backend/.../parsing/config/capture.yaml`): si el SMS llega desde un número corto y no desde un nombre, el filtro lo ignora.
 
 ## Tests
 

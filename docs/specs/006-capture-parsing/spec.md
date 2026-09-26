@@ -106,11 +106,16 @@ backend) y exponerlo obligaría a `ingestion` a importar `ledger.domain.enums.Ba
 Ver el ejemplo de respuesta real en spec 005 §5.
 
 ### 3.2 Comportamiento del listener
-1. Notificación posted → ¿paquete en `banking_apps`? → capturar `title+text+bigText`.
-2. ¿Paquete en `messages_apps`? → aplicar `sms_sender_patterns` al título (remitente del SMS); si no matchea, **ignorar sin leer el resto** (AC-3.3, privacidad).
-3. Pre-filtro local barato: la notificación debe contener un signo de moneda/monto (`$`, `COP`, dígitos con separador de miles); si no, se ignora.
-4. Encolar en Drift (`outbox`) con `client_hash = sha256(package + posted_at_bucket + text)` → batch a `/ingest/notifications` (funciona offline).
-5. El texto de notificaciones ignoradas jamás se persiste ni se transmite.
+El listener es código nativo (`NotificationListenerService` en Kotlin) y filtra antes de guardar nada:
+
+1. Notificación posted (se ignoran los resúmenes de grupo) → ¿paquete en `banking_apps`? → canal `notification`.
+2. ¿Paquete en `messages_apps`? → aplicar `sms_sender_patterns` al título (remitente del SMS); si no matchea, **ignorar sin leer el resto** (AC-3.3, privacidad). Si matchea, canal `sms_notification` y el título (el remitente) viaja en `title`, porque el backend re-valida el patrón sobre él.
+3. El texto es `bigText` si la notificación lo trae y, si no, `text` (la API solo tiene `title` y `text`). Se recortan a 500 y 8192 caracteres.
+4. Pre-filtro local barato: el texto debe contener un signo de moneda/monto (`$`, `COP`, dígitos con separador de miles); si no, se ignora.
+5. Encolar en la **cola nativa** (SQLite propio del listener, tope de 5.000 filas): es el outbox de este canal y sobrevive a que maten la app. Se guardan paquete, canal, `posted_at` (instante + zona del teléfono), título y texto.
+6. La app, cuando corre (al abrir, al volver a primer plano, cada 15 min visible y al recuperar la red), vacía la cola en lotes de hasta 50 a `/ingest/notifications` con `client_hash = sha256("paquete|minuto|texto")`, donde `minuto` es `floor(posted_at_epoch_s / 60)` en UTC: una notificación re-publicada en el mismo minuto da el mismo hash. Sin `Idempotency-Key`: el lote ya es idempotente por `client_hash`. Un lote rechazado con 4xx se reintenta ítem por ítem una vez y los ítems inválidos se descartan; red, 429, 5xx y 401 dejan todo en la cola. Lo capturado con la app cerrada llega cuando se abre (sin envío en segundo plano en el MVP), así que la meta de < 10 s de §1 solo se cumple con la app abierta.
+7. La config de §3.1 la baja la app (se refresca cada hora) y la guarda para el listener; sin config no se captura nada. Al cerrar sesión se borran la cola y la config (P6); si entra otro usuario, lo capturado para el anterior se borra.
+8. El texto de notificaciones ignoradas jamás se persiste ni se transmite.
 
 ## 4. Pipeline de parsing (workers)
 

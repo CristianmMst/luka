@@ -872,6 +872,56 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsGmailDisconnectCancel => 'Cancelar';
 
   @override
+  String get settingsNotificationsTitle => 'Notificaciones del banco';
+
+  @override
+  String get settingsNotificationsActive =>
+      'Activo · registramos tus pagos apenas llegan';
+
+  @override
+  String get settingsNotificationsInactive =>
+      'Inactivo · los pagos que te notifica el banco no se registran';
+
+  @override
+  String get settingsNotificationsLoading => 'Consultando el permiso…';
+
+  @override
+  String get settingsNotificationsEnable => 'Activar';
+
+  @override
+  String get settingsNotificationsManage => 'Administrar';
+
+  @override
+  String settingsNotificationsActionSemantics(String action) {
+    return '$action notificaciones del banco';
+  }
+
+  @override
+  String get notificationDisclosureTitle => 'Registra tus pagos al instante';
+
+  @override
+  String get notificationDisclosureBody =>
+      'Con el acceso a notificaciones, finanzia registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.';
+
+  @override
+  String get notificationDisclosureReads =>
+      'Leemos solo las notificaciones de las apps de tus bancos y los SMS que envían tus bancos.';
+
+  @override
+  String get notificationDisclosureIgnores =>
+      'Ignoramos todo lo demás: chats, correos y SMS de otras personas no se guardan ni salen de tu teléfono.';
+
+  @override
+  String get notificationDisclosureRevoke =>
+      'Puedes quitar el permiso cuando quieras en los ajustes del teléfono.';
+
+  @override
+  String get notificationDisclosureContinue => 'Ir a los ajustes';
+
+  @override
+  String get notificationDisclosureCancel => 'Ahora no';
+
+  @override
   String reviewSubtitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

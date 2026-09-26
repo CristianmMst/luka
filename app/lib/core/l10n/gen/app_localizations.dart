@@ -1432,6 +1432,90 @@ abstract class AppLocalizations {
   /// **'Cancelar'**
   String get settingsGmailDisconnectCancel;
 
+  /// No description provided for @settingsNotificationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones del banco'**
+  String get settingsNotificationsTitle;
+
+  /// No description provided for @settingsNotificationsActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activo · registramos tus pagos apenas llegan'**
+  String get settingsNotificationsActive;
+
+  /// No description provided for @settingsNotificationsInactive.
+  ///
+  /// In es, this message translates to:
+  /// **'Inactivo · los pagos que te notifica el banco no se registran'**
+  String get settingsNotificationsInactive;
+
+  /// No description provided for @settingsNotificationsLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Consultando el permiso…'**
+  String get settingsNotificationsLoading;
+
+  /// No description provided for @settingsNotificationsEnable.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar'**
+  String get settingsNotificationsEnable;
+
+  /// No description provided for @settingsNotificationsManage.
+  ///
+  /// In es, this message translates to:
+  /// **'Administrar'**
+  String get settingsNotificationsManage;
+
+  /// No description provided for @settingsNotificationsActionSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{action} notificaciones del banco'**
+  String settingsNotificationsActionSemantics(String action);
+
+  /// No description provided for @notificationDisclosureTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra tus pagos al instante'**
+  String get notificationDisclosureTitle;
+
+  /// No description provided for @notificationDisclosureBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Con el acceso a notificaciones, finanzia registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.'**
+  String get notificationDisclosureBody;
+
+  /// No description provided for @notificationDisclosureReads.
+  ///
+  /// In es, this message translates to:
+  /// **'Leemos solo las notificaciones de las apps de tus bancos y los SMS que envían tus bancos.'**
+  String get notificationDisclosureReads;
+
+  /// No description provided for @notificationDisclosureIgnores.
+  ///
+  /// In es, this message translates to:
+  /// **'Ignoramos todo lo demás: chats, correos y SMS de otras personas no se guardan ni salen de tu teléfono.'**
+  String get notificationDisclosureIgnores;
+
+  /// No description provided for @notificationDisclosureRevoke.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes quitar el permiso cuando quieras en los ajustes del teléfono.'**
+  String get notificationDisclosureRevoke;
+
+  /// No description provided for @notificationDisclosureContinue.
+  ///
+  /// In es, this message translates to:
+  /// **'Ir a los ajustes'**
+  String get notificationDisclosureContinue;
+
+  /// No description provided for @notificationDisclosureCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get notificationDisclosureCancel;
+
   /// No description provided for @reviewSubtitle.
   ///
   /// In es, this message translates to:

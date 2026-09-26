@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/capture/application/capture_flusher.dart';
+import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
@@ -53,6 +55,9 @@ void main() {
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
+        notificationSourceProvider.overrideWithValue(
+          const NoopNotificationSource(),
+        ),
       ],
     );
     await tester.pumpAndSettle();
@@ -237,6 +242,9 @@ void main() {
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
         gmailPromptStoreProvider.overrideWithValue(prompts),
+        notificationSourceProvider.overrideWithValue(
+          const NoopNotificationSource(),
+        ),
       ],
     );
     await tester.pump();

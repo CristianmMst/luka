@@ -26,6 +26,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Listener de notificaciones bancarias (spec 006 §3.2). Solo el
+             sistema puede enlazarlo, y solo tras el permiso del usuario en
+             Ajustes > Acceso a notificaciones. -->
+        <service
+            android:name=".capture.FinanziaNotificationListener"
+            android:exported="false"
+            android:label="finanzia"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService"/>
+            </intent-filter>
+        </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

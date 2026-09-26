@@ -621,6 +621,27 @@
   "settingsGmailDisconnectBody": "Dejamos de leer los correos de tus bancos. Los movimientos que ya tienes se quedan.",
   "settingsGmailDisconnectConfirm": "Desconectar",
   "settingsGmailDisconnectCancel": "Cancelar",
+  "settingsNotificationsTitle": "Notificaciones del banco",
+  "settingsNotificationsActive": "Activo · registramos tus pagos apenas llegan",
+  "settingsNotificationsInactive": "Inactivo · los pagos que te notifica el banco no se registran",
+  "settingsNotificationsLoading": "Consultando el permiso…",
+  "settingsNotificationsEnable": "Activar",
+  "settingsNotificationsManage": "Administrar",
+  "settingsNotificationsActionSemantics": "{action} notificaciones del banco",
+  "@settingsNotificationsActionSemantics": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationDisclosureTitle": "Registra tus pagos al instante",
+  "notificationDisclosureBody": "Con el acceso a notificaciones, finanzia registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.",
+  "notificationDisclosureReads": "Leemos solo las notificaciones de las apps de tus bancos y los SMS que envían tus bancos.",
+  "notificationDisclosureIgnores": "Ignoramos todo lo demás: chats, correos y SMS de otras personas no se guardan ni salen de tu teléfono.",
+  "notificationDisclosureRevoke": "Puedes quitar el permiso cuando quieras en los ajustes del teléfono.",
+  "notificationDisclosureContinue": "Ir a los ajustes",
+  "notificationDisclosureCancel": "Ahora no",
   "reviewSubtitle": "{count, plural, =0{Todo al día} =1{1 mensaje por revisar} other{{count} mensajes por revisar}}",
   "@reviewSubtitle": {
     "placeholders": {
