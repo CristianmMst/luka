@@ -92,6 +92,13 @@ class TransactionRepositoryPort(Protocol):
         """
         ...
 
+    async def retag_category(
+        self, user_id: UUID, category_id: UUID, fiscal_tag: FiscalTag, now: datetime
+    ) -> int:
+        """Pone `fiscal_tag` a las transacciones de `category_id` del usuario, salvo las
+        transferencias (invariante spec 004 SS2.5), y toca `updated_at` para el pull."""
+        ...
+
 
 class TransactionSourceRepositoryPort(Protocol):
     """Persistencia de fuentes crudas (email/notificacion/SMS/manual/NFC)."""
@@ -132,8 +139,11 @@ class CategoryRepositoryPort(Protocol):
         """Categoria del sistema por `slug`, o `None` si no existe."""
         ...
 
-    async def exists_name(self, user_id: UUID, name: str) -> bool:
-        """`True` si el usuario ya tiene una categoria propia con ese `name`."""
+    async def exists_name(
+        self, user_id: UUID, name: str, *, exclude_id: UUID | None = None
+    ) -> bool:
+        """`True` si `name` choca, sin distinguir mayusculas, con una categoria visible para
+        `user_id` (propia o del sistema) distinta de `exclude_id`."""
         ...
 
     async def add(self, category: Category) -> None: ...

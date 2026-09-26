@@ -45,7 +45,42 @@ def _create_category_use_case(repos) -> CreateCategory:
 
 
 def _update_category_use_case(repos) -> UpdateCategory:
-    return UpdateCategory(categories=repos.categories, uow=repos.uow)
+    return UpdateCategory(
+        categories=repos.categories,
+        transactions=repos.transactions,
+        clock=FixedClock(NOW),
+        uow=repos.uow,
+    )
+
+
+def _manual_use_case(repos) -> CreateManualTransaction:
+    return CreateManualTransaction(
+        transactions=repos.transactions,
+        sources=repos.sources,
+        categories=repos.categories,
+        accounts=repos.accounts,
+        events=repos.events,
+        clock=FixedClock(NOW),
+        ids=repos.ids,
+        uow=repos.uow,
+    )
+
+
+async def _manual_tx(repos, category_id, *, kind: Kind | None = None, amount: str = "10000"):
+    return await _manual_use_case(repos).execute(
+        ManualTransactionCommand(
+            user_id=USER,
+            amount=Decimal(amount),
+            direction=Direction.DEBIT,
+            occurred_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=UTC),
+            category_id=category_id,
+            merchant=None,
+            description=None,
+            account_id=None,
+            notes=None,
+            kind=kind,
+        )
+    )
 
 
 def _delete_category_use_case(repos) -> DeleteCategory:
@@ -320,3 +355,126 @@ async def test_borrar_cuenta_ajena_lanza_account_not_found() -> None:
 
     with pytest.raises(AccountNotFound):
         await use_case.execute(USER, uuid4())
+
+
+# --- Nombres sin distinguir mayusculas y propagacion de fiscal_tag (F4.8a) ---
+
+
+@pytest.mark.unit
+async def test_crear_categoria_con_nombre_de_una_del_sistema_sin_importar_mayusculas() -> None:
+    repos = await build_ledger_repos()
+    use_case = _create_category_use_case(repos)
+    with pytest.raises(DuplicateCategoryName):
+        await use_case.execute(
+            USER,
+            CategoryInput(
+                name="DONACIONES", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE
+            ),
+        )
+
+
+@pytest.mark.unit
+async def test_crear_categoria_duplicada_de_una_propia_sin_importar_mayusculas() -> None:
+    repos = await build_ledger_repos()
+    use_case = _create_category_use_case(repos)
+    await use_case.execute(
+        USER,
+        CategoryInput(name="Mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    with pytest.raises(DuplicateCategoryName):
+        await use_case.execute(
+            USER,
+            CategoryInput(
+                name="mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE
+            ),
+        )
+
+
+@pytest.mark.unit
+async def test_otro_usuario_puede_usar_el_mismo_nombre() -> None:
+    repos = await build_ledger_repos()
+    use_case = _create_category_use_case(repos)
+    await use_case.execute(
+        USER,
+        CategoryInput(name="Mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    other = await use_case.execute(
+        uuid4(),
+        CategoryInput(name="Mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    assert other.name == "Mascotas"
+
+
+@pytest.mark.unit
+async def test_renombrar_a_una_del_sistema_sin_importar_mayusculas_lanza_duplicado() -> None:
+    repos = await build_ledger_repos()
+    category = await _create_category_use_case(repos).execute(
+        USER,
+        CategoryInput(name="Mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    with pytest.raises(DuplicateCategoryName):
+        await _update_category_use_case(repos).execute(
+            USER, category.id, CategoryPatch(name="educación")
+        )
+
+
+@pytest.mark.unit
+async def test_renombrar_cambiando_solo_mayusculas_se_permite() -> None:
+    repos = await build_ledger_repos()
+    category = await _create_category_use_case(repos).execute(
+        USER,
+        CategoryInput(name="mascotas", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    updated = await _update_category_use_case(repos).execute(
+        USER, category.id, CategoryPatch(name="Mascotas")
+    )
+    assert updated.name == "Mascotas"
+
+
+@pytest.mark.unit
+async def test_cambiar_fiscal_tag_propaga_a_sus_movimientos_salvo_transferencias() -> None:
+    repos = await build_ledger_repos()
+    category = await _create_category_use_case(repos).execute(
+        USER,
+        CategoryInput(name="Terapias", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    gasto = await _manual_tx(repos, category.id)
+    transfer = await _manual_tx(repos, category.id, kind=Kind.TRANSFER, amount="20000")
+    ajena = await _manual_tx(repos, SIN_CATEGORIA_ID, amount="30000")
+
+    await _update_category_use_case(repos).execute(
+        USER, category.id, CategoryPatch(fiscal_tag=FiscalTag.DEDUCIBLE_SALUD)
+    )
+
+    refreshed = await repos.transactions.get(USER, gasto.id)
+    assert refreshed is not None
+    assert refreshed.fiscal_tag == FiscalTag.DEDUCIBLE_SALUD
+    assert refreshed.updated_at == NOW
+    kept = await repos.transactions.get(USER, transfer.id)
+    assert kept is not None
+    assert kept.fiscal_tag == FiscalTag.TRANSFERENCIA
+    other = await repos.transactions.get(USER, ajena.id)
+    assert other is not None
+    assert other.fiscal_tag == FiscalTag.NO_DEDUCIBLE
+
+
+@pytest.mark.unit
+async def test_editar_sin_cambiar_fiscal_tag_no_toca_los_movimientos() -> None:
+    repos = await build_ledger_repos()
+    category = await _create_category_use_case(repos).execute(
+        USER,
+        CategoryInput(name="Terapias", icon=None, color=None, fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+    gasto = await _manual_tx(repos, category.id)
+    before = await repos.transactions.get(USER, gasto.id)
+    assert before is not None
+
+    await _update_category_use_case(repos).execute(
+        USER,
+        category.id,
+        CategoryPatch(name="Terapia física", fiscal_tag=FiscalTag.NO_DEDUCIBLE),
+    )
+
+    after = await repos.transactions.get(USER, gasto.id)
+    assert after is not None
+    assert after.updated_at == before.updated_at

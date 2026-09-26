@@ -181,9 +181,12 @@ def get_create_category_use_case(
 
 def get_update_category_use_case(
     session: AsyncSession = Depends(get_session),
+    clock: SystemClock = Depends(get_clock),
 ) -> UpdateCategory:
     return UpdateCategory(
         categories=SqlAlchemyCategoryRepository(session),
+        transactions=SqlAlchemyTransactionRepository(session),
+        clock=clock,
         uow=SqlAlchemyUnitOfWork(session),
     )
 

@@ -175,3 +175,52 @@ async def test_get_categories_devuelve_24_del_sistema_mas_las_propias(
     assert len(system) == 24
     assert len(own) == 1
     assert own[0]["name"] == "Mi categoria"
+
+
+async def test_categoria_con_nombre_del_sistema_sin_importar_mayusculas_es_409(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    user = await user_factory()
+    response = await client.post(
+        "/v1/categories",
+        json={"name": "DONACIONES", "fiscal_tag": "no_deducible"},
+        headers=user.headers,
+    )
+    assert response.status_code == 409
+    assert response.json()["error"]["field"] == "name"
+
+
+async def test_patch_fiscal_tag_propaga_a_los_movimientos_y_toca_updated_at(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    user = await user_factory()
+    category_id = (
+        await client.post(
+            "/v1/categories",
+            json={"name": "Terapias", "fiscal_tag": "no_deducible"},
+            headers=user.headers,
+        )
+    ).json()["id"]
+    tx = (
+        await client.post(
+            "/v1/transactions",
+            json={
+                "amount": "90000.00",
+                "direction": "debit",
+                "occurred_at": "2026-01-01T12:00:00+00:00",
+                "category_id": category_id,
+            },
+            headers=user.headers,
+        )
+    ).json()
+
+    patch_resp = await client.patch(
+        f"/v1/categories/{category_id}",
+        json={"fiscal_tag": "deducible_salud"},
+        headers=user.headers,
+    )
+    assert patch_resp.status_code == 200
+
+    body = (await client.get(f"/v1/transactions/{tx['id']}", headers=user.headers)).json()
+    assert body["fiscal_tag"] == "deducible_salud"
+    assert body["updated_at"] > tx["updated_at"]

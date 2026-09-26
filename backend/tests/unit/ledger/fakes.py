@@ -209,6 +209,16 @@ class InMemoryTransactionRepo:
                 count += 1
         return count
 
+    async def retag_category(
+        self, user_id: UUID, category_id: UUID, fiscal_tag: FiscalTag, now: datetime
+    ) -> int:
+        count = 0
+        for tx in list(self._by_id.values()):
+            if tx.user_id == user_id and tx.category_id == category_id and tx.kind != Kind.TRANSFER:
+                await self.update(replace(tx, fiscal_tag=fiscal_tag, updated_at=now))
+                count += 1
+        return count
+
 
 class InMemoryCategoryRepo:
     """Doble en memoria de `CategoryRepositoryPort`."""
@@ -231,8 +241,15 @@ class InMemoryCategoryRepo:
                 return category
         return None
 
-    async def exists_name(self, user_id: UUID, name: str) -> bool:
-        return any(c.user_id == user_id and c.name == name for c in self._by_id.values())
+    async def exists_name(
+        self, user_id: UUID, name: str, *, exclude_id: UUID | None = None
+    ) -> bool:
+        return any(
+            (c.is_system or c.user_id == user_id)
+            and c.name.lower() == name.lower()
+            and c.id != exclude_id
+            for c in self._by_id.values()
+        )
 
     async def add(self, category: Category) -> None:
         self._by_id[category.id] = category

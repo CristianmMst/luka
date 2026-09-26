@@ -146,8 +146,8 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | slug | TEXT NULL UNIQUE | solo en categorías del sistema; `CHECK ((user_id IS NULL) = (slug IS NOT NULL))` |
 | name | TEXT | |
 | icon / color | TEXT | |
-| fiscal_tag | TEXT NOT NULL | ver spec 007 §2 |
-| UNIQUE NULLS NOT DISTINCT | (user_id, name) | dos categorías del sistema (`user_id NULL`) no pueden compartir nombre |
+| fiscal_tag | TEXT NOT NULL | ver spec 007 §2. Cada transacción guarda su copia (§2.5); cambiarlo en una categoría propia la propaga a sus transacciones, salvo transferencias |
+| UNIQUE NULLS NOT DISTINCT | (user_id, name) | dos categorías del sistema (`user_id NULL`) no pueden compartir nombre. La API además rechaza (409) un nombre propio que coincida, sin distinguir mayúsculas, con otro propio o con uno del sistema (spec 005 §7) |
 
 #### 2.8.1 Categorías del sistema
 

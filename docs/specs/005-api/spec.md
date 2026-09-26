@@ -147,7 +147,7 @@ Logs: solo `gmail_push_received` con `jobs_enqueued`; nunca el `emailAddress` ni
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET/POST | `/categories` · PATCH/DELETE `/categories/{id}` | Sistema + propias; las del sistema no se modifican ni se borran (403). Nombre duplicado → 409. Ajena → 404. `DELETE` de una propia reasigna sus transacciones a `sin_categoria` y borra las `merchant_rules` que apuntaban a ella |
+| GET/POST | `/categories` · PATCH/DELETE `/categories/{id}` | Sistema + propias; las del sistema no se modifican ni se borran (403). Nombre duplicado → 409 `field=name`: se compara sin distinguir mayúsculas contra las propias y las del sistema (renombrar la misma categoría cambiando solo mayúsculas sí se permite). Ajena → 404, también como `category_id` de `POST/PATCH /transactions`. `PATCH` con un `fiscal_tag` distinto lo propaga a las transacciones de la categoría (salvo transferencias, que siguen en `transferencia`) y les toca `updated_at`, para que el pull incremental las traiga. `DELETE` de una propia reasigna sus transacciones a `sin_categoria` (también tocando `updated_at`) y borra las `merchant_rules` que apuntaban a ella |
 | GET/POST | `/accounts` · PATCH/DELETE `/accounts/{id}` | Cuentas vinculadas (RF-6). `(bank, last4)` duplicado para el usuario → 409. `DELETE` dejar `account_id` en `NULL` en sus transacciones (`ON DELETE SET NULL`) |
 | GET | `/review` | Cola de revisión con `partial_extract` |
 | POST | `/review/{raw_message_id}/convert` | Body = transacción completa → crea transacción `parsed_by: manual` y marca resuelto |

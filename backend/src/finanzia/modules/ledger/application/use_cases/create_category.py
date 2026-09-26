@@ -13,7 +13,8 @@ from finanzia.modules.ledger.domain.errors import DuplicateCategoryName
 
 
 class CreateCategory:
-    """Crea una categoria propia del usuario; el nombre debe ser unico para el (409)."""
+    """Crea una categoria propia del usuario. El nombre no puede repetir, sin distinguir
+    mayusculas, el de otra propia ni el de una del sistema (409)."""
 
     def __init__(
         self, *, categories: CategoryRepositoryPort, ids: IdGeneratorPort, uow: UnitOfWorkPort

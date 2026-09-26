@@ -210,3 +210,18 @@ class SqlAlchemyTransactionRepository:
         )
         result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
         return result.rowcount
+
+    async def retag_category(
+        self, user_id: UUID, category_id: UUID, fiscal_tag: FiscalTag, now: datetime
+    ) -> int:
+        stmt = (
+            update(TransactionRow)
+            .where(
+                TransactionRow.user_id == user_id,
+                TransactionRow.category_id == category_id,
+                TransactionRow.kind != "transfer",
+            )
+            .values(fiscal_tag=fiscal_tag.value, updated_at=now)
+        )
+        result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
+        return result.rowcount

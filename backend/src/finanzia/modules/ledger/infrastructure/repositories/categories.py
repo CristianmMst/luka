@@ -45,12 +45,19 @@ class SqlAlchemyCategoryRepository:
         row = (await self._session.execute(stmt)).scalar_one_or_none()
         return category_row_to_entity(row) if row is not None else None
 
-    async def exists_name(self, user_id: UUID, name: str) -> bool:
+    async def exists_name(
+        self, user_id: UUID, name: str, *, exclude_id: UUID | None = None
+    ) -> bool:
         stmt = (
             select(func.count())
             .select_from(CategoryRow)
-            .where(CategoryRow.user_id == user_id, CategoryRow.name == name)
+            .where(
+                or_(CategoryRow.user_id == user_id, CategoryRow.user_id.is_(None)),
+                func.lower(CategoryRow.name) == func.lower(name),
+            )
         )
+        if exclude_id is not None:
+            stmt = stmt.where(CategoryRow.id != exclude_id)
         count = (await self._session.execute(stmt)).scalar_one()
         return count > 0
 

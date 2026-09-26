@@ -147,3 +147,30 @@ async def test_categoria_del_sistema_patch_y_delete_son_403(
     delete_resp = await client.delete(f"/v1/categories/{system_category_id}", headers=user.headers)
     assert delete_resp.status_code == 403
     assert delete_resp.json()["error"]["code"] == "forbidden"
+
+
+async def test_usuario_b_no_puede_usar_la_categoria_de_a_en_un_movimiento(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    second_user: AuthedUser,
+) -> None:
+    user_a = await user_factory()
+    category_id = (
+        await client.post(
+            "/v1/categories",
+            json={"name": "Solo de A", "fiscal_tag": "no_deducible"},
+            headers=user_a.headers,
+        )
+    ).json()["id"]
+
+    response = await client.post(
+        "/v1/transactions",
+        json={
+            "amount": "5000.00",
+            "direction": "debit",
+            "occurred_at": "2026-01-01T12:00:00+00:00",
+            "category_id": category_id,
+        },
+        headers=second_user.headers,
+    )
+    assert response.status_code == 404
