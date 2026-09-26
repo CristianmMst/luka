@@ -4,10 +4,14 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 
 /// `true` cuando hay alguna red: el estado inicial y luego cada cambio.
-Stream<bool> connectivityStream(Connectivity connectivity) =>
-    _connectivityResults(
-      connectivity,
-    ).map((r) => !r.contains(ConnectivityResult.none)).distinct();
+///
+/// Admite varios oyentes (sync, envío de capturas…) y cada uno recibe su
+/// propio estado inicial: el provider guarda una sola instancia del stream.
+Stream<bool> connectivityStream(Connectivity connectivity) => _perListener(
+  () => _connectivityResults(
+    connectivity,
+  ).map((r) => !r.contains(ConnectivityResult.none)).distinct(),
+);
 
 Stream<List<ConnectivityResult>> _connectivityResults(
   Connectivity connectivity,
@@ -17,8 +21,10 @@ Stream<List<ConnectivityResult>> _connectivityResults(
 }
 
 /// Emite al volver a primer plano y cada 15 min mientras la app está visible
-/// (spec 008 §5).
-Stream<void> foregroundTicks() {
+/// (spec 008 §5). Admite varios oyentes, como [connectivityStream].
+Stream<void> foregroundTicks() => _perListener(_foregroundTicks);
+
+Stream<void> _foregroundTicks() {
   AppLifecycleListener? listener;
   Timer? timer;
   late final StreamController<void> controller;
@@ -38,3 +44,17 @@ Stream<void> foregroundTicks() {
   );
   return controller.stream;
 }
+
+/// Un stream que crea una fuente nueva por cada oyente.
+Stream<T> _perListener<T>(Stream<T> Function() source) =>
+    Stream<T>.multi((controller) {
+      final sub = source().listen(
+        controller.addSync,
+        onError: controller.addErrorSync,
+        onDone: controller.closeSync,
+      );
+      controller
+        ..onPause = sub.pause
+        ..onResume = sub.resume
+        ..onCancel = sub.cancel;
+    });
