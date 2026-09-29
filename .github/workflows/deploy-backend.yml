@@ -139,12 +139,11 @@ jobs:
             StrictHostKeyChecking yes
           EOF
 
-      - name: Copiar compose.yml y backup.sh
+      - name: Copiar compose.yml, deploy.sh y backup.sh
         run: |
-          ssh vps "test -f ~/$DEPLOY_DIR/.env" \
-            || { echo "Falta ~/$DEPLOY_DIR/.env en el VPS (backend/deploy/README.md)."; exit 1; }
-          scp backend/deploy/compose.yml backend/deploy/backup.sh "vps:~/$DEPLOY_DIR/"
-          ssh vps "chmod 750 ~/$DEPLOY_DIR/backup.sh"
+          ssh vps "test -f ~/$DEPLOY_DIR/.env"             || { echo "Falta ~/$DEPLOY_DIR/.env en el VPS (backend/deploy/README.md)."; exit 1; }
+          scp backend/deploy/compose.yml backend/deploy/deploy.sh backend/deploy/backup.sh "vps:~/$DEPLOY_DIR/"
+          ssh vps "chmod 750 ~/$DEPLOY_DIR/deploy.sh ~/$DEPLOY_DIR/backup.sh"
 
       - name: Migrar y levantar
         env:
@@ -153,17 +152,10 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # El token entra por stdin (nunca en la linea de comandos) y solo
-          # vale lo que dura el job; el script lo borra al terminar.
+          # vale lo que dura el job: se borra del VPS al terminar, pase lo que
+          # pase. deploy.sh corre sin stdin (ver su cabecera).
           printf '%s' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
-          ssh vps DEPLOY_DIR="$DEPLOY_DIR" IMAGE_REF="$IMAGE_REF" bash -s <<'EOF'
-          set -euo pipefail
-          trap 'docker logout ghcr.io >/dev/null' EXIT
-          cd ~/"$DEPLOY_DIR"
-          sed -i '/^FINANZIA_IMAGE=/d' .env
-          echo "FINANZIA_IMAGE=$IMAGE_REF" >> .env
-          docker compose pull --quiet
-          docker compose run --rm migrate
-          docker compose up -d --remove-orphans --wait --wait-timeout 180
-          docker image prune -f
-          docker compose ps
-          EOF
+          status=0
+          ssh -n vps "~/$DEPLOY_DIR/deploy.sh '$IMAGE_REF'" || status=$?
+          ssh -n vps "docker logout ghcr.io > /dev/null" || true
+          exit "$status"

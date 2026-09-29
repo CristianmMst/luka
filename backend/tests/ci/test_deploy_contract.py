@@ -91,8 +91,19 @@ class TestDeployWorkflow:
         script = _runs(deploy)
         assert "StrictHostKeyChecking yes" in script
         assert "--password-stdin" in script
-        assert script.index("run --rm migrate") < script.index("up -d")
-        assert "--wait" in script
+        # El script remoto es un archivo, no stdin: `docker compose run` se
+        # comia el resto del script y el despliegue quedaba a medias.
+        assert "bash -s" not in script
+        assert "ssh -n vps" in script
+        assert "docker logout" in script
+
+    def test_deploy_sh_migra_sin_stdin_y_verifica_el_stack(self) -> None:
+        deploy_sh = (COMPOSE_PATH.parent / "deploy.sh").read_text(encoding="utf-8")
+        migrate = deploy_sh.index("docker compose run --rm -T migrate < /dev/null")
+        up = deploy_sh.index("docker compose up -d")
+        assert migrate < up
+        assert "--wait" in deploy_sh
+        assert "for service in api worker postgres redis" in deploy_sh
 
 
 @pytest.mark.ci

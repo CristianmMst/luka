@@ -8,6 +8,7 @@ La API, el worker arq, Postgres 16 y Redis 7 corren con Docker Compose en el VPS
 | `compose.yml` | El stack de finanzia. No publica puertos. |
 | `nginx-finanzia.conf` | El server block para `~/apps/nginx/conf.d/finanzia.conf`, calcado de `biologistica.conf`. |
 | `.env.example` | Las variables obligatorias del `.env` del servidor. |
+| `deploy.sh` | Lo que corre el workflow en el VPS: fija la imagen, migra, levanta con `--wait` y verifica que `api`, `worker`, `postgres` y `redis` queden corriendo. Sirve también a mano. |
 | `backup.sh` | `pg_dump` diario con retención de 14 días. |
 
 ## Cómo queda
@@ -33,9 +34,8 @@ internet ─▶ nginx (80/443, ~/apps/nginx) ─red proxy─▶ finanzia-api:800
 1. **`gate`:** `pip-audit --strict` sobre las dependencias de producción (de `uv.lock`, con hashes) y gitleaks. Una vulnerabilidad conocida o un secreto frenan el despliegue (constitución P1, spec 009 §8).
 2. **`build`:** publica `ghcr.io/cristianmmst/finanzia-backend` con los tags `sha-<commit>` y `latest`, con SBOM y atestación de procedencia.
 3. **`deploy`:** entra por SSH con los secretos `VPS_HOST`, `VPS_USER` y `VPS_SSH_KEY`. La huella del host se lee con `ssh-keyscan` en cada despliegue. Luego:
-   1. Copia `compose.yml` y `backup.sh` a `~/apps/finanzia`.
-   2. Fija la imagen por **digest** en `.env`.
-   3. Corre las migraciones y levanta con `--wait`: si algo no queda sano, el job falla.
+   1. Copia `compose.yml`, `deploy.sh` y `backup.sh` a `~/apps/finanzia`.
+   2. Corre `deploy.sh` con la imagen fijada por **digest**: migra, levanta con `--wait` y falla si algún servicio no queda corriendo.
 
    El token de GHCR se borra del VPS al terminar. El workflow **no toca el nginx**: ese paso es manual y se hace una vez.
 
@@ -114,7 +114,7 @@ docker compose restart worker
 tail -f ~/apps/nginx/logs/finanzia-api-error.log    # errores del proxy
 ```
 
-**Volver a una versión anterior:** cambia `FINANZIA_IMAGE` en `.env` por `ghcr.io/cristianmmst/finanzia-backend:sha-<commit>` y corre `docker compose up -d --wait`. Las migraciones no se revierten solas, así que revisa si la versión vieja las soporta.
+**Volver a una versión anterior:** `./deploy.sh ghcr.io/cristianmmst/finanzia-backend:sha-<commit>` (con `docker login ghcr.io` si la imagen es privada). Las migraciones no se revierten solas, así que revisa si la versión vieja las soporta.
 
 **Restaurar un respaldo:**
 
