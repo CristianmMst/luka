@@ -11,6 +11,7 @@ import 'package:finanzia/features/nfc/presentation/nfc_tags_page.dart';
 import 'package:finanzia/features/nfc/presentation/quick_add_page.dart';
 import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
 import 'package:finanzia/features/onboarding/presentation/accounts_onboarding_page.dart';
+import 'package:finanzia/features/onboarding/presentation/apple_pay_onboarding_page.dart';
 import 'package:finanzia/features/onboarding/presentation/notifications_onboarding_page.dart';
 import 'package:finanzia/features/onboarding/presentation/onboarding_navigation.dart';
 import 'package:finanzia/features/review/presentation/review_detail_page.dart';
@@ -123,6 +124,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationsOnboardingPage(),
       ),
       GoRoute(
+        path: Routes.onboardingApplePay,
+        builder: (context, state) => const ApplePayOnboardingPage(),
+      ),
+      GoRoute(
         path: Routes.onboardingAccounts,
         builder: (context, state) => const AccountsOnboardingPage(),
       ),
@@ -210,6 +215,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'tags-nfc',
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => const NfcTagsPage(),
+                  ),
+                  GoRoute(
+                    path: 'apple-pay',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) =>
+                        const ApplePayOnboardingPage(inOnboarding: false),
                   ),
                 ],
               ),

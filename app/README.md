@@ -44,7 +44,7 @@ El proyecto de Google Cloud es `finanzia-509500` (Google Auth Platform, público
 
 Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.
 
-Pendiente para iOS: crear el cliente OAuth de iOS y añadir `GIDClientID` y el URL scheme en `ios/Runner/Info.plist`.
+- **iOS**: cliente de tipo iOS con el bundle `co.finanzia.finanzia`. Su client ID y el invertido (`com.googleusercontent.apps.…`) van en `ios/Flutter/GoogleSignIn.xcconfig`; `Info.plist` los toma de ahí para `GIDClientID` y el esquema de URL de vuelta. Sin ellos el build de Codemagic se detiene.
 
 ### Gmail (F3.6)
 
@@ -140,11 +140,28 @@ Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.
 El listener es nativo (`android/app/src/main/kotlin/co/finanzia/finanzia/capture/`, spec 006 §3.2 y spec 008 §4.1):
 
 - **`FinanziaNotificationListener`** recibe cada notificación, aunque la app esté cerrada. **`CaptureFilter`** decide con la config de `GET /v1/config/capture`: app bancaria o SMS de remitente bancario, y con monto. Lo que pasa va a **`CaptureStore`**, una cola SQLite propia (`finanzia_capture.db`). Lo demás no se guarda ni se loguea.
-- **`CaptureChannel`** (`MethodChannel("co.finanzia/capture")`) expone la cola y el permiso a Dart. En Dart, `lib/features/capture/` la ve como el puerto `NotificationSource` (no-op en iOS).
+- **`CaptureChannel`** (`MethodChannel("co.finanzia/capture")`) expone la cola y el permiso a Dart. En Dart, `lib/features/capture/` la ve como el puerto `NotificationSource` (en iOS es la cola de Apple Pay, abajo).
 - **`CaptureFlusher`** vacía la cola en lotes de 50 a `POST /v1/ingest/notifications` al entrar, al volver a primer plano, cada 15 min y al recuperar la red. Lo capturado con la app cerrada se envía al abrirla (sin envío en segundo plano todavía). Al cerrar sesión se borran la cola y la config.
 - **Ajustes → "Notificaciones del banco"** muestra si hay acceso. "Activar" muestra la divulgación y abre el ajuste del sistema.
 
 Para probarla en un teléfono, con `just up`, `just dev`, `just worker` y `just app-run`: activar el acceso desde Ajustes y hacer un movimiento real con Bancolombia o Nequi. La cola se puede mirar con `adb shell run-as co.finanzia.finanzia ls databases` (`finanzia_capture.db`). Para un SMS, el título de la notificación de Mensajes tiene que coincidir con un patrón de `sms_sender_patterns` (`backend/.../parsing/config/capture.yaml`): si el SMS llega desde un número corto y no desde un nombre, el filtro lo ignora.
+
+### Pagos con Apple Pay en iPhone (F4.3b)
+
+iOS no deja leer notificaciones. La captura automática es una automatización personal "Transacción" de Atajos (iOS 17+) que, al pagar con Wallet, corre la acción **"Registrar pago en finanzia"** (spec 006 §3.3):
+
+- **`RegistrarPagoWallet`** (`ios/Runner/RegistrarPagoWallet.swift`) es la App Intent: recibe tarjeta, comercio y monto y los encola sin abrir la app.
+- **`WalletQueue`** (`ios/Runner/WalletCapture.swift`) es la cola (JSON en Application Support) y **`WalletCaptureChannel`** la expone por el mismo `MethodChannel("co.finanzia/capture")`.
+- En Dart, **`IosWalletNotificationSource`** arma el texto que parsea la plantilla `apple_wallet` del backend y el mismo `CaptureFlusher` lo envía al abrir la app.
+- El onboarding y Ajustes → "Pagos con Apple Pay" guían la creación del Atajo. Para que el pago se una con el correo del banco, la tarjeta tiene que llevar el banco y sus últimos 4 dígitos.
+
+**Compilar e instalar.** Este equipo es Windows, así que el `.ipa` sale de Codemagic (`codemagic.yaml` en la raíz, workflow `ios-unsigned`, corrida manual):
+
+1. En codemagic.io, crear la app desde el repo y un grupo de variables `finanzia` con `API_BASE_URL`: una URL pública del backend, p. ej. la de `just tunnel` (cambia en cada corrida del túnel, así que hay que recompilar).
+2. Correr `ios-unsigned` y descargar `finanzia.ipa` de los artefactos.
+3. Instalarlo con SideStore, que lo firma con el Apple ID; con un Apple ID gratuito hay que refrescarlo cada 7 días.
+
+Riesgos conocidos: el Swift solo se compila en Codemagic, así que los errores se corrigen con sus logs. Con un Apple ID gratuito el entitlement de lectura NFC puede no estar disponible; si SideStore lo quita, la lectura de tags en iOS no funciona, pero el resto sí.
 
 ### Registrar y categorías propias (F4.5a, F4.8a)
 

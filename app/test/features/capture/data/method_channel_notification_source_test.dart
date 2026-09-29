@@ -28,6 +28,7 @@ void main() {
   test('es soportado y consulta el permiso', () async {
     reply = (_) => true;
     expect(source.isSupported, isTrue);
+    expect(source.readsNotifications, isTrue);
     expect(await source.isPermissionGranted(), isTrue);
     expect(calls.single.method, 'isPermissionGranted');
   });
@@ -130,9 +131,79 @@ void main() {
     await expectLater(source.pending(1), throwsA(isA<FormatException>()));
   });
 
-  test('el no-op de iOS no llama al canal', () async {
+  group('cola de Apple Pay de iOS', () {
+    final wallet = IosWalletNotificationSource();
+
+    test('tiene cola pero no lee notificaciones ni pide permiso', () async {
+      expect(wallet.isSupported, isTrue);
+      expect(wallet.readsNotifications, isFalse);
+      expect(await wallet.isPermissionGranted(), isFalse);
+      expect(calls, isEmpty);
+    });
+
+    test('pending arma el texto de cada pago', () async {
+      reply = (_) => [
+        {
+          'id': 4,
+          'card': 'Bancolombia 1234',
+          'merchant': 'OXXO CALLE 59',
+          'amount': r'$53.900,00',
+          'postedAtMs': DateTime.utc(2026, 9, 20, 2, 52).millisecondsSinceEpoch,
+          'offsetMinutes': -300,
+        },
+      ];
+
+      final items = await wallet.pending(50);
+
+      expect(calls.single.method, 'pending');
+      expect(calls.single.arguments, {'limit': 50});
+      expect(items.single.id, 4);
+      expect(items.single.package, 'com.apple.wallet');
+      expect(items.single.title, 'Bancolombia 1234');
+      expect(
+        items.single.text,
+        r'Apple Pay: Compraste $53.900,00 con Bancolombia 1234 '
+        'en OXXO CALLE 59 el 19/09/2026 a las 21:52',
+      );
+    });
+
+    test(
+      'Atajos, dueño, borrar y limpiar van al canal; la config no',
+      () async {
+        await wallet.openPermissionSettings();
+        await wallet.claimFor('u-1');
+        await wallet.remove([1, 2]);
+        await wallet.clear();
+        await wallet.setConfig(
+          const CaptureConfig(
+            version: 1,
+            bankingApps: [],
+            messagesApps: [],
+            smsSenderPatterns: [],
+          ),
+        );
+
+        expect(
+          [for (final c in calls) c.method],
+          [
+            'openShortcuts',
+            'claimFor',
+            'remove',
+            'clear',
+          ],
+        );
+        expect(calls[1].arguments, {'userId': 'u-1'});
+        expect(calls[2].arguments, {
+          'ids': [1, 2],
+        });
+      },
+    );
+  });
+
+  test('el no-op no llama al canal', () async {
     const noop = NoopNotificationSource();
     expect(noop.isSupported, isFalse);
+    expect(noop.readsNotifications, isFalse);
     expect(await noop.isPermissionGranted(), isFalse);
     expect(await noop.pending(50), isEmpty);
     await noop.setConfig(

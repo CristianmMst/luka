@@ -3339,6 +3339,78 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ese tag no es de finanzia.'**
   String get registerReadNfcUnknown;
+
+  /// No description provided for @applePayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra tus pagos con Apple Pay'**
+  String get applePayTitle;
+
+  /// No description provided for @applePayBody.
+  ///
+  /// In es, this message translates to:
+  /// **'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet finanzia recibe el comercio y el monto.'**
+  String get applePayBody;
+
+  /// No description provided for @applePayStep1.
+  ///
+  /// In es, this message translates to:
+  /// **'Abre Atajos → Automatización → + → Transacción.'**
+  String get applePayStep1;
+
+  /// No description provided for @applePayStep2.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige tus tarjetas y marca «Ejecutar inmediatamente».'**
+  String get applePayStep2;
+
+  /// No description provided for @applePayStep3.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega la acción «Registrar pago en finanzia» y pasa Comerciante, Monto y Tarjeta.'**
+  String get applePayStep3;
+
+  /// No description provided for @applePayStepSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso {number}: {text}'**
+  String applePayStepSemantics(int number, String text);
+
+  /// No description provided for @applePayCardTip.
+  ///
+  /// In es, this message translates to:
+  /// **'Para que no se duplique con el correo del banco, en Tarjeta escribe el banco y los últimos 4 dígitos, p. ej. «Bancolombia 1234».'**
+  String get applePayCardTip;
+
+  /// No description provided for @applePayQueueNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Los pagos quedan guardados en el teléfono y se envían al abrir finanzia.'**
+  String get applePayQueueNote;
+
+  /// No description provided for @applePayOpenShortcuts.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir Atajos'**
+  String get applePayOpenShortcuts;
+
+  /// No description provided for @applePayOpenShortcutsError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir Atajos. Búscala en tu iPhone.'**
+  String get applePayOpenShortcutsError;
+
+  /// No description provided for @settingsApplePayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagos con Apple Pay'**
+  String get settingsApplePayTitle;
+
+  /// No description provided for @settingsApplePaySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía para crear el Atajo que los registra'**
+  String get settingsApplePaySubtitle;
 }
 
 class _AppLocalizationsDelegate

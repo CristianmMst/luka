@@ -5,7 +5,7 @@ import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum NotificationAccess {
-  /// Sin listener en esta plataforma (iOS): la UI no muestra la sección.
+  /// Sin listener de notificaciones (iOS): la UI no muestra la sección.
   unsupported,
   granted,
   denied,
@@ -14,8 +14,15 @@ enum NotificationAccess {
 /// Hay listener de notificaciones en esta plataforma (solo Android). Es
 /// síncrono para que la UI no muestre nada, ni un instante, en iOS.
 final notificationCaptureSupportedProvider = Provider<bool>(
-  (ref) => ref.watch(notificationSourceProvider).isSupported,
+  (ref) => ref.watch(notificationSourceProvider).readsNotifications,
 );
+
+/// Hay captura de pagos con Apple Pay (solo iOS, spec 006 §3.3): la cola
+/// existe pero no lee notificaciones.
+final walletCaptureSupportedProvider = Provider<bool>((ref) {
+  final source = ref.watch(notificationSourceProvider);
+  return source.isSupported && !source.readsNotifications;
+});
 
 /// Acceso de la app a las notificaciones del sistema (spec 008 §3.7). Se
 /// vuelve a consultar al volver a primer plano, que es cuando el usuario
@@ -24,7 +31,7 @@ class NotificationAccessController extends AsyncNotifier<NotificationAccess> {
   @override
   Future<NotificationAccess> build() async {
     final source = ref.watch(notificationSourceProvider);
-    if (!source.isSupported) return NotificationAccess.unsupported;
+    if (!source.readsNotifications) return NotificationAccess.unsupported;
     final sub = ref
         .read(foregroundTicksProvider)
         .listen((_) => unawaited(refresh()));

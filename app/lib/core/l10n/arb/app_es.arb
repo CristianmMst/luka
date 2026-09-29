@@ -1185,5 +1185,27 @@
   "nfcErrorTooSmall": "El tag es muy pequeño para el enlace.",
   "nfcErrorIo": "No pudimos escribir el tag. Acércalo de nuevo y no lo muevas.",
   "registerReadNfc": "Leer tag NFC",
-  "registerReadNfcUnknown": "Ese tag no es de finanzia."
+  "registerReadNfcUnknown": "Ese tag no es de finanzia.",
+  "applePayTitle": "Registra tus pagos con Apple Pay",
+  "applePayBody": "iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet finanzia recibe el comercio y el monto.",
+  "applePayStep1": "Abre Atajos → Automatización → + → Transacción.",
+  "applePayStep2": "Elige tus tarjetas y marca «Ejecutar inmediatamente».",
+  "applePayStep3": "Agrega la acción «Registrar pago en finanzia» y pasa Comerciante, Monto y Tarjeta.",
+  "applePayStepSemantics": "Paso {number}: {text}",
+  "@applePayStepSemantics": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "applePayCardTip": "Para que no se duplique con el correo del banco, en Tarjeta escribe el banco y los últimos 4 dígitos, p. ej. «Bancolombia 1234».",
+  "applePayQueueNote": "Los pagos quedan guardados en el teléfono y se envían al abrir finanzia.",
+  "applePayOpenShortcuts": "Abrir Atajos",
+  "applePayOpenShortcutsError": "No se pudo abrir Atajos. Búscala en tu iPhone.",
+  "settingsApplePayTitle": "Pagos con Apple Pay",
+  "settingsApplePaySubtitle": "Guía para crear el Atajo que los registra"
 }

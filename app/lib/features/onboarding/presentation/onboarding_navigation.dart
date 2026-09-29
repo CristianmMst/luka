@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 String onboardingRoute(OnboardingStep step) => switch (step) {
   OnboardingStep.gmail => Routes.onboardingGmail,
   OnboardingStep.notifications => Routes.onboardingNotifications,
+  OnboardingStep.applePay => Routes.onboardingApplePay,
   OnboardingStep.accounts => Routes.onboardingAccounts,
 };
 

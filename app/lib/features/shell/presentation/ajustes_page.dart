@@ -6,6 +6,8 @@ import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/features/accounts/presentation/accounts_settings_tile.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/capture/application/notification_access_controller.dart';
+import 'package:finanzia/features/capture/presentation/widgets/apple_pay_settings_tile.dart';
 import 'package:finanzia/features/capture/presentation/widgets/notification_capture_tile.dart';
 import 'package:finanzia/features/categories/presentation/categories_settings_tile.dart';
 import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
@@ -55,6 +57,8 @@ class AjustesPage extends ConsumerWidget {
                 children: [
                   const GmailSettingsTile(),
                   const NotificationCaptureTile(),
+                  if (ref.watch(walletCaptureSupportedProvider))
+                    const ApplePaySettingsTile(),
                   const CategoriesSettingsTile(),
                   const AccountsSettingsTile(),
                   if (ref.watch(nfcWriteSupportedProvider))

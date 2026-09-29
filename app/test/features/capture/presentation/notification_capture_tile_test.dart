@@ -20,6 +20,7 @@ void main() {
     source = _MockSource();
     ticks = StreamController<void>.broadcast();
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
     when(() => source.openPermissionSettings()).thenAnswer((_) async {});
   });
@@ -84,6 +85,7 @@ void main() {
 
   testWidgets('sin listener (iOS) no muestra nada', (tester) async {
     when(() => source.isSupported).thenReturn(false);
+    when(() => source.readsNotifications).thenReturn(false);
     await pumpTile(tester);
     expect(find.text('Notificaciones del banco'), findsNothing);
   });

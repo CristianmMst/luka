@@ -11,11 +11,15 @@ final captureApiProvider = Provider<CaptureApi>(
   (ref) => CaptureApi(ref.watch(apiDioProvider)),
 );
 
-/// El listener existe solo en Android (spec 003 §3).
+/// Android lee notificaciones; iOS recibe los pagos con Apple Pay
+/// (spec 003 §3, spec 006 §3.3).
 final platformNotificationSourceProvider = Provider<NotificationSource>(
-  (ref) => defaultTargetPlatform == TargetPlatform.android && !kIsWeb
-      ? MethodChannelNotificationSource()
-      : const NoopNotificationSource(),
+  (ref) => switch (defaultTargetPlatform) {
+    _ when kIsWeb => const NoopNotificationSource(),
+    TargetPlatform.android => MethodChannelNotificationSource(),
+    TargetPlatform.iOS => IosWalletNotificationSource(),
+    _ => const NoopNotificationSource(),
+  },
 );
 
 final driftCaptureGrantStoreProvider = Provider<DriftCaptureGrantStore>(

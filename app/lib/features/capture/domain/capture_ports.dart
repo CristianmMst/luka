@@ -1,16 +1,22 @@
 import 'package:finanzia/features/capture/domain/captured_notification.dart';
 
-/// Listener de notificaciones del sistema y su cola local. En Android es
-/// código nativo; en iOS no existe (Apple no deja leer notificaciones de
-/// otras apps) y todo es no-op.
+/// Captura nativa de pagos y su cola local. En Android es el listener de
+/// notificaciones; en iOS, que no deja leer notificaciones de otras apps,
+/// es la cola de pagos con Apple Pay que llena una App Intent (spec 006
+/// §3.3).
 abstract interface class NotificationSource {
-  /// `false` en plataformas sin listener: la UI no muestra la sección.
+  /// Hay cola nativa que enviar. `false` donde no hay captura (web, tests).
   bool get isSupported;
+
+  /// Lee notificaciones del sistema con permiso (solo Android): la UI de
+  /// notificaciones solo existe con esto.
+  bool get readsNotifications;
 
   /// El usuario dio acceso a las notificaciones en los ajustes del sistema.
   Future<bool> isPermissionGranted();
 
-  /// Abre el ajuste del sistema de acceso a notificaciones.
+  /// Abre donde el usuario activa la captura: el ajuste de acceso a
+  /// notificaciones (Android) o la app Atajos (iOS).
   Future<void> openPermissionSettings();
 
   /// Deja la cola al usuario [userId]: si lo capturado era de otro, lo

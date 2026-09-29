@@ -54,6 +54,7 @@ void main() {
     when(() => auth.sessionExpired).thenAnswer((_) => const Stream.empty());
     when(() => gmail.status()).thenAnswer((_) async => _active);
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
     when(() => grants.wasGranted(any())).thenAnswer((_) async => granted);
     when(() => grants.markGranted(any())).thenAnswer((_) async {
@@ -154,6 +155,7 @@ void main() {
   test('en iOS no hay acceso que perder', () async {
     granted = true;
     when(() => source.isSupported).thenReturn(false);
+    when(() => source.readsNotifications).thenReturn(false);
     expect(await health(), CaptureHealth.ok);
   });
 

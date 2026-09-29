@@ -22,6 +22,7 @@ void main() {
     ticks = StreamController<void>.broadcast();
     addTearDown(ticks.close);
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
     when(() => source.openPermissionSettings()).thenAnswer((_) async {});
   });

@@ -42,6 +42,7 @@ void main() {
   setUp(() {
     source = _MockSource();
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
     when(() => source.openPermissionSettings()).thenAnswer((_) async {});
   });

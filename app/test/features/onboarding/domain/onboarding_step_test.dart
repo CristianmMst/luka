@@ -11,11 +11,22 @@ void main() {
       ]);
     });
 
-    test('en iOS no hay paso de notificaciones', () {
+    test('sin captura nativa: Gmail y cuentas', () {
       expect(onboardingSteps(notificationsSupported: false), [
         OnboardingStep.gmail,
         OnboardingStep.accounts,
       ]);
+    });
+
+    test('en iOS: Gmail, Apple Pay y cuentas', () {
+      expect(
+        onboardingSteps(notificationsSupported: false, applePaySupported: true),
+        [
+          OnboardingStep.gmail,
+          OnboardingStep.applePay,
+          OnboardingStep.accounts,
+        ],
+      );
     });
   });
 
@@ -53,6 +64,22 @@ void main() {
       expect(
         first(from: OnboardingStep.notifications),
         OnboardingStep.notifications,
+      );
+    });
+
+    test('Apple Pay se muestra si aplica, después de notificaciones', () {
+      expect(
+        firstPendingStep(
+          from: OnboardingStep.gmail,
+          gmailActive: true,
+          notificationsPending: false,
+          applePayPending: true,
+        ),
+        OnboardingStep.applePay,
+      );
+      expect(
+        first(from: OnboardingStep.applePay),
+        OnboardingStep.accounts,
       );
     });
 

@@ -18,6 +18,9 @@ abstract final class Routes {
   /// "Tags NFC" (F4.5b), a pantalla completa sobre Ajustes.
   static const settingsNfcTags = '/ajustes/tags-nfc';
 
+  /// Guía de pagos con Apple Pay desde Ajustes (F4.3b, solo iOS).
+  static const settingsApplePay = '/ajustes/apple-pay';
+
   /// Registro rápido de un tag NFC (F4.5b): `/rapido?tag=<uuid>`, sobre el
   /// Inicio. Llega por el enlace `finanzia://quick-add?tag=<uuid>`.
   static const quickAdd = '/rapido';
@@ -25,5 +28,6 @@ abstract final class Routes {
   /// Pasos del onboarding tras el login (F3.6, F4.4), fuera del shell.
   static const onboardingGmail = '/onboarding/gmail';
   static const onboardingNotifications = '/onboarding/notificaciones';
+  static const onboardingApplePay = '/onboarding/apple-pay';
   static const onboardingAccounts = '/onboarding/cuentas';
 }

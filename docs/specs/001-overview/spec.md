@@ -40,7 +40,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 - Categorías (personalizables) con etiqueta fiscal; corrección manual reentrenable (reglas por comercio).
 - Dashboard mensual, historial, cola de revisión.
 - Reporte anual estilo formulario 210 (JSON + Excel) y simulación básica de si está obligado a declarar (topes UVT).
-- iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + NFC en foreground).
+- iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + NFC en foreground + pagos con Apple Pay por una automatización de Atajos, iOS 17+, spec 006 §3.3).
 
 ### Fuera de alcance del MVP (backlog)
 
@@ -54,7 +54,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 ## 6. Restricciones estructurales (resumen — detalle en specs 009/010)
 
 - Leer SMS con `READ_SMS` está prohibido por Google Play para apps que no sean el SMS handler; se capturan vía la notificación de la app de Mensajes.
-- iOS no permite leer SMS ni notificaciones de otras apps.
+- iOS no permite leer SMS ni notificaciones de otras apps. La única fuente automática en el teléfono es la automatización "Transacción" de Atajos (pagos con Wallet), que el usuario crea a mano.
 - Gmail `gmail.readonly` es *restricted scope*: >100 usuarios requiere verificación OAuth + auditoría CASA anual.
 - No existe API en Android/iOS para observar transacciones NFC de otras apps; la captura "NFC" real ocurre vía la notificación del pago.
 

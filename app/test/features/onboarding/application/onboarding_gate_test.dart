@@ -85,6 +85,7 @@ void main() {
     when(() => store.isDone(any())).thenAnswer((_) async => done);
     when(() => store.markDone(any())).thenAnswer((_) async => done = true);
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
   });
 
@@ -118,12 +119,30 @@ void main() {
     expect(gate(), const OnboardingShow(OnboardingStep.accounts));
   });
 
-  test('en iOS no hay paso de notificaciones', () async {
+  test('sin captura nativa no hay paso de notificaciones', () async {
     when(() => gmail.status()).thenAnswer((_) async => _active);
     when(() => source.isSupported).thenReturn(false);
+    when(() => source.readsNotifications).thenReturn(false);
     build();
     await settle();
     expect(gate(), const OnboardingShow(OnboardingStep.accounts));
+  });
+
+  test('en iOS la guía de Apple Pay va en lugar de notificaciones', () async {
+    when(() => gmail.status()).thenAnswer((_) async => _active);
+    when(() => source.readsNotifications).thenReturn(false);
+    build();
+    await settle();
+
+    expect(gate(), const OnboardingShow(OnboardingStep.applePay));
+    final flow = container.read(onboardingFlowProvider);
+    expect(flow.steps, [
+      OnboardingStep.gmail,
+      OnboardingStep.applePay,
+      OnboardingStep.accounts,
+    ]);
+    expect(flow.next(OnboardingStep.gmail), OnboardingStep.applePay);
+    expect(flow.next(OnboardingStep.applePay), OnboardingStep.accounts);
   });
 
   test('terminado → skip sin esperar el estado de red', () async {

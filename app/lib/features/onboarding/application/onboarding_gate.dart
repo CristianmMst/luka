@@ -91,6 +91,7 @@ class OnboardingGateController extends Notifier<OnboardingGate> {
         from: OnboardingStep.gmail,
         gmailActive: _gmailActive(gmail),
         notificationsPending: _notificationsPending(ref, access),
+        applePayPending: ref.read(walletCaptureSupportedProvider),
       ),
     );
   }
@@ -150,6 +151,7 @@ class OnboardingFlow {
   /// Los pasos de esta plataforma, para el indicador de progreso.
   List<OnboardingStep> get steps => onboardingSteps(
     notificationsSupported: _ref.read(notificationCaptureSupportedProvider),
+    applePaySupported: _ref.read(walletCaptureSupportedProvider),
   );
 
   /// El paso que sigue a [current], saltando los ya resueltos; `null` tras
@@ -164,6 +166,7 @@ class OnboardingFlow {
         _ref,
         _ref.read(notificationAccessProvider),
       ),
+      applePayPending: _ref.read(walletCaptureSupportedProvider),
     );
   }
 

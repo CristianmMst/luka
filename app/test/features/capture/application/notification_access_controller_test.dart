@@ -19,6 +19,7 @@ void main() {
     source = _MockSource();
     ticks = StreamController<void>.broadcast();
     when(() => source.isSupported).thenReturn(true);
+    when(() => source.readsNotifications).thenReturn(true);
     when(() => source.isPermissionGranted()).thenAnswer((_) async => false);
     when(() => source.openPermissionSettings()).thenAnswer((_) async {});
     container = ProviderContainer(
@@ -61,6 +62,7 @@ void main() {
     await container.read(notificationAccessProvider.future);
     clearInteractions(source);
     when(() => source.isSupported).thenReturn(false);
+    when(() => source.readsNotifications).thenReturn(false);
     container.invalidate(notificationAccessProvider);
 
     expect(
@@ -68,5 +70,25 @@ void main() {
       NotificationAccess.unsupported,
     );
     verifyNever(() => source.isPermissionGranted());
+  });
+
+  test('Android lee notificaciones: no hay captura de Apple Pay', () {
+    expect(container.read(notificationCaptureSupportedProvider), isTrue);
+    expect(container.read(walletCaptureSupportedProvider), isFalse);
+  });
+
+  test('iOS: cola de Apple Pay sin listener de notificaciones', () async {
+    when(() => source.readsNotifications).thenReturn(false);
+    container
+      ..invalidate(notificationCaptureSupportedProvider)
+      ..invalidate(walletCaptureSupportedProvider)
+      ..invalidate(notificationAccessProvider);
+
+    expect(container.read(notificationCaptureSupportedProvider), isFalse);
+    expect(container.read(walletCaptureSupportedProvider), isTrue);
+    expect(
+      await container.read(notificationAccessProvider.future),
+      NotificationAccess.unsupported,
+    );
   });
 }

@@ -48,7 +48,7 @@ Si CASA se retrasa: modo degradado sin Gmail (captura solo por notificaciones + 
 | Finanzas personales | Categoría con políticas propias (no somos préstamos) | Declararse como herramienta de finanzas personales; sin funciones de crédito |
 | Cuenta borrable | Play exige borrado de cuenta in-app y por web | RF-11.3 + página web de solicitud de borrado |
 
-**App Store (iOS)**: sin listener ni SMS → sin fricción especial; cumplir 5.1.1 (privacidad) y 3.1 (sin compras externas). Privacy Nutrition Label equivalente al Data Safety.
+**App Store (iOS)**: sin listener ni SMS → sin fricción especial; cumplir 5.1.1 (privacidad) y 3.1 (sin compras externas). Privacy Nutrition Label equivalente al Data Safety: info financiera (los pagos con Apple Pay que el usuario envía por su automatización de Atajos: tarjeta, comercio, monto), ligada al usuario, no usada para rastreo. La captura la activa el usuario creando la automatización; la app no la crea ni la lee. Hoy se distribuye sin App Store (build sin firmar + SideStore, F4.3b).
 
 ## 3. Colombia — Ley 1581/2012 (habeas data) y régimen de protección de datos
 

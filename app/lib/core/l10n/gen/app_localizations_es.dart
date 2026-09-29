@@ -1979,4 +1979,49 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get registerReadNfcUnknown => 'Ese tag no es de finanzia.';
+
+  @override
+  String get applePayTitle => 'Registra tus pagos con Apple Pay';
+
+  @override
+  String get applePayBody =>
+      'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet finanzia recibe el comercio y el monto.';
+
+  @override
+  String get applePayStep1 => 'Abre Atajos → Automatización → + → Transacción.';
+
+  @override
+  String get applePayStep2 =>
+      'Elige tus tarjetas y marca «Ejecutar inmediatamente».';
+
+  @override
+  String get applePayStep3 =>
+      'Agrega la acción «Registrar pago en finanzia» y pasa Comerciante, Monto y Tarjeta.';
+
+  @override
+  String applePayStepSemantics(int number, String text) {
+    return 'Paso $number: $text';
+  }
+
+  @override
+  String get applePayCardTip =>
+      'Para que no se duplique con el correo del banco, en Tarjeta escribe el banco y los últimos 4 dígitos, p. ej. «Bancolombia 1234».';
+
+  @override
+  String get applePayQueueNote =>
+      'Los pagos quedan guardados en el teléfono y se envían al abrir finanzia.';
+
+  @override
+  String get applePayOpenShortcuts => 'Abrir Atajos';
+
+  @override
+  String get applePayOpenShortcutsError =>
+      'No se pudo abrir Atajos. Búscala en tu iPhone.';
+
+  @override
+  String get settingsApplePayTitle => 'Pagos con Apple Pay';
+
+  @override
+  String get settingsApplePaySubtitle =>
+      'Guía para crear el Atajo que los registra';
 }

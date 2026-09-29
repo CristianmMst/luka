@@ -23,6 +23,9 @@ class _FakeSource implements NotificationSource {
   @override
   final bool isSupported;
 
+  @override
+  bool get readsNotifications => isSupported;
+
   final queue = <CapturedNotification>[];
   final configs = <CaptureConfig>[];
   final claims = <String>[];

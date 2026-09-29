@@ -148,7 +148,7 @@ app/lib/
 - **Reglas de capas** (verificadas por `app/test/architecture_test.dart`, equivalente a import-linter): `domain` es Dart puro (sin Flutter, dio, Drift ni Riverpod); `application` no importa `data` ni `presentation`; `presentation` no importa `data`; `core` no importa features ni `app`. `application` declara sus puertos como providers que fallan si no se sobrescriben, y `lib/app/composition.dart` es el único lugar que los conecta con las implementaciones de `data`.
 - **Red**: dos clientes dio. El público (`/v1/auth/*`) no tiene interceptor, así un refresh nunca dispara otro refresh. El autenticado usa `AuthInterceptor`, que añade el Bearer y, ante `401 token_expired`, hace un refresh single-flight y reintenta una vez. `core` define el puerto `SessionBridge` y la feature `auth` lo implementa (`SessionManager`).
 - El código de plataforma (notification listener, NFC) vive detrás de interfaces de `capture/domain`; el resto de la app no distingue el origen de una transacción.
-- iOS compila la misma app: `capture` expone el puerto `NotificationSource`, con `MethodChannelNotificationSource` (listener nativo en `android/app/src/main/kotlin/co/finanzia/finanzia/capture/`) en Android y `NoopNotificationSource` en iOS.
+- iOS compila la misma app: `capture` expone el puerto `NotificationSource`, con `MethodChannelNotificationSource` (listener nativo en `android/app/src/main/kotlin/co/finanzia/finanzia/capture/`) en Android e `IosWalletNotificationSource` (cola de pagos con Apple Pay que llena la App Intent de `ios/Runner/`, spec 006 §3.3) en iOS; `readsNotifications` distingue las dos para la UI. `NoopNotificationSource` queda para las plataformas sin captura.
 
 ## 4. Flujo end-to-end (correo → transacción)
 
