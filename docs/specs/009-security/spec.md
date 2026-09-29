@@ -12,7 +12,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 | Endpoint de ingesta | Inyección de transacciones falsas (spoofing) | JWT del usuario + re-validación server-side de paquetes soportados + rate limit |
 | Webhook Pub/Sub | Llamadas falsificadas | Verificación OIDC (issuer Google, audience exacta, service account esperada) |
 | Filtro de remitentes de correo (spec 006 §2.2) | Correo falsificado con `From` de un banco inyecta transacciones falsas: la allowlist confía en el header `From` sin validar DKIM ni `Authentication-Results` | **Pendiente**: exigir `dkim=pass` (y `dmarc=pass`) del dominio del banco en `Authentication-Results` antes de aceptar el correo. Hoy lo atenúa que Gmail suele mandar a spam lo que falla DMARC y el sync solo lee INBOX |
-| API pública | Credential stuffing / brute force / DoS | Solo Google Sign-In (sin contraseñas propias), rate limiting por IP y usuario, Caddy con límites de tamaño |
+| API pública | Credential stuffing / brute force / DoS | Solo Google Sign-In (sin contraseñas propias), rate limiting por IP y usuario, nginx con límite de tamaño (`client_max_body_size 2m`) |
 | LLM (DeepSeek) | Fuga de PII a terceros | Se envía solo el **extracto** del mensaje bancario (`relevant_line_prefix`/fallback, spec 006 §4.1) y la fecha de recepción — nunca el cuerpo completo, email del usuario, remitente ni identificadores internos (`user_id`/`raw_message_id`, spec 006 §4.2); DPA del proveedor documentado en spec 010 |
 | App móvil | Extracción de secretos del APK | La app no contiene secretos: solo client_id público de OAuth; el canje de tokens ocurre en el backend |
 | Dependencias | Supply chain | pip-audit/osv-scanner + lockfiles (uv.lock, pubspec.lock) (sin Dependabot: las actualizaciones se hacen a mano en `main`; pip-audit corre en el gate del despliegue del backend sobre las dependencias de la imagen, la app aún no tiene auditoría automática) |
@@ -34,14 +34,14 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 
 | Dato | Mecanismo |
 |---|---|
-| Tránsito | TLS 1.2+ obligatorio (Caddy, HSTS); certificados automáticos Let's Encrypt |
+| Tránsito | TLS 1.2+ obligatorio (nginx del VPS, HSTS); certificados Let's Encrypt con certbot, renovación automática |
 | Gmail refresh tokens | AES-256-GCM; clave `FINANZIA_GMAIL_TOKEN_KEY` (32 bytes aleatorios en base64) solo en env del servidor (secret del compose; con `FINANZIA_ENV=prod`, `Settings` rechaza la llave de ejemplo de `.env.example`); el blob guardado es `nonce (12 B) \|\| ciphertext+tag` (`shared/crypto/aesgcm.py`), con `str(user_id)` como datos asociados (AAD): un blob copiado a la fila de otro usuario no descifra; sin rotación de clave en el MVP |
 | Backups | `pg_dump` cifrado con age (clave pública; privada fuera del VPS); retención 30 días |
 | Contraseñas | N/A — no existen contraseñas propias (ADR-8) |
 
 ## 4. Protección de la API
 
-- **Rate limiting** (Redis, sliding window): `/auth/*` 10/min por IP; `/ingest/notifications` 60/min por usuario; global 600/min por usuario; respuesta 429 + `Retry-After`. La IP se toma de `request.client.host`, salvo que `FINANZIA_TRUST_PROXY_HEADERS=true` (Caddy en producción), en cuyo caso se usa el último valor de `X-Forwarded-For` (el añadido por el proxy de confianza; los valores a la izquierda los controla el cliente). `/health*` está exento. Si Redis no responde, el limitador falla abierto y registra una advertencia (decisión MVP: disponibilidad sobre límite). Implementación (Task 5/F4.3): regla `ingest_user` (`/v1/ingest/` por usuario) en la lista de reglas de `RateLimitMiddleware`, evaluada ANTES que la regla global `user_global` (el orden importa: la primera regla que rechaza responde 429); un `POST /v1/ingest/notifications` matchea ambas reglas y consume cupo de las dos.
+- **Rate limiting** (Redis, sliding window): `/auth/*` 10/min por IP; `/ingest/notifications` 60/min por usuario; global 600/min por usuario; respuesta 429 + `Retry-After`. La IP se toma de `request.client.host`, salvo que `FINANZIA_TRUST_PROXY_HEADERS=true` (nginx en producción), en cuyo caso se usa el último valor de `X-Forwarded-For` (el añadido por el proxy de confianza; los valores a la izquierda los controla el cliente). `/health*` está exento. Si Redis no responde, el limitador falla abierto y registra una advertencia (decisión MVP: disponibilidad sobre límite). Implementación (Task 5/F4.3): regla `ingest_user` (`/v1/ingest/` por usuario) en la lista de reglas de `RateLimitMiddleware`, evaluada ANTES que la regla global `user_global` (el orden importa: la primera regla que rechaza responde 429); un `POST /v1/ingest/notifications` matchea ambas reglas y consume cupo de las dos.
 - **Validación**: Pydantic estricto en todo input; límites de tamaño de body (1 MB general, 64 KB por notificación); listas de enums cerradas (bancos, canales).
 - **Cabeceras**: HSTS, `X-Content-Type-Options: nosniff`, CSP restrictiva en cualquier página servida.
 - **CORS**: cerrado (la app móvil no lo necesita); si hay web futura, allowlist explícita.

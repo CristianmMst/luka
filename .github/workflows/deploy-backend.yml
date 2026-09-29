@@ -3,7 +3,7 @@
 # 1. gate: pip-audit de las dependencias de produccion y gitleaks.
 # 2. build: construye backend/Dockerfile y lo publica en GHCR con el sha del
 #    commit (y `latest`), con SBOM y procedencia.
-# 3. deploy: copia compose.yml y Caddyfile al VPS por SSH, fija la imagen
+# 3. deploy: copia compose.yml y backup.sh a ~/apps/finanzia por SSH, fija la imagen
 #    por digest, corre las migraciones y levanta el stack esperando a que
 #    todo quede sano.
 #
@@ -112,7 +112,8 @@ jobs:
       contents: read
       packages: read
     env:
-      DEPLOY_DIR: finanzia
+      # Junto a las otras apps del servidor (~/apps/<app>).
+      DEPLOY_DIR: apps/finanzia
     steps:
       - uses: actions/checkout@v4
 
@@ -138,11 +139,11 @@ jobs:
             StrictHostKeyChecking yes
           EOF
 
-      - name: Copiar compose.yml, Caddyfile y backup.sh
+      - name: Copiar compose.yml y backup.sh
         run: |
           ssh vps "test -f ~/$DEPLOY_DIR/.env" \
             || { echo "Falta ~/$DEPLOY_DIR/.env en el VPS (backend/deploy/README.md)."; exit 1; }
-          scp backend/deploy/compose.yml backend/deploy/Caddyfile backend/deploy/backup.sh "vps:~/$DEPLOY_DIR/"
+          scp backend/deploy/compose.yml backend/deploy/backup.sh "vps:~/$DEPLOY_DIR/"
           ssh vps "chmod 750 ~/$DEPLOY_DIR/backup.sh"
 
       - name: Migrar y levantar

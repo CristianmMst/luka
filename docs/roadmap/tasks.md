@@ -83,7 +83,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
 | ID | Tarea | Specs | Deps |
 |---|---|---|---|
-| F6.1 | Compose de producción (API xN, workers, Caddy TLS, redes internas) + guía de despliegue VPS + hardening (SSH, firewall, unattended-upgrades) | 003 §5, 009 §6 | F0.4 | ✅ en código (`backend/deploy/`, `deploy-backend.yml`): imagen multietapa no-root, compose endurecido con red de datos interna, Caddy, `bootstrap.sh` del VPS y `backup.sh` local; probado con el stack completo en local. Falta el primer despliegue en el VPS real |
+| F6.1 | Compose de producción (API xN, workers, Caddy TLS, redes internas) + guía de despliegue VPS + hardening (SSH, firewall, unattended-upgrades) | 003 §5, 009 §6 | F0.4 | ✅ en código (`backend/deploy/`, `deploy-backend.yml`): imagen multietapa no-root y compose endurecido con red de datos interna, en el VPS compartido (`~/apps/finanzia`) detrás de su nginx + certbot por la red `proxy` (`nginx-finanzia.conf`), y `backup.sh` local. El hardening del SO (SSH, firewall, unattended-upgrades) queda del servidor, que es compartido. Probado en local con un nginx en la red `proxy`. Falta el primer despliegue real |
 | F6.2 | Backups cifrados automatizados + prueba de restauración documentada | 009 §3, RNF-4 | F6.1 |
 | F6.3 | Observabilidad: logs estructurados sin PII (test CI), métricas de pipeline, alertas mínimas | 009 §5, 006 §6 | F6.1 |
 | F6.4 | Borrado de cuenta end-to-end (evento UserDeleted + purga + verificación ≤72 h) y exportación de datos | RF-11, 004 §6 | F4.8b | adelantado en F4.8b: `DELETE /me` inmediato con CASCADE y `UserDeleted`, y `GET /me/export` síncrono en JSON. Queda el Excel, el job de verificación ≤ 72 h y la web de borrado (F6.5) |

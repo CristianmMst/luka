@@ -1,6 +1,6 @@
 # backend
 
-Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md). El despliegue en producción (VPS con Docker Compose y Caddy, desde GitHub Actions) está en [`deploy/README.md`](deploy/README.md).
+Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md). El despliegue en producción (VPS compartido con Docker Compose detrás de su nginx, desde GitHub Actions) está en [`deploy/README.md`](deploy/README.md).
 
 Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) también en `main`. La app Flutter (F0.6, F1.9) inicia sesión con Google real contra esta API. Fase 3 (Gmail, F3.1–F3.6) está en la rama local `f3-gmail`: watch/sync, cifrado del refresh token, endpoints de conexión, webhook y paso de onboarding en la app, verificado en modo de prueba de Google con túnel de desarrollo (§16). Pendiente: F2.7 (bancos restantes, diferido), la verificación DKIM del remitente (spec 009 §1) y Fases 5+ (fiscal, producción).
 
@@ -221,7 +221,7 @@ Todas tienen el prefijo `FINANZIA_`. Solo las 6 marcadas como **obligatoria** va
 | `FINANZIA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com`) |
 | `FINANZIA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
 | `FINANZIA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
-| `FINANZIA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás de Caddy en producción) |
+| `FINANZIA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás del nginx de producción) |
 | `FINANZIA_RATE_LIMIT_AUTH_PER_MINUTE` | Límite de requests/min para `/auth/*` (por IP) |
 | `FINANZIA_RATE_LIMIT_USER_PER_MINUTE` | Límite de requests/min por usuario autenticado (global) |
 | `FINANZIA_IDEMPOTENCY_TTL_SECONDS` | TTL, en segundos, de las claves `Idempotency-Key` en Redis (default 86400 = 24 h) |

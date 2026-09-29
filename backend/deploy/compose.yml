@@ -1,10 +1,11 @@
-# Produccion en un VPS con Docker Compose (backend/deploy/README.md).
+# Produccion en el VPS compartido (backend/deploy/README.md), en
+# ~/apps/finanzia junto a las otras apps.
 #
-# Caddy es lo unico expuesto (80/443, HTTPS automatico). La API y el worker
-# usan la misma imagen; Postgres y Redis viven en una red interna sin salida a
-# internet ni puertos publicados. Los valores salen de `.env` (ver
-# `.env.example`); el workflow de despliegue escribe FINANZIA_IMAGE con el
-# digest de la imagen publicada.
+# No publica puertos: el nginx del servidor (~/apps/nginx, con certbot) llega
+# a la API por la red Docker compartida `proxy` con el nombre `finanzia-api`
+# (nginx-finanzia.conf). Postgres y Redis viven en una red interna sin salida
+# a internet. Los valores salen de `.env` (ver `.env.example`); el workflow de
+# despliegue escribe FINANZIA_IMAGE con el digest de la imagen publicada.
 
 name: finanzia
 
@@ -33,31 +34,11 @@ x-backend: &backend
   logging: *logging
 
 services:
-  caddy:
-    image: caddy:2.10-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    environment:
-      DOMAIN: ${DOMAIN:?falta DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL:?falta ACME_EMAIL}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      api:
-        condition: service_healthy
-    networks: [public]
-    logging: *logging
-
   api:
     <<: *backend
     environment:
       <<: *backend-env
-      # Caddy agrega la IP del cliente al final de X-Forwarded-For.
+      # nginx agrega la IP del cliente al final de X-Forwarded-For.
       FINANZIA_TRUST_PROXY_HEADERS: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
     depends_on:
@@ -65,7 +46,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [public, data]
+    networks:
+      proxy:
+        aliases: [finanzia-api]
+      data: {}
 
   worker:
     <<: *backend
@@ -85,7 +69,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: [public, data]
+    # `egress` para Gmail, Google y DeepSeek; no entra a la red del proxy.
+    networks: [egress, data]
 
   # Migraciones, a mano o desde el despliegue:
   # `docker compose run --rm migrate`.
@@ -138,13 +123,14 @@ services:
     logging: *logging
 
 networks:
-  public: {}
+  # La red del nginx del servidor (~/apps/nginx/docker-compose.yml).
+  proxy:
+    external: true
+  egress: {}
   # Sin salida a internet: solo la API, el worker y las migraciones la ven.
   data:
     internal: true
 
 volumes:
-  caddy_data: {}
-  caddy_config: {}
   postgres_data: {}
   redis_data: {}

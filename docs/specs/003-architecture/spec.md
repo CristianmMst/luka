@@ -17,7 +17,7 @@ flowchart TB
     end
 
     subgraph vps["VPS (Docker Compose)"]
-        CADDY["Caddy (TLS)"]
+        CADDY["nginx del VPS (TLS, certbot)"]
         API["FastAPI (stateless, xN)"]
         WK["Workers arq (xN)"]
         PG[("PostgreSQL")]
@@ -117,7 +117,7 @@ La implementación del bus vive en `shared/events/`: un codec de eventos (serial
 | Etapa | Infra | Cambio de código |
 |---|---|---|
 | MVP | 1 VPS: compose con API x1, worker x1 | — |
-| Crecimiento | Mismo VPS o 2: API x3 tras Caddy, workers x3, Postgres con `pgbouncer` | 0 |
+| Crecimiento | Mismo VPS o 2: API x3 tras el nginx, workers x3, Postgres con `pgbouncer` | 0 |
 | Escala | Postgres gestionado + réplicas de lectura; particionar `transactions` por fecha; Redis gestionado | migraciones, 0 refactor |
 | Extremo | Extraer `parsing` (el módulo con más carga externa) como servicio propio | mover carpeta + cambiar transporte del bus |
 
@@ -190,7 +190,7 @@ sequenceDiagram
 | Workers | arq (async, nativo Redis) | misma imagen |
 | Datos | PostgreSQL 16, Redis 7 | |
 | LLM | DeepSeek V4 Flash (API OpenAI-compatible, JSON mode) | detrás de `LlmParserPort` |
-| Infra | Docker Compose, Caddy (TLS automático), VPS Hetzner/DO | GCP solo Pub/Sub+OAuth; `backend/deploy/` |
+| Infra | Docker Compose en un VPS compartido (Hostinger), detrás del nginx del servidor con certbot (red `proxy`) | GCP solo Pub/Sub+OAuth; `backend/deploy/` |
 | CI/CD | GitHub Actions solo despliega el backend: pip-audit + gitleaks, imagen en GHCR con SBOM y procedencia, despliegue por SSH fijado por digest. Lint y tests (ruff, pyright, pytest, import-linter, flutter analyze/test) en local; iOS en Codemagic | |
 
 ## 6. ADRs (decisiones registradas)

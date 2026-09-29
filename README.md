@@ -30,4 +30,4 @@ Este proyecto sigue **Spec-Driven Development (SDD)**: primero se escribe la esp
 - **App**: Flutter (Android + iOS) · Riverpod 3 · Drift (offline-first) · dio · go_router · nfc_manager · notification_listener_service · google_sign_in
 - **Backend**: Python 3.12+ · FastAPI · SQLAlchemy/Alembic · PostgreSQL · Redis (colas/eventos/rate-limit) · arq (workers)
 - **LLM parsing**: DeepSeek V4 Flash (respaldo del parsing por reglas)
-- **Infra**: VPS (Docker Compose: API + workers + Postgres + Redis + Caddy) · Google Cloud Pub/Sub (push de Gmail)
+- **Infra**: VPS compartido (Docker Compose: API + workers + Postgres + Redis, detrás del nginx del servidor) · Google Cloud Pub/Sub (push de Gmail)

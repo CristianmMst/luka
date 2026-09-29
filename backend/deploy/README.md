@@ -1,107 +1,108 @@
-# Despliegue del backend en un VPS (F6.1)
+# Despliegue del backend en el VPS (F6.1)
 
-La API, el worker arq, Postgres 16, Redis 7 y Caddy corren con Docker Compose en un VPS (spec 003 §5, spec 009 §6). Cada push a `main` que toca `backend/` despliega solo, con el workflow `.github/workflows/deploy-backend.yml`.
+La API, el worker arq, Postgres 16 y Redis 7 corren con Docker Compose en el VPS compartido (`srv1633607`), en `~/apps/finanzia`, junto a las otras apps (spec 003 §5, spec 009 §6). La entrada es el nginx del servidor (`~/apps/nginx`), con certificados de certbot. Cada push a `main` que toca `backend/` despliega solo, con `.github/workflows/deploy-backend.yml`.
 
 | Archivo | Qué es |
 |---|---|
-| `../Dockerfile` | Imagen multietapa: el builder instala con `uv sync --frozen --no-dev`; el runtime solo trae el venv, `alembic.ini` y las migraciones, y corre como el usuario `app` (uid 10001). API, worker y migraciones usan la misma imagen. |
-| `compose.yml` | El stack de producción. |
-| `Caddyfile` | Proxy con HTTPS automático (Let's Encrypt) y cabeceras de seguridad, sin access log (P1). |
+| `../Dockerfile` | Imagen multietapa. El builder usa `uv sync --frozen --no-dev`; el runtime solo trae el venv, `alembic.ini` y las migraciones, y corre como `app` (uid 10001). API, worker y migraciones usan la misma imagen. |
+| `compose.yml` | El stack de finanzia. No publica puertos. |
+| `nginx-finanzia.conf` | El server block para `~/apps/nginx/conf.d/finanzia.conf`, calcado de `biologistica.conf`. |
 | `.env.example` | Las variables obligatorias del `.env` del servidor. |
-| `bootstrap.sh` | Prepara un VPS nuevo: Docker, usuario `deploy`, SSH solo con llave, firewall, fail2ban y actualizaciones automáticas. |
 | `backup.sh` | `pg_dump` diario con retención de 14 días. |
 
-## Cómo queda el stack
+## Cómo queda
 
-- **Expuesto:** solo Caddy, en 80 y 443 (TCP y UDP para HTTP/3). El 80 redirige a HTTPS.
-- **Red `data` interna:** Postgres y Redis no publican puertos ni tienen salida a internet. Solo la API, el worker y las migraciones los ven.
-- **Contenedores de la app:** filesystem de solo lectura (con `/tmp` en tmpfs), `cap_drop: ALL`, `no-new-privileges` y usuario sin privilegios. La API corre 2 procesos (`WEB_CONCURRENCY`); el rate limit vive en Redis y lo comparten.
-- **Redis:** guarda con AOF (`appendfsync everysec`). Es el bus de eventos y las colas de arq, y así no pierde eventos si se reinicia.
-- **Healthchecks:** la API responde en `/health`, el worker se revisa con `arq --check` y Postgres y Redis tienen el suyo. Caddy espera a que la API esté sana.
-- **Migraciones:** van en un servicio aparte (`migrate`, perfil `migrate`) que el despliegue corre antes de levantar la nueva versión.
-- **Logs:** JSON (structlog, `FINANZIA_ENV=prod`), con rotación de 10 MB × 5 por contenedor.
+```
+internet ─▶ nginx (80/443, ~/apps/nginx) ─red proxy─▶ finanzia-api:8000
+                                                        │
+                            worker ─red egress─▶ Gmail, Google, DeepSeek
+                              │                         │
+                              └──── red data (interna) ─┴─▶ postgres, redis
+```
 
-## El workflow de despliegue
+- **Entrada:** finanzia no publica puertos. La API entra a la red compartida `proxy` con el alias `finanzia-api`, igual que `biologistica-backend`. El nginx resuelve ese nombre en cada petición, así que arranca aunque finanzia esté caído.
+- **Datos:** Postgres y Redis están en la red `data`, interna y sin salida a internet. Son propios de finanzia y no chocan con los de las otras apps.
+- **Contenedores de la app:** filesystem de solo lectura (con `/tmp` en tmpfs), `cap_drop: ALL`, `no-new-privileges` y usuario sin privilegios. La API corre 2 procesos (`WEB_CONCURRENCY`) que comparten el rate limit en Redis.
+- **Redis:** guarda con AOF (`appendfsync everysec`) para no perder eventos del bus ni jobs de arq.
+- **Healthchecks:** `/health` en la API, `arq --check` en el worker, y los propios de Postgres y Redis.
+- **Migraciones:** van en un servicio aparte (`migrate`, perfil `migrate`) que el despliegue corre antes de levantar la versión nueva.
+- **Logs:** la app escribe JSON (structlog) con rotación de 10 MB × 5. El nginx no guarda access log de finanzia (P1: la ruta cruda puede llevar datos del usuario).
 
-1. **`gate`:** `pip-audit --strict` sobre las dependencias de producción (exportadas de `uv.lock` con hashes) y gitleaks sobre el historial. Una vulnerabilidad conocida o un secreto frenan el despliegue (constitución P1, spec 009 §8).
-2. **`build`:** construye la imagen con caché de GitHub Actions y la publica en `ghcr.io/cristianmmst/finanzia-backend` con el tag `sha-<commit>` y `latest`. Trae SBOM y atestación de procedencia.
-3. **`deploy`** (entorno `production`):
-   - Copia `compose.yml`, `Caddyfile` y `backup.sh` por SSH. La huella del host se lee con `ssh-keyscan` en cada despliegue.
-   - Deja en `.env` la imagen fijada por **digest**.
-   - Hace el pull, corre las migraciones y levanta el stack con `--wait`: si algo no queda sano, el job falla.
-   - El token de GHCR solo vale durante el job y se borra del VPS al terminar.
+## El workflow
 
-Lint y tests ya no corren en GitHub: se corren en local antes de subir (`just lint`, `just test`, `just app-ci`).
+1. **`gate`:** `pip-audit --strict` sobre las dependencias de producción (de `uv.lock`, con hashes) y gitleaks. Una vulnerabilidad conocida o un secreto frenan el despliegue (constitución P1, spec 009 §8).
+2. **`build`:** publica `ghcr.io/cristianmmst/finanzia-backend` con los tags `sha-<commit>` y `latest`, con SBOM y atestación de procedencia.
+3. **`deploy`:** entra por SSH con los secretos `VPS_HOST`, `VPS_USER` y `VPS_SSH_KEY`. La huella del host se lee con `ssh-keyscan` en cada despliegue. Luego:
+   1. Copia `compose.yml` y `backup.sh` a `~/apps/finanzia`.
+   2. Fija la imagen por **digest** en `.env`.
+   3. Corre las migraciones y levanta con `--wait`: si algo no queda sano, el job falla.
+
+   El token de GHCR se borra del VPS al terminar. El workflow **no toca el nginx**: ese paso es manual y se hace una vez.
+
+Lint y tests no corren en GitHub. Se corren en local antes de subir: `just lint`, `just test` y `just app-ci`.
 
 ## Primera vez
 
-### 1. VPS y dominio
+Todo en el VPS, con el usuario de `VPS_USER`, que debe poder usar `docker`.
 
-1. Crea un VPS con Ubuntu 24.04 o Debian 12. Con 2 GB de RAM alcanza para empezar. Activa el disco cifrado si el proveedor lo ofrece (spec 009 §6).
-2. Crea un registro DNS `A` (y `AAAA` si hay IPv6), por ejemplo `api.tudominio.com`, que apunte a la IP del VPS.
+### 1. DNS
 
-### 2. Llave de despliegue y bootstrap
+Crea un registro `A` para `api-finanzia.a360soft.tech` apuntando a la IP del VPS. Comprueba que resuelve con `dig +short api-finanzia.a360soft.tech`.
 
-En tu máquina, crea una llave solo para GitHub Actions:
-
-```bash
-ssh-keygen -t ed25519 -f ~/.ssh/finanzia_deploy -C finanzia-deploy -N ""
-```
-
-Copia `bootstrap.sh` al VPS y córrelo como root con la llave pública:
+### 2. `.env`
 
 ```bash
-scp backend/deploy/bootstrap.sh root@<IP>:/root/
-ssh root@<IP> "DEPLOY_PUBKEY='$(cat ~/.ssh/finanzia_deploy.pub)' bash /root/bootstrap.sh"
-```
-
-Deja SSH solo con llave. Antes de cerrar la sesión, comprueba que tu propia llave de root sigue entrando.
-
-### 3. `.env` del servidor
-
-```bash
-ssh -i ~/.ssh/finanzia_deploy deploy@<IP>
-cd ~/finanzia && nano .env    # contenido de backend/deploy/.env.example
+mkdir -p ~/apps/finanzia && cd ~/apps/finanzia
+cat > .env <<EOF
+POSTGRES_PASSWORD=$(openssl rand -hex 32)
+FINANZIA_JWT_SECRET=$(openssl rand -base64 48)
+FINANZIA_GOOGLE_CLIENT_ID=30065910946-hatnfnvkk8782gf8qgbii9qdlqf61jn4.apps.googleusercontent.com
+FINANZIA_GOOGLE_CLIENT_SECRET=PEGA_AQUI_EL_SECRETO
+FINANZIA_GMAIL_TOKEN_KEY=$(openssl rand -base64 32)
+FINANZIA_IMAGE=ghcr.io/cristianmmst/finanzia-backend:latest
+EOF
 chmod 600 .env
+nano .env
 ```
 
-- `POSTGRES_PASSWORD`: `openssl rand -hex 32`.
-- `FINANZIA_JWT_SECRET`: `openssl rand -base64 48`.
-- `FINANZIA_GMAIL_TOKEN_KEY`: `openssl rand -base64 32`. Guárdala también fuera del VPS: sin ella hay que reconectar Gmail de todos los usuarios.
-- `FINANZIA_GOOGLE_CLIENT_SECRET`: el secreto del cliente OAuth web de `finanzia-509500`.
+- **`FINANZIA_GOOGLE_CLIENT_SECRET`:** pega aquí el secreto del cliente OAuth web de `finanzia-509500`.
+- **`FINANZIA_GMAIL_TOKEN_KEY`:** guarda una copia fuera del VPS. Sin ella hay que reconectar Gmail de todos los usuarios.
 
 Los secretos de la app viven solo aquí, nunca en GitHub.
 
-### 4. GitHub
+### 3. Certificado y nginx
 
-En el repo, ve a **Settings → Environments → New environment** y crea `production` con estos secretos:
-
-| Secreto | Valor |
-|---|---|
-| `VPS_HOST` | IP o nombre del VPS |
-| `VPS_USER` | `deploy` |
-| `VPS_SSH_KEY` | Contenido de `~/.ssh/finanzia_deploy` (la llave privada) |
-
-Con `gh` desde la terminal:
+Primero, el bloque HTTP para el challenge. Copia `nginx-finanzia.conf` (de este repo) a `~/apps/nginx/conf.d/finanzia.conf` y **comenta el segundo `server` (el de 443)**, porque el certificado aún no existe. Luego recarga:
 
 ```bash
-gh secret set VPS_SSH_KEY --env production < ~/.ssh/finanzia_deploy
-gh secret set VPS_HOST --env production --body "<IP>"
-gh secret set VPS_USER --env production --body deploy
+docker exec nginx nginx -t && docker exec nginx nginx -s reload
 ```
 
-Luego corre el workflow a mano (**Actions → Deploy backend → Run workflow**) o sube un cambio en `backend/`. Si el repo es privado, la imagen de GHCR también lo es: el VPS la baja con el token del job.
+Después, emite el certificado con el certbot del servidor. Usa la misma red y el mismo webroot que las otras apps:
 
-### 5. Después del primer despliegue
+```bash
+cd ~/apps/certbot
+docker compose run --rm --entrypoint certbot certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d api-finanzia.a360soft.tech \
+  --cert-name finanzia-a360soft-tech \
+  --email <tu-correo> --agree-tos --no-eff-email
+```
 
-- Comprueba `https://<DOMAIN>/health/ready`: debe responder `{"status":"ok",...}`.
-- En Google Cloud (`finanzia-509500`), cambia la URL del extremo de la suscripción push `gmail-push-dev` por `https://<DOMAIN>/v1/webhooks/gmail`. Ya no depende de `just tunnel`.
-- Compila la app con `--dart-define=API_BASE_URL=https://<DOMAIN>`. En Codemagic, pon ese valor en el grupo `finanzia` (app/README.md).
-- Programa el respaldo con `crontab -e` como `deploy`, usando la línea que trae `backup.sh`.
+Por último, descomenta el bloque de 443 y recarga otra vez con el mismo `nginx -t && nginx -s reload`. El certbot del servidor renueva el certificado solo, y el nginx se recarga cada 6 h.
+
+### 4. Primer despliegue
+
+Sube a `main` (o corre **Actions → Deploy backend → Run workflow**). Cuando termine:
+
+- `https://api-finanzia.a360soft.tech/health/ready` debe responder `{"status":"ok",...}`.
+- En Google Cloud (`finanzia-509500`), cambia la URL del extremo de la suscripción push `gmail-push-dev` a `https://api-finanzia.a360soft.tech/v1/webhooks/gmail`.
+- Compila la app con `--dart-define=API_BASE_URL=https://api-finanzia.a360soft.tech`. En Codemagic, pon ese valor en el grupo `finanzia`.
+- Programa el respaldo con `crontab -e`, con la línea que trae `backup.sh`.
 
 ## Operación
 
-Todo se corre como `deploy` en `~/finanzia`:
+Todo en `~/apps/finanzia`:
 
 ```bash
 docker compose ps                                   # estado y salud
@@ -110,9 +111,10 @@ docker compose run --rm migrate                     # migraciones a mano
 docker compose run --rm api python -m finanzia.tools.reparse --since 2026-09-01
 docker compose run --rm api python -m finanzia.tools.mark_self_transfers
 docker compose restart worker
+tail -f ~/apps/nginx/logs/finanzia-api-error.log    # errores del proxy
 ```
 
-**Volver a una versión anterior.** Cambia `FINANZIA_IMAGE` en `.env` por `ghcr.io/cristianmmst/finanzia-backend:sha-<commit>` y corre `docker compose up -d --wait`. Las migraciones no se revierten solas, así que revisa si la versión vieja las soporta.
+**Volver a una versión anterior:** cambia `FINANZIA_IMAGE` en `.env` por `ghcr.io/cristianmmst/finanzia-backend:sha-<commit>` y corre `docker compose up -d --wait`. Las migraciones no se revierten solas, así que revisa si la versión vieja las soporta.
 
 **Restaurar un respaldo:**
 

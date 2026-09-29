@@ -97,16 +97,24 @@ class TestDeployWorkflow:
 
 @pytest.mark.ci
 class TestProductionCompose:
-    def test_solo_caddy_publica_puertos(self, services: dict[str, Any]) -> None:
-        exposed = {name for name, svc in services.items() if svc.get("ports")}
-        assert exposed == {"caddy"}
+    def test_nada_publica_puertos(self, services: dict[str, Any]) -> None:
+        # El nginx del servidor es la unica entrada (nginx-finanzia.conf).
+        assert not [name for name, svc in services.items() if svc.get("ports")]
+
+    def test_api_en_la_red_del_proxy_con_su_alias(self, services: dict[str, Any]) -> None:
+        networks = _yaml(COMPOSE_PATH)["networks"]
+        assert networks["proxy"]["external"] is True
+        assert services["api"]["networks"]["proxy"]["aliases"] == ["finanzia-api"]
+        assert "proxy" not in services["worker"]["networks"]
+        conf = (COMPOSE_PATH.parent / "nginx-finanzia.conf").read_text(encoding="utf-8")
+        assert "http://finanzia-api:8000" in conf
+        assert "access_log off;" in conf
 
     def test_datos_en_red_interna(self, services: dict[str, Any]) -> None:
         networks = _yaml(COMPOSE_PATH)["networks"]
         assert networks["data"]["internal"] is True
         assert services["postgres"]["networks"] == ["data"]
         assert services["redis"]["networks"] == ["data"]
-        assert "data" not in services["caddy"]["networks"]
 
     @pytest.mark.parametrize("name", APP_SERVICES)
     def test_contenedores_de_la_app_endurecidos(self, services: dict[str, Any], name: str) -> None:

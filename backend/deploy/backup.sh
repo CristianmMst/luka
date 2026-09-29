@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Respaldo diario de Postgres en el VPS (backend/deploy/README.md). Guarda un
-# volcado `pg_dump -Fc` en ~/finanzia/backups y borra los de mas de
-# RETENTION_DAYS. Cron de `deploy`:
+# volcado `pg_dump -Fc` en ~/apps/finanzia/backups y borra los de mas de
+# RETENTION_DAYS. Cron del usuario del despliegue (`crontab -e`):
 #
-#   15 3 * * * /home/deploy/finanzia/backup.sh >> /home/deploy/finanzia/backups/backup.log 2>&1
+#   15 3 * * * $HOME/apps/finanzia/backup.sh >> $HOME/apps/finanzia/backups/backup.log 2>&1
 #
 # Queda en el mismo disco: copiarlo cifrado fuera del VPS es F6.2.
 set -euo pipefail
