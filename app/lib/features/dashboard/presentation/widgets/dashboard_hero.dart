@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 
 /// Banda esmeralda del Inicio (diseño A "Balance protagonista"): saludo,
 /// línea de sync, selector de mes y, si hay [summary], el balance con las
-/// tarjetas de gastos e ingresos.
+/// tarjetas de gastos e ingresos. Al final, [alert] (la franja de captura
+/// detenida), que pone su propio espacio arriba cuando se ve.
 class DashboardHero extends StatelessWidget {
   const DashboardHero({
     required this.greeting,
@@ -21,6 +22,7 @@ class DashboardHero extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     this.summary,
+    this.alert,
     super.key,
   });
 
@@ -31,15 +33,14 @@ class DashboardHero extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final MonthlySummary? summary;
+  final Widget? alert;
 
   static const _radius = 28.0;
 
   @override
   Widget build(BuildContext context) {
     final brand = context.finanziaColors;
-    final textTheme = Theme.of(context).textTheme;
     final top = MediaQuery.paddingOf(context).top;
-    final soft = brand.onHero.withValues(alpha: 0.85);
 
     return Container(
       padding: EdgeInsets.fromLTRB(Space.md, top + Space.sm, Space.md, 20),
@@ -51,71 +52,85 @@ class DashboardHero extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 14,
         children: [
-          Row(
-            spacing: Space.sm,
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    greeting,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontSize: 15,
-                      color: brand.onHero,
-                    ),
+          _content(context),
+          ?alert,
+        ],
+      ),
+    );
+  }
+
+  Widget _content(BuildContext context) {
+    final brand = context.finanziaColors;
+    final textTheme = Theme.of(context).textTheme;
+    final soft = brand.onHero.withValues(alpha: 0.85);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 14,
+      children: [
+        Row(
+          spacing: Space.sm,
+          children: [
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Text(
+                  greeting,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontSize: 15,
+                    color: brand.onHero,
                   ),
                 ),
               ),
-              Flexible(
-                child: Text(
-                  syncLine,
-                  textAlign: TextAlign.end,
-                  style: textTheme.bodySmall?.copyWith(color: soft),
+            ),
+            Flexible(
+              child: Text(
+                syncLine,
+                textAlign: TextAlign.end,
+                style: textTheme.bodySmall?.copyWith(color: soft),
+              ),
+            ),
+          ],
+        ),
+        _MonthSelector(
+          month: month,
+          canGoNext: canGoNext,
+          onPrevious: onPrevious,
+          onNext: onNext,
+        ),
+        if (summary case final summary?) ...[
+          _Balance(summary: summary),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 10,
+            children: [
+              Expanded(
+                child: _TotalTile(
+                  label: AppLocalizations.of(context).dashboardExpenses,
+                  amount: summary.totals.expenses,
+                  sign: AmountSign.negative,
+                  color: brand.expense,
+                  delta: summary.expensesDelta,
+                  previous: summary.month.previous,
+                ),
+              ),
+              Expanded(
+                child: _TotalTile(
+                  label: AppLocalizations.of(context).dashboardIncome,
+                  amount: summary.totals.income,
+                  sign: AmountSign.positive,
+                  color: brand.income,
+                  delta: summary.incomeDelta,
+                  previous: summary.month.previous,
                 ),
               ),
             ],
           ),
-          _MonthSelector(
-            month: month,
-            canGoNext: canGoNext,
-            onPrevious: onPrevious,
-            onNext: onNext,
-          ),
-          if (summary case final summary?) ...[
-            _Balance(summary: summary),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 10,
-              children: [
-                Expanded(
-                  child: _TotalTile(
-                    label: AppLocalizations.of(context).dashboardExpenses,
-                    amount: summary.totals.expenses,
-                    sign: AmountSign.negative,
-                    color: brand.expense,
-                    delta: summary.expensesDelta,
-                    previous: summary.month.previous,
-                  ),
-                ),
-                Expanded(
-                  child: _TotalTile(
-                    label: AppLocalizations.of(context).dashboardIncome,
-                    amount: summary.totals.income,
-                    sign: AmountSign.positive,
-                    color: brand.income,
-                    delta: summary.incomeDelta,
-                    previous: summary.month.previous,
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }

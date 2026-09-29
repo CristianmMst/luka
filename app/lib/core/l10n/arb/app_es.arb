@@ -998,5 +998,21 @@
   "accountsOnboardingExampleFrom": "Bancolombia ···1234",
   "accountsOnboardingExampleTo": "Nequi ···9876",
   "accountsOnboardingExample": "transferencia propia, no es gasto ni ingreso",
-  "accountsOnboardingExampleSemantics": "Ejemplo: pasar $500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso."
+  "accountsOnboardingExampleSemantics": "Ejemplo: pasar $500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso.",
+  "captureStoppedNotifications": "Captura detenida",
+  "captureStoppedGmail": "Gmail se desconectó",
+  "captureStoppedReactivate": "Reactivar",
+  "captureStoppedReconnect": "Reconectar",
+  "captureStoppedSemantics": "{title}. {action}",
+  "@captureStoppedSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "captureStoppedReconnectFailed": "No pudimos reconectar Gmail. Inténtalo desde Ajustes."
 }

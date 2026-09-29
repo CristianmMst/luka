@@ -40,6 +40,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../helpers/capture_health.dart';
 
 class _MockSyncStore extends Mock implements SyncStore {}
 
@@ -146,6 +147,7 @@ void main() {
   }) async {
     final container = ProviderContainer(
       overrides: [
+        captureHealthOk(),
         authControllerProvider.overrideWith(
           () => _StartingAuthController(auth),
         ),

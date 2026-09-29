@@ -24,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/capture_health.dart';
 import '../../../helpers/pump_app.dart';
 
 class _Insights extends Mock implements InsightsRepository {}
@@ -118,6 +119,7 @@ void main() {
   });
 
   List<Override> overrides(SyncStatus status) => [
+    captureHealthOk(),
     insightsRepositoryProvider.overrideWithValue(insights),
     dashboardClockProvider.overrideWithValue(() => _now),
     authControllerProvider.overrideWith(_Auth.new),

@@ -3,6 +3,7 @@ import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
+import 'package:finanzia/features/capture/presentation/widgets/capture_stopped_strip.dart';
 import 'package:finanzia/features/dashboard/application/dashboard_controller.dart';
 import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
@@ -54,6 +55,7 @@ class DashboardPage extends ConsumerWidget {
                 onPrevious: controller.previousMonth,
                 onNext: controller.nextMonth,
                 summary: shown,
+                alert: const CaptureStoppedStrip(),
               ),
               if (sync.offline)
                 Padding(

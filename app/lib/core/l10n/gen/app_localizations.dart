@@ -2715,6 +2715,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ejemplo: pasar \$500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso.'**
   String get accountsOnboardingExampleSemantics;
+
+  /// No description provided for @captureStoppedNotifications.
+  ///
+  /// In es, this message translates to:
+  /// **'Captura detenida'**
+  String get captureStoppedNotifications;
+
+  /// No description provided for @captureStoppedGmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Gmail se desconectó'**
+  String get captureStoppedGmail;
+
+  /// No description provided for @captureStoppedReactivate.
+  ///
+  /// In es, this message translates to:
+  /// **'Reactivar'**
+  String get captureStoppedReactivate;
+
+  /// No description provided for @captureStoppedReconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Reconectar'**
+  String get captureStoppedReconnect;
+
+  /// No description provided for @captureStoppedSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{title}. {action}'**
+  String captureStoppedSemantics(String title, String action);
+
+  /// No description provided for @captureStoppedReconnectFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos reconectar Gmail. Inténtalo desde Ajustes.'**
+  String get captureStoppedReconnectFailed;
 }
 
 class _AppLocalizationsDelegate

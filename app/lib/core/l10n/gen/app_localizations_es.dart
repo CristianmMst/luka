@@ -1618,4 +1618,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get accountsOnboardingExampleSemantics =>
       'Ejemplo: pasar \$500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso.';
+
+  @override
+  String get captureStoppedNotifications => 'Captura detenida';
+
+  @override
+  String get captureStoppedGmail => 'Gmail se desconectó';
+
+  @override
+  String get captureStoppedReactivate => 'Reactivar';
+
+  @override
+  String get captureStoppedReconnect => 'Reconectar';
+
+  @override
+  String captureStoppedSemantics(String title, String action) {
+    return '$title. $action';
+  }
+
+  @override
+  String get captureStoppedReconnectFailed =>
+      'No pudimos reconectar Gmail. Inténtalo desde Ajustes.';
 }

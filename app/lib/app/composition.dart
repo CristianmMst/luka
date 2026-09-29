@@ -4,6 +4,7 @@ import 'package:finanzia/features/accounts/data/accounts_data_providers.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
 import 'package:finanzia/features/capture/application/capture_flusher.dart';
+import 'package:finanzia/features/capture/application/capture_health.dart';
 import 'package:finanzia/features/capture/data/capture_data_providers.dart';
 import 'package:finanzia/features/categories/application/category_actions.dart';
 import 'package:finanzia/features/categories/data/categories_data_providers.dart';
@@ -58,6 +59,9 @@ List<Override> get appOverrides => [
     (ref) => ref.watch(platformNotificationSourceProvider),
   ),
   captureRemoteProvider.overrideWith((ref) => ref.watch(captureApiProvider)),
+  captureGrantStoreProvider.overrideWith(
+    (ref) => ref.watch(driftCaptureGrantStoreProvider),
+  ),
   categoriesRemoteProvider.overrideWith(
     (ref) => ref.watch(categoriesApiProvider),
   ),
