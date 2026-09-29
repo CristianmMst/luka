@@ -29,7 +29,11 @@ from finanzia.modules.ingestion.application.dto import (
     ReparseSummary,
     RequeueSummary,
 )
-from finanzia.modules.ingestion.application.use_cases.gmail_connection import GetGmailStatus
+from finanzia.modules.ingestion.application.ports import GmailClientPort
+from finanzia.modules.ingestion.application.use_cases.gmail_connection import (
+    DisconnectGmail,
+    GetGmailStatus,
+)
 from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch import (
     IngestNotificationsBatch,
 )
@@ -65,7 +69,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from finanzia.modules.ingestion.application.ports import ClockPort, GmailClientPort
+    from finanzia.modules.ingestion.application.ports import ClockPort
     from finanzia.shared.events.port import EventBusPort
     from finanzia.shared.settings import Settings
 
@@ -74,6 +78,7 @@ __all__ = [
     "BatchResult",
     "Discarded",
     "Duplicate",
+    "GmailClientPort",
     "GmailSyncResult",
     "GmailTransientError",
     "IngestOutcome",
@@ -84,6 +89,7 @@ __all__ = [
     "RenewWatchesSummary",
     "ReparseSummary",
     "RequeueSummary",
+    "disconnect_gmail",
     "get_raw_message_for_parsing",
     "gmail_connection_status",
     "ingest_notifications_batch",
@@ -287,3 +293,16 @@ async def gmail_connection_status(session: AsyncSession, user_id: UUID) -> str:
     """
     view = await GetGmailStatus(repo=SqlAlchemyGmailConnectionRepository(session)).execute(user_id)
     return "none" if view.status == GMAIL_DISCONNECTED else view.status
+
+
+async def disconnect_gmail(
+    session: AsyncSession, gmail: GmailClientPort, settings: Settings, user_id: UUID
+) -> None:
+    """Para el watch, revoca el grant en Google (best effort) y borra la
+    conexion; comitea. Lo usa identity al borrar la cuenta (RF-11.3)."""
+    await DisconnectGmail(
+        repo=SqlAlchemyGmailConnectionRepository(session),
+        gmail=gmail,
+        cipher=AesGcmTokenCipher.from_settings(settings),
+        uow=SqlAlchemyUnitOfWork(session),
+    ).execute(user_id)

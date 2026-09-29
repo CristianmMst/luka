@@ -3,13 +3,18 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 
+from finanzia.modules.identity.application.use_cases.delete_account import DeleteAccount
+from finanzia.modules.identity.application.use_cases.export_data import ExportUserData
 from finanzia.modules.identity.application.use_cases.get_me import GetMe
 from finanzia.modules.identity.application.use_cases.login_with_google import LoginWithGoogle
 from finanzia.modules.identity.application.use_cases.logout import Logout
 from finanzia.modules.identity.application.use_cases.refresh_session import RefreshSession
 from finanzia.modules.identity.infrastructure.api.deps import (
     get_current_user_id,
+    get_delete_account_use_case,
+    get_export_use_case,
     get_login_use_case,
     get_logout_use_case,
     get_me_use_case,
@@ -75,3 +80,25 @@ async def get_me(
     """Perfil del usuario autenticado y el estado de sus conexiones externas."""
     result = await use_case.execute(user_id)
     return MeResponse.build(result.user, result.connections)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
+    user_id: UUID = Depends(get_current_user_id),
+    use_case: DeleteAccount = Depends(get_delete_account_use_case),
+) -> None:
+    """Borra la cuenta y todos sus datos al instante; irreversible (RF-11.3)."""
+    await use_case.execute(user_id)
+
+
+@router.get("/me/export", status_code=status.HTTP_200_OK)
+async def export_me(
+    user_id: UUID = Depends(get_current_user_id),
+    use_case: ExportUserData = Depends(get_export_use_case),
+) -> JSONResponse:
+    """Todos los datos del usuario en JSON, como archivo descargable (RF-11.2)."""
+    document = await use_case.execute(user_id)
+    return JSONResponse(
+        document,
+        headers={"Content-Disposition": 'attachment; filename="finanzia-export.json"'},
+    )

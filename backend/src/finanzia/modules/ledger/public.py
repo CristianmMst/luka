@@ -21,6 +21,7 @@ from finanzia.modules.ledger.application.use_cases.record_captured_transaction i
     RecordCapturedTransaction,
 )
 from finanzia.modules.ledger.events import TransactionCaptured
+from finanzia.modules.ledger.infrastructure.data_export import export_ledger_data
 from finanzia.modules.ledger.infrastructure.event_publisher import BusEventPublisher
 from finanzia.modules.ledger.infrastructure.id_generator import SecretsIdGenerator
 from finanzia.modules.ledger.infrastructure.owner_name_gateway import IdentityOwnerNames
@@ -49,6 +50,7 @@ __all__ = [
     "Recorded",
     "SourceInput",
     "TransactionCaptured",
+    "export_user_data",
     "mark_self_transfers",
     "record_captured_transaction",
 ]
@@ -82,6 +84,11 @@ async def record_captured_transaction(
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(cmd)
+
+
+async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, object]:
+    """Datos de ledger de `user_id` para `GET /v1/me/export` (RF-11.2)."""
+    return await export_ledger_data(session, user_id)
 
 
 async def mark_self_transfers(

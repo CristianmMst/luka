@@ -18,6 +18,11 @@ class UserRepositoryPort(Protocol):
 
     async def update_profile(self, user: User) -> None: ...
 
+    async def delete(self, id: UUID) -> None:
+        """Borra al usuario; el `ON DELETE CASCADE` se lleva todos sus datos
+        (spec 004 SS6)."""
+        ...
+
 
 class RefreshTokenRepositoryPort(Protocol):
     """Persistencia de refresh tokens: siempre por hash, nunca por valor en claro."""
@@ -71,6 +76,25 @@ class GmailConnectionStatusPort(Protocol):
     async def gmail_status(self, user_id: UUID) -> str:
         """`active` / `revoked` / `error`, o `none` si el usuario no conecto Gmail."""
         ...
+
+
+class GmailCleanupPort(Protocol):
+    """Desconecta Gmail en ingestion (para el watch y revoca el grant en Google,
+    best effort) antes de borrar la cuenta (RF-11.3)."""
+
+    async def disconnect(self, user_id: UUID) -> None: ...
+
+
+class UserDataExportPort(Protocol):
+    """Datos del usuario que viven en otros modulos, listos para JSON (RF-11.2)."""
+
+    async def export(self, user_id: UUID) -> dict[str, object]: ...
+
+
+class EventPublisherPort(Protocol):
+    """Publica eventos de dominio de identity (p. ej. `UserDeleted`)."""
+
+    async def publish(self, event: object) -> None: ...
 
 
 class UnitOfWorkPort(Protocol):

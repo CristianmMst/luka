@@ -86,7 +86,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F6.1 | Compose de producción (API xN, workers, Caddy TLS, redes internas) + guía de despliegue VPS + hardening (SSH, firewall, unattended-upgrades) | 003 §5, 009 §6 | F0.4 |
 | F6.2 | Backups cifrados automatizados + prueba de restauración documentada | 009 §3, RNF-4 | F6.1 |
 | F6.3 | Observabilidad: logs estructurados sin PII (test CI), métricas de pipeline, alertas mínimas | 009 §5, 006 §6 | F6.1 |
-| F6.4 | Borrado de cuenta end-to-end (evento UserDeleted + purga + verificación ≤72 h) y exportación de datos | RF-11, 004 §6 | F4.8b |
+| F6.4 | Borrado de cuenta end-to-end (evento UserDeleted + purga + verificación ≤72 h) y exportación de datos | RF-11, 004 §6 | F4.8b | adelantado en F4.8b: `DELETE /me` inmediato con CASCADE y `UserDeleted`, y `GET /me/export` síncrono en JSON. Queda el Excel, el job de verificación ≤ 72 h y la web de borrado (F6.5) |
 | F6.5 | Documentos legales: política de privacidad, T&C, web mínima con borrado de cuenta | 010 §5 | — |
 | F6.6 | Play Console: Data Safety, declaración de acceso a notificaciones, listing; TestFlight/App Store review | 010 §2 | F6.5 |
 | F6.7 | Gate de 80 conexiones Gmail + proceso de verificación OAuth + agendar CASA | 010 §1 | F6.5 |

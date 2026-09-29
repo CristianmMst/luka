@@ -13,13 +13,20 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.identity.application.ports import GoogleIdTokenVerifierPort
+from finanzia.modules.identity.application.use_cases.delete_account import DeleteAccount
+from finanzia.modules.identity.application.use_cases.export_data import ExportUserData
 from finanzia.modules.identity.application.use_cases.get_me import GetMe
 from finanzia.modules.identity.application.use_cases.login_with_google import LoginWithGoogle
 from finanzia.modules.identity.application.use_cases.logout import Logout
 from finanzia.modules.identity.application.use_cases.refresh_session import RefreshSession
 from finanzia.modules.identity.infrastructure.access_token_issuer import JwtAccessTokenIssuer
 from finanzia.modules.identity.infrastructure.audit import StructlogAudit
-from finanzia.modules.identity.infrastructure.gmail_status import IngestionGmailStatus
+from finanzia.modules.identity.infrastructure.data_export import ModulesDataExport
+from finanzia.modules.identity.infrastructure.event_publisher import BusEventPublisher
+from finanzia.modules.identity.infrastructure.gmail_status import (
+    IngestionGmailCleanup,
+    IngestionGmailStatus,
+)
 from finanzia.modules.identity.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
     SqlAlchemyUserRepository,
@@ -127,6 +134,39 @@ def get_logout_use_case(
 def get_me_use_case(session: AsyncSession = Depends(get_session)) -> GetMe:
     """Ensambla `GetMe` con el repositorio de usuarios y el estado Gmail de ingestion."""
     return GetMe(users=SqlAlchemyUserRepository(session), gmail=IngestionGmailStatus(session))
+
+
+def get_delete_account_use_case(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    clock: SystemClock = Depends(get_clock),
+) -> DeleteAccount:
+    """Ensambla `DeleteAccount`: Gmail por ingestion, bus y repositorios SQLAlchemy."""
+    return DeleteAccount(
+        users=SqlAlchemyUserRepository(session),
+        tokens=SqlAlchemyRefreshTokenRepository(session),
+        gmail=IngestionGmailCleanup(
+            session, request.app.state.gmail_client, request.app.state.settings
+        ),
+        events=BusEventPublisher(request.app.state.event_bus),
+        audit=StructlogAudit(),
+        clock=clock,
+        ids=SecretsTokenGenerator(),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_export_use_case(
+    session: AsyncSession = Depends(get_session),
+    clock: SystemClock = Depends(get_clock),
+) -> ExportUserData:
+    """Ensambla `ExportUserData` con los datos de ledger e ingestion."""
+    return ExportUserData(
+        users=SqlAlchemyUserRepository(session),
+        data=ModulesDataExport(session),
+        audit=StructlogAudit(),
+        clock=clock,
+    )
 
 
 def _build_issuer(settings: Settings) -> JwtAccessTokenIssuer:

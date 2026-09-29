@@ -273,7 +273,7 @@ Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usua
 |---|---|---|
 | `raw_messages.body` | 90 días | job diario de purga (worker) |
 | Transacciones y agregados | indefinida (dato del usuario) | borrado solo con la cuenta |
-| Cuenta borrada | purga total ≤ 72 h | evento `UserDeleted` + CASCADE + job de verificación |
+| Cuenta borrada | purga total ≤ 72 h | hoy es inmediata: `DELETE /me` borra el usuario, el CASCADE se lleva todo y se publica `UserDeleted` (F4.8b). El job de verificación ≤ 72 h llega en F6.4 |
 | Backups | 30 días | rotación de backups cifrados |
 
 El job de purga (`purge_raw_message_bodies`, cron arq diario a las **08:00 UTC =

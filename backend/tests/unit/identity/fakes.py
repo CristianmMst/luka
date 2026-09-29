@@ -12,12 +12,14 @@ from finanzia.modules.identity.domain.errors import InvalidGoogleToken
 
 __all__ = [
     "FakeAccessTokenIssuer",
+    "FakeGmailCleanup",
     "FakeGoogleVerifier",
     "FixedClock",
     "InMemoryRefreshTokenRepo",
     "InMemoryUserRepo",
     "NoopUoW",
     "RecordingAudit",
+    "RecordingPublisher",
     "SequenceTokenGenerator",
 ]
 
@@ -43,6 +45,11 @@ class InMemoryUserRepo:
     async def update_profile(self, user: User) -> None:
         self._by_id[user.id] = user
         self._by_sub[user.google_sub] = user.id
+
+    async def delete(self, id: UUID) -> None:
+        user = self._by_id.pop(id, None)
+        if user is not None:
+            self._by_sub.pop(user.google_sub, None)
 
 
 class InMemoryRefreshTokenRepo:
@@ -128,3 +135,23 @@ class NoopUoW:
 
     async def commit(self) -> None:
         self.commits += 1
+
+
+class FakeGmailCleanup:
+    """Doble de `GmailCleanupPort`: anota a quien se le desconecto Gmail."""
+
+    def __init__(self) -> None:
+        self.disconnected: list[UUID] = []
+
+    async def disconnect(self, user_id: UUID) -> None:
+        self.disconnected.append(user_id)
+
+
+class RecordingPublisher:
+    """Doble de `EventPublisherPort`: guarda los eventos publicados."""
+
+    def __init__(self) -> None:
+        self.events: list[object] = []
+
+    async def publish(self, event: object) -> None:
+        self.events.append(event)

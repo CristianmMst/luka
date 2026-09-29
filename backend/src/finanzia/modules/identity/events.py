@@ -8,7 +8,8 @@ from uuid import UUID
 
 @dataclass(frozen=True, slots=True)
 class UserDeleted:
-    """Se emitira cuando se complete el borrado de una cuenta (aun no emitido)."""
+    """La cuenta se borro (`DELETE /v1/me`, RF-11.3): el CASCADE ya se llevo
+    sus datos. Lo publica `DeleteAccount` despues del commit."""
 
     event_id: UUID
     occurred_at: datetime

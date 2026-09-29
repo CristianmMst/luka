@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from finanzia.modules.identity.domain.entities import RefreshToken, User
@@ -34,6 +34,11 @@ class SqlAlchemyUserRepository:
     async def add(self, user: User) -> None:
         self._session.add(user_entity_to_row(user))
         await self._session.flush()
+
+    async def delete(self, id: UUID) -> None:
+        # CASCADE (spec 004 SS6): arrastra refresh tokens, conexion Gmail,
+        # mensajes crudos y todo ledger del usuario.
+        await self._session.execute(delete(UserRow).where(UserRow.id == id))
 
     async def update_profile(self, user: User) -> None:
         row = await self._session.get(UserRow, user.id)

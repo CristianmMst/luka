@@ -37,8 +37,8 @@
 | POST | `/auth/refresh` **público** | Body `{ "refresh_token", "device_info?" }` (mismo límite) → rota el refresh (familia) y emite nuevo par. Refresh vencido, revocado, reusado o desconocido → 401 `unauthorized` genérico (no se distingue el motivo); `token_expired` es exclusivo del access JWT |
 | POST | `/auth/logout` | Body `{ "refresh_token" }` → revoca ese refresh token. Responde 204 siempre, exista o no el token |
 | GET | `/me` | Perfil + `consents` + `connections`: `{ "gmail": "active" \| "revoked" \| "error" \| "none", "notifications": "none" \| "granted" }`. `gmail` es el estado guardado de la conexión (ingestion, leído por su fachada pública) o `none` si el usuario no conectó Gmail |
-| DELETE | `/me` | Inicia borrado de cuenta (RF-11.3). Respuesta 202 |
-| GET | `/me/export` | Genera exportación completa (job async) → `{ job_id }`; se consulta en `/me/export/{job_id}` (RF-11.2) |
+| DELETE | `/me` | Borra la cuenta al instante (RF-11.3, F4.8b), en este orden: desconecta Gmail (para el watch y revoca el grant en Google, best effort), revoca todos los refresh tokens y borra el usuario. El `ON DELETE CASCADE` se lleva movimientos, fuentes, correos guardados, cuentas, categorías propias, reglas y revisión. Queda en auditoría (`account_deleted`, sin PII) y publica `identity.UserDeleted`. Responde 204. El access JWT vigente sigue firmado hasta vencer (≤ 15 min), pero ya no hay usuario: `/me` y un segundo `DELETE` dan 401. La verificación ≤ 72 h y la web de borrado quedan para F6.4/F6.5 |
+| GET | `/me/export` | Exportación síncrona en JSON (RF-11.2, F4.8b), con `Content-Disposition: attachment; filename="finanzia-export.json"`. Contiene `format_version` (1), `exported_at`, `profile` (email, nombre, alta), `accounts`, `categories` (solo las propias), `transactions` (con nombre de categoría y `sources`: canal y fecha, nunca el cuerpo del mensaje), `merchant_rules`, `review_items` (motivo y resolución) y `gmail.status`. Queda en auditoría (`data_exported`). El Excel y el job asíncrono con `job_id` quedan para F6.4 |
 
 ## 3. Conexión Gmail (ingestion)
 
