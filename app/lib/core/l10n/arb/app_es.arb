@@ -968,5 +968,35 @@
     }
   },
   "accountDeleteConfirm": "Borrar cuenta",
-  "accountDeleteCancel": "Cancelar"
+  "accountDeleteCancel": "Cancelar",
+  "onboardingProgress": "Paso {current} de {total}",
+  "@onboardingProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingContinue": "Continuar",
+  "onboardingDone": "Listo",
+  "onboardingNotNow": "Ahora no",
+  "onboardingIgnoresLabel": "Ignora",
+  "notificationsOnboardingBody": "Con el acceso a notificaciones, finanzia registra cada compra apenas tu banco te avisa.",
+  "notificationsOnboardingReads": "Solo las apps de tus bancos y los SMS que envían tus bancos.",
+  "notificationsOnboardingIgnores": "Chats, correos y SMS de personas: no se guardan ni salen del teléfono.",
+  "notificationsOnboardingEnable": "Activar acceso",
+  "notificationsOnboardingGranted": "Acceso activado. Ya capturamos tus pagos.",
+  "notificationsHeroSender": "BANCOLOMBIA · AHORA",
+  "notificationsHeroText": "Compraste $45.900 en ÉXITO con tu T.Deb *1234.",
+  "notificationsHeroResult": "Registrado en Mercado",
+  "notificationsHeroSemantics": "Ejemplo: la notificación de una compra de $45.900 en Bancolombia queda registrada sola en Mercado.",
+  "accountsOnboardingTitle": "¿Qué cuentas tienes?",
+  "accountsOnboardingBody": "Con ellas separamos tus transferencias propias de tus gastos reales.",
+  "accountsOnboardingExampleFrom": "Bancolombia ···1234",
+  "accountsOnboardingExampleTo": "Nequi ···9876",
+  "accountsOnboardingExample": "transferencia propia, no es gasto ni ingreso",
+  "accountsOnboardingExampleSemantics": "Ejemplo: pasar $500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso."
 }

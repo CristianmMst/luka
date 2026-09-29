@@ -12,7 +12,6 @@ import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
 import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
@@ -30,8 +29,6 @@ class _MockTransactionsRepository extends Mock
     implements TransactionsRepository {}
 
 class _MockGmail extends Mock implements GmailRepository {}
-
-class _MockPrompts extends Mock implements GmailPromptStore {}
 
 /// Inicio se queda cargando: estas pruebas son de la barra inferior.
 class _PendingInsights extends Fake implements InsightsRepository {
@@ -63,7 +60,6 @@ void main() {
   late _MockSyncStore store;
   late _MockTransactionsRepository transactions;
   late _MockGmail gmail;
-  late _MockPrompts prompts;
 
   setUpAll(() => registerFallbackValue(const TransactionFilter()));
 
@@ -72,11 +68,9 @@ void main() {
     transactions = _MockTransactionsRepository();
     // Gmail ya conectado: el gate lleva directo al shell.
     gmail = _MockGmail();
-    prompts = _MockPrompts();
     when(() => gmail.status()).thenAnswer(
       (_) async => const GmailConnectionInfo(status: GmailStatus.active),
     );
-    when(() => prompts.isDismissed(any())).thenAnswer((_) async => false);
     when(
       () => transactions.watch(any(), limit: any(named: 'limit')),
     ).thenAnswer((_) => Stream.value(const []));
@@ -107,7 +101,6 @@ void main() {
         syncStoreProvider.overrideWithValue(store),
         transactionsRepositoryProvider.overrideWithValue(transactions),
         gmailRepositoryProvider.overrideWithValue(gmail),
-        gmailPromptStoreProvider.overrideWithValue(prompts),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),

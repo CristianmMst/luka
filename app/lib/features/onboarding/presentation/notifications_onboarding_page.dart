@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
+import 'package:finanzia/core/theme/tokens/type_tokens.dart';
 import 'package:finanzia/core/widgets/brand_mark.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/presentation/widgets/gmail_failure_notice.dart';
+import 'package:finanzia/core/widgets/inline_notice.dart';
+import 'package:finanzia/features/capture/application/notification_access_controller.dart';
 import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
 import 'package:finanzia/features/onboarding/presentation/onboarding_navigation.dart';
 import 'package:finanzia/features/onboarding/presentation/widgets/onboarding_parts.dart';
@@ -15,55 +15,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Paso "Conecta tu Gmail" tras el login (spec 008 §3.1, AC-1.2/AC-1.3), con
-/// el lenguaje del login "Veta esmeralda": hero esmeralda y titular
-/// Bricolage. Conectar y "Ahora no" siguen al próximo paso del onboarding;
-/// si la conexión quedó guardada pero sin captura (`error`/`revoked`), avisa
-/// que se reintenta desde Ajustes. Con Gmail ya activo (deep link o estado
-/// que llegó tarde) solo ofrece "Continuar".
-class GmailOnboardingPage extends ConsumerWidget {
-  const GmailOnboardingPage({super.key});
+/// Paso "Registra tus pagos al instante" (spec 008 §3.1, F4.4, diseño A
+/// "Hero como Gmail"): explica qué lee y qué ignora, y abre el ajuste del
+/// sistema. Al volver el acceso se vuelve a consultar (AC-3.4); concedido,
+/// ofrece "Continuar". La pantalla es la divulgación destacada que Play pide
+/// antes del ajuste (spec 010 §2).
+class NotificationsOnboardingPage extends ConsumerWidget {
+  const NotificationsOnboardingPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final controller = ref.read(gmailControllerProvider.notifier);
+    final access = ref.watch(notificationAccessProvider);
+    final granted = switch (access.value) {
+      NotificationAccess.granted || NotificationAccess.unsupported => true,
+      NotificationAccess.denied || null => false,
+    };
 
-    final gmail = ref.watch(gmailControllerProvider);
-    // Sin estado (deep link con la red caída): el botón reintenta leerlo.
-    final loadFailed = gmail.hasError && !gmail.isLoading;
-    final loading = gmail.isLoading && !gmail.hasValue;
-    final current = gmail.hasError ? null : gmail.value;
-    final busy = current?.busy ?? false;
-    final failure = loadFailed
-        ? switch (gmail.error) {
-            final GmailFailure f => f,
-            _ => const GmailUnexpected(),
-          }
-        : current?.failure;
-    final showNotice = failure != null && failure is! GmailConsentCancelled;
-    final active = current?.info.status == GmailStatus.active;
-
-    void next() =>
-        unawaited(advanceOnboarding(context, ref, OnboardingStep.gmail));
-
-    Future<void> connect() async {
-      if (loadFailed) return controller.refresh();
-      if (await controller.connect() && context.mounted) {
-        // 200 con `error`/`revoked` (el watch falló): la conexión quedó
-        // guardada pero no captura. Se avisa en vez de ir en silencio.
-        final status = ref.read(gmailControllerProvider).value?.info.status;
-        if (status != GmailStatus.active) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l10n.gmailConnectedInactive)));
-        }
-        next();
-      }
-    }
+    void next() => unawaited(
+      advanceOnboarding(context, ref, OnboardingStep.notifications),
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // El hero es oscuro en ambos temas: íconos de estado claros.
@@ -76,7 +49,7 @@ class GmailOnboardingPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Hero(color: brand.hero, onColor: brand.onHero),
+                  const _Hero(),
                   Expanded(
                     child: SafeArea(
                       top: false,
@@ -93,13 +66,13 @@ class GmailOnboardingPage extends ConsumerWidget {
                             Semantics(
                               header: true,
                               child: Text(
-                                l10n.gmailOnboardingTitle,
+                                l10n.notificationDisclosureTitle,
                                 style: textTheme.displaySmall,
                               ),
                             ),
                             const SizedBox(height: Space.sm),
                             Text(
-                              l10n.gmailOnboardingBody,
+                              l10n.notificationsOnboardingBody,
                               style: textTheme.bodyMedium?.copyWith(
                                 color: scheme.onSurfaceVariant,
                               ),
@@ -110,51 +83,67 @@ class GmailOnboardingPage extends ConsumerWidget {
                               iconColor: scheme.onPrimaryContainer,
                               bubbleColor: scheme.primaryContainer,
                               label: l10n.gmailReadsLabel,
-                              text: l10n.gmailReads,
+                              text: l10n.notificationsOnboardingReads,
                             ),
                             const SizedBox(height: Space.sm),
                             OnboardingScopeRow(
                               icon: Icons.block_rounded,
                               iconColor: scheme.onSurfaceVariant,
                               bubbleColor: scheme.surfaceContainerHigh,
-                              label: l10n.gmailNeverReadsLabel,
-                              text: l10n.gmailNeverReads,
+                              label: l10n.onboardingIgnoresLabel,
+                              text: l10n.notificationsOnboardingIgnores,
                             ),
                             const Spacer(),
                             const SizedBox(height: Space.lg),
-                            if (showNotice) ...[
-                              GmailFailureNotice(failure: failure),
+                            if (granted) ...[
+                              InlineNotice(
+                                message: l10n.notificationsOnboardingGranted,
+                                tone: NoticeTone.info,
+                                icon: Icons.check_circle_outline_rounded,
+                              ),
                               const SizedBox(height: Space.sm),
-                            ],
-                            if (active)
                               FilledButton(
                                 onPressed: next,
                                 style: FilledButton.styleFrom(
                                   minimumSize: const Size.fromHeight(52),
                                 ),
                                 child: Text(l10n.onboardingContinue),
-                              )
-                            else ...[
-                              _ConnectButton(
-                                label: busy
-                                    ? l10n.gmailConnecting
-                                    : showNotice
-                                    ? l10n.gmailRetry
-                                    : l10n.gmailConnect,
-                                busy: busy,
-                                onPressed: busy || loading
+                              ),
+                            ] else ...[
+                              FilledButton.icon(
+                                onPressed: access.isLoading && !access.hasValue
                                     ? null
-                                    : () => unawaited(connect()),
+                                    : () => unawaited(
+                                        ref
+                                            .read(
+                                              notificationAccessProvider
+                                                  .notifier,
+                                            )
+                                            .openSettings(),
+                                      ),
+                                icon: const Icon(
+                                  Icons.notifications_active_outlined,
+                                  size: 20,
+                                ),
+                                label: Text(l10n.notificationsOnboardingEnable),
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(52),
+                                ),
                               ),
                               const SizedBox(height: Space.xxs),
                               TextButton(
-                                onPressed: busy ? null : next,
-                                child: Text(l10n.gmailNotNow),
+                                onPressed: next,
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(
+                                    minTouchTarget,
+                                  ),
+                                ),
+                                child: Text(l10n.onboardingNotNow),
                               ),
                             ],
                             const SizedBox(height: Space.xs),
                             Text(
-                              l10n.gmailRevokeNote,
+                              l10n.notificationDisclosureRevoke,
                               textAlign: TextAlign.center,
                               style: textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
@@ -175,11 +164,10 @@ class GmailOnboardingPage extends ConsumerWidget {
   }
 }
 
+/// Hero esmeralda con la marca, el progreso y un ejemplo: la notificación
+/// de una compra que queda registrada sola.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.color, required this.onColor});
-
-  final Color color;
-  final Color onColor;
+  const _Hero();
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +178,7 @@ class _Hero extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color,
+        color: brand.hero,
         borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(Radii.hero),
         ),
@@ -205,24 +193,21 @@ class _Hero extends StatelessWidget {
             Space.xl - 4,
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: Space.xl - 4,
             children: [
               Row(
                 children: [
-                  BrandMark(
-                    gemColor: context.finanziaColors.gem,
-                    textColor: onColor,
-                  ),
+                  BrandMark(gemColor: brand.gem, textColor: brand.onHero),
                   const Spacer(),
                   const OnboardingDots(
-                    step: OnboardingStep.gmail,
+                    step: OnboardingStep.notifications,
                     onHero: true,
                   ),
                 ],
               ),
               Semantics(
-                label: l10n.gmailHeroSemantics,
+                label: l10n.notificationsHeroSemantics,
                 excludeSemantics: true,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -234,33 +219,65 @@ class _Hero extends StatelessWidget {
                       horizontal: Space.md - 2,
                       vertical: Space.sm,
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: Space.sm,
                       children: [
-                        OnboardingBubble(
-                          icon: Icons.mail_outline_rounded,
-                          color: brand.heroChip,
-                          iconColor: scheme.onPrimaryContainer,
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 2,
-                            children: [
-                              Text(
-                                l10n.gmailHeroLabel,
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: Space.sm,
+                          children: [
+                            OnboardingBubble(
+                              icon: Icons.notifications_none_rounded,
+                              color: brand.heroChip,
+                              iconColor: scheme.onPrimaryContainer,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                spacing: 2,
+                                children: [
+                                  Text(
+                                    l10n.notificationsHeroSender,
+                                    style: textTheme.labelSmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    l10n.notificationsHeroText,
+                                    style: textTheme.bodyMedium,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                l10n.gmailHeroBanks,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        Divider(height: 1, color: scheme.surfaceContainerHigh),
+                        Row(
+                          spacing: Space.xs,
+                          children: [
+                            Icon(
+                              Icons.check_rounded,
+                              size: 18,
+                              color: brand.income,
+                            ),
+                            Expanded(
+                              child: Text(
+                                l10n.notificationsHeroResult,
                                 style: textTheme.titleSmall,
                               ),
-                            ],
-                          ),
+                            ),
+                            Text(
+                              formatCop(
+                                const Cop(4590000),
+                                sign: AmountSign.negative,
+                              ),
+                              style: amountTextStyle.copyWith(
+                                fontSize: 14,
+                                color: brand.expense,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -269,47 +286,6 @@ class _Hero extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ConnectButton extends StatelessWidget {
-  const _ConnectButton({
-    required this.label,
-    required this.busy,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool busy;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return SizedBox(
-      height: 52,
-      child: FilledButton(
-        onPressed: onPressed,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: Space.sm,
-          children: [
-            if (busy)
-              SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: scheme.onSurfaceVariant,
-                ),
-              )
-            else
-              const Icon(Icons.mail_outline_rounded, size: 20),
-            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-          ],
         ),
       ),
     );

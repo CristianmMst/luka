@@ -8,12 +8,11 @@ Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas
 
 ```mermaid
 flowchart TD
-    SPLASH[Splash / gate de sesión] -->|sin sesión| ONB[Onboarding]
-    SPLASH -->|con sesión| HOME
-    ONB --> G[1. Google Sign-In]
+    SPLASH[Splash / gate de sesión] -->|sin sesión| G[1. Google Sign-In]
+    SPLASH -->|con sesión y onboarding terminado| HOME
     G --> GM[2. Conectar Gmail<br/>opcional, explicación clara]
     GM --> NP[3. Permiso notificaciones<br/>solo Android, opcional]
-    NP --> ACC[4. Cuentas propias<br/>banco + últimos 4]
+    NP --> ACC[4. Cuentas propias<br/>banco + tipo + últimos 4 + alias]
     ACC --> HOME
 
     HOME[Shell con bottom nav] --> D[Dashboard]
@@ -29,28 +28,29 @@ flowchart TD
     ST --> PRIV[Privacidad: exportar / borrar cuenta]
 ```
 
-El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha, Inicio (F4.6), Transacciones (F4.2) y Revisión (F4.7) son reales; Registrar y Ajustes son marcadores ("Llega pronto") que completan F4.5 y F4.8. Ajustes ya adelantó el cierre de sesión y la fila de Gmail (F3.6, §3.7).
+El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha, Inicio (F4.6), Transacciones (F4.2), Registrar (F4.5a) y Revisión (F4.7) son reales. Ajustes tiene Gmail, notificaciones, Mis categorías, Mis cuentas y el cierre de sesión (§3.7); el resto llega en F4.8b.
 
-Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). A la fecha (F3.6) el onboarding tiene solo el paso de Gmail (`/onboarding/gmail`); notificaciones y cuentas llegan en F4.4.
+Session gate (`redirectFor` en `lib/app/router.dart`, función pura con tests). El onboarding (F4.4) son tres pantallas fuera del shell: `/onboarding/gmail`, `/onboarding/notificaciones` (solo Android) y `/onboarding/cuentas`.
 - Sin sesión, cualquier ruta va a `/login`; mientras se restaura la sesión, a `/splash`.
-- Con sesión, al salir de `/splash` o de `/login` decide `gmailGateProvider` (feature `gmail`, capa de aplicación): si Gmail no está activo (nunca conectado, revocado o con error) y el usuario no eligió "Ahora no", va a `/onboarding/gmail`; si no, a Inicio.
-- Mientras se lee el estado de Gmail la app espera en el splash en vez de abrir Inicio y luego saltar al onboarding (sin rebote). Si el "Ahora no" guardado ya se leyó de local, sigue a Inicio sin esperar el estado del backend. La espera tiene un tope de 4 s contados desde que la sesión queda autenticada (no desde la primera lectura, que puede caer mientras se restaura la sesión): con red lenta o sin red sigue a Inicio (P4), igual que si el estado falla, porque Gmail es opcional (AC-1.3). Cada sesión nueva rearma el tope. Si el estado llega después, no redirige.
-- En cualquier otra ruta el gate de Gmail no redirige: sin bucles, desconectar Gmail en Ajustes no saca al usuario de ahí y el deep link a `/onboarding/gmail` funciona aunque no haya nada pendiente.
-- El redirect lee la sesión y el gate en el momento (no una copia), así que justo después del login ve el gate ya en espera y no el "no preguntar" de la sesión cerrada.
+- Con sesión, al salir de `/splash` o de `/login` decide `onboardingGateProvider` (feature `onboarding`, capa de aplicación). Si el usuario ya terminó el onboarding, va a Inicio. Si no, va al primer paso sin resolver: se salta Gmail si ya está activo y notificaciones si ya hay acceso o la plataforma no lo tiene (iOS). Cuentas siempre se muestra, con las que haya, y cierra el onboarding.
+- La marca "terminado" es local: `onboarding_done:<userId>` en `sync_state`. Se guarda al tocar "Listo" o "Ahora no" en Cuentas; el "Ahora no" de los otros pasos solo avanza. Restaurar la sesión la conserva, así que quien ya lo terminó abre Inicio sin esperar la red. Cerrar sesión vacía `sync_state` y el onboarding vuelve a salir en el siguiente login, con los pasos resueltos saltados (decisión aceptada).
+- Sin la marca, la app espera en el splash el estado de Gmail y el acceso a notificaciones, en vez de abrir Inicio y luego saltar al onboarding (sin rebote). La espera tiene un tope de 4 s contados desde que la sesión queda autenticada (no desde la primera lectura, que puede caer mientras se restaura la sesión). Con red lenta, sin red o si el estado falla, empieza en Gmail, cuya pantalla ofrece reintentar (P4). Cada sesión nueva rearma el tope. Si el estado llega después, no redirige: la pantalla de Gmail con Gmail ya activo solo ofrece "Continuar".
+- En cualquier otra ruta el gate no redirige: sin bucles, avanzar de paso o desconectar Gmail en Ajustes no saca al usuario de donde está, y el deep link a un paso funciona aunque no haya nada pendiente.
+- El redirect lee la sesión y el gate en el momento (no una copia), así que justo después del login ve el gate ya en espera y no el "terminado" de la sesión cerrada.
 
 ## 3. Especificación por pantalla
 
 ### 3.1 Onboarding (RF-1)
 - Paso Gmail: pantalla propia explicando qué se lee ("solo correos de tus bancos, nunca tu correo personal") antes del consent de Google; botón "ahora no" visible (AC-1.3). Usa autorización incremental: `google_sign_in` solicita `gmail.readonly` y envía el `serverAuthCode` a `/gmail/connect`.
   - Pantalla `/onboarding/gmail` con el lenguaje del login "Veta esmeralda" (hero esmeralda con la tarjeta "Solo alertas de tus bancos", titular Bricolage, sin oro): "Conecta tu Gmail"; **Lee** correos de alertas de tus bancos (Bancolombia, Nequi…); **Nunca lee** tu correo personal, contactos ni adjuntos; por qué: tus compras quedan registradas solas, sin duplicados. Botones "Conectar Gmail" y "Ahora no", y una nota: el permiso se quita cuando quieras desde Ajustes o desde la cuenta de Google.
-  - "Conectar Gmail" abre el consentimiento y, si sale bien, lleva a Inicio. Si el backend responde 200 pero con `status` `error` o `revoked` (el watch falló, spec 005 §3), lleva a Inicio con el aviso "Conectado, pero no pudimos activar la captura; reintenta desde Ajustes." en vez de ir en silencio. "Ahora no" lo guarda y lleva a Inicio.
+  - Progreso (F4.4, diseño B "Puntos" del canvas https://claude.ai/artifact/D1V77pmeXXz4j7qQfoG379): un punto por paso de la plataforma y el actual más largo, en el hero junto a la marca; se lee "Paso n de m".
+  - "Conectar Gmail" abre el consentimiento y, si sale bien, sigue al próximo paso. Si el backend responde 200 pero con `status` `error` o `revoked` (el watch falló, spec 005 §3), sigue con el aviso "Conectado, pero no pudimos activar la captura; reintenta desde Ajustes." en vez de ir en silencio. "Ahora no" sigue al próximo paso sin guardar nada. Con Gmail ya activo (deep link o estado que llegó tarde) la pantalla solo ofrece "Continuar".
   - Estados: conectando (botones bloqueados, "Conectando Gmail…"); consentimiento cancelado (se queda en la página, sin aviso); sin red; rechazo del servidor (código inválido o sin refresh token: "Google no aceptó la autorización. Inténtalo de nuevo."); permiso desmarcado; Google no disponible (503); demasiados intentos (429). Con un fallo el botón dice "Reintentar". Si el estado no se pudo leer (deep link sin red), "Reintentar" vuelve a leerlo.
   - Goldens claro y oscuro en `test/features/gmail/presentation/goldens/`.
   - La autorización (`authorizeServer`) usa la misma instancia de `GoogleSignIn` que el login, inicializada una sola vez con el `serverClientId` (`core/google/google_sign_in_setup.dart`). En Android pide acceso offline con consentimiento forzado, así que cada canje trae refresh token.
   - Cancelar el consentimiento no es un error. Los tres 400 de `server_auth_code` (código inválido, sin refresh token, permiso no concedido) se distinguen por el `reason` del sobre de error (`invalid_code`, `refresh_token_missing`, `scope_not_granted`, spec 005 §1/§3); si falta o es desconocido, se cae al texto del mensaje; los dos primeros se arreglan volviendo a intentarlo.
-  - "Ahora no" se guarda en `sync_state` con la clave `gmail_prompt_dismissed:<userId>`, así que restaurar la sesión no vuelve a preguntar. Cerrar sesión vacía `sync_state`, así que el "Ahora no" se pierde y la invitación reaparece en el siguiente login (decisión aceptada: es un aviso opcional y guardarlo fuera de `sync_state` no vale la complejidad).
-- Paso notificaciones (Android): explica el uso (detectar pagos al instante), lista lo que se ignora; abre el ajuste del sistema de acceso a notificaciones. Detecta el estado al volver (AC-3.4).
-- Paso cuentas: formulario simple banco + últimos 4 + alias, repetible; explica su uso (detectar transferencias propias).
+- Paso notificaciones (Android, `/onboarding/notificaciones`, diseño A "Hero como Gmail"): hero esmeralda con la marca, el progreso y un ejemplo (la notificación de una compra de Bancolombia que queda "Registrado en Mercado"); "Registra tus pagos al instante"; **Lee** solo las apps de tus bancos y los SMS que envían tus bancos; **Ignora** chats, correos y SMS de personas, que no se guardan ni salen del teléfono. "Activar acceso" abre el ajuste del sistema; la pantalla misma es la divulgación destacada previa (spec 010 §2). Al volver a primer plano el acceso se vuelve a consultar (AC-3.4): concedido, muestra "Acceso activado. Ya capturamos tus pagos." y "Continuar". "Ahora no" sigue a Cuentas.
+- Paso cuentas (`/onboarding/cuentas`, diseño B "Lista + hoja"): "¿Qué cuentas tienes?" con un ejemplo de por qué (Bancolombia ···1234 → Nequi ···9876: $500.000 es una transferencia propia, no un gasto ni un ingreso), la lista de las agregadas (editar por fila) y "Agregar cuenta", que abre la misma hoja de Mis cuentas (§3.7): banco, tipo, últimos 4 y alias, repetible. Con al menos una cuenta el botón es "Listo"; sin cuentas, "Ahora no". Ambos terminan el onboarding y llevan a Inicio.
 
 ### 3.2 Dashboard (RF-9)
 Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2stoe8zQwaXFhUPz8h1UKy).

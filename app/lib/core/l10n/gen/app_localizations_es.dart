@@ -1547,4 +1547,75 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get accountDeleteCancel => 'Cancelar';
+
+  @override
+  String onboardingProgress(int current, int total) {
+    return 'Paso $current de $total';
+  }
+
+  @override
+  String get onboardingContinue => 'Continuar';
+
+  @override
+  String get onboardingDone => 'Listo';
+
+  @override
+  String get onboardingNotNow => 'Ahora no';
+
+  @override
+  String get onboardingIgnoresLabel => 'Ignora';
+
+  @override
+  String get notificationsOnboardingBody =>
+      'Con el acceso a notificaciones, finanzia registra cada compra apenas tu banco te avisa.';
+
+  @override
+  String get notificationsOnboardingReads =>
+      'Solo las apps de tus bancos y los SMS que envían tus bancos.';
+
+  @override
+  String get notificationsOnboardingIgnores =>
+      'Chats, correos y SMS de personas: no se guardan ni salen del teléfono.';
+
+  @override
+  String get notificationsOnboardingEnable => 'Activar acceso';
+
+  @override
+  String get notificationsOnboardingGranted =>
+      'Acceso activado. Ya capturamos tus pagos.';
+
+  @override
+  String get notificationsHeroSender => 'BANCOLOMBIA · AHORA';
+
+  @override
+  String get notificationsHeroText =>
+      'Compraste \$45.900 en ÉXITO con tu T.Deb *1234.';
+
+  @override
+  String get notificationsHeroResult => 'Registrado en Mercado';
+
+  @override
+  String get notificationsHeroSemantics =>
+      'Ejemplo: la notificación de una compra de \$45.900 en Bancolombia queda registrada sola en Mercado.';
+
+  @override
+  String get accountsOnboardingTitle => '¿Qué cuentas tienes?';
+
+  @override
+  String get accountsOnboardingBody =>
+      'Con ellas separamos tus transferencias propias de tus gastos reales.';
+
+  @override
+  String get accountsOnboardingExampleFrom => 'Bancolombia ···1234';
+
+  @override
+  String get accountsOnboardingExampleTo => 'Nequi ···9876';
+
+  @override
+  String get accountsOnboardingExample =>
+      'transferencia propia, no es gasto ni ingreso';
+
+  @override
+  String get accountsOnboardingExampleSemantics =>
+      'Ejemplo: pasar \$500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso.';
 }

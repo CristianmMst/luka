@@ -6,15 +6,12 @@ import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockGmail extends Mock implements GmailRepository {}
-
-class _MockPrompts extends Mock implements GmailPromptStore {}
 
 class _MockAuth extends Mock implements AuthRepository {}
 
@@ -31,7 +28,6 @@ const _active = GmailConnectionInfo(
 
 void main() {
   late _MockGmail gmail;
-  late _MockPrompts prompts;
   late _MockAuth auth;
   late ProviderContainer container;
 
@@ -41,7 +37,6 @@ void main() {
       overrides: [
         authRepositoryProvider.overrideWithValue(auth),
         gmailRepositoryProvider.overrideWithValue(gmail),
-        gmailPromptStoreProvider.overrideWithValue(prompts),
       ],
     );
   }
@@ -56,64 +51,35 @@ void main() {
 
   setUp(() {
     gmail = _MockGmail();
-    prompts = _MockPrompts();
     auth = _MockAuth();
     when(() => auth.sessionExpired).thenAnswer((_) => const Stream.empty());
     when(
       () => gmail.status(),
     ).thenAnswer((_) async => GmailConnectionInfo.disconnected);
-    when(() => prompts.isDismissed(any())).thenAnswer((_) async => false);
-    when(() => prompts.dismiss(any())).thenAnswer((_) async {});
   });
 
   tearDown(() => container.dispose());
 
   group('build', () {
-    test('sin conexión y sin "Ahora no" → hay que preguntar', () async {
+    test('lee el estado del backend', () async {
       build();
       final state = await settled();
       expect(state.info, GmailConnectionInfo.disconnected);
-      expect(state.promptDismissed, isFalse);
-      expect(state.shouldPrompt, isTrue);
       expect(state.busy, isFalse);
       expect(state.failure, isNull);
-      verify(() => prompts.isDismissed('u-1')).called(1);
     });
 
-    test('"Ahora no" guardado → no pregunta', () async {
-      when(() => prompts.isDismissed('u-1')).thenAnswer((_) async => true);
-      build();
-      final state = await settled();
-      expect(state.promptDismissed, isTrue);
-      expect(state.shouldPrompt, isFalse);
-    });
-
-    test('ya conectado → no pregunta', () async {
+    test('ya conectado', () async {
       when(() => gmail.status()).thenAnswer((_) async => _active);
       build();
-      final state = await settled();
-      expect(state.info, _active);
-      expect(state.shouldPrompt, isFalse);
+      expect((await settled()).info, _active);
     });
 
-    test('revocado o con error → vuelve a preguntar', () async {
-      for (final status in [GmailStatus.revoked, GmailStatus.error]) {
-        when(
-          () => gmail.status(),
-        ).thenAnswer((_) async => GmailConnectionInfo(status: status));
-        build();
-        expect((await settled()).shouldPrompt, isTrue, reason: '$status');
-        container.dispose();
-      }
-      build();
-    });
-
-    test('sin sesión → no consulta nada ni pregunta', () async {
+    test('sin sesión → no consulta nada', () async {
       build(user: null);
       final state = await settled();
-      expect(state.shouldPrompt, isFalse);
+      expect(state.info, GmailConnectionInfo.disconnected);
       verifyNever(() => gmail.status());
-      verifyNever(() => prompts.isDismissed(any()));
     });
 
     test('status que falla → AsyncError con el GmailFailure', () async {
@@ -135,7 +101,6 @@ void main() {
       expect(current().info, _active);
       expect(current().busy, isFalse);
       expect(current().failure, isNull);
-      expect(current().shouldPrompt, isFalse);
     });
 
     test('marca busy mientras corre e ignora un segundo toque', () async {
@@ -205,28 +170,6 @@ void main() {
 
       expect(await controller().connect(), isFalse);
       verifyNever(() => gmail.connect());
-    });
-  });
-
-  group('skip', () {
-    test('guarda "Ahora no" para el usuario y deja de preguntar', () async {
-      build();
-      await settled();
-
-      await controller().skip();
-
-      verify(() => prompts.dismiss('u-1')).called(1);
-      expect(current().promptDismissed, isTrue);
-      expect(current().shouldPrompt, isFalse);
-    });
-
-    test('sin sesión no guarda nada', () async {
-      build(user: null);
-      await settled();
-
-      await controller().skip();
-
-      verifyNever(() => prompts.dismiss(any()));
     });
   });
 

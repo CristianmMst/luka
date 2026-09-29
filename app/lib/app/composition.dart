@@ -11,6 +11,8 @@ import 'package:finanzia/features/dashboard/application/dashboard_providers.dart
 import 'package:finanzia/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/data/gmail_data_providers.dart';
+import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
+import 'package:finanzia/features/onboarding/data/onboarding_data_providers.dart';
 import 'package:finanzia/features/review/application/review_providers.dart';
 import 'package:finanzia/features/review/data/review_data_providers.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
@@ -32,8 +34,8 @@ List<Override> get appOverrides => [
   gmailRepositoryProvider.overrideWith(
     (ref) => ref.watch(gmailRepositoryImplProvider),
   ),
-  gmailPromptStoreProvider.overrideWith(
-    (ref) => ref.watch(driftGmailPromptStoreProvider),
+  onboardingStoreProvider.overrideWith(
+    (ref) => ref.watch(driftOnboardingStoreProvider),
   ),
   syncStoreProvider.overrideWith((ref) => ref.watch(driftSyncStoreProvider)),
   syncRemoteProvider.overrideWith((ref) => ref.watch(syncApiProvider)),

@@ -15,7 +15,8 @@ abstract final class Routes {
   /// "Mis cuentas" (F4.4), a pantalla completa sobre Ajustes.
   static const settingsAccounts = '/ajustes/cuentas';
 
-  /// Paso "Conecta tu Gmail" tras el login (F3.6). El resto de
-  /// `/onboarding/*` queda reservado para F4.4.
+  /// Pasos del onboarding tras el login (F3.6, F4.4), fuera del shell.
   static const onboardingGmail = '/onboarding/gmail';
+  static const onboardingNotifications = '/onboarding/notificaciones';
+  static const onboardingAccounts = '/onboarding/cuentas';
 }

@@ -48,7 +48,7 @@ Pendiente para iOS: crear el cliente OAuth de iOS y añadir `GIDClientID` y el U
 
 ### Gmail (F3.6)
 
-Tras el login, si Gmail no está activo (nunca conectado, revocado o con error) y el usuario no eligió "Ahora no" antes, el gate de sesión (`redirectFor`, spec 008 §2) lleva a `/onboarding/gmail` (`lib/features/gmail/presentation/gmail_onboarding_page.dart`) en vez de a Inicio. La pantalla explica con el lenguaje "Veta esmeralda" qué lee (solo alertas de bancos) y qué nunca lee (correo personal, contactos, adjuntos); "Conectar Gmail" pide el scope `gmail.readonly` con autorización incremental (`google_sign_in`, `authorizeServer`) y envía el `serverAuthCode` a `POST /gmail/connect`; "Ahora no" solo pospone la invitación (se guarda en `sync_state` hasta el próximo login) y ambos botones llevan a Inicio. Contra el backend local en modo de prueba de Google, hace falta el túnel de desarrollo (`backend/README.md` §16) para que el consentimiento complete el canje.
+Tras el login, mientras el usuario no haya terminado el onboarding (F4.4, marca local `onboarding_done:<userId>` en `sync_state`, que se pierde al cerrar sesión), el gate de sesión (`redirectFor` + `onboardingGateProvider`, spec 008 §2) lleva al primer paso sin resolver: `/onboarding/gmail` (`lib/features/gmail/presentation/gmail_onboarding_page.dart`), `/onboarding/notificaciones` (solo Android) y `/onboarding/cuentas` (`lib/features/onboarding/presentation/`). La pantalla de Gmail explica con el lenguaje "Veta esmeralda" qué lee (solo alertas de bancos) y qué nunca lee (correo personal, contactos, adjuntos); "Conectar Gmail" pide el scope `gmail.readonly` con autorización incremental (`google_sign_in`, `authorizeServer`) y envía el `serverAuthCode` a `POST /gmail/connect`; "Ahora no" sigue al próximo paso. "Listo" o "Ahora no" en Cuentas terminan el onboarding. Contra el backend local en modo de prueba de Google, hace falta el túnel de desarrollo (`backend/README.md` §16) para que el consentimiento complete el canje.
 
 En Ajustes, la fila "Gmail" (`lib/features/gmail/presentation/widgets/gmail_settings_tile.dart`) muestra el estado real (`GET /gmail/status`): conectado ("Conectado · `<email>`" + botón "Desconectar" con diálogo de confirmación), revocado o con error ("Reconectar"), sin conectar ("Conectar") o sin poder consultarlo ("Reintentar"). Como el consent screen sigue en modo de prueba, un grant vencido a los 7 días también aparece como revocado — se resuelve reconectando desde aquí, no es un error de la app.
 
@@ -70,6 +70,8 @@ lib/
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
     ├── capture/           # Captura de notificaciones Android (F4.3): cola nativa → /ingest
     ├── categories/        # Categorías propias (F4.8a): hoja crear/editar, Mis categorías
+    ├── accounts/          # Cuentas vinculadas (F4.4): hoja crear/editar, Mis cuentas
+    ├── onboarding/        # Gate y pasos del onboarding (F4.4): notificaciones, cuentas
     ├── shell/             # HomeShell (bottom nav) + marcadores de Registrar/Ajustes
     └── dashboard/         # Inicio (F4.6): resumen del mes calculado en local
 ```

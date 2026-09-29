@@ -14,8 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GmailState {
 
- GmailConnectionInfo get info;/// El usuario eligió "Ahora no" (o no hay sesión a quién preguntarle).
- bool get promptDismissed;/// Hay un connect o disconnect en curso: la pantalla bloquea el botón.
+ GmailConnectionInfo get info;/// Hay un connect o disconnect en curso: la pantalla bloquea el botón.
  bool get busy;/// Último fallo de una acción, para el aviso de la pantalla. `null` tras
 /// un éxito o una cancelación.
  GmailFailure? get failure;
@@ -29,16 +28,16 @@ $GmailStateCopyWith<GmailState> get copyWith => _$GmailStateCopyWithImpl<GmailSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GmailState&&(identical(other.info, info) || other.info == info)&&(identical(other.promptDismissed, promptDismissed) || other.promptDismissed == promptDismissed)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GmailState&&(identical(other.info, info) || other.info == info)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,info,promptDismissed,busy,failure);
+int get hashCode => Object.hash(runtimeType,info,busy,failure);
 
 @override
 String toString() {
-  return 'GmailState(info: $info, promptDismissed: $promptDismissed, busy: $busy, failure: $failure)';
+  return 'GmailState(info: $info, busy: $busy, failure: $failure)';
 }
 
 
@@ -49,7 +48,7 @@ abstract mixin class $GmailStateCopyWith<$Res>  {
   factory $GmailStateCopyWith(GmailState value, $Res Function(GmailState) _then) = _$GmailStateCopyWithImpl;
 @useResult
 $Res call({
- GmailConnectionInfo info, bool promptDismissed, bool busy, GmailFailure? failure
+ GmailConnectionInfo info, bool busy, GmailFailure? failure
 });
 
 
@@ -66,11 +65,10 @@ class _$GmailStateCopyWithImpl<$Res>
 
 /// Create a copy of GmailState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? info = null,Object? promptDismissed = null,Object? busy = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? info = null,Object? busy = null,Object? failure = freezed,}) {
   return _then(_self.copyWith(
 info: null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
-as GmailConnectionInfo,promptDismissed: null == promptDismissed ? _self.promptDismissed : promptDismissed // ignore: cast_nullable_to_non_nullable
-as bool,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
+as GmailConnectionInfo,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as GmailFailure?,
   ));
@@ -166,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GmailConnectionInfo info,  bool promptDismissed,  bool busy,  GmailFailure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GmailConnectionInfo info,  bool busy,  GmailFailure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GmailState() when $default != null:
-return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case _:
+return $default(_that.info,_that.busy,_that.failure);case _:
   return orElse();
 
 }
@@ -187,10 +185,10 @@ return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GmailConnectionInfo info,  bool promptDismissed,  bool busy,  GmailFailure? failure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GmailConnectionInfo info,  bool busy,  GmailFailure? failure)  $default,) {final _that = this;
 switch (_that) {
 case _GmailState():
-return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case _:
+return $default(_that.info,_that.busy,_that.failure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +205,10 @@ return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GmailConnectionInfo info,  bool promptDismissed,  bool busy,  GmailFailure? failure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GmailConnectionInfo info,  bool busy,  GmailFailure? failure)?  $default,) {final _that = this;
 switch (_that) {
 case _GmailState() when $default != null:
-return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case _:
+return $default(_that.info,_that.busy,_that.failure);case _:
   return null;
 
 }
@@ -221,13 +219,11 @@ return $default(_that.info,_that.promptDismissed,_that.busy,_that.failure);case 
 /// @nodoc
 
 
-class _GmailState extends GmailState {
-  const _GmailState({required this.info, required this.promptDismissed, this.busy = false, this.failure}): super._();
+class _GmailState implements GmailState {
+  const _GmailState({required this.info, this.busy = false, this.failure});
   
 
 @override final  GmailConnectionInfo info;
-/// El usuario eligió "Ahora no" (o no hay sesión a quién preguntarle).
-@override final  bool promptDismissed;
 /// Hay un connect o disconnect en curso: la pantalla bloquea el botón.
 @override@JsonKey() final  bool busy;
 /// Último fallo de una acción, para el aviso de la pantalla. `null` tras
@@ -244,16 +240,16 @@ _$GmailStateCopyWith<_GmailState> get copyWith => __$GmailStateCopyWithImpl<_Gma
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GmailState&&(identical(other.info, info) || other.info == info)&&(identical(other.promptDismissed, promptDismissed) || other.promptDismissed == promptDismissed)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GmailState&&(identical(other.info, info) || other.info == info)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,info,promptDismissed,busy,failure);
+int get hashCode => Object.hash(runtimeType,info,busy,failure);
 
 @override
 String toString() {
-  return 'GmailState(info: $info, promptDismissed: $promptDismissed, busy: $busy, failure: $failure)';
+  return 'GmailState(info: $info, busy: $busy, failure: $failure)';
 }
 
 
@@ -264,7 +260,7 @@ abstract mixin class _$GmailStateCopyWith<$Res> implements $GmailStateCopyWith<$
   factory _$GmailStateCopyWith(_GmailState value, $Res Function(_GmailState) _then) = __$GmailStateCopyWithImpl;
 @override @useResult
 $Res call({
- GmailConnectionInfo info, bool promptDismissed, bool busy, GmailFailure? failure
+ GmailConnectionInfo info, bool busy, GmailFailure? failure
 });
 
 
@@ -281,11 +277,10 @@ class __$GmailStateCopyWithImpl<$Res>
 
 /// Create a copy of GmailState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? info = null,Object? promptDismissed = null,Object? busy = null,Object? failure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? info = null,Object? busy = null,Object? failure = freezed,}) {
   return _then(_GmailState(
 info: null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
-as GmailConnectionInfo,promptDismissed: null == promptDismissed ? _self.promptDismissed : promptDismissed // ignore: cast_nullable_to_non_nullable
-as bool,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
+as GmailConnectionInfo,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as GmailFailure?,
   ));

@@ -7,7 +7,6 @@ import 'package:finanzia/features/capture/data/method_channel_notification_sourc
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/gmail/presentation/widgets/gmail_disconnect_dialog.dart';
 import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
@@ -18,8 +17,6 @@ import 'package:mocktail/mocktail.dart';
 import '../../../helpers/pump_app.dart';
 
 class _MockGmail extends Mock implements GmailRepository {}
-
-class _MockPrompts extends Mock implements GmailPromptStore {}
 
 class _FixedAuthController extends AuthController {
   @override
@@ -39,13 +36,10 @@ const _active = GmailConnectionInfo(
 
 void main() {
   late _MockGmail gmail;
-  late _MockPrompts prompts;
 
   setUp(() {
     gmail = _MockGmail();
-    prompts = _MockPrompts();
     when(() => gmail.status()).thenAnswer((_) async => _active);
-    when(() => prompts.isDismissed(any())).thenAnswer((_) async => true);
   });
 
   Future<void> pumpAjustes(WidgetTester tester) async {
@@ -54,7 +48,6 @@ void main() {
       overrides: [
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
-        gmailPromptStoreProvider.overrideWithValue(prompts),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),
@@ -241,7 +234,6 @@ void main() {
       overrides: [
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
-        gmailPromptStoreProvider.overrideWithValue(prompts),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),

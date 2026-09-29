@@ -77,7 +77,7 @@ void main() {
     await open(tester);
     expect(find.text('Nueva cuenta'), findsOneWidget);
 
-    await _tap(tester, find.text('Elige tu banco'));
+    await _tap(tester, find.byType(DropdownButtonFormField<String>));
     await tester.tap(find.text('Nequi').last);
     await tester.pumpAndSettle();
     await _tap(tester, find.text('Billetera'));
@@ -110,7 +110,7 @@ void main() {
     when(() => actions.create(any())).thenThrow(const AccountDuplicate());
     await open(tester);
 
-    await _tap(tester, find.text('Elige tu banco'));
+    await _tap(tester, find.byType(DropdownButtonFormField<String>));
     await tester.tap(find.text('BBVA').last);
     await tester.pumpAndSettle();
     await _tap(tester, find.text('Guardar cuenta'));
@@ -126,7 +126,7 @@ void main() {
     when(() => actions.create(any())).thenThrow(const AccountOffline());
     await open(tester);
 
-    await _tap(tester, find.text('Elige tu banco'));
+    await _tap(tester, find.byType(DropdownButtonFormField<String>));
     await tester.tap(find.text('Nequi').last);
     await tester.pumpAndSettle();
     await _tap(tester, find.text('Guardar cuenta'));

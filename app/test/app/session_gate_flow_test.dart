@@ -4,6 +4,8 @@ import 'package:finanzia/app/app.dart';
 import 'package:finanzia/app/router.dart';
 import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/core/time/colombia_month.dart';
+import 'package:finanzia/features/accounts/application/account_actions.dart';
+import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
@@ -15,12 +17,14 @@ import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
 import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/application/gmail_gate.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
+import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
+import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
+import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
+import 'package:finanzia/features/onboarding/presentation/accounts_onboarding_page.dart';
 import 'package:finanzia/features/review/application/review_providers.dart';
 import 'package:finanzia/features/review/domain/review_item.dart';
 import 'package:finanzia/features/review/domain/review_repository.dart';
@@ -43,7 +47,9 @@ class _MockTransactions extends Mock implements TransactionsRepository {}
 
 class _MockGmail extends Mock implements GmailRepository {}
 
-class _MockPrompts extends Mock implements GmailPromptStore {}
+class _MockOnboarding extends Mock implements OnboardingStore {}
+
+class _MockAccounts extends Mock implements AccountsStore {}
 
 class _MockReview extends Mock implements ReviewRepository {}
 
@@ -69,12 +75,14 @@ const _ana = User(
   status: UserStatus.active,
 );
 
-/// El gate de sesión con la app entera: login → Gmail → Inicio.
+/// El gate de sesión con la app entera: login → onboarding → Inicio. Con
+/// `NoopNotificationSource` (como en iOS) no hay paso de notificaciones.
 void main() {
   late _MockSyncStore store;
   late _MockTransactions transactions;
   late _MockGmail gmail;
-  late _MockPrompts prompts;
+  late _MockOnboarding onboardingStore;
+  late _MockAccounts accounts;
   late _MockReview review;
   late _MockInsights insights;
 
@@ -87,7 +95,8 @@ void main() {
     store = _MockSyncStore();
     transactions = _MockTransactions();
     gmail = _MockGmail();
-    prompts = _MockPrompts();
+    onboardingStore = _MockOnboarding();
+    accounts = _MockAccounts();
     review = _MockReview();
     insights = _MockInsights();
     when(() => insights.watchMonth(any())).thenAnswer(
@@ -124,8 +133,11 @@ void main() {
     when(
       () => gmail.status(),
     ).thenAnswer((_) async => GmailConnectionInfo.disconnected);
-    when(() => prompts.isDismissed(any())).thenAnswer((_) async => false);
-    when(() => prompts.dismiss(any())).thenAnswer((_) async {});
+    when(
+      () => onboardingStore.isDone(any()),
+    ).thenAnswer((_) async => false);
+    when(() => onboardingStore.markDone(any())).thenAnswer((_) async {});
+    when(() => accounts.watchAll()).thenAnswer((_) => Stream.value(const []));
   });
 
   Future<ProviderContainer> pumpApp(
@@ -141,7 +153,8 @@ void main() {
         syncStoreProvider.overrideWithValue(store),
         transactionsRepositoryProvider.overrideWithValue(transactions),
         gmailRepositoryProvider.overrideWithValue(gmail),
-        gmailPromptStoreProvider.overrideWithValue(prompts),
+        onboardingStoreProvider.overrideWithValue(onboardingStore),
+        accountsStoreProvider.overrideWithValue(accounts),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),
@@ -165,6 +178,7 @@ void main() {
 
   final home = find.byType(DashboardPage);
   final onboarding = find.byType(GmailOnboardingPage);
+  final accountsStep = find.byType(AccountsOnboardingPage);
 
   testWidgets('tras el login sin Gmail pasa por el splash al paso de Gmail, '
       'sin asomarse a Inicio', (tester) async {
@@ -188,64 +202,79 @@ void main() {
     expect(home, findsNothing);
   });
 
-  testWidgets('"Ahora no" lleva a Inicio y el gate no vuelve a mandar al '
-      'onboarding', (tester) async {
+  testWidgets('"Ahora no" en cada paso termina en Inicio y el onboarding '
+      'no vuelve', (tester) async {
     await pumpApp(tester);
     await tester.pumpAndSettle();
     expect(onboarding, findsOneWidget);
 
     await tester.tap(find.text('Ahora no'));
     await tester.pumpAndSettle();
+    expect(accountsStep, findsOneWidget);
+    verifyNever(() => onboardingStore.markDone(any()));
 
+    await tester.tap(find.text('Ahora no'));
+    await tester.pumpAndSettle();
     expect(home, findsOneWidget);
-    verify(() => prompts.dismiss('u-1')).called(1);
+    verify(() => onboardingStore.markDone('u-1')).called(1);
   });
 
-  testWidgets('con Gmail activo abre directo en Inicio', (tester) async {
+  testWidgets('con Gmail activo salta ese paso', (tester) async {
     when(() => gmail.status()).thenAnswer(
       (_) async => const GmailConnectionInfo(status: GmailStatus.active),
     );
     await pumpApp(tester);
     await tester.pumpAndSettle();
 
-    expect(home, findsOneWidget);
+    expect(accountsStep, findsOneWidget);
     expect(onboarding, findsNothing);
   });
 
-  testWidgets('con "Ahora no" guardado abre directo en Inicio', (tester) async {
-    when(() => prompts.isDismissed('u-1')).thenAnswer((_) async => true);
+  testWidgets('con el onboarding terminado abre directo en Inicio', (
+    tester,
+  ) async {
+    when(() => onboardingStore.isDone('u-1')).thenAnswer((_) async => true);
     await pumpApp(tester);
     await tester.pumpAndSettle();
 
     expect(home, findsOneWidget);
   });
 
-  testWidgets('sin red abre en Inicio (Gmail es opcional)', (tester) async {
+  testWidgets('sin red muestra el paso de Gmail, que ofrece reintentar', (
+    tester,
+  ) async {
     when(() => gmail.status()).thenThrow(const GmailNetworkFailure());
     await pumpApp(tester);
     await tester.pumpAndSettle();
 
-    expect(home, findsOneWidget);
+    expect(onboarding, findsOneWidget);
+    expect(find.text('Reintentar'), findsOneWidget);
   });
 
-  testWidgets('si el estado tarda, sigue a Inicio y no rebota al llegar', (
-    tester,
-  ) async {
+  testWidgets('si el estado tarda, muestra el onboarding y no rebota al '
+      'llegar', (tester) async {
     final status = Completer<GmailConnectionInfo>();
     when(() => gmail.status()).thenAnswer((_) => status.future);
     final container = await pumpApp(tester);
     await tester.pump();
     expect(find.byType(SplashPage), findsOneWidget);
 
-    await tester.pump(GmailGateController.timeout);
+    await tester.pump(OnboardingGateController.timeout);
     await tester.pumpAndSettle();
-    expect(home, findsOneWidget);
+    expect(onboarding, findsOneWidget);
 
-    status.complete(GmailConnectionInfo.disconnected);
+    status.complete(
+      const GmailConnectionInfo(status: GmailStatus.active),
+    );
     await tester.pumpAndSettle();
-    expect(container.read(gmailGateProvider), GmailGate.prompt);
-    expect(home, findsOneWidget);
-    expect(onboarding, findsNothing);
+    expect(
+      container.read(onboardingGateProvider),
+      const OnboardingShow(OnboardingStep.accounts),
+    );
+    // Sigue en Gmail, que ahora solo ofrece continuar.
+    expect(onboarding, findsOneWidget);
+    expect(find.text('Continuar'), findsOneWidget);
+    expect(home, findsNothing);
   });
 
   testWidgets('el deep link al onboarding funciona sin nada pendiente', (
@@ -266,7 +295,7 @@ void main() {
   testWidgets('Revisión vive en el shell y su detalle va a pantalla completa', (
     tester,
   ) async {
-    when(() => prompts.isDismissed('u-1')).thenAnswer((_) async => true);
+    when(() => onboardingStore.isDone('u-1')).thenAnswer((_) async => true);
     final container = await pumpApp(tester);
     await tester.pumpAndSettle();
 

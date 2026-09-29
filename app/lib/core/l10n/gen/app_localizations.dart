@@ -2595,6 +2595,126 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cancelar'**
   String get accountDeleteCancel;
+
+  /// No description provided for @onboardingProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'Paso {current} de {total}'**
+  String onboardingProgress(int current, int total);
+
+  /// No description provided for @onboardingContinue.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get onboardingContinue;
+
+  /// No description provided for @onboardingDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo'**
+  String get onboardingDone;
+
+  /// No description provided for @onboardingNotNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get onboardingNotNow;
+
+  /// No description provided for @onboardingIgnoresLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ignora'**
+  String get onboardingIgnoresLabel;
+
+  /// No description provided for @notificationsOnboardingBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Con el acceso a notificaciones, finanzia registra cada compra apenas tu banco te avisa.'**
+  String get notificationsOnboardingBody;
+
+  /// No description provided for @notificationsOnboardingReads.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo las apps de tus bancos y los SMS que envían tus bancos.'**
+  String get notificationsOnboardingReads;
+
+  /// No description provided for @notificationsOnboardingIgnores.
+  ///
+  /// In es, this message translates to:
+  /// **'Chats, correos y SMS de personas: no se guardan ni salen del teléfono.'**
+  String get notificationsOnboardingIgnores;
+
+  /// No description provided for @notificationsOnboardingEnable.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar acceso'**
+  String get notificationsOnboardingEnable;
+
+  /// No description provided for @notificationsOnboardingGranted.
+  ///
+  /// In es, this message translates to:
+  /// **'Acceso activado. Ya capturamos tus pagos.'**
+  String get notificationsOnboardingGranted;
+
+  /// No description provided for @notificationsHeroSender.
+  ///
+  /// In es, this message translates to:
+  /// **'BANCOLOMBIA · AHORA'**
+  String get notificationsHeroSender;
+
+  /// No description provided for @notificationsHeroText.
+  ///
+  /// In es, this message translates to:
+  /// **'Compraste \$45.900 en ÉXITO con tu T.Deb *1234.'**
+  String get notificationsHeroText;
+
+  /// No description provided for @notificationsHeroResult.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrado en Mercado'**
+  String get notificationsHeroResult;
+
+  /// No description provided for @notificationsHeroSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Ejemplo: la notificación de una compra de \$45.900 en Bancolombia queda registrada sola en Mercado.'**
+  String get notificationsHeroSemantics;
+
+  /// No description provided for @accountsOnboardingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué cuentas tienes?'**
+  String get accountsOnboardingTitle;
+
+  /// No description provided for @accountsOnboardingBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Con ellas separamos tus transferencias propias de tus gastos reales.'**
+  String get accountsOnboardingBody;
+
+  /// No description provided for @accountsOnboardingExampleFrom.
+  ///
+  /// In es, this message translates to:
+  /// **'Bancolombia ···1234'**
+  String get accountsOnboardingExampleFrom;
+
+  /// No description provided for @accountsOnboardingExampleTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Nequi ···9876'**
+  String get accountsOnboardingExampleTo;
+
+  /// No description provided for @accountsOnboardingExample.
+  ///
+  /// In es, this message translates to:
+  /// **'transferencia propia, no es gasto ni ingreso'**
+  String get accountsOnboardingExample;
+
+  /// No description provided for @accountsOnboardingExampleSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Ejemplo: pasar \$500.000 de tu Bancolombia a tu Nequi es una transferencia propia, no un gasto ni un ingreso.'**
+  String get accountsOnboardingExampleSemantics;
 }
 
 class _AppLocalizationsDelegate

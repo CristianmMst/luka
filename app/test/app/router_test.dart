@@ -1,7 +1,8 @@
 import 'package:finanzia/app/router.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/gmail/application/gmail_gate.dart';
+import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
+import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,7 +13,19 @@ void main() {
   const signedOut = AsyncData<AuthState>(Unauthenticated());
   final failed = AsyncError<AuthState>(Exception(), StackTrace.empty);
 
-  group('sesión (Gmail ya resuelto)', () {
+  const skip = OnboardingSkip();
+  const pending = OnboardingPending();
+  const gmail = OnboardingShow(OnboardingStep.gmail);
+  const accounts = OnboardingShow(OnboardingStep.accounts);
+  const gates = <OnboardingGate>[
+    skip,
+    pending,
+    gmail,
+    OnboardingShow(OnboardingStep.notifications),
+    accounts,
+  ];
+
+  group('sesión (onboarding ya resuelto)', () {
     final table = <(AsyncValue<AuthState>, String, String?)>[
       (loading, Routes.splash, null),
       (loading, Routes.home, Routes.splash),
@@ -36,74 +49,89 @@ void main() {
       (signedIn, Routes.review, null),
       (signedIn, '${Routes.review}/m1', null),
       (signedIn, Routes.settings, null),
-      // El onboarding de Gmail también pide sesión.
+      // El onboarding también pide sesión.
       (signedOut, Routes.onboardingGmail, Routes.login),
+      (signedOut, Routes.onboardingNotifications, Routes.login),
+      (signedOut, Routes.onboardingAccounts, Routes.login),
       (loading, Routes.onboardingGmail, Routes.splash),
-      (failed, Routes.onboardingGmail, Routes.login),
+      (failed, Routes.onboardingAccounts, Routes.login),
     ];
 
     for (final (auth, location, expected) in table) {
       test('${auth.runtimeType} en $location → ${expected ?? 'se queda'}', () {
-        expect(redirectFor(auth, location, gmail: GmailGate.skip), expected);
+        expect(redirectFor(auth, location, onboarding: skip), expected);
       });
     }
   });
 
-  group('paso de Gmail', () {
-    final table = <(GmailGate, String, String?)>[
-      // Al salir del splash o del login decide el gate.
-      (GmailGate.prompt, Routes.splash, Routes.onboardingGmail),
-      (GmailGate.prompt, Routes.login, Routes.onboardingGmail),
-      (GmailGate.skip, Routes.splash, Routes.home),
-      (GmailGate.skip, Routes.login, Routes.home),
+  group('onboarding', () {
+    final table = <(OnboardingGate, String, String?)>[
+      // Al salir del splash o del login decide el gate, en el primer paso
+      // pendiente.
+      (gmail, Routes.splash, Routes.onboardingGmail),
+      (gmail, Routes.login, Routes.onboardingGmail),
+      (
+        const OnboardingShow(OnboardingStep.notifications),
+        Routes.splash,
+        Routes.onboardingNotifications,
+      ),
+      (accounts, Routes.login, Routes.onboardingAccounts),
+      (skip, Routes.splash, Routes.home),
+      (skip, Routes.login, Routes.home),
       // Cargando: espera en el splash, sin pasar por Inicio.
-      (GmailGate.pending, Routes.splash, null),
-      (GmailGate.pending, Routes.login, Routes.splash),
-      // Ya en el onboarding no se redirige: ni bucle ni rebote, y el deep
-      // link funciona aunque no haya nada pendiente.
-      (GmailGate.prompt, Routes.onboardingGmail, null),
-      (GmailGate.skip, Routes.onboardingGmail, null),
-      (GmailGate.pending, Routes.onboardingGmail, null),
+      (pending, Routes.splash, null),
+      (pending, Routes.login, Routes.splash),
+      // Ya en el onboarding no se redirige: ni bucle ni rebote al avanzar
+      // de paso, y el deep link funciona aunque no haya nada pendiente.
+      (gmail, Routes.onboardingGmail, null),
+      (gmail, Routes.onboardingAccounts, null),
+      (skip, Routes.onboardingGmail, null),
+      (skip, Routes.onboardingNotifications, null),
+      (pending, Routes.onboardingGmail, null),
       // En el shell tampoco: desconectar en Ajustes no saca al usuario.
-      (GmailGate.prompt, Routes.home, null),
-      (GmailGate.prompt, Routes.settings, null),
-      (GmailGate.pending, Routes.home, null),
-      (GmailGate.pending, '${Routes.transactions}/tx1', null),
-      (GmailGate.prompt, '${Routes.review}/m1', null),
+      (gmail, Routes.home, null),
+      (gmail, Routes.settings, null),
+      (pending, Routes.home, null),
+      (pending, '${Routes.transactions}/tx1', null),
+      (accounts, '${Routes.review}/m1', null),
     ];
 
-    for (final (gmail, location, expected) in table) {
-      test('con sesión, $gmail en $location → ${expected ?? 'se queda'}', () {
-        expect(redirectFor(signedIn, location, gmail: gmail), expected);
+    for (final (gate, location, expected) in table) {
+      test('con sesión, $gate en $location → ${expected ?? 'se queda'}', () {
+        expect(redirectFor(signedIn, location, onboarding: gate), expected);
       });
     }
 
-    test('sin sesión el gate de Gmail no importa', () {
-      for (final gmail in GmailGate.values) {
+    test('sin sesión el gate del onboarding no importa', () {
+      for (final gate in gates) {
         expect(
-          redirectFor(signedOut, Routes.splash, gmail: gmail),
+          redirectFor(signedOut, Routes.splash, onboarding: gate),
           Routes.login,
         );
-        expect(redirectFor(loading, Routes.home, gmail: gmail), Routes.splash);
+        expect(
+          redirectFor(loading, Routes.home, onboarding: gate),
+          Routes.splash,
+        );
       }
     });
 
     test('ningún destino vuelve a redirigir (sin bucles)', () {
       for (final auth in [loading, signedIn, signedOut, failed]) {
-        for (final gmail in GmailGate.values) {
+        for (final gate in gates) {
           for (final location in [
             Routes.splash,
             Routes.login,
             Routes.home,
             Routes.onboardingGmail,
+            Routes.onboardingAccounts,
             Routes.settings,
           ]) {
-            final target = redirectFor(auth, location, gmail: gmail);
+            final target = redirectFor(auth, location, onboarding: gate);
             if (target == null) continue;
             expect(
-              redirectFor(auth, target, gmail: gmail),
+              redirectFor(auth, target, onboarding: gate),
               isNull,
-              reason: '$auth/$gmail: $location → $target',
+              reason: '$auth/$gate: $location → $target',
             );
           }
         }

@@ -5,10 +5,11 @@ import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/app_theme.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:finanzia/features/capture/application/capture_flusher.dart';
+import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_prompt_store.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,6 @@ import 'package:mocktail/mocktail.dart';
 import '../../../helpers/pump_app.dart';
 
 class _MockGmail extends Mock implements GmailRepository {}
-
-class _MockPrompts extends Mock implements GmailPromptStore {}
 
 class _FixedAuthController extends AuthController {
   @override
@@ -39,20 +38,17 @@ const _active = GmailConnectionInfo(
   email: 'ana@gmail.com',
 );
 
-const _inicio = 'INICIO';
+/// El paso que sigue a Gmail: sin notificaciones (iOS), Cuentas.
+const _next = 'CUENTAS';
 
 void main() {
   late _MockGmail gmail;
-  late _MockPrompts prompts;
 
   setUp(() {
     gmail = _MockGmail();
-    prompts = _MockPrompts();
     when(
       () => gmail.status(),
     ).thenAnswer((_) async => GmailConnectionInfo.disconnected);
-    when(() => prompts.isDismissed(any())).thenAnswer((_) async => false);
-    when(() => prompts.dismiss(any())).thenAnswer((_) async {});
   });
 
   Future<void> pumpPage(
@@ -71,8 +67,8 @@ void main() {
           builder: (_, _) => const GmailOnboardingPage(),
         ),
         GoRoute(
-          path: Routes.home,
-          builder: (_, _) => const Scaffold(body: Text(_inicio)),
+          path: Routes.onboardingAccounts,
+          builder: (_, _) => const Scaffold(body: Text(_next)),
         ),
       ],
     );
@@ -82,7 +78,9 @@ void main() {
         overrides: [
           authControllerProvider.overrideWith(_FixedAuthController.new),
           gmailRepositoryProvider.overrideWithValue(gmail),
-          gmailPromptStoreProvider.overrideWithValue(prompts),
+          notificationSourceProvider.overrideWithValue(
+            const NoopNotificationSource(),
+          ),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light,
@@ -125,7 +123,7 @@ void main() {
     expect(tester.getSize(notNowButton()).height, greaterThanOrEqualTo(48));
   });
 
-  testWidgets('conectar abre el consentimiento y lleva a Inicio', (
+  testWidgets('conectar abre el consentimiento y sigue al próximo paso', (
     tester,
   ) async {
     when(() => gmail.connect()).thenAnswer((_) async => _active);
@@ -135,11 +133,11 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => gmail.connect()).called(1);
-    expect(find.text(_inicio), findsOneWidget);
+    expect(find.text(_next), findsOneWidget);
   });
 
   for (final status in [GmailStatus.error, GmailStatus.revoked]) {
-    testWidgets('conectado con ${status.name}: avisa y lleva a Inicio', (
+    testWidgets('conectado con ${status.name}: avisa y sigue al próximo paso', (
       tester,
     ) async {
       when(() => gmail.connect()).thenAnswer(
@@ -152,7 +150,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text(_inicio), findsOneWidget);
+      expect(find.text(_next), findsOneWidget);
       expect(
         find.text(
           'Conectado, pero no pudimos activar la captura; '
@@ -191,7 +189,7 @@ void main() {
 
     pending.complete(_active);
     await tester.pumpAndSettle();
-    expect(find.text(_inicio), findsOneWidget);
+    expect(find.text(_next), findsOneWidget);
   });
 
   testWidgets('cancelar el consentimiento se queda en la página sin aviso', (
@@ -206,7 +204,7 @@ void main() {
     expect(find.text('Conecta tu Gmail'), findsOneWidget);
     expect(find.text('Conectar Gmail'), findsOneWidget);
     expect(find.byIcon(Icons.error_outline_rounded), findsNothing);
-    expect(find.text(_inicio), findsNothing);
+    expect(find.text(_next), findsNothing);
   });
 
   final failures = <(String, GmailFailure, String)>[
@@ -259,7 +257,7 @@ void main() {
 
       expect(find.text(message), findsOneWidget);
       expect(find.text('Reintentar'), findsOneWidget);
-      expect(find.text(_inicio), findsNothing);
+      expect(find.text(_next), findsNothing);
     });
   }
 
@@ -280,7 +278,7 @@ void main() {
     );
   });
 
-  testWidgets('reintentar tras un rechazo conecta y lleva a Inicio', (
+  testWidgets('reintentar tras un rechazo conecta y sigue al próximo paso', (
     tester,
   ) async {
     var calls = 0;
@@ -295,10 +293,10 @@ void main() {
     await tester.tap(connectButton());
     await tester.pumpAndSettle();
 
-    expect(find.text(_inicio), findsOneWidget);
+    expect(find.text(_next), findsOneWidget);
   });
 
-  testWidgets('"Ahora no" lo recuerda para el usuario y lleva a Inicio', (
+  testWidgets('"Ahora no" sigue al próximo paso sin conectar', (
     tester,
   ) async {
     await pumpPage(tester);
@@ -306,9 +304,21 @@ void main() {
     await tester.tap(notNowButton());
     await tester.pumpAndSettle();
 
-    verify(() => prompts.dismiss('u-1')).called(1);
     verifyNever(() => gmail.connect());
-    expect(find.text(_inicio), findsOneWidget);
+    expect(find.text(_next), findsOneWidget);
+  });
+
+  testWidgets('con Gmail ya activo solo ofrece continuar', (tester) async {
+    when(() => gmail.status()).thenAnswer((_) async => _active);
+    await pumpPage(tester);
+
+    expect(find.text('Conectar Gmail'), findsNothing);
+    expect(notNowButton(), findsNothing);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => gmail.connect());
+    expect(find.text(_next), findsOneWidget);
   });
 
   testWidgets('sin poder leer el estado: avisa y reintenta leerlo', (
