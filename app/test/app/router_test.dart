@@ -138,4 +138,48 @@ void main() {
       }
     });
   });
+
+  group('registro rápido por tag NFC', () {
+    const quick = '/rapido?tag=3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b';
+
+    test('al salir del splash sin onboarding abre el destino pendiente', () {
+      expect(
+        redirectFor(
+          signedIn,
+          Routes.splash,
+          onboarding: skip,
+          pendingDeepLink: quick,
+        ),
+        quick,
+      );
+    });
+
+    test('con onboarding pendiente, el onboarding va primero', () {
+      expect(
+        redirectFor(
+          signedIn,
+          Routes.splash,
+          onboarding: gmail,
+          pendingDeepLink: quick,
+        ),
+        Routes.onboardingGmail,
+      );
+    });
+
+    test('sin sesión el destino no se abre', () {
+      expect(
+        redirectFor(
+          signedOut,
+          Routes.splash,
+          onboarding: skip,
+          pendingDeepLink: quick,
+        ),
+        Routes.login,
+      );
+    });
+
+    test('ya en el registro rápido no se redirige', () {
+      expect(redirectFor(signedIn, Routes.quickAdd, onboarding: skip), isNull);
+    });
+  });
 }

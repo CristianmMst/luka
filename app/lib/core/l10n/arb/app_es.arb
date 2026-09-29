@@ -1114,5 +1114,76 @@
   "accountPickerTitle": "¿De qué cuenta?",
   "accountPickerNone": "Sin cuenta",
   "accountFieldLabel": "Cuenta",
-  "filterAccount": "Cuenta"
+  "filterAccount": "Cuenta",
+  "quickAddUnknownTitle": "Tag sin configurar",
+  "quickAddUnknownMeta": "Este teléfono no lo conoce",
+  "quickAddAmountLabel": "¿Cuánto fue?",
+  "quickAddCategory": "Categoría",
+  "quickAddChooseCategory": "Elegir categoría…",
+  "quickAddRemember": "Guardar como plantilla de este tag",
+  "quickAddSave": "Guardar gasto",
+  "quickAddOpenFull": "Abrir el registro completo",
+  "quickAddSaved": "Gasto guardado",
+  "quickAddSavedOffline": "Gasto guardado. Se enviará cuando haya conexión.",
+  "quickAddAmountRequired": "Escribe cuánto fue.",
+  "quickAddClose": "Cerrar",
+  "quickAddDefaultTemplateName": "Tag nuevo",
+  "settingsNfcTitle": "Tags NFC",
+  "settingsNfcSubtitle": "Registra un gasto con solo acercar el teléfono",
+  "nfcTagsTitle": "Tags NFC",
+  "nfcTagsIntro": "Pega un tag donde gastas seguido. Al acercar el teléfono, finanzia abre el registro con la categoría lista.",
+  "nfcTagsEmpty": "Aún no tienes tags. Crea uno y escríbelo en un tag NFC.",
+  "nfcTagsNew": "Nuevo tag",
+  "nfcTagsLocalNote": "Los tags funcionan en este teléfono: en otro se abren sin categoría.",
+  "nfcTagEditSemantics": "Editar {name}",
+  "@nfcTagEditSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nfcTagFormNewTitle": "Nuevo tag",
+  "nfcTagFormEditTitle": "Editar tag",
+  "nfcTagFormName": "Nombre",
+  "nfcTagFormNameHint": "Ej. Café de la oficina",
+  "nfcTagFormNameRequired": "Escribe un nombre.",
+  "nfcTagFormNote": "Nota (opcional)",
+  "nfcTagFormNoteHint": "Ej. tinto",
+  "nfcTagFormSaveAndWrite": "Guardar y escribir en un tag",
+  "nfcTagFormSaveOnly": "Solo guardar",
+  "nfcTagFormSave": "Guardar",
+  "nfcTagFormWrite": "Escribir en un tag",
+  "nfcTagFormDelete": "Borrar tag",
+  "nfcTagSaved": "Tag guardado",
+  "nfcTagDeleted": "Tag borrado",
+  "nfcTagMetaNone": "Sin categoría",
+  "nfcWriteTitle": "Acerca el tag al teléfono",
+  "nfcWriteBody": "Vamos a escribir «{name}». Mantenlo quieto detrás del teléfono.",
+  "@nfcWriteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nfcWriteDoneTitle": "Tag listo",
+  "nfcWriteDoneBody": "Acércalo cuando quieras registrar un gasto de «{name}».",
+  "@nfcWriteDoneBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nfcWriteDone": "Listo",
+  "nfcWriteCancel": "Cancelar",
+  "nfcWriteRetry": "Intentar de nuevo",
+  "nfcErrorDisabled": "El NFC está apagado. Enciéndelo en los ajustes del teléfono y vuelve a intentarlo.",
+  "nfcErrorUnsupported": "Este teléfono no tiene NFC.",
+  "nfcErrorNotWritable": "Este tag no se puede escribir (es de solo lectura o no es NDEF).",
+  "nfcErrorTooSmall": "El tag es muy pequeño para el enlace.",
+  "nfcErrorIo": "No pudimos escribir el tag. Acércalo de nuevo y no lo muevas.",
+  "registerReadNfc": "Leer tag NFC",
+  "registerReadNfcUnknown": "Ese tag no es de finanzia."
 }

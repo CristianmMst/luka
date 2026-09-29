@@ -78,7 +78,8 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 
 ### 3.4 Registrar (RF-4)
 - Formulario completo (F4.5a, diseño A "Formulario en tarjeta", el mismo `TransactionFormCard` de Revisión): monto (teclado numérico COP, único obligatorio: > $0), Gasto/Ingreso (default gasto), fecha y hora (default ahora: si no se tocan, se toma el instante de guardar), comercio, categoría (con "+ Nueva categoría", §3.7) y nota. La fila opcional "Cuenta" (F4.8b, diseño A "Fila + hoja") abre "¿De qué cuenta?": las cuentas vinculadas, "Sin cuenta" y "+ Agregar cuenta", que crea una y la deja elegida. La cuenta viaja en `account_id`, y la fila local optimista toma el banco de la cuenta, como el servidor. El tipo transferencia se marca después en el detalle. Al guardar: aviso "Movimiento guardado" (sin red: "… Se enviará cuando haya conexión.") con "Deshacer", que lo elimina (con el id vigente: el del servidor si el sync ya canjeó el local) y avisa "Movimiento deshecho"; el formulario queda limpio. Después, se elimina desde el detalle (§3.3). Sin conexión se muestra el aviso sobre el formulario.
-- **Formulario rápido (NFC)**: solo monto grande centrado + botón confirmar; categoría/cuenta del tag. Objetivo: 2 toques + monto. Abre por deep link `finanzia://quick-add?tag=<uuid>` (Android NDEF) o desde botón NFC (iOS foreground).
+- **Formulario rápido (NFC)** (F4.5b, diseño B "Hoja sobre la app", canvas https://claude.ai/artifact/WzR2MPpbs6czQaGfz2kpMM): ruta `/rapido?tag=<uuid>` en el navegador raíz, como hoja sobre la pantalla que había (página transparente). Encabezado con el nombre de la plantilla y "Categoría · Cuenta"; monto grande (único obligatorio: "Escribe cuánto fue.") y "Guardar gasto"; "Abrir registro completo" lleva a Registrar. Categoría, cuenta y nota vienen de la plantilla. Un tag que este teléfono no conoce se titula "Tag sin configurar", pide la categoría (opcional) y trae marcada "Guardar como plantilla de este tag" (nombre = la categoría elegida o "Tag nuevo"). Guarda por el outbox con `nfc_tag_id`, avisa como Registrar y se cierra. Objetivo: acercar + monto + 1 toque.
+  - Abre por el deep link `finanzia://quick-add?tag=<uuid>` (Android NDEF con la app cerrada o abierta; esquema `finanzia` en iOS) o con "Leer tag NFC" en Registrar (solo iOS, sesión Core NFC en primer plano). El redirect del router traduce el enlace a `/rapido`; si la sesión aún no está lista (arranque en frío), guarda el destino y lo abre después del splash o del onboarding.
 - Ambos guardan primero en Drift + outbox (AC-4.2).
 
 ### 3.5 Revisión (RF-8)
@@ -96,6 +97,9 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
   - Fila "Notificaciones del banco" (F4.3, solo Android): "Activo" ofrece "Administrar", que abre el ajuste del sistema; "Inactivo" ofrece "Activar", que primero muestra una hoja de divulgación prominente (spec 010 §2: qué se lee, qué se ignora y cómo quitar el permiso) y solo con "Ir a los ajustes" abre el ajuste del sistema. El estado se vuelve a leer al volver a primer plano (AC-3.4). En iOS la fila no existe.
   - Fila "Gmail" (F3.6, AC-1.3): conectado muestra la cuenta Gmail ("Conectado · email") y ofrece "Desconectar", que pide confirmación en un diálogo Material ("¿Desconectar Gmail?": deja de leer los correos, los movimientos se quedan); revocado o con error explica que la captura se detuvo y ofrece "Reconectar"; desconectado ofrece "Conectar"; sin poder consultar el estado, "Reintentar". Mientras corre una acción se ve un indicador en lugar del botón y un fallo se avisa bajo la fila. La acción mide 48 dp o más y su etiqueta accesible dice qué hace ("Desconectar Gmail").
 - Cuentas vinculadas (CRUD); categorías (CRUD de propias); escribir/gestionar tags NFC.
+  - Fila "Tags NFC" (F4.5b, solo Android, que es donde se escriben) → `/ajustes/tags-nfc`: las plantillas con su "Categoría · Cuenta", editar por fila (48 dp) y "Nuevo tag", con la nota de que funcionan solo en este teléfono.
+  - Hoja "Nuevo tag" / "Editar tag": nombre (obligatorio, ≤ 60), categoría, cuenta (el selector de Registrar) y nota. Crear ofrece "Guardar y escribir en un tag" y "Solo guardar"; editar, "Guardar", "Escribir en un tag" y "Borrar tag". No van a la API.
+  - "Escribir" abre la pantalla esmeralda completa "Acerca el tag al teléfono" (diseño B), que escribe el enlace y muestra "Tag listo" o el error (NFC apagado o sin soporte, tag de solo lectura, sin espacio, fallo de lectura) con "Intentar de nuevo". Salir cancela la sesión NFC.
   - Fila "Mis categorías" (F4.8a) → `/ajustes/categorias`: las categorías propias (solo las ve su dueño, spec 005 §7) con ícono, color, etiqueta en lenguaje claro y conteo local de movimientos; editar y borrar por fila (48 dp) y "Nueva categoría". Las de finanzia se explican como no editables.
   - Hoja "Nueva categoría" / "Editar categoría" (diseño A "Hoja completa"): nombre (1–80), ícono de un set curado de 16 (6 por fila para conservar 48 dp) y color de 8 de la paleta (con ícono blanco AA), y "¿Para qué la usas?", que abre el selector de las 12 etiquetas fiscales agrupadas en gastos, aportes e ingresos, con nombre y pista en lenguaje claro (default "Gasto personal" = `no_deducible`; `transferencia` no se ofrece). Se abre también desde "+ Nueva categoría" del selector de categoría (no en el filtro), que deja elegida la nueva. Crear, editar y borrar van directo a la API (sin outbox): sin conexión se avisa "Necesitas conexión…"; nombre repetido (sin mayúsculas, propio o de finanzia) se avisa bajo el campo. Tras un éxito la copia local se actualiza al instante; editar o borrar además pide un sync para traer los movimientos que el servidor retaggeó o pasó a "Sin categoría".
   - Borrar confirma con un diálogo: "¿Borrar «X»? Sus N movimientos pasan a Sin categoría…".
@@ -116,8 +120,9 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - iOS: `NoopNotificationSource`; la UI de onboarding/ajustes no muestra la sección.
 
 ### 4.2 NfcService
-- Android: lectura NDEF por intent-filter (app cerrada) y en foreground; escritura de tags.
-- iOS: lectura en foreground con sesión Core NFC iniciada por el usuario.
+- Puerto `NfcService` (`availability`, `write(Uri)`, `readUri`, `cancel`) en `features/nfc/domain`, adaptador `NfcManagerService` con `nfc_manager` 4 + `ndef_record`.
+- Android: la lectura con la app cerrada no pasa por el plugin: el intent-filter entrega el enlace como deep link a go_router (`flutter_deeplinking_enabled`). Escritura con `NdefAndroid` (o `NdefFormatableAndroid` si el tag viene sin formato).
+- iOS: lectura en primer plano con una sesión Core NFC que inicia el usuario (`NdefIos`); entitlement `com.apple.developer.nfc.readersession.formats` (NDEF, TAG) y `NFCReaderUsageDescription`. No escribe.
 
 ## 5. Sincronización offline (P4, contrato en spec 005 §9)
 
@@ -138,7 +143,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 | Google Sign-In | ambas | onboarding paso 1 | no hay app sin login |
 | `gmail.readonly` (incremental) | ambas | onboarding paso 2 / Ajustes | captura manual + notificaciones |
 | Acceso a notificaciones | Android | onboarding paso 3 / Ajustes | captura por Gmail + manual |
-| NFC | ambas | al usar la función | registro manual normal |
+| NFC | ambas | al usar la función (permiso de manifiesto en Android, `uses-feature` no obligatorio; en iOS la hoja del sistema al leer) | registro manual normal |
 | Notificaciones push propias (avisos de la app) | ambas | post-onboarding | sin recordatorios |
 
 ## 7. UX/UI

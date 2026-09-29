@@ -10,6 +10,8 @@ import 'package:finanzia/features/capture/presentation/widgets/notification_capt
 import 'package:finanzia/features/categories/presentation/categories_settings_tile.dart';
 import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:finanzia/features/gmail/presentation/widgets/gmail_settings_tile.dart';
+import 'package:finanzia/features/nfc/application/nfc_actions.dart';
+import 'package:finanzia/features/nfc/presentation/nfc_tags_settings_tile.dart';
 import 'package:finanzia/features/privacy/presentation/privacy_sheet.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/presentation/sync_sheet.dart';
@@ -55,6 +57,8 @@ class AjustesPage extends ConsumerWidget {
                   const NotificationCaptureTile(),
                   const CategoriesSettingsTile(),
                   const AccountsSettingsTile(),
+                  if (ref.watch(nfcWriteSupportedProvider))
+                    const NfcTagsSettingsTile(),
                   const _PrivacyTile(),
                   const SizedBox(height: Space.xs),
                   OutlinedButton(

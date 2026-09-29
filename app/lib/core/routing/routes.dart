@@ -15,6 +15,13 @@ abstract final class Routes {
   /// "Mis cuentas" (F4.4), a pantalla completa sobre Ajustes.
   static const settingsAccounts = '/ajustes/cuentas';
 
+  /// "Tags NFC" (F4.5b), a pantalla completa sobre Ajustes.
+  static const settingsNfcTags = '/ajustes/tags-nfc';
+
+  /// Registro rápido de un tag NFC (F4.5b): `/rapido?tag=<uuid>`, sobre el
+  /// Inicio. Llega por el enlace `finanzia://quick-add?tag=<uuid>`.
+  static const quickAdd = '/rapido';
+
   /// Pasos del onboarding tras el login (F3.6, F4.4), fuera del shell.
   static const onboardingGmail = '/onboarding/gmail';
   static const onboardingNotifications = '/onboarding/notificaciones';

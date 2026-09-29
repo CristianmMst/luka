@@ -261,10 +261,11 @@ MVP, riesgo §4.8 del plan). Superado el presupuesto → directo a `review_queue
 
 ## 5. NFC (app)
 
-- Tags NDEF con payload propio: `finanzia://quick-add?tag=<uuid>`; el uuid se asocia en la app a una plantilla (categoría + cuenta + nota por defecto).
-- Android: intent-filter NDEF → abre la app directo en el formulario rápido incluso cerrada. iOS: lectura en foreground (Core NFC) desde la pantalla de registro.
-- Escritura de tags: pantalla en Ajustes (Android) usando `nfc_manager`; un tag puede reescribirse.
-- El formulario rápido solo pide monto (categoría/cuenta vienen del tag) → guardar offline → outbox (AC-4.2).
+- Tags NDEF con un registro URI propio (well-known `U`, prefijo 0x00): `finanzia://quick-add?tag=<uuid>`. El uuid se asocia en la app a una plantilla (nombre, categoría, cuenta y nota por defecto, todas opcionales salvo el nombre).
+- Las plantillas viven solo en el teléfono que las creó (tabla Drift `local_nfc_tags`, se borra al cerrar sesión como el resto, P6); no se sincronizan. En otro teléfono el mismo tag cae al caso "tag desconocido".
+- Android: intent-filters `NDEF_DISCOVERED` y `VIEW` para `finanzia://quick-add` → abren la app directo en el formulario rápido, incluso cerrada. iOS: lectura en primer plano (Core NFC) con el botón "Leer tag NFC" de Registrar; el esquema `finanzia` también abre el formulario.
+- Escritura de tags: pantalla en Ajustes (solo Android) con `nfc_manager`; un tag puede reescribirse. Tag de solo lectura, sin NDEF o sin espacio, y NFC apagado se explican con su propio mensaje.
+- El formulario rápido solo pide el monto (categoría, cuenta y nota vienen de la plantilla) → guarda offline → outbox con `nfc_tag_id` (AC-4.2); el servidor marca `channel: nfc` y la fila local optimista lleva `channels=["nfc"]`. Un tag desconocido pide además la categoría (opcional) y ofrece "Guardar como plantilla de este tag".
 
 ## 6. Métricas del pipeline (observabilidad)
 

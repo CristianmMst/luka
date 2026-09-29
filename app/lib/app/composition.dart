@@ -12,6 +12,8 @@ import 'package:finanzia/features/dashboard/application/dashboard_providers.dart
 import 'package:finanzia/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/data/gmail_data_providers.dart';
+import 'package:finanzia/features/nfc/application/nfc_actions.dart';
+import 'package:finanzia/features/nfc/data/nfc_data_providers.dart';
 import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
 import 'package:finanzia/features/onboarding/data/onboarding_data_providers.dart';
 import 'package:finanzia/features/privacy/application/privacy_actions.dart';
@@ -72,6 +74,12 @@ List<Override> get appOverrides => [
   ),
   accountsRemoteProvider.overrideWith((ref) => ref.watch(accountsApiProvider)),
   privacyRemoteProvider.overrideWith((ref) => ref.watch(privacyApiProvider)),
+  nfcTagStoreProvider.overrideWith(
+    (ref) => ref.watch(driftNfcTagStoreProvider),
+  ),
+  nfcServiceProvider.overrideWith(
+    (ref) => ref.watch(nfcManagerServiceProvider),
+  ),
   exportSaverProvider.overrideWith(
     (ref) => ref.watch(shareExportSaverProvider),
   ),

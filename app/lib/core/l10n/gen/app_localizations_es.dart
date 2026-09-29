@@ -1815,4 +1815,168 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get filterAccount => 'Cuenta';
+
+  @override
+  String get quickAddUnknownTitle => 'Tag sin configurar';
+
+  @override
+  String get quickAddUnknownMeta => 'Este teléfono no lo conoce';
+
+  @override
+  String get quickAddAmountLabel => '¿Cuánto fue?';
+
+  @override
+  String get quickAddCategory => 'Categoría';
+
+  @override
+  String get quickAddChooseCategory => 'Elegir categoría…';
+
+  @override
+  String get quickAddRemember => 'Guardar como plantilla de este tag';
+
+  @override
+  String get quickAddSave => 'Guardar gasto';
+
+  @override
+  String get quickAddOpenFull => 'Abrir el registro completo';
+
+  @override
+  String get quickAddSaved => 'Gasto guardado';
+
+  @override
+  String get quickAddSavedOffline =>
+      'Gasto guardado. Se enviará cuando haya conexión.';
+
+  @override
+  String get quickAddAmountRequired => 'Escribe cuánto fue.';
+
+  @override
+  String get quickAddClose => 'Cerrar';
+
+  @override
+  String get quickAddDefaultTemplateName => 'Tag nuevo';
+
+  @override
+  String get settingsNfcTitle => 'Tags NFC';
+
+  @override
+  String get settingsNfcSubtitle =>
+      'Registra un gasto con solo acercar el teléfono';
+
+  @override
+  String get nfcTagsTitle => 'Tags NFC';
+
+  @override
+  String get nfcTagsIntro =>
+      'Pega un tag donde gastas seguido. Al acercar el teléfono, finanzia abre el registro con la categoría lista.';
+
+  @override
+  String get nfcTagsEmpty =>
+      'Aún no tienes tags. Crea uno y escríbelo en un tag NFC.';
+
+  @override
+  String get nfcTagsNew => 'Nuevo tag';
+
+  @override
+  String get nfcTagsLocalNote =>
+      'Los tags funcionan en este teléfono: en otro se abren sin categoría.';
+
+  @override
+  String nfcTagEditSemantics(String name) {
+    return 'Editar $name';
+  }
+
+  @override
+  String get nfcTagFormNewTitle => 'Nuevo tag';
+
+  @override
+  String get nfcTagFormEditTitle => 'Editar tag';
+
+  @override
+  String get nfcTagFormName => 'Nombre';
+
+  @override
+  String get nfcTagFormNameHint => 'Ej. Café de la oficina';
+
+  @override
+  String get nfcTagFormNameRequired => 'Escribe un nombre.';
+
+  @override
+  String get nfcTagFormNote => 'Nota (opcional)';
+
+  @override
+  String get nfcTagFormNoteHint => 'Ej. tinto';
+
+  @override
+  String get nfcTagFormSaveAndWrite => 'Guardar y escribir en un tag';
+
+  @override
+  String get nfcTagFormSaveOnly => 'Solo guardar';
+
+  @override
+  String get nfcTagFormSave => 'Guardar';
+
+  @override
+  String get nfcTagFormWrite => 'Escribir en un tag';
+
+  @override
+  String get nfcTagFormDelete => 'Borrar tag';
+
+  @override
+  String get nfcTagSaved => 'Tag guardado';
+
+  @override
+  String get nfcTagDeleted => 'Tag borrado';
+
+  @override
+  String get nfcTagMetaNone => 'Sin categoría';
+
+  @override
+  String get nfcWriteTitle => 'Acerca el tag al teléfono';
+
+  @override
+  String nfcWriteBody(String name) {
+    return 'Vamos a escribir «$name». Mantenlo quieto detrás del teléfono.';
+  }
+
+  @override
+  String get nfcWriteDoneTitle => 'Tag listo';
+
+  @override
+  String nfcWriteDoneBody(String name) {
+    return 'Acércalo cuando quieras registrar un gasto de «$name».';
+  }
+
+  @override
+  String get nfcWriteDone => 'Listo';
+
+  @override
+  String get nfcWriteCancel => 'Cancelar';
+
+  @override
+  String get nfcWriteRetry => 'Intentar de nuevo';
+
+  @override
+  String get nfcErrorDisabled =>
+      'El NFC está apagado. Enciéndelo en los ajustes del teléfono y vuelve a intentarlo.';
+
+  @override
+  String get nfcErrorUnsupported => 'Este teléfono no tiene NFC.';
+
+  @override
+  String get nfcErrorNotWritable =>
+      'Este tag no se puede escribir (es de solo lectura o no es NDEF).';
+
+  @override
+  String get nfcErrorTooSmall => 'El tag es muy pequeño para el enlace.';
+
+  @override
+  String get nfcErrorIo =>
+      'No pudimos escribir el tag. Acércalo de nuevo y no lo muevas.';
+
+  @override
+  String get registerReadNfc => 'Leer tag NFC';
+
+  @override
+  String get registerReadNfcUnknown => 'Ese tag no es de finanzia.';
 }

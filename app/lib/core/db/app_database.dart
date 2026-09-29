@@ -14,6 +14,7 @@ part 'app_database.g.dart';
     LocalReview,
     Outbox,
     SyncState,
+    LocalNfcTags,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -21,14 +22,17 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'finanzia'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       // v1 era una base vacía (F0.6): no hay datos que migrar.
-      if (from < 2) await m.createAll();
+      if (from < 2) {
+        await m.createAll();
+        return;
+      }
       if (from == 2) {
         await m.addColumn(localTransactions, localTransactions.channels);
         // Reiniciar el cursor fuerza un pull completo que rellena los
@@ -37,6 +41,8 @@ class AppDatabase extends _$AppDatabase {
           syncState,
         )..where((s) => s.key.equals('transactions_cursor'))).go();
       }
+      // v4: plantillas de tags NFC (F4.5b).
+      if (from < 4) await m.createTable(localNfcTags);
     },
   );
 }

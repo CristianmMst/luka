@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Tags NFC del registro rápido (spec 006 §5). Opcional: la app se
+         instala en teléfonos sin NFC. -->
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
     <application
         android:label="finanzia"
         android:name="${applicationName}"
@@ -25,6 +29,22 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Tag NFC escrito por finanzia: abre el registro rápido aunque
+                 la app esté cerrada (AC-4.1). -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="finanzia" android:host="quick-add"/>
+            </intent-filter>
+            <!-- El mismo enlace desde cualquier otra fuente. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="finanzia" android:host="quick-add"/>
+            </intent-filter>
+            <!-- go_router recibe el enlace como ruta (deep link de Flutter). -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="true"/>
         </activity>
         <!-- Listener de notificaciones bancarias (spec 006 §3.2). Solo el
              sistema puede enlazarlo, y solo tras el permiso del usuario en

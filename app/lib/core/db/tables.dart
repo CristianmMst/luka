@@ -114,3 +114,17 @@ class SyncState extends Table {
   @override
   Set<Column<Object>> get primaryKey => {key};
 }
+
+/// Plantillas de tags NFC (spec 006 §5, F4.5b): solo locales, no se
+/// sincronizan. Un tag escrito en otro teléfono no se encuentra aquí.
+@DataClassName('LocalNfcTagRow')
+class LocalNfcTags extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get categoryId => text().nullable()();
+  TextColumn get accountId => text().nullable()();
+  TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
