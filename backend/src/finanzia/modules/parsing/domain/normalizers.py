@@ -25,6 +25,28 @@ _TRAILING_PUNCT_RE = re.compile(r"[.,;:]+$")
 
 _DECIMAL_LEN = 2
 
+# Meses en espanol (Nequi: "26 de septiembre de 2026") -> numero, para que la
+# plantilla use `%m` y no dependa del locale del proceso.
+_MONTHS_ES = {
+    "enero": "01",
+    "febrero": "02",
+    "marzo": "03",
+    "abril": "04",
+    "mayo": "05",
+    "junio": "06",
+    "julio": "07",
+    "agosto": "08",
+    "septiembre": "09",
+    "setiembre": "09",
+    "octubre": "10",
+    "noviembre": "11",
+    "diciembre": "12",
+}
+_MONTH_ES_RE = re.compile(r"\b(" + "|".join(_MONTHS_ES) + r")\b", re.IGNORECASE)
+# "11:21 a.m", "1:05 p. m.", "9:00 AM": hora de 12 horas con meridiano.
+_TIME_12H_RE = re.compile(r"^(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?$", re.IGNORECASE)
+_HOURS_12H = 12
+
 
 def parse_amount(raw: str) -> Decimal:
     """Convierte un monto colombiano (es-CO o en-US, con `$`/`COP`) a `Decimal`.
@@ -74,15 +96,32 @@ def parse_local_datetime(
 ) -> datetime:
     """Combina fecha + hora local (plantilla) en un `datetime` aware.
 
-    `date_format` es el formato `strptime` de la fecha (p. ej. `%d/%m/%Y`);
-    la hora siempre se interpreta como `%H:%M`. Lanza `DateInvalid` si no se
-    puede parsear.
+    `date_format` es el formato `strptime` de la fecha (p. ej. `%d/%m/%Y`); un
+    mes escrito en espanol ("septiembre") se cambia antes por su numero, asi
+    que se usa `%m`. La hora es `%H:%M`, o de 12 horas con "a.m"/"p.m" (se
+    pasa a 24 horas). Lanza `DateInvalid` si no se puede parsear.
     """
+    date_norm = _MONTH_ES_RE.sub(lambda m: _MONTHS_ES[m.group(1).lower()], date_str)
     try:
-        naive = datetime.strptime(f"{date_str} {time_str}", f"{date_format} %H:%M")
+        time_norm = _to_24h(time_str.strip())
+        naive = datetime.strptime(f"{date_norm} {time_norm}", f"{date_format} %H:%M")
     except ValueError as exc:
         raise DateInvalid(f"fecha/hora invalida: {date_str!r} {time_str!r}") from exc
     return naive.replace(tzinfo=ZoneInfo(tz))
+
+
+def _to_24h(time_str: str) -> str:
+    """`"11:21 p.m"` -> `"23:21"`; una hora sin meridiano queda igual."""
+    found = _TIME_12H_RE.match(time_str)
+    if found is None:
+        return time_str
+    hour, minute, meridiem = int(found.group(1)), found.group(2), found.group(3).lower()
+    if not 1 <= hour <= _HOURS_12H:
+        raise ValueError(f"hora de 12 horas fuera de rango: {time_str!r}")
+    hour %= _HOURS_12H
+    if meridiem == "p":
+        hour += _HOURS_12H
+    return f"{hour:02d}:{minute}"
 
 
 def clean_text(value: str) -> str:

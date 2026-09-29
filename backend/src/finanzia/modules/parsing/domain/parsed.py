@@ -36,6 +36,9 @@ class ParsedTransaction:
     suggested_category: str | None
     parsed_by: str
     confidence: float | None
+    # `merchant` es una persona (plantilla con `counterparty: true`): ledger
+    # la compara con el titular para detectar transferencias propias.
+    merchant_is_person: bool = False
 
     def __post_init__(self) -> None:
         _require_aware(self.occurred_at)

@@ -85,6 +85,7 @@ def make_transaction_parsed_handler(
                 raw_message_id=event.raw_message_id,
                 received_at=event.received_at,
             ),
+            merchant_is_person=event.merchant_is_person,
         )
 
         try:

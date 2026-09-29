@@ -42,7 +42,7 @@ banks:
     verified: true
     senders: [alertasynotificaciones@an.notificacionesbancolombia.com,
               "@notificacionesbancolombia.com", "@bancolombia.com.co"]
-  nequi:        {verified: false, senders: ["@nequi.com.co"]}
+  nequi:        {verified: true, senders: ["@nequi.com.co"]}  # fixture real (F2.7)
   davivienda:   {verified: false, senders: ["@davivienda.com"]}
   daviplata:    {verified: false, senders: ["@daviplata.com"]}
   bbva:         {verified: false, senders: ["@bbva.com.co"]}
@@ -53,9 +53,9 @@ Un correo cuyo `From` no matchea ningún patrón se descarta sin persistir el cu
 Matching (`parsing/domain/allowlist.py`): exacto case-insensitive sobre la dirección (sin el
 display name), o sufijo de dominio si el patrón empieza por `@` (matchea el dominio exacto y
 subdominios, nunca un dominio "hijo": `@bancolombia.com.co` NO matchea
-`x@bancolombia.com.co.evil.com`). Solo Bancolombia está `verified: true` (fixture real, F2.3); los
-otros cinco bancos quedan **sin verificar con fixture** — el filtro los acepta igual, pero al no
-tener plantilla (F2.7, diferido) siempre caen al LLM genérico.
+`x@bancolombia.com.co.evil.com`). Bancolombia (F2.3) y Nequi (F2.7) están `verified: true` (fixture
+real); los otros cuatro bancos quedan **sin verificar con fixture** — el filtro los acepta igual,
+pero al no tener plantilla (F2.7, diferido) siempre caen al LLM genérico.
 
 ### 2.3 Extracción del cuerpo
 - Preferir `text/plain`; si solo hay HTML, convertir a texto (strip de tags, conservar tablas como líneas). Implementado en `ingestion/domain/gmail_message.py` (stdlib `html.parser`): se toma la primera parte `text/plain` no vacía (recorrido en profundidad) y si no hay, la primera `text/html`; las partes con `filename` (adjuntos) nunca son cuerpo; se decodifica con el `charset` de la parte (UTF-8 con reemplazo si falta o es desconocido). En el HTML, los tags de bloque (`p`, `div`, `br`, `tr`, `li`, `h1`–`h6`, …) cortan línea, las celdas de una fila se unen con un espacio (cada fila de tabla es una línea), se descartan `head`/`script`/`style` y comentarios, y se colapsan espacios y líneas vacías.
@@ -148,9 +148,18 @@ templates:
     direction: debit        # debit | credit
     pattern: '...'          # regex con grupos nombrados (amount, date, time obligatorios;
                              # merchant, last4 segun el mensaje)
-    date_format: "%d/%m/%Y" # formato strptime de <date>; <time> siempre es %H:%M
+    date_format: "%d/%m/%Y" # formato strptime de <date>; un mes en espanol
+                             # ("septiembre") se cambia antes por su numero (usar %m)
     suggested_category: nomina  # opcional
+    counterparty: true       # opcional (default false): <merchant> es una persona
+                             # (envio o recibo entre personas), no un comercio
 ```
+
+- `<time>` es `HH:MM` de 24 horas, o de 12 horas con meridiano ("11:21 a.m", "1:05 p. m.",
+  "9:00 AM"), que se pasa a 24 horas antes de parsear.
+- `counterparty: true` marca que el `merchant` capturado es la contraparte de una transferencia
+  entre personas. Viaja en `TransactionParsed.merchant_is_person` y ledger lo compara con el
+  nombre del titular para detectar transferencias propias (spec 004 §4.1).
 
 - `relevant_line_prefix` reduce el cuerpo al fragmento útil antes de matchear plantillas o llamar
   al LLM (`extract_excerpt`, `parsing/domain/excerpt.py`): el cuerpo se parte en párrafos
@@ -171,6 +180,11 @@ templates:
 - Plantillas Bancolombia vigentes (`parsing/config/templates/bancolombia.yaml`, v1): `compra_tdeb`,
   `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
   (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`) y `nomina`.
+  Las dos de transferencia llevan `counterparty: true`.
+- Plantillas Nequi vigentes (`parsing/config/templates/nequi.yaml`, v1, F2.7): `breb_recibida`
+  ("Recibiste 2.600 de <persona> el 26 de septiembre de 2026 a las 11:21 a.m, desde el banco
+  <banco>"; `direction: credit`, `counterparty: true`, fixture `nequi/breb_recibida.txt`). El
+  monto llega sin `$` y el cuerpo es un solo párrafo; `relevant_line_prefix: "Recibiste "`.
 
 ### 4.2 Fallback LLM — contrato DeepSeek
 

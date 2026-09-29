@@ -1,6 +1,6 @@
 """Motor de plantillas regex por banco (spec 006 §4.1, F2.3). Puro (stdlib
 solo, P3). Ninguna plantilla entra sin fixture real (regla de oro, spec 006
-§4.1) — hoy solo `config/templates/bancolombia.yaml`.
+§4.1): `config/templates/bancolombia.yaml` y `nequi.yaml`.
 """
 
 from __future__ import annotations
@@ -31,9 +31,16 @@ _REQUIRED_GROUPS = frozenset({"amount", "date", "time"})
 class Template:
     """Una plantilla: regex nombrada + post-proceso."""
 
-    __slots__ = ("date_format", "direction", "id", "pattern", "suggested_category")
+    __slots__ = (
+        "counterparty",
+        "date_format",
+        "direction",
+        "id",
+        "pattern",
+        "suggested_category",
+    )
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - un campo por clave del YAML
         self,
         *,
         id: str,
@@ -41,12 +48,17 @@ class Template:
         pattern: re.Pattern[str],
         date_format: str,
         suggested_category: str | None,
+        counterparty: bool = False,
     ) -> None:
         self.id = id
         self.direction = direction
         self.pattern = pattern
         self.date_format = date_format
         self.suggested_category = suggested_category
+        # El grupo `merchant` es una persona (envio o recibo entre personas),
+        # no un comercio: ledger lo compara con el titular (transferencia
+        # propia, spec 004 §4.1).
+        self.counterparty = counterparty
 
 
 class BankTemplates:
@@ -121,6 +133,7 @@ class TemplateMatch:
             suggested_category=self.template.suggested_category,
             parsed_by=f"rule:{self.bank}:{self.template.id}:v{self.version}",
             confidence=None,
+            merchant_is_person=self.template.counterparty,
         )
 
 
@@ -149,12 +162,19 @@ def _compile_template(bank: str, raw: dict[str, Any]) -> Template:
             f"plantilla {raw.get('id')!r} de {bank!r}: faltan grupos nombrados {sorted(missing)}"
         )
 
+    counterparty = raw.get("counterparty", False)
+    if not isinstance(counterparty, bool):
+        raise TemplateConfigError(
+            f"plantilla {raw.get('id')!r} de {bank!r}: counterparty debe ser true/false"
+        )
+
     return Template(
         id=str(raw["id"]),
         direction=direction,
         pattern=pattern,
         date_format=str(raw["date_format"]),
         suggested_category=raw.get("suggested_category"),
+        counterparty=counterparty,
     )
 
 

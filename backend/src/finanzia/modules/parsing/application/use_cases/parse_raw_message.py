@@ -200,6 +200,7 @@ class ParseRawMessage:
                 parsed_by=parsed.parsed_by,
                 confidence=parsed.confidence,
                 received_at=view.received_at,
+                merchant_is_person=parsed.merchant_is_person,
             )
         )
         await self._gateway.mark(view.id, "parsed", now)

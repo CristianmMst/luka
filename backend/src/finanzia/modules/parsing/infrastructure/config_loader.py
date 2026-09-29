@@ -20,6 +20,8 @@ from finanzia.modules.parsing.domain.templates import TemplateRegistry
 
 _CONFIG_PACKAGE = "finanzia.modules.parsing.config"
 _TEMPLATES_PACKAGE = f"{_CONFIG_PACKAGE}.templates"
+# Orden de prueba en `TemplateRegistry.match(None, ...)`.
+_TEMPLATE_FILES = ("bancolombia.yaml", "nequi.yaml")
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,19 +47,20 @@ def _read_yaml(package: str, filename: str) -> dict[str, Any]:
 
 @functools.lru_cache(maxsize=1)
 def load_parsing_config() -> ParsingConfig:
-    """Carga y compila `senders.yaml`, `capture.yaml` y `templates/bancolombia.yaml`.
+    """Carga y compila `senders.yaml`, `capture.yaml` y las plantillas de
+    `templates/` (un YAML por banco, en `_TEMPLATE_FILES`).
 
     Cacheado (`lru_cache`): la config no cambia sin un redeploy. Lanza
     `TemplateConfigError` si algun YAML falta o es invalido.
     """
     senders_raw = _read_yaml(_CONFIG_PACKAGE, "senders.yaml")
     capture_raw = _read_yaml(_CONFIG_PACKAGE, "capture.yaml")
-    templates_raw = _read_yaml(_TEMPLATES_PACKAGE, "bancolombia.yaml")
+    templates_raw = [_read_yaml(_TEMPLATES_PACKAGE, name) for name in _TEMPLATE_FILES]
 
     try:
         senders = SenderAllowlist.from_config(senders_raw)
         capture = CaptureConfig.from_config(capture_raw)
-        templates = TemplateRegistry.from_dicts([templates_raw])
+        templates = TemplateRegistry.from_dicts(templates_raw)
     except TemplateConfigError:
         raise
     except (KeyError, TypeError, ValueError) as exc:

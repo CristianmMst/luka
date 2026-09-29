@@ -111,6 +111,9 @@ class CapturedTransactionCommand:
     parsed_by: str
     confidence: float | None
     source: SourceInput
+    # `merchant` es una persona: si es el titular, es transferencia propia
+    # (spec 004 §4.1).
+    merchant_is_person: bool = False
 
 
 @dataclass(frozen=True, slots=True)

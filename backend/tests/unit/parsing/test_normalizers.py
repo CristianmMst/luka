@@ -64,6 +64,36 @@ class TestParseLocalDatetime:
         with pytest.raises(DateInvalid):
             parse_local_datetime("2026-05-01", "16:00", "%d/%m/%Y")
 
+    def test_mes_en_espanol_y_hora_am_pm(self) -> None:
+        # Nequi: "el 26 de septiembre de 2026 a las 11:21 a.m".
+        result = parse_local_datetime("26 de septiembre de 2026", "11:21 a.m", "%d de %m de %Y")
+        assert result.isoformat() == "2026-09-26T11:21:00-05:00"
+
+    @pytest.mark.parametrize(
+        ("time", "expected"),
+        [
+            ("11:21 p.m", "23:21"),
+            ("1:05 p. m.", "13:05"),
+            ("12:05 a.m", "00:05"),
+            ("12:30 p.m", "12:30"),
+            ("9:00 AM", "09:00"),
+            ("16:28", "16:28"),
+        ],
+    )
+    def test_hora_de_12_horas_pasa_a_24(self, time: str, expected: str) -> None:
+        result = parse_local_datetime("01/05/2026", time, "%d/%m/%Y")
+        assert result.strftime("%H:%M") == expected
+
+    @pytest.mark.parametrize("month", ["SEPTIEMBRE", "Setiembre", "septiembre"])
+    def test_mes_en_espanol_sin_importar_mayusculas(self, month: str) -> None:
+        result = parse_local_datetime(f"3 de {month} de 2026", "08:00", "%d de %m de %Y")
+        assert (result.month, result.day) == (9, 3)
+
+    @pytest.mark.parametrize("time", ["13:00 p.m", "0:30 a.m", "11:75 a.m"])
+    def test_hora_am_pm_invalida_lanza_date_invalid(self, time: str) -> None:
+        with pytest.raises(DateInvalid):
+            parse_local_datetime("01/05/2026", time, "%d/%m/%Y")
+
 
 @pytest.mark.unit
 class TestCleanText:

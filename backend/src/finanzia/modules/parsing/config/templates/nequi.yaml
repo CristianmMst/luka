@@ -1,0 +1,15 @@
+# Plantillas de extraccion Nequi (spec 006 §4.1, F2.7).
+# Regla de oro: ninguna plantilla entra sin fixture real anonimizado + test
+# (backend/tests/fixtures/emails/nequi/*.txt).
+bank: nequi
+version: 1
+# El cuerpo es un solo parrafo; el prefijo lo corta en la primera
+# "Recibiste " y la plantilla busca la que trae el monto.
+relevant_line_prefix: "Recibiste "
+templates:
+  - id: breb_recibida # fixture: breb_recibida.txt
+    direction: credit
+    counterparty: true
+    # Monto sin "$" ("2.600"), mes en espanol y hora "11:21 a.m".
+    pattern: 'Recibiste \$?(?P<amount>[\d.,]+) de (?P<merchant>.+?) el (?P<date>\d{1,2} de \w+ de \d{4}) a las (?P<time>\d{1,2}:\d{2} ?[ap]\.? ?m)'
+    date_format: "%d de %m de %Y"

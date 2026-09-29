@@ -1,0 +1,22 @@
+from: notificaciones@nequi.com.co
+subject: "¡Recibiste plata por Bre-B!"
+received_at: 2026-09-26T11:21:49-05:00
+expected:
+  is_transaction: true
+  bank: nequi
+  direction: credit
+  amount: "2600.00"
+  merchant: "Ana Maria Perez Gomez"
+  last4: null
+  occurred_at: 2026-09-26T11:21:00-05:00
+  channel_hint: breb_recibida
+  note: >-
+    cuerpo real de un solo parrafo (sin lineas en blanco); monto sin "$", mes
+    en espanol y hora "a.m". El remitente es la misma titular (desde Nubank):
+    transferencia propia (spec 004 §4.1)
+---
+¡Recibiste plata por Bre-B!
+¡Hola, ANA PEREZ!
+Recibiste 2.600 de Ana Maria Perez Gomez el 26 de septiembre de 2026 a las 11:21 a.m, desde el banco Nubank. Revisa el detalle en los movimientos de tu app o descarga el comprobante si lo necesitas.
+Si no fuiste tú, fue un error o tienes dudas, escríbenos al chat de nuestra página web: www.nequi.com.co en el botón de "Ayuda" o llama a la línea de atención: (+57) 300 600 0100
+¿Ya nos sigues en redes? ¡Siempre tenemos cosas nuevas!

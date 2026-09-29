@@ -61,6 +61,10 @@ class TestTemplateRegistryBancolombia:
         else:
             assert parsed.suggested_category is None
 
+        # Solo en las transferencias el `merchant` es una persona.
+        is_transfer = TEMPLATE_ID_BY_FIXTURE[fixture.name].startswith("transferencia_")
+        assert parsed.merchant_is_person is is_transfer
+
     def test_match_con_bank_none_prueba_todos_los_bancos(self, registry: TemplateRegistry) -> None:
         fixture = next(f for f in bancolombia_fixtures() if f.name == "compra_tdeb.txt")
         excerpt = extract_excerpt(fixture.body, "Bancolombia:")
@@ -84,12 +88,12 @@ class TestTemplateRegistryBancolombia:
             match.to_parsed(far_received_at)
 
     def test_bank_config_y_known_banks(self, registry: TemplateRegistry) -> None:
-        assert registry.known_banks() == frozenset({"bancolombia"})
+        assert registry.known_banks() == frozenset({"bancolombia", "nequi"})
         bank_config = registry.bank_config("bancolombia")
         assert bank_config is not None
         assert bank_config.version == 1
         assert len(bank_config.templates) == 4
-        assert registry.bank_config("nequi") is None
+        assert registry.bank_config("davivienda") is None
 
     def test_config_real_tiene_exactamente_las_4_plantillas_esperadas(
         self, registry: TemplateRegistry
@@ -142,6 +146,23 @@ class TestTemplateRegistryConfigErrors:
                 {
                     "id": "roto",
                     "direction": "sideways",
+                    "pattern": r"Bancolombia: (?P<amount>\d+) (?P<date>\S+) (?P<time>\S+)",
+                    "date_format": "%d/%m/%Y",
+                }
+            ],
+        }
+        with pytest.raises(TemplateConfigError):
+            TemplateRegistry.from_dicts([bad_config])
+
+    def test_counterparty_no_booleano_lanza_template_config_error(self) -> None:
+        bad_config = {
+            "bank": "bancolombia",
+            "version": 1,
+            "templates": [
+                {
+                    "id": "roto",
+                    "direction": "debit",
+                    "counterparty": "si",
                     "pattern": r"Bancolombia: (?P<amount>\d+) (?P<date>\S+) (?P<time>\S+)",
                     "date_format": "%d/%m/%Y",
                 }

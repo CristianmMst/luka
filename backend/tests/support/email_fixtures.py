@@ -57,4 +57,15 @@ def bancolombia_fixtures() -> list[EmailFixture]:
     return load_email_fixtures(FIXTURES_DIR / "bancolombia")
 
 
-__all__ = ["FIXTURES_DIR", "EmailFixture", "bancolombia_fixtures", "load_email_fixtures"]
+def nequi_fixtures() -> list[EmailFixture]:
+    """Los fixtures de Nequi (correo real anonimizado, F2.7)."""
+    return load_email_fixtures(FIXTURES_DIR / "nequi")
+
+
+__all__ = [
+    "FIXTURES_DIR",
+    "EmailFixture",
+    "bancolombia_fixtures",
+    "load_email_fixtures",
+    "nequi_fixtures",
+]

@@ -39,6 +39,10 @@ class TransactionParsed:
     parsed_by: str
     confidence: float | None
     received_at: datetime
+    # `merchant` es una persona (envio/recibo entre personas): ledger la
+    # compara con el titular (transferencia propia, spec 004 §4.1). Con
+    # default: un evento viejo en el stream sigue decodificando.
+    merchant_is_person: bool = False
 
     event_type: ClassVar[str] = "parsing.TransactionParsed"
 

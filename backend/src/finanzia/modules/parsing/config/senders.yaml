@@ -1,7 +1,7 @@
 # Lista blanca de remitentes de correo por banco (spec 006 §2.2, D6).
 #
 # `verified: true` significa que el remitente/dominio fue validado contra un
-# fixture real (solo bancolombia, F2.3). Los demas bancos quedan con los
+# fixture real (bancolombia F2.3, nequi F2.7). Los demas bancos quedan con los
 # dominios documentados en la spec original pero sin fixture que los
 # confirme: el filtro los acepta igual (AC-2.4 solo descarta lo que no
 # matchea ningun patron), pero al no tener plantilla (F2.7, diferido) caen
@@ -21,7 +21,7 @@ banks:
       - "@notificacionesbancolombia.com"
       - "@bancolombia.com.co"
   nequi:
-    verified: false
+    verified: true # fixture real: nequi/breb_recibida.txt (F2.7)
     senders:
       - "@nequi.com.co"
   davivienda:
