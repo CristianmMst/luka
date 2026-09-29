@@ -25,6 +25,11 @@ worker:
 reparse *args:
 	cd backend && uv run python -m finanzia.tools.reparse {{args}}
 
+# Marca como transferencia los envios/recibos ya capturados al propio titular
+# (spec 004 §4.1). Uso: `just mark-self-transfers` o `--user <uuid>`.
+mark-self-transfers *args:
+	cd backend && uv run python -m finanzia.tools.mark_self_transfers {{args}}
+
 # Corre toda la suite de tests.
 test:
 	cd backend && uv run pytest -q

@@ -52,6 +52,7 @@ def _cmd(  # noqa: PLR0913 - builder de comando con un default por campo
     parsed_by: str = "rule:bancolombia:debito",
     confidence: float | None = 0.9,
     source: SourceInput | None = None,
+    merchant_is_person: bool = False,
 ) -> CapturedTransactionCommand:
     return CapturedTransactionCommand(
         user_id=USER,
@@ -66,6 +67,7 @@ def _cmd(  # noqa: PLR0913 - builder de comando con un default por campo
         parsed_by=parsed_by,
         confidence=confidence,
         source=source or SourceInput(Channel.EMAIL, uuid4(), occurred_at),
+        merchant_is_person=merchant_is_person,
     )
 
 
@@ -79,6 +81,7 @@ def _make_use_case(
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
         review_queue=repos.review_queue,
+        owner_names=repos.owner_names,
         events=repos.events,
         clock=clock or FixedClock(NOW),
         ids=repos.ids,
@@ -470,3 +473,58 @@ async def test_item_ya_reparsed_no_bloquea_la_captura_repetida() -> None:
     assert first.created is True
     assert second.created is False
     assert second.transaction.id == first.transaction.id
+
+
+@pytest.mark.unit
+class TestSelfTransfer:
+    """Transferencias propias por nombre del titular (spec 004 SS4.1)."""
+
+    async def test_envio_a_nombre_del_titular_es_transferencia(self) -> None:
+        repos = await build_ledger_repos()
+        repos.owner_names.names[USER] = "Cristian Steve Mora Moreno"
+        result = await _make_use_case(repos).execute(
+            _cmd(merchant="CRISTIAN MORA", merchant_is_person=True, last4=None)
+        )
+
+        tx = result.transaction
+        assert tx.kind == Kind.TRANSFER
+        assert tx.fiscal_tag == FiscalTag.TRANSFERENCIA
+        assert tx.transfer_pair_id is None
+        (event,) = [e for e in repos.events.events if isinstance(e, TransactionCaptured)]
+        assert event.kind == Kind.TRANSFER
+
+    async def test_recibo_del_titular_desde_otro_banco_es_transferencia(self) -> None:
+        repos = await build_ledger_repos()
+        repos.owner_names.names[USER] = "Cristian Mora"
+        result = await _make_use_case(repos).execute(
+            _cmd(
+                bank=Bank.NEQUI,
+                direction=Direction.CREDIT,
+                merchant="Cristian Steve Mora Moreno",
+                merchant_is_person=True,
+                last4=None,
+            )
+        )
+        assert result.transaction.kind == Kind.TRANSFER
+
+    async def test_envio_a_otra_persona_sigue_siendo_gasto(self) -> None:
+        repos = await build_ledger_repos()
+        repos.owner_names.names[USER] = "Cristian Mora"
+        result = await _make_use_case(repos).execute(
+            _cmd(merchant="Alejandro Herrera Feria", merchant_is_person=True)
+        )
+        assert result.transaction.kind == Kind.EXPENSE
+
+    async def test_comercio_con_el_nombre_del_titular_no_cuenta(self) -> None:
+        # Una compra (merchant no es persona) nunca es transferencia propia.
+        repos = await build_ledger_repos()
+        repos.owner_names.names[USER] = "Cristian Mora"
+        result = await _make_use_case(repos).execute(_cmd(merchant="CRISTIAN MORA"))
+        assert result.transaction.kind == Kind.EXPENSE
+
+    async def test_sin_nombre_del_titular_no_marca(self) -> None:
+        repos = await build_ledger_repos()
+        result = await _make_use_case(repos).execute(
+            _cmd(merchant="CRISTIAN MORA", merchant_is_person=True)
+        )
+        assert result.transaction.kind == Kind.EXPENSE

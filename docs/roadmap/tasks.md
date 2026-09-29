@@ -39,6 +39,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F2.4 | Adapter DeepSeek (`LlmParserPort`): JSON mode, validación Pydantic, reintento, presupuesto por usuario en Redis | 006 §4.2 | F2.2 | ✅ con salvedad: todo el camino HTTP está probado solo con `httpx.MockTransport` y el recorrido en vivo corrió con el LLM deshabilitado; nunca se ejercitó contra la API real de DeepSeek (backend/README.md §13) |
 | F2.5 | Flujo dedupe end-to-end: ON CONFLICT + adjuntar fuente + test de doble procesamiento (AC-5.1/5.2) | 004 §3 | F2.3, F1.6 | ✅ |
 | F2.6 | Review queue: endpoints convert/discard + partial_extract | 005 §7 | F2.1 | ✅ |
+| F2.8 | Transferencias propias por titular: una captura entre personas cuyo contraparte es el titular nace como `transfer` aunque falte el otro lado; `just mark-self-transfers` reclasifica lo ya capturado | 004 §4.1, 006 §4.1 | F2.3 | ✅ nombre del titular = `display_name` de Google |
 | F2.7 | Plantillas Davivienda, Daviplata, BBVA, Banco de Bogotá (con fixtures) | 006 §4.1 | F2.3 | parcial: Nequi `breb_recibida` ✅ (fixture real; fechas en español y hora a.m/p.m); el resto diferido sin fixtures reales (Davivienda, Daviplata, BBVA, Banco de Bogotá, y los demás correos de Nequi) |
 
 ## Fase 3 — Gmail (RF-2 completo)

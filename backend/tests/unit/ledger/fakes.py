@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import replace
 from datetime import datetime
 from decimal import Decimal
@@ -158,6 +158,20 @@ class InMemoryTransactionRepo:
             self._dedupe_index.pop((old.user_id, old.dedupe_key), None)
         self._by_id[tx.id] = tx
         self._dedupe_index[(tx.user_id, tx.dedupe_key)] = tx.id
+
+    async def find_non_transfers_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        return sorted(
+            (
+                t
+                for t in self._by_id.values()
+                if t.parsed_by in parsed_by
+                and t.kind != Kind.TRANSFER
+                and (user_id is None or t.user_id == user_id)
+            ),
+            key=lambda t: t.created_at,
+        )
 
     async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
         tx = self._by_id.get(id)
@@ -422,10 +436,21 @@ class FakeReviewSource:
         return True
 
 
+class FakeOwnerNames:
+    """Doble de `OwnerNamePort`: `display_name` por usuario, puesto por el test."""
+
+    def __init__(self) -> None:
+        self.names: dict[UUID, str] = {}
+
+    async def display_name(self, user_id: UUID) -> str | None:
+        return self.names.get(user_id)
+
+
 class LedgerRepos:
     """Paquete de todos los dobles de ledger, ya conectados entre si."""
 
     def __init__(self) -> None:
+        self.owner_names = FakeOwnerNames()
         self.sources = InMemoryTransactionSourceRepo()
         self.transactions = InMemoryTransactionRepo(sources=self.sources)
         self.categories = InMemoryCategoryRepo()

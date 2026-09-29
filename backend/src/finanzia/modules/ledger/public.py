@@ -13,12 +13,17 @@ from finanzia.modules.ledger.application.dto import (
     Recorded,
     SourceInput,
 )
+from finanzia.modules.ledger.application.use_cases.mark_self_transfers import (
+    MarkSelfTransfers,
+    MarkSelfTransfersSummary,
+)
 from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
 from finanzia.modules.ledger.events import TransactionCaptured
 from finanzia.modules.ledger.infrastructure.event_publisher import BusEventPublisher
 from finanzia.modules.ledger.infrastructure.id_generator import SecretsIdGenerator
+from finanzia.modules.ledger.infrastructure.owner_name_gateway import IdentityOwnerNames
 from finanzia.modules.ledger.infrastructure.repositories import (
     SqlAlchemyCategoryRepository,
     SqlAlchemyLinkedAccountRepository,
@@ -30,6 +35,9 @@ from finanzia.modules.ledger.infrastructure.repositories import (
 from finanzia.modules.ledger.infrastructure.uow import SqlAlchemyUnitOfWork
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+    from uuid import UUID
+
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from finanzia.modules.ledger.application.ports import ClockPort
@@ -37,9 +45,11 @@ if TYPE_CHECKING:
 
 __all__ = [
     "CapturedTransactionCommand",
+    "MarkSelfTransfersSummary",
     "Recorded",
     "SourceInput",
     "TransactionCaptured",
+    "mark_self_transfers",
     "record_captured_transaction",
 ]
 
@@ -65,9 +75,28 @@ async def record_captured_transaction(
         accounts=SqlAlchemyLinkedAccountRepository(session),
         merchant_rules=SqlAlchemyMerchantRuleRepository(session),
         review_queue=SqlAlchemyReviewQueueRepository(session),
+        owner_names=IdentityOwnerNames(session),
         events=BusEventPublisher(event_bus),
         clock=clock,
         ids=SecretsIdGenerator(),
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(cmd)
+
+
+async def mark_self_transfers(
+    session: AsyncSession,
+    clock: ClockPort,
+    *,
+    person_parsed_by: Collection[str],
+    user_id: UUID | None,
+) -> MarkSelfTransfersSummary:
+    """Reclasifica como transferencia las capturas entre personas hechas al
+    propio titular (spec 004 SS4.1); `person_parsed_by` lo da parsing."""
+    use_case = MarkSelfTransfers(
+        transactions=SqlAlchemyTransactionRepository(session),
+        owner_names=IdentityOwnerNames(session),
+        clock=clock,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await use_case.execute(person_parsed_by=person_parsed_by, user_id=user_id)

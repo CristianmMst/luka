@@ -22,12 +22,14 @@ from finanzia.modules.ledger.application.ports import (
     IdGeneratorPort,
     LinkedAccountRepositoryPort,
     MerchantRuleRepositoryPort,
+    OwnerNamePort,
     ReviewQueueRepositoryPort,
     TransactionRepositoryPort,
     TransactionSourceRepositoryPort,
     UnitOfWorkPort,
 )
 from finanzia.modules.ledger.application.use_cases._transfer_matching import try_auto_pair
+from finanzia.modules.ledger.domain.classification import mark_as_transfer
 from finanzia.modules.ledger.domain.dedupe import candidate_keys, is_same_capture
 from finanzia.modules.ledger.domain.entities import (
     Category,
@@ -42,6 +44,7 @@ from finanzia.modules.ledger.domain.errors import (
 )
 from finanzia.modules.ledger.domain.merchant import match_rule, normalize_merchant
 from finanzia.modules.ledger.domain.review import ReviewResolution
+from finanzia.modules.ledger.domain.self_transfer import is_same_person
 from finanzia.modules.ledger.events import TransactionCaptured
 
 # Resoluciones que decide el usuario; `reparsed` (una reentrega) sigue el dedupe.
@@ -60,11 +63,13 @@ class RecordCapturedTransaction:
         accounts: LinkedAccountRepositoryPort,
         merchant_rules: MerchantRuleRepositoryPort,
         review_queue: ReviewQueueRepositoryPort,
+        owner_names: OwnerNamePort,
         events: EventPublisherPort,
         clock: ClockPort,
         ids: IdGeneratorPort,
         uow: UnitOfWorkPort,
     ) -> None:
+        self._owner_names = owner_names
         self._transactions = transactions
         self._sources = sources
         self._categories = categories
@@ -128,6 +133,11 @@ class RecordCapturedTransaction:
             confidence=cmd.confidence,
             dedupe_key=keys[1],
         )
+        if await self._is_self_transfer(cmd):
+            # Plata entre cuentas propias (spec 004 SS4.1): transferencia
+            # aunque el otro lado nunca llegue. Si llega y hay cuentas
+            # vinculadas, el matcher igual puede emparejarlas.
+            tx = mark_as_transfer(tx, now=tx.updated_at)
         inserted_id = await self._transactions.insert_if_absent(tx)
         if inserted_id is None:
             # Carrera: otro proceso inserto la misma clave canonica primero.
@@ -161,6 +171,13 @@ class RecordCapturedTransaction:
             )
         )
         return Recorded(transaction=tx, created=True, source_attached=True)
+
+    async def _is_self_transfer(self, cmd: CapturedTransactionCommand) -> bool:
+        """El envio o recibo es entre personas y la contraparte es el titular."""
+        if not cmd.merchant_is_person or not cmd.merchant:
+            return False
+        owner = await self._owner_names.display_name(cmd.user_id)
+        return is_same_person(cmd.merchant, owner)
 
     async def _claim_review(self, cmd: CapturedTransactionCommand) -> None:
         """Cierra como `reparsed` el item abierto del `raw_message`, si lo hay, o

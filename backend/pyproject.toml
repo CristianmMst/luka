@@ -145,7 +145,8 @@ ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.m
   "finanzia.modules.identity.infrastructure.gmail_status -> finanzia.modules.ingestion.public",
   "finanzia.modules.parsing.infrastructure.raw_message_gateway -> finanzia.modules.ingestion.public",
   "finanzia.modules.ledger.infrastructure.consumers -> finanzia.modules.parsing.events",
-  "finanzia.modules.ledger.infrastructure.raw_messages_gateway -> finanzia.modules.ingestion.public"]
+  "finanzia.modules.ledger.infrastructure.raw_messages_gateway -> finanzia.modules.ingestion.public",
+  "finanzia.modules.ledger.infrastructure.owner_name_gateway -> finanzia.modules.identity.public"]
 
 [[tool.importlinter.contracts]]  # Kernel
 name = "Kernel - shared nunca importa modulos ni composition roots"

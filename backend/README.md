@@ -60,7 +60,7 @@ Gate de cobertura de dominio (≥90 %, exigido en CI para `ledger.domain`, `iden
 uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain --cov-fail-under=90
 ```
 
-También disponibles como recetas de [`just`](../justfile) desde la raíz del repo: `just lint`, `just test`, `just test-unit`, `just coverage-domain`, `just ci` (= `lint` + `test` + `coverage-domain`), `just migrate`, `just revision <nombre>`, `just up`/`down`, `just dev`, `just worker` y `just reparse [--since AAAA-MM-DD]` (reprocesa los mensajes `failed` con cuerpo y cierra su revisión como `reparsed`; corre `just migrate` antes si falta la 0007 y necesita el worker en marcha, spec 005 §7).
+También disponibles como recetas de [`just`](../justfile) desde la raíz del repo: `just lint`, `just test`, `just test-unit`, `just coverage-domain`, `just ci` (= `lint` + `test` + `coverage-domain`), `just migrate`, `just revision <nombre>`, `just up`/`down`, `just dev`, `just worker` y `just reparse [--since AAAA-MM-DD]` (reprocesa los mensajes `failed` con cuerpo y cierra su revisión como `reparsed`; corre `just migrate` antes si falta la 0007 y necesita el worker en marcha, spec 005 §7) y `just mark-self-transfers [--user UUID]` (marca como transferencia los envíos y recibos ya capturados al propio titular, sin tocar los editados a mano; imprime `marked=<n> skipped_edited=<m>`, spec 004 §4.1).
 
 ## 5. Estructura de tests
 

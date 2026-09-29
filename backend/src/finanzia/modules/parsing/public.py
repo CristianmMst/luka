@@ -32,7 +32,13 @@ __all__ = [
     "capture_config",
     "load_parsing_config",
     "make_raw_message_received_handler",
+    "person_transfer_parsed_by",
 ]
+
+
+def person_transfer_parsed_by() -> frozenset[str]:
+    """`parsed_by` de las plantillas de envio/recibo entre personas (spec 004 §4.1)."""
+    return load_parsing_config().templates.person_parsed_by()
 
 
 def bank_for_email_sender(sender: str) -> str | None:

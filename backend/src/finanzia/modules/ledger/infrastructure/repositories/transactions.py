@@ -12,7 +12,7 @@ las anotaciones de esta clase (ambos comparten nombre en el mismo scope).
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 from decimal import Decimal
 from typing import cast
@@ -151,6 +151,20 @@ class SqlAlchemyTransactionRepository:
             .values(**values)
         )
         await self._session.execute(stmt)
+
+    async def find_non_transfers_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        if not parsed_by:
+            return []
+        stmt = select(TransactionRow).where(
+            TransactionRow.parsed_by.in_(list(parsed_by)),
+            TransactionRow.kind != "transfer",
+        )
+        if user_id is not None:
+            stmt = stmt.where(TransactionRow.user_id == user_id)
+        result = await self._session.execute(stmt.order_by(TransactionRow.created_at))
+        return [transaction_row_to_entity(row) for row in result.scalars()]
 
     async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
         stmt = (

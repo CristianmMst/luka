@@ -242,6 +242,16 @@ bucket = int(occurred_at_utc.timestamp()) // 600  # floor a ventanas de 10 min
 3. Ambigüedad (2+ candidatos) → no emparejar; sugerir en UI.
 4. Desmarcado manual (AC-6.3) → set `kind` original, `transfer_pair_id=NULL` y registrar par en lista de exclusión (JSONB en la transacción) para no reemparejar.
 
+### 4.1 Transferencias propias por titular
+
+El matcher necesita los dos lados y las dos cuentas vinculadas. Muchas veces solo llega uno (Nubank no manda correo; Bancolombia avisa "transferiste … a CRISTIAN MORA" pero la cuenta destino no avisa). Por eso, en una captura de una plantilla entre personas (`counterparty: true`, spec 006 §4.1, que llega como `merchant_is_person`), si el nombre de la contraparte es el del titular, la transacción nace con `kind='transfer'` y `fiscal_tag='transferencia'`, sin par (`transfer_pair_id=NULL`). No cuenta como gasto ni ingreso (constitución). Si el otro lado también llega y hay cuentas vinculadas, el matcher de §4 igual puede emparejarlas.
+
+- **Nombre del titular:** el `display_name` de su cuenta Google, leído por `identity.public.load_display_name`. Sin nombre no se marca nada.
+- **Coincidencia** (`ledger/domain/self_transfer.py`): se comparan los nombres sin tildes, en mayúsculas y sin puntuación. Todas las palabras del nombre más corto deben estar en el más largo, con al menos 2 en común: "CRISTIAN MORA" y "Cristian Steve Mora Moreno" coinciden; "CRISTIAN" solo no.
+- **Alcance:** solo los envíos y recibos a uno mismo. Pagarle a otra persona por Bre-B sigue siendo gasto, y lo que otro te manda sigue siendo ingreso. Una compra en un comercio con el nombre del titular nunca se marca, porque su plantilla no es entre personas.
+- **Reversible:** el usuario la desmarca desde el detalle, como cualquier transferencia.
+- **Movimientos anteriores:** `just mark-self-transfers` (`finanzia.tools.mark_self_transfers`, caso de uso `MarkSelfTransfers`) aplica la misma regla a las capturas entre personas ya guardadas. Solo toca las que nadie editó después de capturarlas (`updated_at == created_at`); las editadas se cuentan como omitidas. Sube `updated_at` para que el pull de la app las traiga y es idempotente.
+
 ## 5. Esquema local (Drift, app)
 
 Espejo simplificado para offline-first; el servidor es la fuente de verdad.

@@ -47,6 +47,13 @@ class TestTemplateRegistryNequi:
         assert parsed.parsed_by == f"rule:nequi:{TEMPLATE_ID_BY_FIXTURE[fixture.name]}:v1"
         assert parsed.merchant_is_person is True
 
+    def test_parsed_by_de_las_plantillas_entre_personas(self, registry: TemplateRegistry) -> None:
+        assert registry.person_parsed_by() == {
+            "rule:bancolombia:transferencia_llave:v1",
+            "rule:bancolombia:transferencia_llave_recibida:v1",
+            "rule:nequi:breb_recibida:v1",
+        }
+
     def test_todos_los_fixtures_tienen_plantilla_asignada(self) -> None:
         assert {f.name for f in nequi_fixtures()} == set(TEMPLATE_ID_BY_FIXTURE)
 

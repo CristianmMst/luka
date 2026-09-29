@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 from decimal import Decimal
 from typing import Protocol
@@ -51,6 +51,14 @@ class TransactionRepositoryPort(Protocol):
 
     async def update(self, tx: Transaction) -> None:
         """Reemplaza el estado persistido de `tx` (misma `id`)."""
+        ...
+
+    async def find_non_transfers_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        """Las que no son `transfer`, con `parsed_by` en `parsed_by`, de `user_id`
+        (o de todos si es `None`). Para reclasificar transferencias propias
+        (spec 004 SS4.1)."""
         ...
 
     async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
@@ -154,6 +162,13 @@ class CategoryRepositoryPort(Protocol):
 
 
 # --- Cuentas vinculadas ----------------------------------------------------------------
+
+
+class OwnerNamePort(Protocol):
+    """Nombre del titular (el `display_name` de su cuenta), para reconocer
+    transferencias propias (spec 004 SS4.1). `None` si no se conoce."""
+
+    async def display_name(self, user_id: UUID) -> str | None: ...
 
 
 class LinkedAccountRepositoryPort(Protocol):
@@ -276,6 +291,7 @@ __all__ = [
     "IdGeneratorPort",
     "LinkedAccountRepositoryPort",
     "MerchantRuleRepositoryPort",
+    "OwnerNamePort",
     "ReviewQueueRepositoryPort",
     "ReviewSourcePort",
     "TransactionRepositoryPort",

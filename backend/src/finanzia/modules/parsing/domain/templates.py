@@ -225,6 +225,17 @@ class TemplateRegistry:
         """Bancos con al menos una plantilla configurada (distinto de allowlist)."""
         return frozenset(self._banks)
 
+    def person_parsed_by(self) -> frozenset[str]:
+        """`parsed_by` de las plantillas con `counterparty: true` (envios y
+        recibos entre personas), para reclasificar transferencias propias ya
+        capturadas (spec 004 §4.1)."""
+        return frozenset(
+            f"rule:{bank.bank}:{template.id}:v{bank.version}"
+            for bank in self._banks.values()
+            for template in bank.templates
+            if template.counterparty
+        )
+
     def match(self, bank: str | None, excerpt: str) -> TemplateMatch | None:
         """Busca la primera plantilla que matchea `excerpt`.
 
