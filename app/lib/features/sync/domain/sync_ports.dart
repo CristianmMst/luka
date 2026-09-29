@@ -1,4 +1,5 @@
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
+import 'package:finanzia/features/sync/domain/rejected_change.dart';
 import 'package:finanzia/features/sync/domain/sync_rules.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -121,4 +122,8 @@ abstract interface class SyncStore {
   /// Cantidad de ítems abiertos en la cola de revisión (badge de la barra de
   /// navegación, spec 008 §7).
   Stream<int> watchOpenReviewCount();
+
+  /// Los cambios rechazados, del más viejo al más nuevo, con el movimiento
+  /// local que tocan si existe (spec 008 §5).
+  Stream<List<RejectedChange>> watchRejected();
 }

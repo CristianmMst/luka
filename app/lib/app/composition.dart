@@ -14,6 +14,8 @@ import 'package:finanzia/features/gmail/application/gmail_controller.dart';
 import 'package:finanzia/features/gmail/data/gmail_data_providers.dart';
 import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
 import 'package:finanzia/features/onboarding/data/onboarding_data_providers.dart';
+import 'package:finanzia/features/privacy/application/privacy_actions.dart';
+import 'package:finanzia/features/privacy/data/privacy_data_providers.dart';
 import 'package:finanzia/features/review/application/review_providers.dart';
 import 'package:finanzia/features/review/data/review_data_providers.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
@@ -69,6 +71,10 @@ List<Override> get appOverrides => [
     (ref) => ref.watch(driftCategoriesStoreProvider),
   ),
   accountsRemoteProvider.overrideWith((ref) => ref.watch(accountsApiProvider)),
+  privacyRemoteProvider.overrideWith((ref) => ref.watch(privacyApiProvider)),
+  exportSaverProvider.overrideWith(
+    (ref) => ref.watch(shareExportSaverProvider),
+  ),
   accountsStoreProvider.overrideWith(
     (ref) => ref.watch(driftAccountsStoreProvider),
   ),

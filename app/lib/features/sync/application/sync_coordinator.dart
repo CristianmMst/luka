@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/sync/application/sync_engine.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
+import 'package:finanzia/features/sync/domain/rejected_change.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,6 +52,13 @@ final syncEngineProvider = Provider<SyncEngine>(
 final openReviewCountProvider = StreamProvider<int>(
   (ref) => ref.watch(syncStoreProvider).watchOpenReviewCount(),
 );
+
+/// Cambios que el servidor rechazó, para la hoja de sincronización
+/// (spec 008 §5).
+final StreamProvider<List<RejectedChange>> rejectedChangesProvider =
+    StreamProvider.autoDispose<List<RejectedChange>>(
+      (ref) => ref.watch(syncStoreProvider).watchRejected(),
+    );
 
 @freezed
 abstract class SyncStatus with _$SyncStatus {

@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:finanzia/core/db/app_database.dart';
 import 'package:finanzia/features/sync/data/outbox_codec.dart';
 import 'package:finanzia/features/sync/domain/outbox_operation.dart';
+import 'package:finanzia/features/sync/domain/rejected_change.dart';
 import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:finanzia/features/sync/domain/sync_rules.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
@@ -479,6 +480,35 @@ class DriftSyncStore implements SyncStore {
           lastSyncedAt: last == null ? null : DateTime.parse(last),
         );
       });
+
+  @override
+  Stream<List<RejectedChange>> watchRejected() {
+    final o = _db.outbox;
+    final t = _db.localTransactions;
+    final query =
+        _db.select(o).join([
+            leftOuterJoin(t, t.id.equalsExp(o.targetId)),
+          ])
+          ..where(o.status.equals(_rejected))
+          ..orderBy([OrderingTerm.asc(o.seq)]);
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          () {
+            final entry = row.readTable(o);
+            final tx = row.readTableOrNull(t);
+            return RejectedChange(
+              seq: entry.seq,
+              op: _decode(entry),
+              reason: entry.lastError,
+              merchant: tx?.merchant,
+              amountCents: tx?.amountCents,
+              direction: tx?.direction,
+            );
+          }(),
+      ],
+    );
+  }
 
   @override
   Stream<int> watchOpenReviewCount() => _db

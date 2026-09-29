@@ -1014,5 +1014,101 @@
       }
     }
   },
-  "captureStoppedReconnectFailed": "No pudimos reconectar Gmail. Inténtalo desde Ajustes."
+  "captureStoppedReconnectFailed": "No pudimos reconectar Gmail. Inténtalo desde Ajustes.",
+  "settingsTitle": "Ajustes",
+  "settingsProfileSemantics": "{name}, {email}",
+  "@settingsProfileSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSyncOpen": "Ver sincronización",
+  "syncAgoNow": "hace un momento",
+  "syncAgoMinutes": "hace {n} min",
+  "@syncAgoMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncAgoHours": "hace {n} h",
+  "@syncAgoHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncAgoDays": "{n, plural, =1{hace 1 día} other{hace {n} días}}",
+  "@syncAgoDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSheetTitle": "Sincronización",
+  "syncSheetNow": "Sincronizar ahora",
+  "syncSheetRunning": "Sincronizando…",
+  "syncSheetAllSent": "Todo está enviado.",
+  "syncSheetRejectedHeader": "{count, plural, =1{1 cambio no se pudo enviar} other{{count} cambios no se pudieron enviar}}",
+  "@syncSheetRejectedHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSheetHelp": "Reintentar lo vuelve a enviar. Descartar deja el dato como lo tiene el servidor.",
+  "rejectedOpCreate": "Nuevo movimiento",
+  "rejectedOpPatch": "Cambio en un movimiento",
+  "rejectedOpTransfer": "Cambio de transferencia",
+  "rejectedOpDelete": "Eliminar un movimiento",
+  "rejectedOpConvertReview": "Convertir desde Revisión",
+  "rejectedOpDiscardReview": "Descartar de Revisión",
+  "rejectedReasonGone": "Lo que usaba ya no existe.",
+  "rejectedReasonInvalid": "El servidor no aceptó los datos.",
+  "rejectedReasonDependency": "Dependía de otro cambio que tampoco se envió.",
+  "rejectedReasonOther": "El servidor no lo aceptó.",
+  "rejectedRetrySemantics": "Reintentar: {what}",
+  "@rejectedRetrySemantics": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "rejectedDiscardSemantics": "Descartar: {what}",
+  "@rejectedDiscardSemantics": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsPrivacyTitle": "Privacidad y datos",
+  "settingsPrivacySubtitle": "Exportar · Borrar cuenta",
+  "privacySheetTitle": "Privacidad y datos",
+  "privacyExportTitle": "Exportar mis datos",
+  "privacyExportBody": "Un archivo JSON con tus movimientos, cuentas, categorías y reglas.",
+  "privacyExporting": "Preparando el archivo…",
+  "privacyDeleteTitle": "Borrar mi cuenta",
+  "privacyDeleteIntro": "Esto se borra del servidor y de este teléfono:",
+  "privacyDeleteItemTransactions": "Tus movimientos y sus fuentes",
+  "privacyDeleteItemMessages": "Correos y notificaciones guardados",
+  "privacyDeleteItemData": "Cuentas, categorías y reglas",
+  "privacyDeleteItemGmail": "La conexión con Gmail",
+  "privacyExportFirst": "Exportar mis datos antes",
+  "privacyDeleteConfirmLabel": "Escribe BORRAR para confirmar",
+  "privacyDeleteConfirmWord": "BORRAR",
+  "privacyDeleteButton": "Borrar para siempre",
+  "privacyDeleting": "Borrando…",
+  "privacyErrorOffline": "Necesitas conexión para exportar o borrar tu cuenta.",
+  "privacyErrorUnexpected": "No pudimos completarlo. Intenta de nuevo."
 }

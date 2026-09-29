@@ -1639,4 +1639,168 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get captureStoppedReconnectFailed =>
       'No pudimos reconectar Gmail. Inténtalo desde Ajustes.';
+
+  @override
+  String get settingsTitle => 'Ajustes';
+
+  @override
+  String settingsProfileSemantics(String name, String email) {
+    return '$name, $email';
+  }
+
+  @override
+  String get settingsSyncOpen => 'Ver sincronización';
+
+  @override
+  String get syncAgoNow => 'hace un momento';
+
+  @override
+  String syncAgoMinutes(int n) {
+    return 'hace $n min';
+  }
+
+  @override
+  String syncAgoHours(int n) {
+    return 'hace $n h';
+  }
+
+  @override
+  String syncAgoDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'hace $n días',
+      one: 'hace 1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncSheetTitle => 'Sincronización';
+
+  @override
+  String get syncSheetNow => 'Sincronizar ahora';
+
+  @override
+  String get syncSheetRunning => 'Sincronizando…';
+
+  @override
+  String get syncSheetAllSent => 'Todo está enviado.';
+
+  @override
+  String syncSheetRejectedHeader(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cambios no se pudieron enviar',
+      one: '1 cambio no se pudo enviar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncSheetHelp =>
+      'Reintentar lo vuelve a enviar. Descartar deja el dato como lo tiene el servidor.';
+
+  @override
+  String get rejectedOpCreate => 'Nuevo movimiento';
+
+  @override
+  String get rejectedOpPatch => 'Cambio en un movimiento';
+
+  @override
+  String get rejectedOpTransfer => 'Cambio de transferencia';
+
+  @override
+  String get rejectedOpDelete => 'Eliminar un movimiento';
+
+  @override
+  String get rejectedOpConvertReview => 'Convertir desde Revisión';
+
+  @override
+  String get rejectedOpDiscardReview => 'Descartar de Revisión';
+
+  @override
+  String get rejectedReasonGone => 'Lo que usaba ya no existe.';
+
+  @override
+  String get rejectedReasonInvalid => 'El servidor no aceptó los datos.';
+
+  @override
+  String get rejectedReasonDependency =>
+      'Dependía de otro cambio que tampoco se envió.';
+
+  @override
+  String get rejectedReasonOther => 'El servidor no lo aceptó.';
+
+  @override
+  String rejectedRetrySemantics(String what) {
+    return 'Reintentar: $what';
+  }
+
+  @override
+  String rejectedDiscardSemantics(String what) {
+    return 'Descartar: $what';
+  }
+
+  @override
+  String get settingsPrivacyTitle => 'Privacidad y datos';
+
+  @override
+  String get settingsPrivacySubtitle => 'Exportar · Borrar cuenta';
+
+  @override
+  String get privacySheetTitle => 'Privacidad y datos';
+
+  @override
+  String get privacyExportTitle => 'Exportar mis datos';
+
+  @override
+  String get privacyExportBody =>
+      'Un archivo JSON con tus movimientos, cuentas, categorías y reglas.';
+
+  @override
+  String get privacyExporting => 'Preparando el archivo…';
+
+  @override
+  String get privacyDeleteTitle => 'Borrar mi cuenta';
+
+  @override
+  String get privacyDeleteIntro =>
+      'Esto se borra del servidor y de este teléfono:';
+
+  @override
+  String get privacyDeleteItemTransactions => 'Tus movimientos y sus fuentes';
+
+  @override
+  String get privacyDeleteItemMessages => 'Correos y notificaciones guardados';
+
+  @override
+  String get privacyDeleteItemData => 'Cuentas, categorías y reglas';
+
+  @override
+  String get privacyDeleteItemGmail => 'La conexión con Gmail';
+
+  @override
+  String get privacyExportFirst => 'Exportar mis datos antes';
+
+  @override
+  String get privacyDeleteConfirmLabel => 'Escribe BORRAR para confirmar';
+
+  @override
+  String get privacyDeleteConfirmWord => 'BORRAR';
+
+  @override
+  String get privacyDeleteButton => 'Borrar para siempre';
+
+  @override
+  String get privacyDeleting => 'Borrando…';
+
+  @override
+  String get privacyErrorOffline =>
+      'Necesitas conexión para exportar o borrar tu cuenta.';
+
+  @override
+  String get privacyErrorUnexpected =>
+      'No pudimos completarlo. Intenta de nuevo.';
 }

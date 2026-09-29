@@ -2751,6 +2751,270 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No pudimos reconectar Gmail. Inténtalo desde Ajustes.'**
   String get captureStoppedReconnectFailed;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsProfileSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{name}, {email}'**
+  String settingsProfileSemantics(String name, String email);
+
+  /// No description provided for @settingsSyncOpen.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver sincronización'**
+  String get settingsSyncOpen;
+
+  /// No description provided for @syncAgoNow.
+  ///
+  /// In es, this message translates to:
+  /// **'hace un momento'**
+  String get syncAgoNow;
+
+  /// No description provided for @syncAgoMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'hace {n} min'**
+  String syncAgoMinutes(int n);
+
+  /// No description provided for @syncAgoHours.
+  ///
+  /// In es, this message translates to:
+  /// **'hace {n} h'**
+  String syncAgoHours(int n);
+
+  /// No description provided for @syncAgoDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{n, plural, =1{hace 1 día} other{hace {n} días}}'**
+  String syncAgoDays(int n);
+
+  /// No description provided for @syncSheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronización'**
+  String get syncSheetTitle;
+
+  /// No description provided for @syncSheetNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronizar ahora'**
+  String get syncSheetNow;
+
+  /// No description provided for @syncSheetRunning.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronizando…'**
+  String get syncSheetRunning;
+
+  /// No description provided for @syncSheetAllSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo está enviado.'**
+  String get syncSheetAllSent;
+
+  /// No description provided for @syncSheetRejectedHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 cambio no se pudo enviar} other{{count} cambios no se pudieron enviar}}'**
+  String syncSheetRejectedHeader(int count);
+
+  /// No description provided for @syncSheetHelp.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar lo vuelve a enviar. Descartar deja el dato como lo tiene el servidor.'**
+  String get syncSheetHelp;
+
+  /// No description provided for @rejectedOpCreate.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo movimiento'**
+  String get rejectedOpCreate;
+
+  /// No description provided for @rejectedOpPatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambio en un movimiento'**
+  String get rejectedOpPatch;
+
+  /// No description provided for @rejectedOpTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambio de transferencia'**
+  String get rejectedOpTransfer;
+
+  /// No description provided for @rejectedOpDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar un movimiento'**
+  String get rejectedOpDelete;
+
+  /// No description provided for @rejectedOpConvertReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Convertir desde Revisión'**
+  String get rejectedOpConvertReview;
+
+  /// No description provided for @rejectedOpDiscardReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartar de Revisión'**
+  String get rejectedOpDiscardReview;
+
+  /// No description provided for @rejectedReasonGone.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que usaba ya no existe.'**
+  String get rejectedReasonGone;
+
+  /// No description provided for @rejectedReasonInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'El servidor no aceptó los datos.'**
+  String get rejectedReasonInvalid;
+
+  /// No description provided for @rejectedReasonDependency.
+  ///
+  /// In es, this message translates to:
+  /// **'Dependía de otro cambio que tampoco se envió.'**
+  String get rejectedReasonDependency;
+
+  /// No description provided for @rejectedReasonOther.
+  ///
+  /// In es, this message translates to:
+  /// **'El servidor no lo aceptó.'**
+  String get rejectedReasonOther;
+
+  /// No description provided for @rejectedRetrySemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar: {what}'**
+  String rejectedRetrySemantics(String what);
+
+  /// No description provided for @rejectedDiscardSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Descartar: {what}'**
+  String rejectedDiscardSemantics(String what);
+
+  /// No description provided for @settingsPrivacyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad y datos'**
+  String get settingsPrivacyTitle;
+
+  /// No description provided for @settingsPrivacySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar · Borrar cuenta'**
+  String get settingsPrivacySubtitle;
+
+  /// No description provided for @privacySheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad y datos'**
+  String get privacySheetTitle;
+
+  /// No description provided for @privacyExportTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar mis datos'**
+  String get privacyExportTitle;
+
+  /// No description provided for @privacyExportBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Un archivo JSON con tus movimientos, cuentas, categorías y reglas.'**
+  String get privacyExportBody;
+
+  /// No description provided for @privacyExporting.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando el archivo…'**
+  String get privacyExporting;
+
+  /// No description provided for @privacyDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar mi cuenta'**
+  String get privacyDeleteTitle;
+
+  /// No description provided for @privacyDeleteIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto se borra del servidor y de este teléfono:'**
+  String get privacyDeleteIntro;
+
+  /// No description provided for @privacyDeleteItemTransactions.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus movimientos y sus fuentes'**
+  String get privacyDeleteItemTransactions;
+
+  /// No description provided for @privacyDeleteItemMessages.
+  ///
+  /// In es, this message translates to:
+  /// **'Correos y notificaciones guardados'**
+  String get privacyDeleteItemMessages;
+
+  /// No description provided for @privacyDeleteItemData.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuentas, categorías y reglas'**
+  String get privacyDeleteItemData;
+
+  /// No description provided for @privacyDeleteItemGmail.
+  ///
+  /// In es, this message translates to:
+  /// **'La conexión con Gmail'**
+  String get privacyDeleteItemGmail;
+
+  /// No description provided for @privacyExportFirst.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar mis datos antes'**
+  String get privacyExportFirst;
+
+  /// No description provided for @privacyDeleteConfirmLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe BORRAR para confirmar'**
+  String get privacyDeleteConfirmLabel;
+
+  /// No description provided for @privacyDeleteConfirmWord.
+  ///
+  /// In es, this message translates to:
+  /// **'BORRAR'**
+  String get privacyDeleteConfirmWord;
+
+  /// No description provided for @privacyDeleteButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar para siempre'**
+  String get privacyDeleteButton;
+
+  /// No description provided for @privacyDeleting.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrando…'**
+  String get privacyDeleting;
+
+  /// No description provided for @privacyErrorOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas conexión para exportar o borrar tu cuenta.'**
+  String get privacyErrorOffline;
+
+  /// No description provided for @privacyErrorUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos completarlo. Intenta de nuevo.'**
+  String get privacyErrorUnexpected;
 }
 
 class _AppLocalizationsDelegate

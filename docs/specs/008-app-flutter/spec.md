@@ -91,7 +91,8 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - Selector de año gravable; verificación de topes (semáforo por criterio con valores UVT); cifras por cédula expandibles → lista de transacciones que las soportan (AC-10.4); advertencias (p. ej. intereses de vivienda); datos manuales (dependientes, patrimonio) editables aquí; botón exportar Excel (descarga/share). Disclaimer fijo (spec 007 §1).
 
 ### 3.7 Ajustes
-- Perfil Google; estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
+- Diseño B "Perfil arriba + lista plana" (F4.8b, canvas https://claude.ai/artifact/WzR2MPpbs6czQaGfz2kpMM): hero esmeralda con el perfil de Google (iniciales, nombre y correo) y la línea de sync tocable, que abre la hoja de sincronización. Debajo, una lista: conexiones (Gmail, notificaciones), Mis categorías, Mis cuentas, "Privacidad y datos" y cerrar sesión.
+- Estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
   - Fila "Notificaciones del banco" (F4.3, solo Android): "Activo" ofrece "Administrar", que abre el ajuste del sistema; "Inactivo" ofrece "Activar", que primero muestra una hoja de divulgación prominente (spec 010 §2: qué se lee, qué se ignora y cómo quitar el permiso) y solo con "Ir a los ajustes" abre el ajuste del sistema. El estado se vuelve a leer al volver a primer plano (AC-3.4). En iOS la fila no existe.
   - Fila "Gmail" (F3.6, AC-1.3): conectado muestra la cuenta Gmail ("Conectado · email") y ofrece "Desconectar", que pide confirmación en un diálogo Material ("¿Desconectar Gmail?": deja de leer los correos, los movimientos se quedan); revocado o con error explica que la captura se detuvo y ofrece "Reconectar"; desconectado ofrece "Conectar"; sin poder consultar el estado, "Reintentar". Mientras corre una acción se ve un indicador en lugar del botón y un fallo se avisa bajo la fila. La acción mide 48 dp o más y su etiqueta accesible dice qué hace ("Desconectar Gmail").
 - Cuentas vinculadas (CRUD); categorías (CRUD de propias); escribir/gestionar tags NFC.
@@ -101,7 +102,10 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
   - Fila "Mis cuentas" (F4.4) → `/ajustes/cuentas`: las cuentas vinculadas (RF-6), con su alias (o el banco si no tiene) y "Banco · Tipo ···últimos 4"; editar y borrar por fila (48 dp) y "Agregar cuenta".
   - Hoja "Nueva cuenta" / "Editar cuenta" (diseño B "Lista + hoja", la misma del paso Cuentas del onboarding): banco (obligatorio, los 7 del backend), tipo (ahorros por defecto; corriente, tarjeta de crédito, billetera), últimos 4 (opcional, 1–4 dígitos) y alias (opcional, ≤ 60). El banco no se edita (el backend no lo acepta): se explica bajo el campo. Van directo a `/v1/accounts` (sin outbox); sin conexión se avisa, y una cuenta repetida (mismo banco y últimos 4, 409) se avisa bajo "últimos 4". Tras un éxito la copia local se actualiza al instante.
   - Borrar confirma: "¿Borrar «X»? Sus N movimientos quedan sin cuenta." En local se hace lo mismo que el servidor (`account_id` en NULL).
-- Privacidad: política, exportar datos (RF-11.2), borrar cuenta con doble confirmación + texto de irreversibilidad (RF-11.3).
+- Privacidad (hoja "Privacidad y datos", diseño B, F4.8b):
+  - **Exportar mis datos** (RF-11.2) descarga `GET /me/export` y lo entrega por la hoja de compartir del sistema como `finanzia-AAAA-MM-DD.json` (`share_plus`), para guardarlo o mandarlo. Las exportaciones viejas del directorio temporal se borran antes de escribir una nueva.
+  - **Borrar mi cuenta** (RF-11.3) lista lo que se borra: movimientos y fuentes, correos y notificaciones guardados, cuentas, categorías y reglas, y la conexión con Gmail. Ofrece "Exportar mis datos antes" y exige escribir BORRAR para habilitar "Borrar para siempre" (doble confirmación). Tras el 204 de `DELETE /me` se cierra la sesión, lo que borra la base local (P6). Sin red o con error se avisa y no se toca nada local.
+  - La política de privacidad se enlaza cuando exista su URL (F6.5).
 
 ## 4. Servicios de plataforma (feature `capture`)
 
@@ -122,7 +126,10 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - Ids locales: una creación offline nace con un UUID local; al confirmarse en el servidor, ese id se canjea en `local_transactions` y en `target_id`/`related_id` del outbox (spec 004 §5).
 - Conflictos: gana `updated_at` más reciente, salvo que la fila tenga una edición local aún sin enviar (outbox pendiente), que siempre prevalece sobre el pull (spec 003 §3).
 - Privacidad: la base local se borra por completo (incluido el outbox sin enviar, P6) solo cuando la sesión pasa de autenticada a cerrada por el propio usuario en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. `claimFor` también la borra si el usuario que inicia sesión es distinto al que la dejó. Antes de borrar o de reclamar la base para un usuario nuevo, el coordinador espera a que termine cualquier ciclo de sync en curso, para que no se crucen escrituras tardías entre usuarios.
-- Indicador de estado de sync: línea provisional en la franja del Inicio, por prioridad: "sincronizando…" / "sin conexión" / "{n} cambios no se pudieron enviar" (operaciones `rejected`) / "aún no sincronizado" (nunca hubo un ciclo completo) / "al día" o el conteo de pendientes; se traslada a Ajustes en F4.8.
+- Indicador de estado de sync: línea provisional en la franja del Inicio, por prioridad: "sincronizando…" / "sin conexión" / "{n} cambios no se pudieron enviar" (operaciones `rejected`) / "aún no sincronizado" (nunca hubo un ciclo completo) / "al día" o el conteo de pendientes. Se muestra en la franja del Inicio y en el hero de Ajustes (F4.8b); tocarla en Ajustes abre la hoja "Sincronización" (diseño B "Hoja compacta"):
+  - "hace N min/h/días" desde la última sincronización y "Sincronizar ahora";
+  - la lista de cambios rechazados (`SyncStore.watchRejected`), con el tipo de operación, el movimiento afectado si existe (comercio y monto) y el motivo en lenguaje claro: ya no existe, datos no aceptados, dependía de otro cambio u otro;
+  - cada fila tiene Reintentar y Descartar (48 dp), que reusan `retryRejected`/`discardRejected` por el id del registro. Así se resuelven también los rechazados que no tienen fila visible, como un descarte de Revisión.
 
 ## 6. Permisos y plataforma
 

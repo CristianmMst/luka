@@ -10,6 +10,7 @@ import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
 import 'package:finanzia/features/gmail/presentation/widgets/gmail_disconnect_dialog.dart';
 import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
+import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -17,6 +18,11 @@ import 'package:mocktail/mocktail.dart';
 import '../../../helpers/pump_app.dart';
 
 class _MockGmail extends Mock implements GmailRepository {}
+
+class _IdleCoordinator extends SyncCoordinator {
+  @override
+  SyncStatus build() => const SyncStatus();
+}
 
 class _FixedAuthController extends AuthController {
   @override
@@ -48,6 +54,7 @@ void main() {
       overrides: [
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
+        syncCoordinatorProvider.overrideWith(_IdleCoordinator.new),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),
@@ -234,6 +241,7 @@ void main() {
       overrides: [
         authControllerProvider.overrideWith(_FixedAuthController.new),
         gmailRepositoryProvider.overrideWithValue(gmail),
+        syncCoordinatorProvider.overrideWith(_IdleCoordinator.new),
         notificationSourceProvider.overrideWithValue(
           const NoopNotificationSource(),
         ),
