@@ -1,8 +1,11 @@
-.venv
-tests
-.git
-__pycache__
+# Contexto minimo: la imagen solo necesita pyproject.toml, uv.lock, README.md,
+# alembic.ini, src/ y migrations/ (Dockerfile). Se ignora todo lo demas.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!alembic.ini
+!src/
+!migrations/
 **/__pycache__
-.env
-.pytest_cache
-.ruff_cache
+**/*.py[cod]

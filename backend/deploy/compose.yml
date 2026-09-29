@@ -1,0 +1,150 @@
+# Produccion en un VPS con Docker Compose (backend/deploy/README.md).
+#
+# Caddy es lo unico expuesto (80/443, HTTPS automatico). La API y el worker
+# usan la misma imagen; Postgres y Redis viven en una red interna sin salida a
+# internet ni puertos publicados. Los valores salen de `.env` (ver
+# `.env.example`); el workflow de despliegue escribe FINANZIA_IMAGE con el
+# digest de la imagen publicada.
+
+name: finanzia
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-backend-env: &backend-env
+  FINANZIA_ENV: prod
+  FINANZIA_DATABASE_URL: postgresql+asyncpg://finanzia:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@postgres:5432/finanzia
+  FINANZIA_REDIS_URL: redis://redis:6379/0
+
+x-backend: &backend
+  image: ${FINANZIA_IMAGE:?falta FINANZIA_IMAGE}
+  # Secretos de la app (FINANZIA_*). Lo que no lleva ese prefijo se ignora.
+  env_file: .env
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  logging: *logging
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?falta DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?falta ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [public]
+    logging: *logging
+
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      # Caddy agrega la IP del cliente al final de X-Forwarded-For.
+      FINANZIA_TRUST_PROXY_HEADERS: "true"
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [public, data]
+
+  worker:
+    <<: *backend
+    command: ["arq", "finanzia.worker.WorkerSettings"]
+    environment:
+      <<: *backend-env
+    healthcheck:
+      test: ["CMD", "arq", "--check", "finanzia.worker.WorkerSettings"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    # Deja terminar los jobs en curso (arq los reintenta si se cortan).
+    stop_grace_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [public, data]
+
+  # Migraciones, a mano o desde el despliegue:
+  # `docker compose run --rm migrate`.
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *backend-env
+    restart: "no"
+    healthcheck:
+      disable: true
+    profiles: [migrate]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [data]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finanzia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}
+      POSTGRES_DB: finanzia
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finanzia -d finanzia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    shm_size: 256m
+    networks: [data]
+    logging: *logging
+
+  # Bus de eventos (Redis Streams) y colas de arq: con AOF para no perder
+  # eventos si el contenedor se reinicia.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [data]
+    logging: *logging
+
+networks:
+  public: {}
+  # Sin salida a internet: solo la API, el worker y las migraciones la ven.
+  data:
+    internal: true
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  postgres_data: {}
+  redis_data: {}

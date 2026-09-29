@@ -100,7 +100,7 @@ Detalle en spec 009. Resumen verificable:
 - JWT de acceso ≤ 15 min; refresh rotativo con detección de reuso.
 - Tokens de Gmail cifrados en reposo; TLS 1.2+ en todo tráfico.
 - Rate limiting por usuario e IP en endpoints de auth e ingesta.
-- 0 secretos en repo/app móvil (verificado con gitleaks en CI).
+- 0 secretos en repo/app móvil (verificado con gitleaks en el gate del despliegue).
 
 ### RNF-2 · Escalabilidad
 - API stateless: escalar = añadir réplicas; sin sesión en memoria.
@@ -127,7 +127,7 @@ Detalle en spec 010: verificación OAuth + CASA antes de superar 100 usuarios de
 
 ### RNF-7 · Calidad
 - Cobertura de tests del dominio (dedupe, transferencias, fiscal, parsers) ≥ 90%.
-- CI en cada PR: lint (ruff / flutter analyze), tests, auditoría de dependencias, verificación de fronteras de módulos (import-linter).
+- Antes de cada push a `main`, en local: lint (ruff / flutter analyze), tests y verificación de fronteras de módulos (import-linter) (`just lint`, `just test`, `just app-ci`). La auditoría de dependencias y gitleaks corren en GitHub como gate del despliegue del backend.
 - Cada banco soportado tiene fixtures de correos/notificaciones reales anonimizados.
 
 ## C. Matriz de trazabilidad

@@ -11,8 +11,8 @@ App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente 
 
 - **Spec primero (P8).** Un cambio de comportamiento actualiza su spec en el mismo commit. Si un spec contradice el código, se corrige ahí mismo.
 - **Commits:** Conventional Commits con scope, en español y sin tildes. Por ejemplo, `feat(ledger): ...` o `fix(app): ...`. El cuerpo cita el ID de roadmap (`F4.1`) y termina con el trailer `Co-Authored-By`.
-- **Solo se sube `main`**, por avance rápido. Nada de ramas remotas ni PRs. Antes de subir, correr lint y tests.
-- **Dependencias:** se actualizan a mano en `main`, respetando los pines de Flutter 3.35. Dependabot está desactivado (sin `dependabot.yml` ni alertas). La única auditoría automática es pip-audit en el CI del backend.
+- **Solo se sube `main`**, por avance rápido. Nada de ramas remotas ni PRs. Antes de subir, correr lint y tests: GitHub ya no los corre.
+- **Dependencias:** se actualizan a mano en `main`, respetando los pines de Flutter 3.35. Dependabot está desactivado (sin `dependabot.yml` ni alertas). La única auditoría automática es pip-audit (más gitleaks) en el gate del despliegue del backend.
 - **TDD** en `domain/` y `application/`. Nada se da por hecho sin haber corrido el comando que lo prueba.
 
 ## Comandos (`justfile` en la raíz)
@@ -26,7 +26,7 @@ App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente 
 | `just test`, `just coverage-domain` (≥ 90 %) | `just app-goldens`: regenerar goldens del login |
 | `just migrate`, `just revision <nombre>` | `just app-ci` = lint + test |
 
-CI (`.github/workflows/`) corre el workflow del backend y App CI por separado, cada uno según la ruta que cambió.
+GitHub Actions solo despliega: `.github/workflows/deploy-backend.yml` corre, en cada push a `main` que toca `backend/`, el gate (pip-audit + gitleaks), publica la imagen en GHCR y la levanta en el VPS con Docker Compose (`backend/deploy/README.md`). No hay CI de lint ni tests: `just lint`, `just test` y `just app-ci` se corren en local.
 
 ## Backend (`backend/`, Python 3.12, uv)
 
@@ -46,8 +46,8 @@ CI (`.github/workflows/`) corre el workflow del backend y App CI por separado, c
   - `core` no importa features.
 - **Estado:** Riverpod 3 **sin codegen** (`Notifier`/`AsyncNotifier` a mano). `riverpod_generator` no resuelve con Flutter 3.35. Los puertos de `application` son providers que se sobrescriben en `lib/app/composition.dart`.
 - **Red:** **dio**, no `http`. El `AuthInterceptor` pone el Bearer y, ante `401 token_expired`, hace un refresh single-flight vía `SessionManager` y reintenta.
-- **Modelos:** **json_serializable / freezed**, no `fromJson` a mano. La guía oficial de Flutter recomienda generación de código para proyectos medianos o grandes. El código generado se versiona y CI verifica que esté al día.
-- **Tests:** **mocktail**, no mockito. El doble de dio es `test/helpers/stub_backend.dart`. Los goldens (`tag golden`) no corren en CI.
+- **Modelos:** **json_serializable / freezed**, no `fromJson` a mano. La guía oficial de Flutter recomienda generación de código para proyectos medianos o grandes. El código generado se versiona y hay que regenerarlo (`just app-gen`) antes de subir.
+- **Tests:** **mocktail**, no mockito. El doble de dio es `test/helpers/stub_backend.dart`. Los goldens (`tag golden`) no corren en `just app-test`.
 - **Montos:** siempre en `Cop` (centavos `int`, `lib/core/format/money.dart`); nunca `double`. `formatCop` da `$1.234.567`, y el gasto usa U+2212.
 - **UI:**
   - Textos solo en `lib/core/l10n/arb/app_es.arb`.
@@ -66,7 +66,7 @@ CI (`.github/workflows/`) corre el workflow del backend y App CI por separado, c
 ## Seguridad (P1, spec 009)
 
 - **Tokens:** solo en `flutter_secure_storage`, nunca en SharedPreferences.
-- **Logs:** nunca montos, comercios, emails, tokens ni cuerpos de mensajes; en la ruta se loguea la plantilla, no el path crudo. Aplica al backend (hay test en CI) y al `LogInterceptor` de dio.
+- **Logs:** nunca montos, comercios, emails, tokens ni cuerpos de mensajes; en la ruta se loguea la plantilla, no el path crudo. Aplica al backend (hay test, `tests/ci/test_log_hygiene.py`) y al `LogInterceptor` de dio.
 - **Secretos:** `.env` y `.env.*` están ignorados en todo el repo, salvo `.env.example`.
 
 ## Skills y MCP de Dart/Flutter

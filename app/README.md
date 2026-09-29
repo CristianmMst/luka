@@ -4,7 +4,7 @@ App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con 
 
 ## Requisitos
 
-- Flutter 3.35.7 (Dart 3.9). CI fija la misma versión.
+- Flutter 3.35.7 (Dart 3.9). Codemagic fija la misma versión.
 - Para correrla contra el backend local: `just up` y `just dev` desde la raíz, con `backend/.env` creado a partir de `backend/.env.example`.
 - Un teléfono Android por USB (o un emulador) con depuración USB activa.
 
@@ -19,10 +19,10 @@ Desde la raíz del repo:
 | `just app-lint` | `dart format` + `flutter analyze --fatal-infos` |
 | `just app-test` | Tests (sin goldens) + gate de cobertura de `domain`+`application` ≥ 90 % |
 | `just app-goldens` | Regenera los goldens visuales del login (claro y oscuro) |
-| `just app-ci` | Lo mismo que corre `App CI` en GitHub Actions |
+| `just app-ci` | Lint + tests + cobertura: correrlo antes de subir (GitHub no corre CI de la app) |
 | `just app-android-test` | Tests JUnit del listener nativo (`CaptureFilter`); necesita JDK 17–21 y el `gradlew` que genera `flutter build apk` |
 
-El código generado (`*.g.dart`, `*.freezed.dart`, `lib/core/l10n/gen/`) se versiona. CI lo regenera y falla si cambia.
+El código generado (`*.g.dart`, `*.freezed.dart`, `lib/core/l10n/gen/`) se versiona: regenerarlo con `just app-gen` antes de subir.
 
 ## Configuración
 
@@ -171,4 +171,4 @@ Riesgos conocidos: el Swift solo se compila en Codemagic, así que los errores s
 ## Tests
 
 - **Unitarios y de widgets:** dominio, `SessionManager` (incluye el single-flight de punta a punta), repositorio, interceptor, controllers, redirects del router y estados del login.
-- **Goldens (`tag golden`):** `test/features/auth/presentation/goldens/` y `test/features/review/presentation/goldens/`. Dependen del rasterizador de cada plataforma, así que CI no los corre. Se regeneran y revisan a mano.
+- **Goldens (`tag golden`):** `test/features/auth/presentation/goldens/` y `test/features/review/presentation/goldens/`. Dependen del rasterizador de cada plataforma, así que `just app-test` no los corre. Se regeneran y revisan a mano.

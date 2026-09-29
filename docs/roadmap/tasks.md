@@ -12,7 +12,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F0.2 | Backend scaffold: uv + FastAPI + estructura modular/hexagonal vacía (shared + 6 módulos con carpetas domain/application/infrastructure) | 003 §2 | F0.1 | ✅ |
 | F0.3 | Tooling backend: ruff, pyright, pytest, import-linter con las 4 reglas de dependencia | 003 §2.2 | F0.2 | ✅ |
 | F0.4 | docker-compose dev: Postgres 16 + Redis 7; settings con pydantic-settings | 003 §5 | F0.2 | ✅ |
-| F0.5 | CI GitHub Actions: lint + tests + import-linter + pip-audit + gitleaks | 009 §8, RNF-7 | F0.3 | ✅ |
+| F0.5 | CI GitHub Actions: lint + tests + import-linter + pip-audit + gitleaks | 009 §8, RNF-7 | F0.3 | ✅; el 2026-09-29 los workflows de CI se quitaron: lint y tests van en local y pip-audit + gitleaks pasaron al gate del despliegue (F6.1) |
 | F0.6 | App scaffold: `flutter create`, estructura feature-first vacía, riverpod/drift/dio/go_router configurados, flutter analyze/test en CI | 003 §3, 008 §1 | F0.1 | ✅ riverpod sin codegen (spec 003 §3); Drift configurado con base vacía hasta F4.1 |
 
 ## Fase 1 — Identity + Ledger básico (RF-1, RF-7 parcial)
@@ -83,7 +83,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 
 | ID | Tarea | Specs | Deps |
 |---|---|---|---|
-| F6.1 | Compose de producción (API xN, workers, Caddy TLS, redes internas) + guía de despliegue VPS + hardening (SSH, firewall, unattended-upgrades) | 003 §5, 009 §6 | F0.4 |
+| F6.1 | Compose de producción (API xN, workers, Caddy TLS, redes internas) + guía de despliegue VPS + hardening (SSH, firewall, unattended-upgrades) | 003 §5, 009 §6 | F0.4 | ✅ en código (`backend/deploy/`, `deploy-backend.yml`): imagen multietapa no-root, compose endurecido con red de datos interna, Caddy, `bootstrap.sh` del VPS y `backup.sh` local; probado con el stack completo en local. Falta el primer despliegue en el VPS real |
 | F6.2 | Backups cifrados automatizados + prueba de restauración documentada | 009 §3, RNF-4 | F6.1 |
 | F6.3 | Observabilidad: logs estructurados sin PII (test CI), métricas de pipeline, alertas mínimas | 009 §5, 006 §6 | F6.1 |
 | F6.4 | Borrado de cuenta end-to-end (evento UserDeleted + purga + verificación ≤72 h) y exportación de datos | RF-11, 004 §6 | F4.8b | adelantado en F4.8b: `DELETE /me` inmediato con CASCADE y `UserDeleted`, y `GET /me/export` síncrono en JSON. Queda el Excel, el job de verificación ≤ 72 h y la web de borrado (F6.5) |

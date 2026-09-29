@@ -15,7 +15,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 | API pública | Credential stuffing / brute force / DoS | Solo Google Sign-In (sin contraseñas propias), rate limiting por IP y usuario, Caddy con límites de tamaño |
 | LLM (DeepSeek) | Fuga de PII a terceros | Se envía solo el **extracto** del mensaje bancario (`relevant_line_prefix`/fallback, spec 006 §4.1) y la fecha de recepción — nunca el cuerpo completo, email del usuario, remitente ni identificadores internos (`user_id`/`raw_message_id`, spec 006 §4.2); DPA del proveedor documentado en spec 010 |
 | App móvil | Extracción de secretos del APK | La app no contiene secretos: solo client_id público de OAuth; el canje de tokens ocurre en el backend |
-| Dependencias | Supply chain | pip-audit/osv-scanner + lockfiles (uv.lock, pubspec.lock) (sin Dependabot: las actualizaciones se hacen a mano en `main`; pip-audit corre en el CI del backend, la app aún no tiene auditoría automática) |
+| Dependencias | Supply chain | pip-audit/osv-scanner + lockfiles (uv.lock, pubspec.lock) (sin Dependabot: las actualizaciones se hacen a mano en `main`; pip-audit corre en el gate del despliegue del backend sobre las dependencias de la imagen, la app aún no tiene auditoría automática) |
 
 ## 2. Autenticación y sesiones
 
@@ -50,7 +50,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 
 ## 5. Logging y monitoreo
 
-- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. La `ruta` registrada es siempre la **plantilla** de la ruta (p. ej. `/v1/transactions/{id}`), nunca el path crudo ni el query string, para no filtrar identificadores ni parámetros de búsqueda a los logs. **Prohibido**: cuerpos de mensajes, montos, comercios, emails (incluida la cuenta Gmail de un aviso push), remitentes y asuntos de correo, tokens y `serverAuthCode` (P1); `FORBIDDEN_LOG_KEYS` (`shared/logging.py`) los redacta en runtime. Test de CI que greppea patrones prohibidos en llamadas de log.
+- Logs estructurados JSON (structlog): request_id, user_id (UUID interno), ruta, latencia, resultado. La `ruta` registrada es siempre la **plantilla** de la ruta (p. ej. `/v1/transactions/{id}`), nunca el path crudo ni el query string, para no filtrar identificadores ni parámetros de búsqueda a los logs. **Prohibido**: cuerpos de mensajes, montos, comercios, emails (incluida la cuenta Gmail de un aviso push), remitentes y asuntos de correo, tokens y `serverAuthCode` (P1); `FORBIDDEN_LOG_KEYS` (`shared/logging.py`) los redacta en runtime. Test (`tests/ci/test_log_hygiene.py`) que greppea patrones prohibidos en llamadas de log.
 - Auditoría de eventos sensibles: login, refresh reuse detectado, conexión/desconexión Gmail, exportación, borrado de cuenta.
 - Alertas mínimas MVP: tasa de 5xx, backlog de colas, fallos de renovación de watch, presupuesto LLM global.
 
@@ -69,6 +69,8 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 - Ofuscación de release (`--obfuscate --split-debug-info`).
 
 ## 8. Checklist de release (gate de CI/CD)
+
+Los dos primeros los corre el job `gate` de `deploy-backend.yml` y frenan el despliegue; el resto se verifica con `just test` antes de subir.
 
 - [ ] gitleaks sin hallazgos (0 secretos en repo).
 - [ ] pip-audit / osv-scanner sin vulnerabilidades críticas/altas sin justificar.

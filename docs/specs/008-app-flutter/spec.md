@@ -190,4 +190,4 @@ Canvas F4.2 (lista "Tarjetas por día", detalle "Monto protagonista", filtros, h
 - **AC-APP-1** La app abre y muestra transacciones locales en modo avión; registrar manual funciona y sincroniza al reconectar (test E2E).
 - **AC-APP-2** Matar la app en Android no detiene la captura de notificaciones (el listener del sistema persiste).
 - **AC-APP-3** Cambio de categoría refleja en dashboard y reporte fiscal local sin esperar al servidor (optimistic update + reconciliación).
-- **AC-APP-4** `flutter analyze` sin warnings; `flutter test` verde en CI para dominio y controllers de cada feature.
+- **AC-APP-4** `flutter analyze` sin warnings; `flutter test` verde (`just app-ci`, antes de subir) para dominio y controllers de cada feature.

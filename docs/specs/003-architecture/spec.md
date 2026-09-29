@@ -73,7 +73,7 @@ modules/<nombre>/
 └── events.py        # eventos de dominio que publica/consume
 ```
 
-Reglas de dependencia (verificadas con **import-linter** en CI):
+Reglas de dependencia (verificadas con **import-linter**, `just lint`):
 1. `domain` no importa nada fuera de sí mismo y de la stdlib.
 2. `application` importa solo `domain` y sus propios ports. `application` también puede importar el `events.py` del propio módulo; `events.py` es puro (solo stdlib).
 3. `infrastructure` implementa ports; es el único lugar con SQLAlchemy/HTTP/Redis. `shared` es el kernel (usa SQLAlchemy/Redis) y nunca importa `modules`.
@@ -190,8 +190,8 @@ sequenceDiagram
 | Workers | arq (async, nativo Redis) | misma imagen |
 | Datos | PostgreSQL 16, Redis 7 | |
 | LLM | DeepSeek V4 Flash (API OpenAI-compatible, JSON mode) | detrás de `LlmParserPort` |
-| Infra | Docker Compose, Caddy (TLS automático), VPS Hetzner/DO | GCP solo Pub/Sub+OAuth |
-| CI | GitHub Actions: ruff, pyright, pytest, import-linter, pip-audit, gitleaks, flutter analyze/test | |
+| Infra | Docker Compose, Caddy (TLS automático), VPS Hetzner/DO | GCP solo Pub/Sub+OAuth; `backend/deploy/` |
+| CI/CD | GitHub Actions solo despliega el backend: pip-audit + gitleaks, imagen en GHCR con SBOM y procedencia, despliegue por SSH fijado por digest. Lint y tests (ruff, pyright, pytest, import-linter, flutter analyze/test) en local; iOS en Codemagic | |
 
 ## 6. ADRs (decisiones registradas)
 
