@@ -11,6 +11,7 @@ import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_hero.
 import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_states.dart';
 import 'package:finanzia/features/dashboard/presentation/widgets/top_categories_card.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
+import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
 import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
@@ -42,36 +43,39 @@ class DashboardPage extends ConsumerWidget {
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         // La banda esmeralda va detrás de la barra de estado en ambos temas.
         value: SystemUiOverlayStyle.light,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: Space.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DashboardHero(
-                greeting: l10n.homeGreeting(user?.greetingName ?? ''),
-                syncLine: syncLine(l10n, sync),
-                month: state.month,
-                canGoNext: state.canGoNext,
-                onPrevious: controller.previousMonth,
-                onNext: controller.nextMonth,
-                summary: shown,
-                alert: const CaptureStoppedStrip(),
-              ),
-              if (sync.offline)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Space.md,
-                    Space.md,
-                    Space.md,
-                    0,
-                  ),
-                  child: OfflineBanner(message: l10n.dashboardOffline),
+        child: SyncRefresh(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: Space.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DashboardHero(
+                  greeting: l10n.homeGreeting(user?.greetingName ?? ''),
+                  syncLine: syncLine(l10n, sync),
+                  month: state.month,
+                  canGoNext: state.canGoNext,
+                  onPrevious: controller.previousMonth,
+                  onNext: controller.nextMonth,
+                  summary: shown,
+                  alert: const CaptureStoppedStrip(),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(Space.md),
-                child: _body(context, ref, state, sync, shown),
-              ),
-            ],
+                if (sync.offline)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Space.md,
+                      Space.md,
+                      Space.md,
+                      0,
+                    ),
+                    child: OfflineBanner(message: l10n.dashboardOffline),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(Space.md),
+                  child: _body(context, ref, state, sync, shown),
+                ),
+              ],
+            ),
           ),
         ),
       ),

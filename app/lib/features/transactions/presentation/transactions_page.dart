@@ -5,6 +5,7 @@ import 'package:finanzia/core/routing/routes.dart';
 import 'package:finanzia/core/theme/finanzia_colors.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
+import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
 import 'package:finanzia/features/transactions/application/transaction_actions.dart';
 import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
@@ -143,7 +144,12 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                 padding: EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, 0),
                 child: OfflineBanner(),
               ),
-            Expanded(child: _body(state, sync, summary)),
+            Expanded(
+              child: switch (_body(state, sync, summary)) {
+                final _DayList list => SyncRefresh(child: list),
+                final other => SyncRefresh.fill(child: other),
+              },
+            ),
           ],
         ),
       ),
@@ -416,6 +422,7 @@ class _DayList extends ConsumerWidget {
 
     return ListView.separated(
       controller: scroll,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(Space.md).copyWith(top: Space.sm),
       itemCount: children.length,
       separatorBuilder: (_, _) => const SizedBox(height: Space.sm),

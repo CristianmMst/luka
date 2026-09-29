@@ -11,6 +11,7 @@ import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
 import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
+import 'package:finanzia/features/sync/application/sync_engine.dart';
 import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:finanzia/features/transactions/domain/category_option.dart';
@@ -40,9 +41,16 @@ class _FixedCoordinator extends SyncCoordinator {
   _FixedCoordinator(this._status);
 
   final SyncStatus _status;
+  int syncs = 0;
 
   @override
   SyncStatus build() => _status;
+
+  @override
+  Future<SyncRunResult> sync() async {
+    syncs++;
+    return SyncRunResult.synced;
+  }
 }
 
 const _ana = User(
@@ -154,6 +162,24 @@ void main() {
           matching: find.byType(IconButton),
         ),
       );
+
+  testWidgets('deslizar hacia abajo sincroniza', (tester) async {
+    await pumpPage(tester);
+    final coordinator =
+        ProviderScope.containerOf(
+              tester.element(find.byType(DashboardPage)),
+            ).read(syncCoordinatorProvider.notifier)
+            as _FixedCoordinator;
+
+    await tester.fling(
+      find.text('Balance del mes'),
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    expect(coordinator.syncs, 1);
+  });
 
   testWidgets('pinta el balance, las tarjetas y el top del mes', (
     tester,

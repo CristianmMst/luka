@@ -5,6 +5,7 @@ import 'package:finanzia/features/review/application/review_list_controller.dart
 import 'package:finanzia/features/review/domain/review_item.dart';
 import 'package:finanzia/features/review/presentation/widgets/review_card.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
+import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/list_states.dart';
 import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +67,14 @@ class ReviewPage extends ConsumerWidget {
             Expanded(
               child: switch (items) {
                 AsyncData(value: final list) when list.isEmpty =>
-                  const _EmptyReview(),
-                AsyncData(value: final list) => _ReviewList(items: list),
-                AsyncError() => _LoadError(
-                  onRetry: () => ref.invalidate(reviewListControllerProvider),
+                  const SyncRefresh.fill(child: _EmptyReview()),
+                AsyncData(value: final list) => SyncRefresh(
+                  child: _ReviewList(items: list),
+                ),
+                AsyncError() => SyncRefresh.fill(
+                  child: _LoadError(
+                    onRetry: () => ref.invalidate(reviewListControllerProvider),
+                  ),
                 ),
                 _ => const TransactionsSkeleton(),
               },
@@ -89,6 +94,7 @@ class _ReviewList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(Space.md).copyWith(top: Space.sm),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: Space.sm),
