@@ -7,6 +7,7 @@
 | Correo Gmail | Ambas (server-side) | < 60 s p95 | Gmail watch → Pub/Sub → webhook |
 | Notificación bancaria / Google Wallet | Android | < 10 s p95 | NotificationListenerService |
 | SMS bancario | Android | < 10 s p95 | Notificación de la app de Mensajes (NO READ_SMS) |
+| Pago con Apple Pay | iOS 17+ | al abrir la app | Automatización "Transacción" de Atajos → App Intent → cola nativa (§3.3) |
 | NFC tag | Android (+iOS foreground) | inmediato | nfc_manager → formulario rápido |
 | Manual | Ambas | inmediato | formulario |
 
@@ -117,6 +118,16 @@ El listener es código nativo (`NotificationListenerService` en Kotlin) y filtra
 7. La config de §3.1 la baja la app (se refresca cada hora) y la guarda para el listener; sin config no se captura nada. Al cerrar sesión se borran la cola y la config (P6); si entra otro usuario, lo capturado para el anterior se borra.
 8. El texto de notificaciones ignoradas jamás se persiste ni se transmite.
 
+### 3.3 Pagos con Apple Pay (iOS, F4.3b)
+iOS no deja leer notificaciones de otras apps. La única fuente automática es la automatización personal **"Transacción"** de Atajos (iOS 17+): corre al pagar con una tarjeta de Wallet y entrega tarjeta, comercio y monto.
+
+1. El usuario crea la automatización con la guía de la app (spec 008 §3.1): para sus tarjetas, "Ejecutar inmediatamente", con la acción **"Registrar pago en finanzia"** (App Intent `RegistrarPagoWallet`, parámetros tarjeta, comercio y monto).
+2. La intent corre en el proceso de la app, sin abrirla, y encola el pago con su instante en una cola nativa (archivo JSON en el sandbox). No hay extensión ni App Group: SideStore con Apple ID gratuito no los garantiza.
+3. Al abrir la app, `IosWalletNotificationSource` (el `NotificationSource` de iOS, mismo `MethodChannel("co.finanzia/capture")`) entrega la cola al `CaptureFlusher`, que la envía a `/ingest/notifications` igual que en Android (§3.2 paso 6), con canal `notification` y paquete sintético `com.apple.wallet`.
+4. El ítem es texto fijo que arma la app: título = nombre de la tarjeta; texto = `Apple Pay: Compraste $12.500,00 con <tarjeta> en <comercio> el 29/09/2026 a las 14:05` (hora local del teléfono). Lo parsea la plantilla genérica `apple_wallet` (§4.1), sin LLM.
+5. Banco: `com.apple.wallet` tiene `bank: null` y `bank_from_title: true` en `capture.yaml`, así que el backend busca el banco en el nombre de la tarjeta con `sms_sender_patterns`; si no aparece queda `other`. Si el nombre termina en 4 cifras, son el `last4`.
+6. Dedupe (spec 004 §3): el pago y el correo del banco de la misma compra se unen solo si coinciden banco y `last4`. Por eso la guía pide que la tarjeta se llame con el banco y sus últimos 4 dígitos (p. ej. "Bancolombia 1234"), escribiéndolo en el parámetro tarjeta si el nombre de Wallet no los trae. Si no, quedan dos movimientos y se documenta como límite conocido.
+
 ## 4. Pipeline de parsing (workers)
 
 ```mermaid
@@ -154,6 +165,12 @@ templates:
     counterparty: true       # opcional (default false): <merchant> es una persona
                              # (envio o recibo entre personas), no un comercio
 ```
+
+- Una config con `generic: true` (hoy solo `apple_wallet.yaml`, §3.3) no es de un banco: su `bank`
+  es solo el nombre que va en `parsed_by` (`rule:apple_wallet:compra:v1`). Sus plantillas se prueban
+  después de las del banco del mensaje y el movimiento toma ese banco, o `other` si no se conoce. No
+  cuenta en `known_banks()`. Su contrato es el texto que arma la app, así que el test lleva los
+  ejemplos en lugar de un fixture de correo.
 
 - `<time>` es `HH:MM` de 24 horas, o de 12 horas con meridiano ("11:21 a.m", "1:05 p. m.",
   "9:00 AM"), que se pasa a 24 horas antes de parsear.

@@ -16,6 +16,12 @@ banking_apps:
     bank: banco_bogota
   - package: com.google.android.apps.walletnfcrel
     bank: null
+  # Sintetico: pagos con Apple Pay que la app de iPhone recibe de la
+  # automatizacion "Transaccion" de Atajos (F4.3b). El titulo es el nombre de
+  # la tarjeta y el banco se busca en el con `sms_sender_patterns`.
+  - package: com.apple.wallet
+    bank: null
+    bank_from_title: true
 messages_apps:
   - com.google.android.apps.messaging
   - com.samsung.android.messaging

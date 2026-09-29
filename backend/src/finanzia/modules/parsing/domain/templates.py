@@ -1,6 +1,8 @@
 """Motor de plantillas regex por banco (spec 006 §4.1, F2.3). Puro (stdlib
 solo, P3). Ninguna plantilla entra sin fixture real (regla de oro, spec 006
-§4.1): `config/templates/bancolombia.yaml` y `nequi.yaml`.
+§4.1): `config/templates/bancolombia.yaml` y `nequi.yaml`. Las plantillas
+genericas (`generic: true`, p. ej. `apple_wallet.yaml`, F4.3b) no son de un
+banco: se prueban despues de las del banco y toman el banco del mensaje.
 """
 
 from __future__ import annotations
@@ -25,6 +27,8 @@ from finanzia.modules.parsing.domain.normalizers import (
 from finanzia.modules.parsing.domain.parsed import ParsedTransaction
 
 _MAX_DRIFT = timedelta(days=7)
+# Banco de una plantilla generica cuando el mensaje no trae uno (spec 004 §2.4).
+_OTHER = "other"
 _REQUIRED_GROUPS = frozenset({"amount", "date", "time"})
 
 
@@ -64,7 +68,7 @@ class Template:
 class BankTemplates:
     """Plantillas de un banco: extracto de referencia + lista versionada."""
 
-    __slots__ = ("bank", "relevant_line_prefix", "templates", "version")
+    __slots__ = ("bank", "generic", "relevant_line_prefix", "templates", "version")
 
     def __init__(
         self,
@@ -73,17 +77,20 @@ class BankTemplates:
         version: int,
         relevant_line_prefix: str | None,
         templates: tuple[Template, ...],
+        generic: bool = False,
     ) -> None:
+        # En una config generica `bank` es solo su nombre (va en `parsed_by`).
         self.bank = bank
         self.version = version
         self.relevant_line_prefix = relevant_line_prefix
         self.templates = templates
+        self.generic = generic
 
 
 class TemplateMatch:
     """Un match de plantilla contra un extracto, antes de normalizar."""
 
-    __slots__ = ("bank", "groups", "template", "version")
+    __slots__ = ("bank", "groups", "source", "template", "version")
 
     def __init__(
         self,
@@ -92,11 +99,14 @@ class TemplateMatch:
         version: int,
         template: Template,
         groups: Mapping[str, str | None],
+        source: str | None = None,
     ) -> None:
         self.bank = bank
         self.version = version
         self.template = template
         self.groups = groups
+        # Config de la plantilla: el banco, o el nombre de una generica.
+        self.source = source or bank
 
     def to_parsed(self, received_at: datetime) -> ParsedTransaction:
         """Aplica los normalizadores y produce un `ParsedTransaction`.
@@ -131,7 +141,7 @@ class TemplateMatch:
             merchant=merchant,
             last4=self.groups.get("last4"),
             suggested_category=self.template.suggested_category,
-            parsed_by=f"rule:{self.bank}:{self.template.id}:v{self.version}",
+            parsed_by=f"rule:{self.source}:{self.template.id}:v{self.version}",
             confidence=None,
             merchant_is_person=self.template.counterparty,
         )
@@ -188,12 +198,17 @@ def _compile_bank(raw: dict[str, Any]) -> BankTemplates:
         raise TemplateConfigError(f"{bank!r}: 'templates' debe ser una lista no vacia")
     templates_config = cast("list[dict[str, Any]]", raw_templates)
 
+    generic = raw.get("generic", False)
+    if not isinstance(generic, bool):
+        raise TemplateConfigError(f"{bank!r}: 'generic' debe ser true/false")
+
     templates = tuple(_compile_template(bank, entry) for entry in templates_config)
     return BankTemplates(
         bank=bank,
         version=int(raw["version"]),
         relevant_line_prefix=raw.get("relevant_line_prefix"),
         templates=templates,
+        generic=generic,
     )
 
 
@@ -223,7 +238,7 @@ class TemplateRegistry:
 
     def known_banks(self) -> frozenset[str]:
         """Bancos con al menos una plantilla configurada (distinto de allowlist)."""
-        return frozenset(self._banks)
+        return frozenset(name for name, cfg in self._banks.items() if not cfg.generic)
 
     def person_parsed_by(self) -> frozenset[str]:
         """`parsed_by` de las plantillas con `counterparty: true` (envios y
@@ -240,23 +255,25 @@ class TemplateRegistry:
         """Busca la primera plantilla que matchea `excerpt`.
 
         Si `bank` es `None` se prueban todos los bancos conocidos, en el
-        orden en que fueron cargados.
+        orden en que fueron cargados. Las genericas van al final y toman
+        `bank` (o `other` si no se conoce).
         """
-        if bank is None:
-            candidates: list[BankTemplates] = list(self._banks.values())
-        else:
-            bank_templates = self._banks.get(bank)
-            candidates = [bank_templates] if bank_templates is not None else []
+        banks = [cfg for cfg in self._banks.values() if not cfg.generic]
+        generics = [cfg for cfg in self._banks.values() if cfg.generic]
+        if bank is not None:
+            banks = [cfg for cfg in banks if cfg.bank == bank]
 
-        for bank_templates in candidates:
+        for bank_templates in [*banks, *generics]:
             for template in bank_templates.templates:
                 found = template.pattern.search(excerpt)
                 if found:
+                    resolved = (bank or _OTHER) if bank_templates.generic else bank_templates.bank
                     return TemplateMatch(
-                        bank=bank_templates.bank,
+                        bank=resolved,
                         version=bank_templates.version,
                         template=template,
                         groups=found.groupdict(),
+                        source=bank_templates.bank,
                     )
         return None
 

@@ -100,6 +100,9 @@ class CaptureConfig:
     banking_apps: dict[str, str | None]
     messages_apps: frozenset[str]
     sms_patterns: tuple[_SmsPattern, ...]
+    # Apps sin banco propio cuyo titulo es el nombre de la tarjeta (Apple Pay,
+    # F4.3b): el banco se busca en el titulo con `sms_sender_patterns`.
+    bank_from_title: frozenset[str] = frozenset()
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> CaptureConfig:
@@ -118,12 +121,21 @@ class CaptureConfig:
         sms_config = cast("list[Any]", raw_sms)
 
         banking_apps: dict[str, str | None] = {}
+        bank_from_title: set[str] = set()
         for raw_app in apps_config:
             if not isinstance(raw_app, dict) or "package" not in raw_app:
                 raise TemplateConfigError("capture.yaml: entrada invalida en 'banking_apps'")
             app = cast("dict[str, Any]", raw_app)
+            package = str(app["package"])
             bank_value = app.get("bank")
-            banking_apps[str(app["package"])] = str(bank_value) if bank_value is not None else None
+            banking_apps[package] = str(bank_value) if bank_value is not None else None
+            from_title = app.get("bank_from_title", False)
+            if not isinstance(from_title, bool):
+                raise TemplateConfigError(
+                    f"capture.yaml: 'bank_from_title' de {package!r} debe ser true/false"
+                )
+            if from_title:
+                bank_from_title.add(package)
 
         sms_patterns: list[_SmsPattern] = []
         for raw_entry in sms_config:
@@ -147,6 +159,7 @@ class CaptureConfig:
             banking_apps=banking_apps,
             messages_apps=frozenset(str(a) for a in messages_config),
             sms_patterns=tuple(sms_patterns),
+            bank_from_title=frozenset(bank_from_title),
         )
 
     def bank_for_notification(
@@ -155,25 +168,34 @@ class CaptureConfig:
         """Decide si una notificacion/SMS se acepta y con que banco (spec 006 §3.2).
 
         `channel="notification"`: aceptada si `package` esta en `banking_apps`
-        (el banco puede ser `None`, p. ej. Google Wallet). `channel=
+        (el banco puede ser `None`, p. ej. Google Wallet; con `bank_from_title`,
+        como Apple Pay, sale del titulo o queda `None`). `channel=
         "sms_notification"`: aceptada si `package` esta en `messages_apps` **y**
         `title` matchea algun `sms_sender_patterns` (AC-3.3: si no matchea, se
         rechaza sin seguir leyendo). Cualquier otro canal/paquete se rechaza.
         """
         if channel == "notification":
-            if package in self.banking_apps:
-                return NotificationDecision(accepted=True, bank=self.banking_apps[package])
-            return NotificationDecision(accepted=False, bank=None)
+            if package not in self.banking_apps:
+                return NotificationDecision(accepted=False, bank=None)
+            bank = self.banking_apps[package]
+            if bank is None and package in self.bank_from_title and title:
+                bank = self._bank_in(title)
+            return NotificationDecision(accepted=True, bank=bank)
 
         if channel == "sms_notification":
             if package not in self.messages_apps or not title:
                 return NotificationDecision(accepted=False, bank=None)
-            for sms_pattern in self.sms_patterns:
-                if sms_pattern.regex.search(title):
-                    return NotificationDecision(accepted=True, bank=sms_pattern.bank)
-            return NotificationDecision(accepted=False, bank=None)
+            bank = self._bank_in(title)
+            return NotificationDecision(accepted=bank is not None, bank=bank)
 
         return NotificationDecision(accepted=False, bank=None)
+
+    def _bank_in(self, title: str) -> str | None:
+        """Primer banco de `sms_sender_patterns` que aparece en `title`."""
+        for sms_pattern in self.sms_patterns:
+            if sms_pattern.regex.search(title):
+                return sms_pattern.bank
+        return None
 
 
 __all__ = ["CaptureConfig", "NotificationDecision", "SenderAllowlist"]

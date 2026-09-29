@@ -1,0 +1,16 @@
+# Plantilla generica de Apple Pay (spec 006 §3.3, F4.3b). No es de un banco:
+# el texto lo arma la app de iPhone con lo que le pasa la automatizacion
+# "Transaccion" de Atajos, asi que el contrato vive en el test
+# (tests/unit/parsing/test_templates_apple_wallet.py) y en la app. El banco
+# sale del nombre de la tarjeta (capture.yaml, bank_from_title) o queda other.
+bank: apple_wallet
+generic: true
+version: 1
+templates:
+  - id: compra
+    direction: debit
+    # "Apple Pay: Compraste $12.500,00 con <tarjeta> en <comercio> el
+    # 29/09/2026 a las 14:05". La tarjeta va antes del comercio para que un
+    # comercio con " con " no la corte; si termina en 4 cifras son el last4.
+    pattern: 'Apple Pay: Compraste \$?(?P<amount>[\d.,]+) con (?:.*?(?<!\d)(?P<last4>\d{4})|.*?) en (?P<merchant>.+) el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%Y"

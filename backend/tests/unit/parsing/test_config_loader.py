@@ -42,9 +42,10 @@ class TestLoadParsingConfig:
             == "bancolombia"
         )
 
-    def test_capture_tiene_7_apps(self) -> None:
+    def test_capture_tiene_8_apps(self) -> None:
         config = load_parsing_config()
-        assert len(config.capture.banking_apps) == 7
+        assert len(config.capture.banking_apps) == 8
+        assert config.capture.banking_apps["com.apple.wallet"] is None
         assert config.capture.banking_apps["com.bancolombia.app"] == "bancolombia"
         assert config.capture.banking_apps["com.google.android.apps.walletnfcrel"] is None
 

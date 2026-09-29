@@ -30,6 +30,7 @@ CAPTURE_CONFIG = {
         {"package": "com.bancolombia.app", "bank": "bancolombia"},
         {"package": "com.nequi.MobileApp", "bank": "nequi"},
         {"package": "com.google.android.apps.walletnfcrel", "bank": None},
+        {"package": "com.apple.wallet", "bank": None, "bank_from_title": True},
     ],
     "messages_apps": [
         "com.google.android.apps.messaging",
@@ -116,6 +117,37 @@ class TestCaptureConfigNotification:
         )
         assert decision.accepted is True
         assert decision.bank is None
+
+    def test_apple_wallet_toma_el_banco_del_nombre_de_la_tarjeta(
+        self, capture: CaptureConfig
+    ) -> None:
+        decision = capture.bank_for_notification(
+            "com.apple.wallet", "notification", "Mastercard Bancolombia 1234"
+        )
+        assert decision.accepted is True
+        assert decision.bank == "bancolombia"
+
+    def test_apple_wallet_con_tarjeta_sin_banco_conocido(self, capture: CaptureConfig) -> None:
+        for title in ("Visa Oro", None):
+            decision = capture.bank_for_notification("com.apple.wallet", "notification", title)
+            assert decision.accepted is True
+            assert decision.bank is None
+
+    def test_google_wallet_no_mira_el_titulo(self, capture: CaptureConfig) -> None:
+        decision = capture.bank_for_notification(
+            "com.google.android.apps.walletnfcrel", "notification", "Pago en Nequi Store"
+        )
+        assert decision.bank is None
+
+    def test_bank_from_title_invalido_falla(self) -> None:
+        config = {
+            **CAPTURE_CONFIG,
+            "banking_apps": [
+                {"package": "com.apple.wallet", "bank": None, "bank_from_title": "si"}
+            ],
+        }
+        with pytest.raises(TemplateConfigError):
+            CaptureConfig.from_config(config)
 
     def test_app_no_soportada_rechazada(self, capture: CaptureConfig) -> None:
         decision = capture.bank_for_notification("com.whatsapp", "notification", None)
