@@ -1,4 +1,5 @@
 import 'package:finanzia/core/routing/routes.dart';
+import 'package:finanzia/features/accounts/presentation/my_accounts_page.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/presentation/login_page.dart';
 import 'package:finanzia/features/auth/presentation/splash_page.dart';
@@ -149,6 +150,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'categorias',
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => const MyCategoriesPage(),
+                  ),
+                  GoRoute(
+                    path: 'cuentas',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const MyAccountsPage(),
                   ),
                 ],
               ),

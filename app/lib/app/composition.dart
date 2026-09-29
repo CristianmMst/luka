@@ -1,4 +1,6 @@
 import 'package:finanzia/core/network/dio_providers.dart';
+import 'package:finanzia/features/accounts/application/account_actions.dart';
+import 'package:finanzia/features/accounts/data/accounts_data_providers.dart';
 import 'package:finanzia/features/auth/application/auth_controller.dart';
 import 'package:finanzia/features/auth/data/auth_data_providers.dart';
 import 'package:finanzia/features/capture/application/capture_flusher.dart';
@@ -59,5 +61,9 @@ List<Override> get appOverrides => [
   ),
   categoriesStoreProvider.overrideWith(
     (ref) => ref.watch(driftCategoriesStoreProvider),
+  ),
+  accountsRemoteProvider.overrideWith((ref) => ref.watch(accountsApiProvider)),
+  accountsStoreProvider.overrideWith(
+    (ref) => ref.watch(driftAccountsStoreProvider),
   ),
 ];

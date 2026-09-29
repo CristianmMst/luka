@@ -881,5 +881,92 @@
   "detailDeleteBody": "Se quita de tus movimientos y de tu reporte. No se puede deshacer.",
   "detailDeleteConfirm": "Eliminar",
   "detailDeleteCancel": "Cancelar",
-  "detailDeleted": "Movimiento eliminado"
+  "detailDeleted": "Movimiento eliminado",
+  "settingsAccountsTitle": "Mis cuentas",
+  "settingsAccountsSubtitle": "Para reconocer tus transferencias propias",
+  "myAccountsTitle": "Mis cuentas",
+  "myAccountsIntro": "Con tus cuentas separamos lo que pasas entre ellas de tus gastos e ingresos reales.",
+  "myAccountsEmpty": "Aún no tienes cuentas. Agrega las de tus bancos.",
+  "accountsAdd": "Agregar cuenta",
+  "accountRowMeta": "{bank} · {kind}",
+  "@accountRowMeta": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "accountRowMetaWithLast4": "{bank} · {kind} ···{last4}",
+  "@accountRowMetaWithLast4": {
+    "placeholders": {
+      "bank": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "accountEditSemantics": "Editar {name}",
+  "@accountEditSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleteSemantics": "Borrar {name}",
+  "@accountDeleteSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountFormNewTitle": "Nueva cuenta",
+  "accountFormEditTitle": "Editar cuenta",
+  "accountFormBank": "Banco",
+  "accountFormBankHint": "Elige tu banco",
+  "accountFormBankLocked": "El banco no se puede cambiar; si te equivocaste, borra la cuenta y créala de nuevo.",
+  "accountFormKind": "Tipo",
+  "accountFormLast4": "Últimos 4 (opcional)",
+  "accountFormAlias": "Alias (opcional)",
+  "accountFormAliasHint": "Ej. Nómina",
+  "accountFormCreate": "Guardar cuenta",
+  "accountFormSave": "Guardar",
+  "accountFormCancel": "Cancelar",
+  "accountBankRequired": "Elige el banco.",
+  "accountLast4Invalid": "Escribe de 1 a 4 números.",
+  "accountAliasTooLong": "Máximo 60 caracteres.",
+  "accountErrorDuplicate": "Ya tienes una cuenta de ese banco con esos últimos 4.",
+  "accountErrorOffline": "Necesitas conexión para agregar, editar o borrar cuentas.",
+  "accountErrorGone": "Esa cuenta ya no existe.",
+  "accountErrorUnexpected": "No pudimos guardar la cuenta. Intenta de nuevo.",
+  "accountCreated": "Cuenta agregada",
+  "accountSaved": "Cuenta guardada",
+  "accountDeleted": "Cuenta borrada",
+  "accountDeleteTitle": "¿Borrar «{name}»?",
+  "@accountDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleteBody": "{count, plural, =0{No tiene movimientos.} =1{Su movimiento queda sin cuenta.} other{Sus {count} movimientos quedan sin cuenta.}} No se puede deshacer.",
+  "@accountDeleteBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountDeleteConfirm": "Borrar cuenta",
+  "accountDeleteCancel": "Cancelar"
 }

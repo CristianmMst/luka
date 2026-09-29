@@ -71,7 +71,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | bank | TEXT | enum de bancos soportados + `other` |
 | kind | TEXT | `savings` / `checking` / `credit_card` / `wallet` |
 | last4 | TEXT NULL | últimos dígitos que aparecen en correos/notifs; `CHECK (last4 ~ '^[0-9]{1,4}$')` |
-| alias | TEXT | nombre que le da el usuario |
+| alias | TEXT NULL | nombre que le da el usuario (opcional) |
 | UNIQUE NULLS NOT DISTINCT | (user_id, bank, last4) | dos cuentas del mismo banco sin `last4` conocido cuentan como duplicado |
 
 ### 2.5 `transactions` (ledger)

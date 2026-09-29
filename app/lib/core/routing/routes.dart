@@ -12,6 +12,9 @@ abstract final class Routes {
   /// "Mis categorías" (F4.8a), a pantalla completa sobre Ajustes.
   static const settingsCategories = '/ajustes/categorias';
 
+  /// "Mis cuentas" (F4.4), a pantalla completa sobre Ajustes.
+  static const settingsAccounts = '/ajustes/cuentas';
+
   /// Paso "Conecta tu Gmail" tras el login (F3.6). El resto de
   /// `/onboarding/*` queda reservado para F4.4.
   static const onboardingGmail = '/onboarding/gmail';

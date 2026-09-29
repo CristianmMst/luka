@@ -1413,4 +1413,138 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get detailDeleted => 'Movimiento eliminado';
+
+  @override
+  String get settingsAccountsTitle => 'Mis cuentas';
+
+  @override
+  String get settingsAccountsSubtitle =>
+      'Para reconocer tus transferencias propias';
+
+  @override
+  String get myAccountsTitle => 'Mis cuentas';
+
+  @override
+  String get myAccountsIntro =>
+      'Con tus cuentas separamos lo que pasas entre ellas de tus gastos e ingresos reales.';
+
+  @override
+  String get myAccountsEmpty =>
+      'Aún no tienes cuentas. Agrega las de tus bancos.';
+
+  @override
+  String get accountsAdd => 'Agregar cuenta';
+
+  @override
+  String accountRowMeta(String bank, String kind) {
+    return '$bank · $kind';
+  }
+
+  @override
+  String accountRowMetaWithLast4(String bank, String kind, String last4) {
+    return '$bank · $kind ···$last4';
+  }
+
+  @override
+  String accountEditSemantics(String name) {
+    return 'Editar $name';
+  }
+
+  @override
+  String accountDeleteSemantics(String name) {
+    return 'Borrar $name';
+  }
+
+  @override
+  String get accountFormNewTitle => 'Nueva cuenta';
+
+  @override
+  String get accountFormEditTitle => 'Editar cuenta';
+
+  @override
+  String get accountFormBank => 'Banco';
+
+  @override
+  String get accountFormBankHint => 'Elige tu banco';
+
+  @override
+  String get accountFormBankLocked =>
+      'El banco no se puede cambiar; si te equivocaste, borra la cuenta y créala de nuevo.';
+
+  @override
+  String get accountFormKind => 'Tipo';
+
+  @override
+  String get accountFormLast4 => 'Últimos 4 (opcional)';
+
+  @override
+  String get accountFormAlias => 'Alias (opcional)';
+
+  @override
+  String get accountFormAliasHint => 'Ej. Nómina';
+
+  @override
+  String get accountFormCreate => 'Guardar cuenta';
+
+  @override
+  String get accountFormSave => 'Guardar';
+
+  @override
+  String get accountFormCancel => 'Cancelar';
+
+  @override
+  String get accountBankRequired => 'Elige el banco.';
+
+  @override
+  String get accountLast4Invalid => 'Escribe de 1 a 4 números.';
+
+  @override
+  String get accountAliasTooLong => 'Máximo 60 caracteres.';
+
+  @override
+  String get accountErrorDuplicate =>
+      'Ya tienes una cuenta de ese banco con esos últimos 4.';
+
+  @override
+  String get accountErrorOffline =>
+      'Necesitas conexión para agregar, editar o borrar cuentas.';
+
+  @override
+  String get accountErrorGone => 'Esa cuenta ya no existe.';
+
+  @override
+  String get accountErrorUnexpected =>
+      'No pudimos guardar la cuenta. Intenta de nuevo.';
+
+  @override
+  String get accountCreated => 'Cuenta agregada';
+
+  @override
+  String get accountSaved => 'Cuenta guardada';
+
+  @override
+  String get accountDeleted => 'Cuenta borrada';
+
+  @override
+  String accountDeleteTitle(String name) {
+    return '¿Borrar «$name»?';
+  }
+
+  @override
+  String accountDeleteBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sus $count movimientos quedan sin cuenta.',
+      one: 'Su movimiento queda sin cuenta.',
+      zero: 'No tiene movimientos.',
+    );
+    return '$_temp0 No se puede deshacer.';
+  }
+
+  @override
+  String get accountDeleteConfirm => 'Borrar cuenta';
+
+  @override
+  String get accountDeleteCancel => 'Cancelar';
 }

@@ -2379,6 +2379,222 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Movimiento eliminado'**
   String get detailDeleted;
+
+  /// No description provided for @settingsAccountsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis cuentas'**
+  String get settingsAccountsTitle;
+
+  /// No description provided for @settingsAccountsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Para reconocer tus transferencias propias'**
+  String get settingsAccountsSubtitle;
+
+  /// No description provided for @myAccountsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis cuentas'**
+  String get myAccountsTitle;
+
+  /// No description provided for @myAccountsIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Con tus cuentas separamos lo que pasas entre ellas de tus gastos e ingresos reales.'**
+  String get myAccountsIntro;
+
+  /// No description provided for @myAccountsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes cuentas. Agrega las de tus bancos.'**
+  String get myAccountsEmpty;
+
+  /// No description provided for @accountsAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar cuenta'**
+  String get accountsAdd;
+
+  /// No description provided for @accountRowMeta.
+  ///
+  /// In es, this message translates to:
+  /// **'{bank} · {kind}'**
+  String accountRowMeta(String bank, String kind);
+
+  /// No description provided for @accountRowMetaWithLast4.
+  ///
+  /// In es, this message translates to:
+  /// **'{bank} · {kind} ···{last4}'**
+  String accountRowMetaWithLast4(String bank, String kind, String last4);
+
+  /// No description provided for @accountEditSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar {name}'**
+  String accountEditSemantics(String name);
+
+  /// No description provided for @accountDeleteSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar {name}'**
+  String accountDeleteSemantics(String name);
+
+  /// No description provided for @accountFormNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva cuenta'**
+  String get accountFormNewTitle;
+
+  /// No description provided for @accountFormEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar cuenta'**
+  String get accountFormEditTitle;
+
+  /// No description provided for @accountFormBank.
+  ///
+  /// In es, this message translates to:
+  /// **'Banco'**
+  String get accountFormBank;
+
+  /// No description provided for @accountFormBankHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige tu banco'**
+  String get accountFormBankHint;
+
+  /// No description provided for @accountFormBankLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'El banco no se puede cambiar; si te equivocaste, borra la cuenta y créala de nuevo.'**
+  String get accountFormBankLocked;
+
+  /// No description provided for @accountFormKind.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get accountFormKind;
+
+  /// No description provided for @accountFormLast4.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 4 (opcional)'**
+  String get accountFormLast4;
+
+  /// No description provided for @accountFormAlias.
+  ///
+  /// In es, this message translates to:
+  /// **'Alias (opcional)'**
+  String get accountFormAlias;
+
+  /// No description provided for @accountFormAliasHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Nómina'**
+  String get accountFormAliasHint;
+
+  /// No description provided for @accountFormCreate.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cuenta'**
+  String get accountFormCreate;
+
+  /// No description provided for @accountFormSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get accountFormSave;
+
+  /// No description provided for @accountFormCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get accountFormCancel;
+
+  /// No description provided for @accountBankRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige el banco.'**
+  String get accountBankRequired;
+
+  /// No description provided for @accountLast4Invalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe de 1 a 4 números.'**
+  String get accountLast4Invalid;
+
+  /// No description provided for @accountAliasTooLong.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 60 caracteres.'**
+  String get accountAliasTooLong;
+
+  /// No description provided for @accountErrorDuplicate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes una cuenta de ese banco con esos últimos 4.'**
+  String get accountErrorDuplicate;
+
+  /// No description provided for @accountErrorOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas conexión para agregar, editar o borrar cuentas.'**
+  String get accountErrorOffline;
+
+  /// No description provided for @accountErrorGone.
+  ///
+  /// In es, this message translates to:
+  /// **'Esa cuenta ya no existe.'**
+  String get accountErrorGone;
+
+  /// No description provided for @accountErrorUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar la cuenta. Intenta de nuevo.'**
+  String get accountErrorUnexpected;
+
+  /// No description provided for @accountCreated.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta agregada'**
+  String get accountCreated;
+
+  /// No description provided for @accountSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta guardada'**
+  String get accountSaved;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta borrada'**
+  String get accountDeleted;
+
+  /// No description provided for @accountDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Borrar «{name}»?'**
+  String accountDeleteTitle(String name);
+
+  /// No description provided for @accountDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{No tiene movimientos.} =1{Su movimiento queda sin cuenta.} other{Sus {count} movimientos quedan sin cuenta.}} No se puede deshacer.'**
+  String accountDeleteBody(int count);
+
+  /// No description provided for @accountDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar cuenta'**
+  String get accountDeleteConfirm;
+
+  /// No description provided for @accountDeleteCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get accountDeleteCancel;
 }
 
 class _AppLocalizationsDelegate
