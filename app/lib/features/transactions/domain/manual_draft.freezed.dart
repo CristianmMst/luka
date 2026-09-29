@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ManualDraft {
 
- DateTime get occurredAt; Cop? get amount; TxDirection get direction; String? get merchant; String? get categoryId; String? get notes;
+ DateTime get occurredAt; Cop? get amount; TxDirection get direction; String? get merchant; String? get categoryId; String? get notes;/// Cuenta vinculada de donde salió o a donde entró (spec 008 §3.4).
+ String? get accountId;/// Tag NFC del registro rápido (spec 006 §5): el servidor marca la
+/// fuente como `nfc`.
+ String? get nfcTagId;
 /// Create a copy of ManualDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $ManualDraftCopyWith<ManualDraft> get copyWith => _$ManualDraftCopyWithImpl<Manu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ManualDraft&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ManualDraft&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.nfcTagId, nfcTagId) || other.nfcTagId == nfcTagId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,occurredAt,amount,direction,merchant,categoryId,notes);
+int get hashCode => Object.hash(runtimeType,occurredAt,amount,direction,merchant,categoryId,notes,accountId,nfcTagId);
 
 @override
 String toString() {
-  return 'ManualDraft(occurredAt: $occurredAt, amount: $amount, direction: $direction, merchant: $merchant, categoryId: $categoryId, notes: $notes)';
+  return 'ManualDraft(occurredAt: $occurredAt, amount: $amount, direction: $direction, merchant: $merchant, categoryId: $categoryId, notes: $notes, accountId: $accountId, nfcTagId: $nfcTagId)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $ManualDraftCopyWith<$Res>  {
   factory $ManualDraftCopyWith(ManualDraft value, $Res Function(ManualDraft) _then) = _$ManualDraftCopyWithImpl;
 @useResult
 $Res call({
- DateTime occurredAt, Cop? amount, TxDirection direction, String? merchant, String? categoryId, String? notes
+ DateTime occurredAt, Cop? amount, TxDirection direction, String? merchant, String? categoryId, String? notes, String? accountId, String? nfcTagId
 });
 
 
@@ -62,7 +65,7 @@ class _$ManualDraftCopyWithImpl<$Res>
 
 /// Create a copy of ManualDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? occurredAt = null,Object? amount = freezed,Object? direction = null,Object? merchant = freezed,Object? categoryId = freezed,Object? notes = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? occurredAt = null,Object? amount = freezed,Object? direction = null,Object? merchant = freezed,Object? categoryId = freezed,Object? notes = freezed,Object? accountId = freezed,Object? nfcTagId = freezed,}) {
   return _then(_self.copyWith(
 occurredAt: null == occurredAt ? _self.occurredAt : occurredAt // ignore: cast_nullable_to_non_nullable
 as DateTime,amount: freezed == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -70,6 +73,8 @@ as Cop?,direction: null == direction ? _self.direction : direction // ignore: ca
 as TxDirection,merchant: freezed == merchant ? _self.merchant : merchant // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
+as String?,nfcTagId: freezed == nfcTagId ? _self.nfcTagId : nfcTagId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -155,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes,  String? accountId,  String? nfcTagId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ManualDraft() when $default != null:
-return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes);case _:
+return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes,_that.accountId,_that.nfcTagId);case _:
   return orElse();
 
 }
@@ -176,10 +181,10 @@ return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes,  String? accountId,  String? nfcTagId)  $default,) {final _that = this;
 switch (_that) {
 case _ManualDraft():
-return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes);case _:
+return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes,_that.accountId,_that.nfcTagId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +201,10 @@ return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( DateTime occurredAt,  Cop? amount,  TxDirection direction,  String? merchant,  String? categoryId,  String? notes,  String? accountId,  String? nfcTagId)?  $default,) {final _that = this;
 switch (_that) {
 case _ManualDraft() when $default != null:
-return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes);case _:
+return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_that.categoryId,_that.notes,_that.accountId,_that.nfcTagId);case _:
   return null;
 
 }
@@ -211,7 +216,7 @@ return $default(_that.occurredAt,_that.amount,_that.direction,_that.merchant,_th
 
 
 class _ManualDraft extends ManualDraft {
-  const _ManualDraft({required this.occurredAt, this.amount, this.direction = TxDirection.debit, this.merchant, this.categoryId, this.notes}): super._();
+  const _ManualDraft({required this.occurredAt, this.amount, this.direction = TxDirection.debit, this.merchant, this.categoryId, this.notes, this.accountId, this.nfcTagId}): super._();
   
 
 @override final  DateTime occurredAt;
@@ -220,6 +225,11 @@ class _ManualDraft extends ManualDraft {
 @override final  String? merchant;
 @override final  String? categoryId;
 @override final  String? notes;
+/// Cuenta vinculada de donde salió o a donde entró (spec 008 §3.4).
+@override final  String? accountId;
+/// Tag NFC del registro rápido (spec 006 §5): el servidor marca la
+/// fuente como `nfc`.
+@override final  String? nfcTagId;
 
 /// Create a copy of ManualDraft
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +241,16 @@ _$ManualDraftCopyWith<_ManualDraft> get copyWith => __$ManualDraftCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ManualDraft&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.notes, notes) || other.notes == notes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ManualDraft&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.nfcTagId, nfcTagId) || other.nfcTagId == nfcTagId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,occurredAt,amount,direction,merchant,categoryId,notes);
+int get hashCode => Object.hash(runtimeType,occurredAt,amount,direction,merchant,categoryId,notes,accountId,nfcTagId);
 
 @override
 String toString() {
-  return 'ManualDraft(occurredAt: $occurredAt, amount: $amount, direction: $direction, merchant: $merchant, categoryId: $categoryId, notes: $notes)';
+  return 'ManualDraft(occurredAt: $occurredAt, amount: $amount, direction: $direction, merchant: $merchant, categoryId: $categoryId, notes: $notes, accountId: $accountId, nfcTagId: $nfcTagId)';
 }
 
 
@@ -251,7 +261,7 @@ abstract mixin class _$ManualDraftCopyWith<$Res> implements $ManualDraftCopyWith
   factory _$ManualDraftCopyWith(_ManualDraft value, $Res Function(_ManualDraft) _then) = __$ManualDraftCopyWithImpl;
 @override @useResult
 $Res call({
- DateTime occurredAt, Cop? amount, TxDirection direction, String? merchant, String? categoryId, String? notes
+ DateTime occurredAt, Cop? amount, TxDirection direction, String? merchant, String? categoryId, String? notes, String? accountId, String? nfcTagId
 });
 
 
@@ -268,7 +278,7 @@ class __$ManualDraftCopyWithImpl<$Res>
 
 /// Create a copy of ManualDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? occurredAt = null,Object? amount = freezed,Object? direction = null,Object? merchant = freezed,Object? categoryId = freezed,Object? notes = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? occurredAt = null,Object? amount = freezed,Object? direction = null,Object? merchant = freezed,Object? categoryId = freezed,Object? notes = freezed,Object? accountId = freezed,Object? nfcTagId = freezed,}) {
   return _then(_ManualDraft(
 occurredAt: null == occurredAt ? _self.occurredAt : occurredAt // ignore: cast_nullable_to_non_nullable
 as DateTime,amount: freezed == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -276,6 +286,8 @@ as Cop?,direction: null == direction ? _self.direction : direction // ignore: ca
 as TxDirection,merchant: freezed == merchant ? _self.merchant : merchant // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
+as String?,nfcTagId: freezed == nfcTagId ? _self.nfcTagId : nfcTagId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

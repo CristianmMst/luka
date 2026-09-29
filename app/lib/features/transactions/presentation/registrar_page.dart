@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:finanzia/core/widgets/inline_notice.dart';
+import 'package:finanzia/features/accounts/presentation/account_picker_sheet.dart';
 import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
@@ -37,6 +38,8 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
   var _dateTouched = false;
   String? _categoryId;
   String? _categoryName;
+  String? _accountId;
+  String? _accountName;
   Set<ManualDraftError> _errors = const {};
   var _saveFailed = false;
   var _busy = false;
@@ -60,6 +63,8 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
     _dateTouched = false;
     _categoryId = null;
     _categoryName = null;
+    _accountId = null;
+    _accountName = null;
     _errors = const {};
   }
 
@@ -113,6 +118,15 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
     });
   }
 
+  Future<void> _pickAccount() async {
+    final pick = await AccountPickerSheet.show(context, selectedId: _accountId);
+    if (pick == null || !mounted) return;
+    setState(() {
+      _accountId = pick.id;
+      _accountName = pick.name;
+    });
+  }
+
   Future<void> _save() async {
     final draft = ManualDraft(
       // Sin tocar la fecha, el movimiento es de cuando se guarda.
@@ -122,6 +136,7 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
       merchant: _merchant.text,
       categoryId: _categoryId,
       notes: _notes.text,
+      accountId: _accountId,
     );
     final errors = draft.validate();
     setState(() {
@@ -224,6 +239,8 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage> {
               onPickDate: () => unawaited(_pickDate()),
               onPickTime: () => unawaited(_pickTime()),
               onPickCategory: () => unawaited(_pickCategory()),
+              accountName: _accountName,
+              onPickAccount: () => unawaited(_pickAccount()),
             ),
             const SizedBox(height: Space.lg),
             if (_saveFailed) ...[

@@ -1,6 +1,8 @@
 import 'package:finanzia/core/format/money.dart';
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/app_theme.dart';
+import 'package:finanzia/features/accounts/application/account_actions.dart';
+import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
 import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/application/transaction_actions.dart';
@@ -16,6 +18,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Actions extends Mock implements TransactionActions {}
+
+class _Accounts extends Mock implements AccountsStore {}
 
 class _Transactions extends Mock implements TransactionsRepository {}
 
@@ -34,12 +38,26 @@ final _now = DateTime.utc(2026, 9, 25, 20, 42);
 void main() {
   late _Actions actions;
   late _Transactions transactions;
+  late _Accounts accounts;
 
   setUpAll(() => registerFallbackValue(ManualDraft(occurredAt: _now)));
 
   setUp(() {
     actions = _Actions();
     transactions = _Transactions();
+    accounts = _Accounts();
+    when(() => accounts.watchAll()).thenAnswer(
+      (_) => Stream.value(const [
+        LinkedAccount(
+          id: 'a-1',
+          bank: 'bancolombia',
+          kind: 'savings',
+          last4: '8761',
+          alias: 'Nómina',
+          transactionCount: 0,
+        ),
+      ]),
+    );
     when(() => actions.create(any())).thenAnswer((_) async => 'local-1');
     when(() => actions.delete(any())).thenAnswer((_) async {});
     when(() => transactions.watchCategories()).thenAnswer(
@@ -78,6 +96,7 @@ void main() {
         overrides: [
           transactionActionsProvider.overrideWithValue(actions),
           transactionsRepositoryProvider.overrideWithValue(transactions),
+          accountsStoreProvider.overrideWithValue(accounts),
           transactionsClockProvider.overrideWithValue(() => _now),
           syncCoordinatorProvider.overrideWith(
             () => _Coordinator(offline: offline),
@@ -134,6 +153,27 @@ void main() {
     expect(find.text('Sin categoría'), findsOneWidget);
     final amount = tester.widget<TextField>(find.byType(TextField).at(0));
     expect(amount.controller!.text, isEmpty);
+  });
+
+  testWidgets('la cuenta elegida viaja en el borrador', (tester) async {
+    await pumpRegistrar(tester);
+
+    await tester.enterText(find.byType(TextField).at(0), '45900');
+    await tester.tap(find.text('Sin cuenta'));
+    await tester.pumpAndSettle();
+    expect(find.text('¿De qué cuenta?'), findsOneWidget);
+    await tester.tap(find.text('Nómina'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nómina'), findsOneWidget);
+    await tester.tap(find.text('Guardar movimiento'));
+    await tester.pumpAndSettle();
+
+    final draft =
+        verify(() => actions.create(captureAny())).captured.single
+            as ManualDraft;
+    expect(draft.accountId, 'a-1');
+    // El formulario queda limpio, también la cuenta.
+    expect(find.text('Sin cuenta'), findsOneWidget);
   });
 
   testWidgets('un ingreso se guarda como crédito', (tester) async {

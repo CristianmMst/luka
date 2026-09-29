@@ -3015,6 +3015,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No pudimos completarlo. Intenta de nuevo.'**
   String get privacyErrorUnexpected;
+
+  /// No description provided for @accountPickerTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿De qué cuenta?'**
+  String get accountPickerTitle;
+
+  /// No description provided for @accountPickerNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuenta'**
+  String get accountPickerNone;
+
+  /// No description provided for @accountFieldLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get accountFieldLabel;
+
+  /// No description provided for @filterAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get filterAccount;
 }
 
 class _AppLocalizationsDelegate

@@ -541,6 +541,15 @@ class DriftSyncStore implements SyncStore {
     final kind =
         data.kind ??
         (data.direction == TxDirection.debit ? TxKind.expense : TxKind.income);
+    // Como el servidor: el banco sale de la cuenta, y el canal es `nfc` si
+    // vino de un tag (spec 005 §6). Así el filtro por banco y el ícono del
+    // canal se ven bien antes del pull.
+    final accountId = data.accountId;
+    final bank = accountId == null
+        ? null
+        : (await (_db.select(
+            _db.localAccounts,
+          )..where((a) => a.id.equals(accountId))).getSingleOrNull())?.bank;
     await _db
         .into(_db.localTransactions)
         .insert(
@@ -553,9 +562,13 @@ class DriftSyncStore implements SyncStore {
             occurredAt: data.occurredAt.toUtc(),
             merchant: Value(data.merchant),
             description: Value(data.description),
-            accountId: Value(data.accountId),
+            bank: Value(bank),
+            accountId: Value(accountId),
             categoryId: Value(data.categoryId),
             fiscalTag: Value(await _fiscalTagOf(data.categoryId)),
+            channels: Value(
+              jsonEncode([if (data.nfcTagId != null) 'nfc' else 'manual']),
+            ),
             parsedBy: 'manual',
             notes: Value(data.notes),
             createdAt: now,

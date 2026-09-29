@@ -8,9 +8,9 @@ import 'package:finanzia/features/transactions/presentation/widgets/transaction_
 import 'package:flutter/material.dart';
 
 /// Tarjeta del formulario de un movimiento: monto, gasto o ingreso, fecha y
-/// hora, comercio, categoría y, si hay [notes], nota. La usan "Crear
-/// movimiento" en Revisión (spec 008 §3.5) y "Registrar" (§3.4). Los
-/// errores llegan ya como texto.
+/// hora, comercio, categoría, la cuenta si hay [onPickAccount] y, si hay
+/// [notes], nota. La usan "Crear movimiento" en Revisión (spec 008 §3.5) y
+/// "Registrar" (§3.4). Los errores llegan ya como texto.
 class TransactionFormCard extends StatelessWidget {
   const TransactionFormCard({
     required this.amount,
@@ -24,6 +24,8 @@ class TransactionFormCard extends StatelessWidget {
     required this.onPickTime,
     required this.onPickCategory,
     this.notes,
+    this.accountName,
+    this.onPickAccount,
     this.amountError,
     this.directionError,
     this.dateError,
@@ -48,6 +50,12 @@ class TransactionFormCard extends StatelessWidget {
   final VoidCallback onPickDate;
   final VoidCallback onPickTime;
   final VoidCallback onPickCategory;
+
+  /// Cuenta elegida (`null`: "Sin cuenta").
+  final String? accountName;
+
+  /// Abre el selector de cuenta; `null` oculta la fila (Revisión).
+  final VoidCallback? onPickAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +207,20 @@ class TransactionFormCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (onPickAccount case final pickAccount?)
+              Row(
+                children: [
+                  Expanded(child: Text(l10n.accountFieldLabel, style: label)),
+                  _CategoryButton(
+                    label: accountName ?? l10n.accountPickerNone,
+                    semantics: l10n.reviewChangeSemantics(
+                      l10n.accountFieldLabel,
+                      accountName ?? l10n.accountPickerNone,
+                    ),
+                    onTap: pickAccount,
+                  ),
+                ],
+              ),
             if (notes != null) ...[
               const SizedBox(height: Space.xs),
               Text(l10n.registerNotesLabel, style: label),
@@ -283,11 +305,19 @@ class _PickerTile extends StatelessWidget {
 }
 
 /// Chip de categoría de 36 dp en un área táctil de 48 dp; abre la hoja.
+/// Chip tocable de un valor del formulario (categoría, cuenta).
 class _CategoryButton extends StatelessWidget {
-  const _CategoryButton({required this.label, required this.onTap});
+  const _CategoryButton({
+    required this.label,
+    required this.onTap,
+    this.semantics,
+  });
 
   final String label;
   final VoidCallback onTap;
+
+  /// Por defecto, "Cambiar categoría: …".
+  final String? semantics;
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +329,7 @@ class _CategoryButton extends StatelessWidget {
       button: true,
       container: true,
       excludeSemantics: true,
-      label: l10n.txChangeCategorySemantics(label),
+      label: semantics ?? l10n.txChangeCategorySemantics(label),
       onTap: onTap,
       child: InkWell(
         onTap: onTap,

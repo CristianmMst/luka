@@ -14,7 +14,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TransactionFilter {
 
- PeriodPreset get period; DateTime? get from; DateTime? get to; Set<TxKind> get kinds; Set<String> get banks; Set<TxChannel> get channels; String? get categoryId; String get text;
+ PeriodPreset get period; DateTime? get from; DateTime? get to; Set<TxKind> get kinds; Set<String> get banks; Set<TxChannel> get channels;/// Cuentas vinculadas (ids); vacío = todas.
+ Set<String> get accountIds; String? get categoryId; String get text;
 /// Create a copy of TransactionFilter
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +26,16 @@ $TransactionFilterCopyWith<TransactionFilter> get copyWith => _$TransactionFilte
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFilter&&(identical(other.period, period) || other.period == period)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&const DeepCollectionEquality().equals(other.kinds, kinds)&&const DeepCollectionEquality().equals(other.banks, banks)&&const DeepCollectionEquality().equals(other.channels, channels)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionFilter&&(identical(other.period, period) || other.period == period)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&const DeepCollectionEquality().equals(other.kinds, kinds)&&const DeepCollectionEquality().equals(other.banks, banks)&&const DeepCollectionEquality().equals(other.channels, channels)&&const DeepCollectionEquality().equals(other.accountIds, accountIds)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,from,to,const DeepCollectionEquality().hash(kinds),const DeepCollectionEquality().hash(banks),const DeepCollectionEquality().hash(channels),categoryId,text);
+int get hashCode => Object.hash(runtimeType,period,from,to,const DeepCollectionEquality().hash(kinds),const DeepCollectionEquality().hash(banks),const DeepCollectionEquality().hash(channels),const DeepCollectionEquality().hash(accountIds),categoryId,text);
 
 @override
 String toString() {
-  return 'TransactionFilter(period: $period, from: $from, to: $to, kinds: $kinds, banks: $banks, channels: $channels, categoryId: $categoryId, text: $text)';
+  return 'TransactionFilter(period: $period, from: $from, to: $to, kinds: $kinds, banks: $banks, channels: $channels, accountIds: $accountIds, categoryId: $categoryId, text: $text)';
 }
 
 
@@ -45,7 +46,7 @@ abstract mixin class $TransactionFilterCopyWith<$Res>  {
   factory $TransactionFilterCopyWith(TransactionFilter value, $Res Function(TransactionFilter) _then) = _$TransactionFilterCopyWithImpl;
 @useResult
 $Res call({
- PeriodPreset period, DateTime? from, DateTime? to, Set<TxKind> kinds, Set<String> banks, Set<TxChannel> channels, String? categoryId, String text
+ PeriodPreset period, DateTime? from, DateTime? to, Set<TxKind> kinds, Set<String> banks, Set<TxChannel> channels, Set<String> accountIds, String? categoryId, String text
 });
 
 
@@ -62,7 +63,7 @@ class _$TransactionFilterCopyWithImpl<$Res>
 
 /// Create a copy of TransactionFilter
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? from = freezed,Object? to = freezed,Object? kinds = null,Object? banks = null,Object? channels = null,Object? categoryId = freezed,Object? text = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? period = null,Object? from = freezed,Object? to = freezed,Object? kinds = null,Object? banks = null,Object? channels = null,Object? accountIds = null,Object? categoryId = freezed,Object? text = null,}) {
   return _then(_self.copyWith(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodPreset,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
@@ -70,7 +71,8 @@ as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_n
 as DateTime?,kinds: null == kinds ? _self.kinds : kinds // ignore: cast_nullable_to_non_nullable
 as Set<TxKind>,banks: null == banks ? _self.banks : banks // ignore: cast_nullable_to_non_nullable
 as Set<String>,channels: null == channels ? _self.channels : channels // ignore: cast_nullable_to_non_nullable
-as Set<TxChannel>,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as Set<TxChannel>,accountIds: null == accountIds ? _self.accountIds : accountIds // ignore: cast_nullable_to_non_nullable
+as Set<String>,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -157,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  String? categoryId,  String text)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  Set<String> accountIds,  String? categoryId,  String text)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TransactionFilter() when $default != null:
-return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.categoryId,_that.text);case _:
+return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.accountIds,_that.categoryId,_that.text);case _:
   return orElse();
 
 }
@@ -178,10 +180,10 @@ return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  String? categoryId,  String text)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  Set<String> accountIds,  String? categoryId,  String text)  $default,) {final _that = this;
 switch (_that) {
 case _TransactionFilter():
-return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.categoryId,_that.text);case _:
+return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.accountIds,_that.categoryId,_that.text);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +200,10 @@ return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  String? categoryId,  String text)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PeriodPreset period,  DateTime? from,  DateTime? to,  Set<TxKind> kinds,  Set<String> banks,  Set<TxChannel> channels,  Set<String> accountIds,  String? categoryId,  String text)?  $default,) {final _that = this;
 switch (_that) {
 case _TransactionFilter() when $default != null:
-return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.categoryId,_that.text);case _:
+return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.channels,_that.accountIds,_that.categoryId,_that.text);case _:
   return null;
 
 }
@@ -213,7 +215,7 @@ return $default(_that.period,_that.from,_that.to,_that.kinds,_that.banks,_that.c
 
 
 class _TransactionFilter extends TransactionFilter {
-  const _TransactionFilter({this.period = PeriodPreset.thisMonth, this.from, this.to, final  Set<TxKind> kinds = const <TxKind>{}, final  Set<String> banks = const <String>{}, final  Set<TxChannel> channels = const <TxChannel>{}, this.categoryId, this.text = ''}): _kinds = kinds,_banks = banks,_channels = channels,super._();
+  const _TransactionFilter({this.period = PeriodPreset.thisMonth, this.from, this.to, final  Set<TxKind> kinds = const <TxKind>{}, final  Set<String> banks = const <String>{}, final  Set<TxChannel> channels = const <TxChannel>{}, final  Set<String> accountIds = const <String>{}, this.categoryId, this.text = ''}): _kinds = kinds,_banks = banks,_channels = channels,_accountIds = accountIds,super._();
   
 
 @override@JsonKey() final  PeriodPreset period;
@@ -240,6 +242,15 @@ class _TransactionFilter extends TransactionFilter {
   return EqualUnmodifiableSetView(_channels);
 }
 
+/// Cuentas vinculadas (ids); vacío = todas.
+ final  Set<String> _accountIds;
+/// Cuentas vinculadas (ids); vacío = todas.
+@override@JsonKey() Set<String> get accountIds {
+  if (_accountIds is EqualUnmodifiableSetView) return _accountIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_accountIds);
+}
+
 @override final  String? categoryId;
 @override@JsonKey() final  String text;
 
@@ -253,16 +264,16 @@ _$TransactionFilterCopyWith<_TransactionFilter> get copyWith => __$TransactionFi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionFilter&&(identical(other.period, period) || other.period == period)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&const DeepCollectionEquality().equals(other._kinds, _kinds)&&const DeepCollectionEquality().equals(other._banks, _banks)&&const DeepCollectionEquality().equals(other._channels, _channels)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionFilter&&(identical(other.period, period) || other.period == period)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&const DeepCollectionEquality().equals(other._kinds, _kinds)&&const DeepCollectionEquality().equals(other._banks, _banks)&&const DeepCollectionEquality().equals(other._channels, _channels)&&const DeepCollectionEquality().equals(other._accountIds, _accountIds)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.text, text) || other.text == text));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,period,from,to,const DeepCollectionEquality().hash(_kinds),const DeepCollectionEquality().hash(_banks),const DeepCollectionEquality().hash(_channels),categoryId,text);
+int get hashCode => Object.hash(runtimeType,period,from,to,const DeepCollectionEquality().hash(_kinds),const DeepCollectionEquality().hash(_banks),const DeepCollectionEquality().hash(_channels),const DeepCollectionEquality().hash(_accountIds),categoryId,text);
 
 @override
 String toString() {
-  return 'TransactionFilter(period: $period, from: $from, to: $to, kinds: $kinds, banks: $banks, channels: $channels, categoryId: $categoryId, text: $text)';
+  return 'TransactionFilter(period: $period, from: $from, to: $to, kinds: $kinds, banks: $banks, channels: $channels, accountIds: $accountIds, categoryId: $categoryId, text: $text)';
 }
 
 
@@ -273,7 +284,7 @@ abstract mixin class _$TransactionFilterCopyWith<$Res> implements $TransactionFi
   factory _$TransactionFilterCopyWith(_TransactionFilter value, $Res Function(_TransactionFilter) _then) = __$TransactionFilterCopyWithImpl;
 @override @useResult
 $Res call({
- PeriodPreset period, DateTime? from, DateTime? to, Set<TxKind> kinds, Set<String> banks, Set<TxChannel> channels, String? categoryId, String text
+ PeriodPreset period, DateTime? from, DateTime? to, Set<TxKind> kinds, Set<String> banks, Set<TxChannel> channels, Set<String> accountIds, String? categoryId, String text
 });
 
 
@@ -290,7 +301,7 @@ class __$TransactionFilterCopyWithImpl<$Res>
 
 /// Create a copy of TransactionFilter
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? from = freezed,Object? to = freezed,Object? kinds = null,Object? banks = null,Object? channels = null,Object? categoryId = freezed,Object? text = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? period = null,Object? from = freezed,Object? to = freezed,Object? kinds = null,Object? banks = null,Object? channels = null,Object? accountIds = null,Object? categoryId = freezed,Object? text = null,}) {
   return _then(_TransactionFilter(
 period: null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as PeriodPreset,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
@@ -298,7 +309,8 @@ as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_n
 as DateTime?,kinds: null == kinds ? _self._kinds : kinds // ignore: cast_nullable_to_non_nullable
 as Set<TxKind>,banks: null == banks ? _self._banks : banks // ignore: cast_nullable_to_non_nullable
 as Set<String>,channels: null == channels ? _self._channels : channels // ignore: cast_nullable_to_non_nullable
-as Set<TxChannel>,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
+as Set<TxChannel>,accountIds: null == accountIds ? _self._accountIds : accountIds // ignore: cast_nullable_to_non_nullable
+as Set<String>,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,
   ));

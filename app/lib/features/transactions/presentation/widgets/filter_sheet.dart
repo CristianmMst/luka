@@ -1,5 +1,7 @@
 import 'package:finanzia/core/l10n/gen/app_localizations.dart';
 import 'package:finanzia/core/theme/tokens/spacing.dart';
+import 'package:finanzia/features/accounts/application/account_actions.dart';
+import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
 import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
@@ -94,6 +96,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     final now = ref.watch(transactionsClockProvider)();
     final count = ref.watch(filteredCountProvider(_draft)).value;
     final categories = ref.watch(transactionCategoriesProvider).value;
+    final accounts = ref.watch(linkedAccountsProvider).value ?? const [];
     final categoryName = _draft.categoryId == null
         ? l10n.filterCategoryAll
         : filterCategoryName(l10n, _draft.categoryId, categories) ??
@@ -179,6 +182,24 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                       ),
                   ],
                 ),
+                if (accounts.isNotEmpty)
+                  _Group(
+                    title: l10n.filterAccount,
+                    children: [
+                      for (final account in accounts)
+                        _ToggleChip(
+                          label: linkedAccountTitle(l10n, account),
+                          selected: _draft.accountIds.contains(account.id),
+                          onTap: () => _update(
+                            _draft.copyWith(
+                              accountIds: _toggle(_draft.accountIds, {
+                                account.id,
+                              }),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 _Group(
                   title: l10n.filterSource,
                   children: [

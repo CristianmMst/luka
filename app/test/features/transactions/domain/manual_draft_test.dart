@@ -51,4 +51,16 @@ void main() {
       throwsA(isA<InvalidManualDraft>()),
     );
   });
+
+  test('toNewTransaction lleva la cuenta y el tag NFC', () {
+    final draft = ManualDraft(
+      occurredAt: at,
+      amount: Cop.pesos(8500),
+      accountId: 'a-1',
+      nfcTagId: 'tag-1',
+    );
+    final data = draft.toNewTransaction();
+    expect(data.accountId, 'a-1');
+    expect(data.nfcTagId, 'tag-1');
+  });
 }

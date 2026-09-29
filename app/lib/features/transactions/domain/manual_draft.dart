@@ -30,6 +30,13 @@ abstract class ManualDraft with _$ManualDraft {
     String? merchant,
     String? categoryId,
     String? notes,
+
+    /// Cuenta vinculada de donde salió o a donde entró (spec 008 §3.4).
+    String? accountId,
+
+    /// Tag NFC del registro rápido (spec 006 §5): el servidor marca la
+    /// fuente como `nfc`.
+    String? nfcTagId,
   }) = _ManualDraft;
 
   const ManualDraft._();
@@ -48,6 +55,8 @@ abstract class ManualDraft with _$ManualDraft {
       merchant: _text(merchant),
       categoryId: categoryId,
       notes: _text(notes),
+      accountId: accountId,
+      nfcTagId: nfcTagId,
     );
   }
 

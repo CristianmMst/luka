@@ -52,6 +52,9 @@ class DriftTransactionsRepository implements TransactionsRepository {
       query.where(t.kind.isIn([for (final k in filter.kinds) k.name]));
     }
     if (filter.banks.isNotEmpty) query.where(t.bank.isIn(filter.banks));
+    if (filter.accountIds.isNotEmpty) {
+      query.where(t.accountId.isIn(filter.accountIds));
+    }
     if (filter.categoryId case final categoryId?) {
       query.where(_inCategory(categoryId));
     }

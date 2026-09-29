@@ -16,6 +16,9 @@ abstract class TransactionFilter with _$TransactionFilter {
     @Default(<TxKind>{}) Set<TxKind> kinds,
     @Default(<String>{}) Set<String> banks,
     @Default(<TxChannel>{}) Set<TxChannel> channels,
+
+    /// Cuentas vinculadas (ids); vacío = todas.
+    @Default(<String>{}) Set<String> accountIds,
     String? categoryId,
     @Default('') String text,
   }) = _TransactionFilter;
@@ -29,6 +32,7 @@ abstract class TransactionFilter with _$TransactionFilter {
     if (kinds.isNotEmpty) count++;
     if (banks.isNotEmpty) count++;
     if (channels.isNotEmpty) count++;
+    if (accountIds.isNotEmpty) count++;
     if (categoryId != null) count++;
     if (period != PeriodPreset.thisMonth) count++;
     return count;

@@ -23,6 +23,7 @@ void main() {
         const TransactionFilter(channels: {TxChannel.manual}).activeCount,
         1,
       );
+      expect(const TransactionFilter(accountIds: {'a-1'}).activeCount, 1);
       expect(
         const TransactionFilter(categoryId: 'c1').activeCount,
         1,

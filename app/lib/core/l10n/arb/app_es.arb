@@ -1110,5 +1110,9 @@
   "privacyDeleteButton": "Borrar para siempre",
   "privacyDeleting": "Borrando…",
   "privacyErrorOffline": "Necesitas conexión para exportar o borrar tu cuenta.",
-  "privacyErrorUnexpected": "No pudimos completarlo. Intenta de nuevo."
+  "privacyErrorUnexpected": "No pudimos completarlo. Intenta de nuevo.",
+  "accountPickerTitle": "¿De qué cuenta?",
+  "accountPickerNone": "Sin cuenta",
+  "accountFieldLabel": "Cuenta",
+  "filterAccount": "Cuenta"
 }

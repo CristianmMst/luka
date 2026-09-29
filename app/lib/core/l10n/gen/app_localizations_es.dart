@@ -1803,4 +1803,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get privacyErrorUnexpected =>
       'No pudimos completarlo. Intenta de nuevo.';
+
+  @override
+  String get accountPickerTitle => '¿De qué cuenta?';
+
+  @override
+  String get accountPickerNone => 'Sin cuenta';
+
+  @override
+  String get accountFieldLabel => 'Cuenta';
+
+  @override
+  String get filterAccount => 'Cuenta';
 }
