@@ -1,0 +1,52 @@
+# Build de iOS sin firmar para instalar con SideStore (F4.3b, app/README.md).
+# Codemagic compila en macOS lo que este equipo (Windows) no puede. El .ipa
+# sale sin firma; SideStore lo firma con el Apple ID del usuario al
+# instalarlo y hay que refrescarlo cada 7 días.
+#
+# Se corre a mano desde codemagic.io (sin disparadores). Variables, en el
+# grupo `finanzia` de la app en Codemagic:
+#   API_BASE_URL  obligatoria: URL pública del backend (p. ej. la de
+#                 `just tunnel`). El default de desarrollo, localhost, no
+#                 llega desde el iPhone.
+# GOOGLE_SERVER_CLIENT_ID no hace falta: el default de la app es el de
+# finanzia-509500.
+workflows:
+  ios-unsigned:
+    name: iOS sin firmar (SideStore)
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      groups:
+        - finanzia
+      flutter: 3.35.7
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Revisar configuración
+        script: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "Falta API_BASE_URL en el grupo 'finanzia' de Codemagic."
+            exit 1
+          fi
+          if ! grep -Eq '^GOOGLE_IOS_CLIENT_ID = .+' app/ios/Flutter/GoogleSignIn.xcconfig; then
+            echo "Falta el cliente OAuth de iOS en app/ios/Flutter/GoogleSignIn.xcconfig."
+            exit 1
+          fi
+      - name: Dependencias
+        script: |
+          cd app
+          flutter pub get
+      - name: Compilar sin firmar
+        script: |
+          cd app
+          flutter build ios --release --no-codesign \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+      - name: Empaquetar .ipa
+        script: |
+          cd app/build/ios/iphoneos
+          rm -rf Payload finanzia.ipa
+          mkdir Payload
+          cp -R Runner.app Payload/
+          zip -qry finanzia.ipa Payload
+    artifacts:
+      - app/build/ios/iphoneos/finanzia.ipa
