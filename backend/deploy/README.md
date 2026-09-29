@@ -26,7 +26,7 @@ La API, el worker arq, Postgres 16, Redis 7 y Caddy corren con Docker Compose en
 1. **`gate`:** `pip-audit --strict` sobre las dependencias de producción (exportadas de `uv.lock` con hashes) y gitleaks sobre el historial. Una vulnerabilidad conocida o un secreto frenan el despliegue (constitución P1, spec 009 §8).
 2. **`build`:** construye la imagen con caché de GitHub Actions y la publica en `ghcr.io/cristianmmst/finanzia-backend` con el tag `sha-<commit>` y `latest`. Trae SBOM y atestación de procedencia.
 3. **`deploy`** (entorno `production`):
-   - Copia `compose.yml`, `Caddyfile` y `backup.sh` por SSH, verificando la huella del host.
+   - Copia `compose.yml`, `Caddyfile` y `backup.sh` por SSH. La huella del host se lee con `ssh-keyscan` en cada despliegue.
    - Deja en `.env` la imagen fijada por **digest**.
    - Hace el pull, corre las migraciones y levanta el stack con `--wait`: si algo no queda sano, el job falla.
    - El token de GHCR solo vale durante el job y se borra del VPS al terminar.
@@ -81,13 +81,11 @@ En el repo, ve a **Settings → Environments → New environment** y crea `produ
 | `VPS_HOST` | IP o nombre del VPS |
 | `VPS_USER` | `deploy` |
 | `VPS_SSH_KEY` | Contenido de `~/.ssh/finanzia_deploy` (la llave privada) |
-| `VPS_KNOWN_HOSTS` | Salida de `ssh-keyscan -t ed25519 <IP>` (revisa que la huella coincida con la del VPS) |
 
 Con `gh` desde la terminal:
 
 ```bash
 gh secret set VPS_SSH_KEY --env production < ~/.ssh/finanzia_deploy
-ssh-keyscan -t ed25519 <IP> | gh secret set VPS_KNOWN_HOSTS --env production
 gh secret set VPS_HOST --env production --body "<IP>"
 gh secret set VPS_USER --env production --body deploy
 ```

@@ -8,8 +8,8 @@
 #    todo quede sano.
 #
 # Lint y tests corren en local antes de subir (`just lint`, `just test`).
-# Secretos del entorno `production`: VPS_HOST, VPS_USER, VPS_SSH_KEY y
-# VPS_KNOWN_HOSTS. Los secretos de la app viven solo en el `.env` del VPS.
+# Secretos del entorno `production`: VPS_HOST, VPS_USER y VPS_SSH_KEY.
+# Los secretos de la app viven solo en el `.env` del VPS.
 name: Deploy backend
 
 on:
@@ -116,15 +116,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Llave SSH y host conocido
+      - name: Llave SSH y huella del host
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # La huella se lee del servidor en cada despliegue (sin secreto que
+          # mantener). No protege de un servidor suplantado en la red; para
+          # eso habria que fijarla como secreto.
+          ssh-keyscan -t ed25519 "$VPS_HOST" > ~/.ssh/known_hosts
+          test -s ~/.ssh/known_hosts || { echo "ssh-keyscan no obtuvo la huella de $VPS_HOST"; exit 1; }
           cat > ~/.ssh/config <<EOF
           Host vps
             HostName ${{ secrets.VPS_HOST }}
