@@ -61,7 +61,7 @@ GitHub Actions solo despliega: `.github/workflows/deploy-backend.yml` corre, en 
 - **Variables de entorno:** no añadir las que repitan un default.
   - `backend/.env.example` trae solo las obligatorias: DB, Redis, `JWT_SECRET` y `GOOGLE_CLIENT_ID`.
   - La app solo acepta `API_BASE_URL` y `GOOGLE_SERVER_CLIENT_ID`, y ambas tienen default de desarrollo. `flutter run` funciona sin flags.
-- **Google Sign-In:** proyecto GCP `finanzia-509500`. El client ID web es la audiencia del `id_token` en app y backend. Si cambia la máquina o el keystore, hay que agregar su SHA-1 al cliente Android.
+- **Google Sign-In:** proyecto GCP `luka-510204`. El client ID web es la audiencia del `id_token` en app y backend. Si cambia la máquina o el keystore, hay que agregar su SHA-1 al cliente Android.
 
 ## Seguridad (P1, spec 009)
 

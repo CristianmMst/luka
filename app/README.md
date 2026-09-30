@@ -31,15 +31,15 @@ No hay que pasar nada para desarrollo: `flutter run` (o Run en el IDE) usa los v
 | Variable | Default | Uso |
 |---|---|---|
 | `API_BASE_URL` | `http://localhost:8000` | Base de la API; con `adb reverse tcp:8000 tcp:8000` llega al backend local desde teléfono o emulador |
-| `GOOGLE_SERVER_CLIENT_ID` | client ID web de `finanzia-509500` | Audiencia del `id_token` que verifica el backend |
+| `GOOGLE_SERVER_CLIENT_ID` | client ID web de `luka-510204` | Audiencia del `id_token` que verifica el backend |
 
 Los `dart-define` se aplican al compilar: después de cambiarlos hay que relanzar la app, porque el hot reload no los recoge.
 
 ### Google Sign-In real
 
-El proyecto de Google Cloud es `finanzia-509500` (Google Auth Platform, público externo en modo de prueba). Tiene dos clientes OAuth:
+El proyecto de Google Cloud es `luka-510204` (Google Auth Platform, público externo en modo de prueba). Tiene dos clientes OAuth:
 
-- **Web** (`30065910946-hatnf…apps.googleusercontent.com`): es la audiencia del `id_token`. La app lo usa como `serverClientId` y el backend lo exige como `LUKA_GOOGLE_CLIENT_ID`.
+- **Web** (`918126641294-eldns…apps.googleusercontent.com`): es la audiencia del `id_token`. La app lo usa como `serverClientId` y el backend lo exige como `LUKA_GOOGLE_CLIENT_ID`.
 - **Android**: paquete `co.luka.luka` con el SHA-1 del keystore de debug de la máquina de desarrollo. Si otra máquina u otro keystore firma el APK, hay que agregar su SHA-1 (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
 
 Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.

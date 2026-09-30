@@ -43,7 +43,7 @@ def _envelope(data: dict[str, Any]) -> dict[str, Any]:
             "messageId": "136969346945",
             "publishTime": "2026-05-01T12:00:00Z",
         },
-        "subscription": "projects/finanzia-509500/subscriptions/gmail-push",
+        "subscription": "projects/luka-510204/subscriptions/gmail-push",
     }
 
 

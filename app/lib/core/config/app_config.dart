@@ -21,11 +21,12 @@ final class AppConfig {
     );
   }
 
-  /// Client ID web del proyecto de desarrollo `finanzia-509500`. No es un
+  /// Client ID web del proyecto de desarrollo `luka-510204`. No es un
   /// secreto: es la audiencia pública del `id_token`. Los builds de otros
   /// entornos lo sobrescriben con `--dart-define`.
   static const devGoogleServerClientId =
-      '30065910946-hatnfnvkk8782gf8qgbii9qdlqf61jn4.apps.googleusercontent.com';
+      '918126641294-eldnsshsmu7vufdajkesk69qim7ft9ph'
+      '.apps.googleusercontent.com';
 
   final String apiBaseUrl;
 

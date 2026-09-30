@@ -56,7 +56,7 @@ mkdir -p ~/apps/luka && cd ~/apps/luka
 cat > .env <<EOF
 POSTGRES_PASSWORD=$(openssl rand -hex 32)
 LUKA_JWT_SECRET=$(openssl rand -base64 48)
-LUKA_GOOGLE_CLIENT_ID=30065910946-hatnfnvkk8782gf8qgbii9qdlqf61jn4.apps.googleusercontent.com
+LUKA_GOOGLE_CLIENT_ID=918126641294-eldnsshsmu7vufdajkesk69qim7ft9ph.apps.googleusercontent.com
 LUKA_GOOGLE_CLIENT_SECRET=PEGA_AQUI_EL_SECRETO
 LUKA_GMAIL_TOKEN_KEY=$(openssl rand -base64 32)
 LUKA_IMAGE=ghcr.io/cristianmmst/luka-backend:latest
@@ -65,7 +65,7 @@ chmod 600 .env
 nano .env
 ```
 
-- **`LUKA_GOOGLE_CLIENT_SECRET`:** pega aquí el secreto del cliente OAuth web de `finanzia-509500`.
+- **`LUKA_GOOGLE_CLIENT_SECRET`:** pega aquí el secreto del cliente OAuth web de `luka-510204`.
 - **`LUKA_GMAIL_TOKEN_KEY`:** guarda una copia fuera del VPS. Sin ella hay que reconectar Gmail de todos los usuarios.
 
 Los secretos de la app viven solo aquí, nunca en GitHub.
@@ -96,7 +96,7 @@ Por último, descomenta el bloque de 443 y recarga otra vez con el mismo `nginx 
 Sube a `main` (o corre **Actions → Deploy backend → Run workflow**). Cuando termine:
 
 - `https://luka.a360soft.tech/health/ready` debe responder `{"status":"ok",...}`.
-- En Google Cloud (`finanzia-509500`), cambia la URL del extremo de la suscripción push `gmail-push-dev` a `https://luka.a360soft.tech/v1/webhooks/gmail`.
+- En Google Cloud (`luka-510204`), cambia la URL del extremo de la suscripción push `gmail-push-dev` a `https://luka.a360soft.tech/v1/webhooks/gmail`.
 - Compila la app con `--dart-define=API_BASE_URL=https://luka.a360soft.tech`. En Codemagic, pon ese valor en el grupo `luka`.
 - Programa el respaldo con `crontab -e`, con la línea que trae `backup.sh`.
 

@@ -13,7 +13,7 @@ App de uso masivo: estas obligaciones son bloqueantes de lanzamiento, no opciona
 
 ### Modo de prueba (desarrollo, F3.1–F3.6)
 
-Mientras la pantalla de consentimiento del proyecto GCP (`finanzia-509500`) esté en modo de prueba
+Mientras la pantalla de consentimiento del proyecto GCP (`luka-510204`) esté en modo de prueba
 ("Público en prueba" en Google Auth Platform):
 
 - Solo los usuarios de prueba declarados en la consola pueden completar el consentimiento y

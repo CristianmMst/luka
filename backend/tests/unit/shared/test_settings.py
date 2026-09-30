@@ -125,11 +125,11 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.llm_confidence_threshold == 0.8
     assert settings.raw_message_retention_days == 90
     assert settings.raw_message_body_max_bytes == 8192
-    assert settings.gmail_pubsub_topic == "projects/finanzia-509500/topics/gmail-push"
+    assert settings.gmail_pubsub_topic == "projects/luka-510204/topics/gmail-push"
     assert settings.gmail_push_audience == "luka-gmail-push"
     assert (
         settings.gmail_push_service_account
-        == "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
+        == "gmail-push-invoker@luka-510204.iam.gserviceaccount.com"
     )
 
 

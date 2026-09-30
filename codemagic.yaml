@@ -9,7 +9,7 @@
 #                 https://luka.a360soft.tech. El default de desarrollo, localhost, no
 #                 llega desde el iPhone.
 # GOOGLE_SERVER_CLIENT_ID no hace falta: el default de la app es el de
-# finanzia-509500.
+# luka-510204.
 workflows:
   ios-unsigned:
     name: iOS sin firmar (SideStore)

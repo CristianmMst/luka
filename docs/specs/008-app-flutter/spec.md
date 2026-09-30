@@ -183,7 +183,7 @@ Canvas F4.2 (lista "Tarjetas por día", detalle "Monto protagonista", filtros, h
 | Variable | Default | Uso |
 |---|---|---|
 | `API_BASE_URL` | `http://localhost:8000` | base de la API; con `adb reverse tcp:8000 tcp:8000` llega al backend local desde teléfono o emulador |
-| `GOOGLE_SERVER_CLIENT_ID` | client ID web del proyecto de desarrollo `finanzia-509500` | audiencia del `id_token`; otros entornos lo sobrescriben |
+| `GOOGLE_SERVER_CLIENT_ID` | client ID web del proyecto de desarrollo `luka-510204` | audiencia del `id_token`; otros entornos lo sobrescriben |
 
 ## 8. Criterios de aceptación específicos de la app
 

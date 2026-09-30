@@ -41,9 +41,9 @@ class Settings(BaseSettings):
 
     # Cifrado AES-256-GCM de `gmail_connections.refresh_token_enc` (spec 009 §3, F3.2).
     gmail_token_key: SecretStr
-    gmail_pubsub_topic: str = "projects/finanzia-509500/topics/gmail-push"
+    gmail_pubsub_topic: str = "projects/luka-510204/topics/gmail-push"
     gmail_push_audience: str = "luka-gmail-push"
-    gmail_push_service_account: str = "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
+    gmail_push_service_account: str = "gmail-push-invoker@luka-510204.iam.gserviceaccount.com"
 
     log_level: str = "INFO"
     log_json: bool | None = None
