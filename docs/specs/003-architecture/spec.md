@@ -45,7 +45,7 @@ Decisión central: **monolito modular con arquitectura hexagonal** en el backend
 
 ```
 backend/
-├── src/finanzia/
+├── src/luka/
 │   ├── shared/             # kernel: config, db (SQLAlchemy), seguridad, bus de eventos, errores
 │   ├── modules/
 │   │   ├── identity/       # Google Sign-In, JWT/refresh, usuarios, consentimientos, borrado de cuenta
@@ -104,7 +104,7 @@ Grupo de consumidores por evento (F2.2):
 
 Los grupos se crean (idempotente) tanto al arrancar la API como el worker, para que un evento publicado antes del primer arranque del worker no se pierda (`XGROUP CREATE ... $ MKSTREAM` ignora entradas previas si el grupo no existía aún). `event_id` es determinista por `raw_message_id` + resultado (D8): así la reentrega de un evento de parsing —incluida la de un reproceso tras un fallo de commit— es absorbida por el `IdempotentHandler`, aunque llegue en una entrada de stream distinta.
 
-La implementación del bus vive en `shared/events/`: un codec de eventos (serialización/registro por `event_type`), un adapter de Redis Streams, un consumer con grupos de consumidores (`XREADGROUP`) que reclama pendientes abandonados con `XAUTOCLAIM` y envía a una DLQ (`finanzia:events:dlq`) los mensajes que superan el máximo de reintentos, y un handler idempotente que marca cada `event_id` procesado por grupo con un marcador de 7 días. Los consumers corren dentro del proceso worker arq, cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada. La publicación del evento ocurre después del commit de la transacción que lo origina, sin patrón outbox transaccional: se acepta como riesgo del MVP (§6 del plan de implementación); si un caso de uso futuro depende de no perder nunca el evento, se añade un outbox en Fase 2.
+La implementación del bus vive en `shared/events/`: un codec de eventos (serialización/registro por `event_type`), un adapter de Redis Streams, un consumer con grupos de consumidores (`XREADGROUP`) que reclama pendientes abandonados con `XAUTOCLAIM` y envía a una DLQ (`luka:events:dlq`) los mensajes que superan el máximo de reintentos, y un handler idempotente que marca cada `event_id` procesado por grupo con un marcador de 7 días. Los consumers corren dentro del proceso worker arq, cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada. La publicación del evento ocurre después del commit de la transacción que lo origina, sin patrón outbox transaccional: se acepta como riesgo del MVP (§6 del plan de implementación); si un caso de uso futuro depende de no perder nunca el evento, se añade un outbox en Fase 2.
 
 ### 2.4 Request path vs workers
 
@@ -148,7 +148,7 @@ app/lib/
 - **Reglas de capas** (verificadas por `app/test/architecture_test.dart`, equivalente a import-linter): `domain` es Dart puro (sin Flutter, dio, Drift ni Riverpod); `application` no importa `data` ni `presentation`; `presentation` no importa `data`; `core` no importa features ni `app`. `application` declara sus puertos como providers que fallan si no se sobrescriben, y `lib/app/composition.dart` es el único lugar que los conecta con las implementaciones de `data`.
 - **Red**: dos clientes dio. El público (`/v1/auth/*`) no tiene interceptor, así un refresh nunca dispara otro refresh. El autenticado usa `AuthInterceptor`, que añade el Bearer y, ante `401 token_expired`, hace un refresh single-flight y reintenta una vez. `core` define el puerto `SessionBridge` y la feature `auth` lo implementa (`SessionManager`).
 - El código de plataforma (notification listener, NFC) vive detrás de interfaces de `capture/domain`; el resto de la app no distingue el origen de una transacción.
-- iOS compila la misma app: `capture` expone el puerto `NotificationSource`, con `MethodChannelNotificationSource` (listener nativo en `android/app/src/main/kotlin/co/finanzia/finanzia/capture/`) en Android e `IosWalletNotificationSource` (cola de pagos con Apple Pay que llena la App Intent de `ios/Runner/`, spec 006 §3.3) en iOS; `readsNotifications` distingue las dos para la UI. `NoopNotificationSource` queda para las plataformas sin captura.
+- iOS compila la misma app: `capture` expone el puerto `NotificationSource`, con `MethodChannelNotificationSource` (listener nativo en `android/app/src/main/kotlin/co/luka/luka/capture/`) en Android e `IosWalletNotificationSource` (cola de pagos con Apple Pay que llena la App Intent de `ios/Runner/`, spec 006 §3.3) en iOS; `readsNotifications` distingue las dos para la UI. `NoopNotificationSource` queda para las plataformas sin captura.
 
 ## 4. Flujo end-to-end (correo → transacción)
 

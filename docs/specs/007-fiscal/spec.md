@@ -4,7 +4,7 @@
 
 El motor fiscal produce el **insumo de la declaración de renta de personas naturales** (formulario 210): cifras agregadas del año gravable organizadas por cédulas y conceptos, más la verificación de topes de obligación de declarar. **No** liquida el impuesto final ni presenta ante la DIAN (fuera de alcance MVP, spec 001 §5).
 
-Disclaimer obligatorio en UI y exportes: *"Este reporte es un insumo informativo; verifica las cifras con tu contador. finanzia no presta asesoría tributaria."*
+Disclaimer obligatorio en UI y exportes: *"Este reporte es un insumo informativo; verifica las cifras con tu contador. luka no presta asesoría tributaria."*
 
 ## 2. Etiquetas fiscales (`fiscal_tag`)
 

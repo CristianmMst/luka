@@ -2,7 +2,7 @@
 
 ## 1. Visión
 
-**finanzia** elimina el registro manual de gastos: captura automáticamente cada transacción del usuario desde sus correos bancarios, las notificaciones de su celular y sus SMS bancarios, la clasifica con etiquetas fiscales colombianas, y al final del año genera las cifras de la declaración de renta organizadas según el formulario 210 de la DIAN — listas para copiar al portal o entregar al contador.
+**luka** elimina el registro manual de gastos: captura automáticamente cada transacción del usuario desde sus correos bancarios, las notificaciones de su celular y sus SMS bancarios, la clasifica con etiquetas fiscales colombianas, y al final del año genera las cifras de la declaración de renta organizadas según el formulario 210 de la DIAN — listas para copiar al portal o entregar al contador.
 
 ## 2. Problema
 

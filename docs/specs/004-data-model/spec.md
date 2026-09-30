@@ -141,7 +141,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 
 | Columna | Tipo | Notas |
 |---|---|---|
-| id | UUID PK | en las categorías del sistema, `uuid5(NAMESPACE_URL, "https://finanzia.app/categories/{slug}")` (determinístico, ver §2.8.1) |
+| id | UUID PK | en las categorías del sistema, `uuid5(NAMESPACE_URL, "https://luka.app/categories/{slug}")` (determinístico, ver §2.8.1) |
 | user_id | UUID FK NULL | NULL = categoría del sistema (RF-7.4) |
 | slug | TEXT NULL UNIQUE | solo en categorías del sistema; `CHECK ((user_id IS NULL) = (slug IS NOT NULL))` |
 | name | TEXT | |
@@ -250,7 +250,7 @@ El matcher necesita los dos lados y las dos cuentas vinculadas. Muchas veces sol
 - **Coincidencia** (`ledger/domain/self_transfer.py`): se comparan los nombres sin tildes, en mayúsculas y sin puntuación. Todas las palabras del nombre más corto deben estar en el más largo, con al menos 2 en común: "CRISTIAN MORA" y "Cristian Steve Mora Moreno" coinciden; "CRISTIAN" solo no.
 - **Alcance:** solo los envíos y recibos a uno mismo. Pagarle a otra persona por Bre-B sigue siendo gasto, y lo que otro te manda sigue siendo ingreso. Una compra en un comercio con el nombre del titular nunca se marca, porque su plantilla no es entre personas.
 - **Reversible:** el usuario la desmarca desde el detalle, como cualquier transferencia.
-- **Movimientos anteriores:** `just mark-self-transfers` (`finanzia.tools.mark_self_transfers`, caso de uso `MarkSelfTransfers`) aplica la misma regla a las capturas entre personas ya guardadas. Solo toca las que nadie editó después de capturarlas (`updated_at == created_at`); las editadas se cuentan como omitidas. Sube `updated_at` para que el pull de la app las traiga y es idempotente.
+- **Movimientos anteriores:** `just mark-self-transfers` (`luka.tools.mark_self_transfers`, caso de uso `MarkSelfTransfers`) aplica la misma regla a las capturas entre personas ya guardadas. Solo toca las que nadie editó después de capturarlas (`updated_at == created_at`); las editadas se cuentan como omitidas. Sube `updated_at` para que el pull de la app las traiga y es idempotente.
 
 ## 5. Esquema local (Drift, app)
 

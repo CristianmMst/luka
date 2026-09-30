@@ -1,4 +1,4 @@
-# Constitución del proyecto finanzia
+# Constitución del proyecto luka
 
 Principios innegociables. Toda decisión de diseño, spec o implementación debe cumplirlos; si un cambio los contradice, se actualiza primero este documento mediante discusión explícita.
 

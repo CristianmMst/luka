@@ -1,4 +1,4 @@
-# finanzia
+# luka
 
 App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente (notificaciones, Gmail, NFC, manual) y arma el reporte de renta colombiano (formulario 210 de la DIAN). Usuarios y moneda: Colombia, COP, español.
 
@@ -30,7 +30,7 @@ GitHub Actions solo despliega: `.github/workflows/deploy-backend.yml` corre, en 
 
 ## Backend (`backend/`, Python 3.12, uv)
 
-- **Arquitectura:** monolito modular hexagonal, `src/finanzia/{shared,modules/<m>/{domain,application,infrastructure}}`. Import-linter tiene 6 contratos: `shared` no importa módulos, y los cruces entre módulos pasan solo por `public.py`/`events.py`.
+- **Arquitectura:** monolito modular hexagonal, `src/luka/{shared,modules/<m>/{domain,application,infrastructure}}`. Import-linter tiene 6 contratos: `shared` no importa módulos, y los cruces entre módulos pasan solo por `public.py`/`events.py`.
 - **Dominio:** dataclasses frozen de stdlib; Pydantic solo en los bordes (API y settings).
 - **Errores:** cada módulo define errores puros y un `EXCEPTION_MAP` en infra. El sobre de error de la API es `{"error":{"code","message","field?"}}`.
 - **Tiempo y logs:** el tiempo siempre entra por `ClockPort`; nada de `datetime.now()` directo. Los logs son structlog.

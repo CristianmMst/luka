@@ -1,4 +1,4 @@
-# finanzia
+# luka
 
 App multiplataforma (Flutter) de control de gastos personales con **captura automática de transacciones** (Gmail, notificaciones bancarias, SMS, NFC) y **generación del reporte anual de renta colombiano** (cifras organizadas según el formulario 210 de la DIAN).
 
