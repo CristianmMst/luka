@@ -61,7 +61,13 @@ void main() {
     );
     await expectLater(
       GmailAuthorizer(unconfigured).obtainServerAuthCode(),
-      throwsA(isA<GmailMisconfigured>()),
+      throwsA(
+        isA<GmailMisconfigured>().having(
+          (f) => f.code,
+          'code',
+          GmailErrorCode.missingClientId,
+        ),
+      ),
     );
     verifyNever(
       () => client.initialize(serverClientId: any(named: 'serverClientId')),
@@ -78,7 +84,7 @@ void main() {
         isA<GmailUnexpected>().having(
           (f) => f.code,
           'code',
-          'sinServerAuthCode',
+          GmailErrorCode.noServerAuthCode,
         ),
       ),
     );
@@ -89,16 +95,32 @@ void main() {
       GoogleSignInExceptionCode.canceled: isA<GmailConsentCancelled>(),
       GoogleSignInExceptionCode.interrupted: isA<GmailConsentCancelled>(),
       GoogleSignInExceptionCode.clientConfigurationError:
-          isA<GmailMisconfigured>(),
+          isA<GmailMisconfigured>().having(
+            (f) => f.code,
+            'code',
+            GmailErrorCode.clientConfiguration,
+          ),
       GoogleSignInExceptionCode.providerConfigurationError:
-          isA<GmailMisconfigured>(),
+          isA<GmailMisconfigured>().having(
+            (f) => f.code,
+            'code',
+            GmailErrorCode.providerConfiguration,
+          ),
       GoogleSignInExceptionCode.uiUnavailable: isA<GmailUnexpected>().having(
         (f) => f.code,
         'code',
-        'uiUnavailable',
+        GmailErrorCode.uiUnavailable,
       ),
-      GoogleSignInExceptionCode.userMismatch: isA<GmailUnexpected>(),
-      GoogleSignInExceptionCode.unknownError: isA<GmailUnexpected>(),
+      GoogleSignInExceptionCode.userMismatch: isA<GmailUnexpected>().having(
+        (f) => f.code,
+        'code',
+        GmailErrorCode.userMismatch,
+      ),
+      GoogleSignInExceptionCode.unknownError: isA<GmailUnexpected>().having(
+        (f) => f.code,
+        'code',
+        GmailErrorCode.googleUnknown,
+      ),
     };
     for (final MapEntry(:key, :value) in cases.entries) {
       when(

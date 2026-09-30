@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/widgets/inline_notice.dart';
@@ -41,19 +40,16 @@ class GmailFailureNotice extends StatelessWidget {
         l10n.gmailErrorUpstream,
         Icons.cloud_off_rounded,
       ),
-      GmailMisconfigured(:final detail) => (
+      GmailMisconfigured(:final code) => (
         NoticeTone.error,
-        // En debug se añade la causa técnica para diagnosticar el setup.
-        kDebugMode
-            ? '${l10n.gmailErrorMisconfigured}\n($detail)'
-            : l10n.gmailErrorWithCode(l10n.gmailErrorMisconfigured, detail),
+        l10n.gmailErrorWithCode(l10n.gmailErrorMisconfigured, code.name),
         null,
       ),
       GmailUnexpected(:final code) => (
         NoticeTone.error,
         code == null
             ? l10n.gmailErrorUnexpected
-            : l10n.gmailErrorWithCode(l10n.gmailErrorUnexpected, code),
+            : l10n.gmailErrorWithCode(l10n.gmailErrorUnexpected, code.name),
         null,
       ),
     };

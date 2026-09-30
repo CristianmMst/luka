@@ -24,9 +24,7 @@ class GmailAuthorizer {
 
   Future<String> obtainServerAuthCode() async {
     if (_setup.serverClientId == null) {
-      throw const GmailMisconfigured(
-        'Falta --dart-define=GOOGLE_SERVER_CLIENT_ID',
-      );
+      throw const GmailMisconfigured(GmailErrorCode.missingClientId);
     }
     try {
       final client = await _setup.ensureInitialized();
@@ -35,10 +33,7 @@ class GmailAuthorizer {
       );
       // `null`: la plataforma no entregó código. Sin él no hay conexión.
       if (authorization == null) {
-        throw const GmailUnexpected(
-          'Google no entregó serverAuthCode',
-          'sinServerAuthCode',
-        );
+        throw const GmailUnexpected(null, GmailErrorCode.noServerAuthCode);
       }
       return authorization.serverAuthCode;
     } on GoogleSignInException catch (e) {
@@ -47,14 +42,21 @@ class GmailAuthorizer {
       throw switch (e.code) {
         GoogleSignInExceptionCode.canceled ||
         GoogleSignInExceptionCode.interrupted => const GmailConsentCancelled(),
-        GoogleSignInExceptionCode.clientConfigurationError ||
+        GoogleSignInExceptionCode.clientConfigurationError =>
+          const GmailMisconfigured(GmailErrorCode.clientConfiguration),
         GoogleSignInExceptionCode.providerConfigurationError =>
-          GmailMisconfigured(e.code.name),
-        GoogleSignInExceptionCode.uiUnavailable ||
-        GoogleSignInExceptionCode.userMismatch ||
+          const GmailMisconfigured(GmailErrorCode.providerConfiguration),
+        GoogleSignInExceptionCode.uiUnavailable => GmailUnexpected(
+          e.code,
+          GmailErrorCode.uiUnavailable,
+        ),
+        GoogleSignInExceptionCode.userMismatch => GmailUnexpected(
+          e.code,
+          GmailErrorCode.userMismatch,
+        ),
         GoogleSignInExceptionCode.unknownError => GmailUnexpected(
           e.code,
-          e.code.name,
+          GmailErrorCode.googleUnknown,
         ),
       };
     }

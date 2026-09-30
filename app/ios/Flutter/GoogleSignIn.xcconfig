@@ -1,7 +1,9 @@
 // Cliente OAuth de tipo iOS del proyecto GCP luka-510204 (F4.3b), para
-// el bundle co.luka.luka. El id_token sigue teniendo como audiencia
-// el cliente web (GOOGLE_SERVER_CLIENT_ID), como en Android. Info.plist lo
-// usa en GIDClientID y en el esquema de URL de vuelta del inicio de sesión.
+// el bundle co.luka.luka. En iOS el id_token llega con este cliente como
+// audiencia (el backend lo acepta con LUKA_GOOGLE_IOS_CLIENT_ID). Info.plist
+// lo usa en GIDClientID y en el esquema de URL de vuelta del inicio de sesión.
+// test/core/config/google_sign_in_config_test.dart verifica que el invertido
+// corresponda y que el cliente web sea el mismo default de Dart.
 // Ejemplo: 1234-abcd.apps.googleusercontent.com y
 // com.googleusercontent.apps.1234-abcd
 GOOGLE_IOS_CLIENT_ID = 918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de.apps.googleusercontent.com

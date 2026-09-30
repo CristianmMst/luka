@@ -1,3 +1,36 @@
+/// Código de soporte que la app muestra junto a un error inesperado o de
+/// configuración, para diagnosticar desde el teléfono. Es estable (no
+/// depende del texto de la plataforma ni de nombres de clases) y nunca lleva
+/// datos de la cuenta.
+enum GmailErrorCode {
+  /// El build no trae `GOOGLE_SERVER_CLIENT_ID`.
+  missingClientId,
+
+  /// `clientConfigurationError` de Google Sign-In.
+  clientConfiguration,
+
+  /// `providerConfigurationError` de Google Sign-In.
+  providerConfiguration,
+
+  /// Google autorizó pero no entregó `serverAuthCode`.
+  noServerAuthCode,
+
+  /// `uiUnavailable` de Google Sign-In.
+  uiUnavailable,
+
+  /// `userMismatch` de Google Sign-In.
+  userMismatch,
+
+  /// `unknownError` de Google Sign-In.
+  googleUnknown,
+
+  /// El backend respondió algo fuera de lo previsto.
+  backendUnexpected,
+
+  /// Cualquier otro fallo.
+  unknown,
+}
+
 /// Por qué no se pudo conectar, consultar o desconectar Gmail.
 sealed class GmailFailure implements Exception {
   const GmailFailure();
@@ -46,9 +79,9 @@ final class GmailScopeDenied extends GmailFailure {
 /// Google Sign-In no está configurado en este build (falta el client ID) o
 /// la plataforma no soporta la autorización.
 final class GmailMisconfigured extends GmailFailure {
-  const GmailMisconfigured(this.detail);
+  const GmailMisconfigured(this.code);
 
-  final String detail;
+  final GmailErrorCode code;
 }
 
 final class GmailUnexpected extends GmailFailure {
@@ -56,7 +89,5 @@ final class GmailUnexpected extends GmailFailure {
 
   final Object? cause;
 
-  /// Código corto y sin datos de la cuenta (p. ej. `uiUnavailable`) que la
-  /// app muestra para diagnosticar desde el teléfono.
-  final String? code;
+  final GmailErrorCode? code;
 }

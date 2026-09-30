@@ -48,7 +48,10 @@ void main() {
     });
 
     test('los fallos llevan su detalle', () {
-      expect(const GmailMisconfigured('x').detail, 'x');
+      expect(
+        const GmailMisconfigured(GmailErrorCode.missingClientId).code,
+        GmailErrorCode.missingClientId,
+      );
       expect(const GmailUnexpected('boom').cause, 'boom');
       expect(const GmailUnexpected().cause, isNull);
     });

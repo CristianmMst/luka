@@ -247,7 +247,7 @@ void main() {
     ),
     (
       'inesperado con código de la plataforma',
-      const GmailUnexpected(null, 'uiUnavailable'),
+      const GmailUnexpected(null, GmailErrorCode.uiUnavailable),
       'No pudimos conectar Gmail. Inténtalo de nuevo. (código: uiUnavailable)',
     ),
   ];
@@ -266,12 +266,12 @@ void main() {
     });
   }
 
-  testWidgets('sin configurar: avisa (con el detalle en debug)', (
+  testWidgets('sin configurar: avisa con el código', (
     tester,
   ) async {
     when(
       () => gmail.connect(),
-    ).thenThrow(const GmailMisconfigured('sin client id'));
+    ).thenThrow(const GmailMisconfigured(GmailErrorCode.missingClientId));
     await pumpPage(tester);
 
     await tester.tap(connectButton());
@@ -281,6 +281,7 @@ void main() {
       find.textContaining('La conexión con Gmail no está configurada'),
       findsOneWidget,
     );
+    expect(find.textContaining('(código: missingClientId)'), findsOneWidget);
   });
 
   testWidgets('reintentar tras un rechazo conecta y sigue al próximo paso', (

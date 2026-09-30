@@ -41,10 +41,9 @@ class GmailOnboardingPage extends ConsumerWidget {
     final failure = loadFailed
         ? switch (gmail.error) {
             final GmailFailure f => f,
-            // Solo el tipo como código: el mensaje puede traer la cuenta.
             final Object error => GmailUnexpected(
               error,
-              error.runtimeType.toString(),
+              GmailErrorCode.unknown,
             ),
             null => const GmailUnexpected(),
           }

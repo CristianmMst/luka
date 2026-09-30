@@ -8,8 +8,10 @@
 #   API_BASE_URL  obligatoria: URL pública del backend, en producción
 #                 https://luka.a360soft.tech. El default de desarrollo, localhost, no
 #                 llega desde el iPhone.
-# GOOGLE_SERVER_CLIENT_ID no hace falta: el default de la app es el de
-# luka-510204.
+#   GOOGLE_SERVER_CLIENT_ID  opcional: sin ella se usa el default de la app
+#                 (luka-510204). En iOS el que manda es el de
+#                 app/ios/Flutter/GoogleSignIn.xcconfig, así que si se define
+#                 tiene que coincidir con ese.
 workflows:
   ios-unsigned:
     name: iOS sin firmar (SideStore)
@@ -32,6 +34,10 @@ workflows:
             echo "Falta el cliente OAuth de iOS en app/ios/Flutter/GoogleSignIn.xcconfig."
             exit 1
           fi
+          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ] && ! grep -Fxq "GOOGLE_SERVER_CLIENT_ID = $GOOGLE_SERVER_CLIENT_ID" app/ios/Flutter/GoogleSignIn.xcconfig; then
+            echo "GOOGLE_SERVER_CLIENT_ID no coincide con app/ios/Flutter/GoogleSignIn.xcconfig."
+            exit 1
+          fi
       - name: Dependencias
         script: |
           cd app
@@ -40,7 +46,7 @@ workflows:
         script: |
           cd app
           flutter build ios --release --no-codesign \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
+            --dart-define=API_BASE_URL="$API_BASE_URL"             ${GOOGLE_SERVER_CLIENT_ID:+--dart-define=GOOGLE_SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"}
       - name: Empaquetar .ipa
         script: |
           cd app/build/ios/iphoneos

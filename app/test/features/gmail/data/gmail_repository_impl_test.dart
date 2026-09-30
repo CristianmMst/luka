@@ -221,7 +221,13 @@ void main() {
       backend.handler = (_) => StubResponse.error(400, 'validation_error');
       await expectLater(
         repository.connect(),
-        throwsA(isA<GmailUnexpected>()),
+        throwsA(
+          isA<GmailUnexpected>().having(
+            (f) => f.code,
+            'code',
+            GmailErrorCode.backendUnexpected,
+          ),
+        ),
       );
     });
   });
