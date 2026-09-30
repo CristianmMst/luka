@@ -8,7 +8,7 @@ import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// "Fuentes" del detalle (diseño "DetalleA"): una tarjeta por fuente con
-/// su canal y la hora de recepción y, con dos o más, el sello dorado
+/// su canal y la hora de recepción y, con dos o más, el sello amarillo
 /// "1 registro con N fuentes, sin duplicados". Sin red muestra el panel
 /// "Las fuentes se consultan con conexión…" (diseño "Estados").
 class SourcesSection extends StatelessWidget {
@@ -162,7 +162,7 @@ class _SourceCard extends StatelessWidget {
   }
 }
 
-/// El oro de marca se reserva para este sello (spec 008 §7.1).
+/// El amarillo de marca se reserva para este sello (spec 008 §7.1).
 class _SingleRecordSeal extends StatelessWidget {
   const _SingleRecordSeal({required this.count});
 
@@ -172,7 +172,8 @@ class _SingleRecordSeal extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final brand = context.lukaColors;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
     return Semantics(
       container: true,
@@ -181,7 +182,7 @@ class _SingleRecordSeal extends StatelessWidget {
         decoration: BoxDecoration(
           color: brand.goldContainer,
           borderRadius: Radii.noticeAll,
-          border: Border.all(color: brand.gold, width: 1.5),
+          border: Border.all(color: theme.colorScheme.tertiary, width: 1.5),
         ),
         child: Row(
           spacing: 10,

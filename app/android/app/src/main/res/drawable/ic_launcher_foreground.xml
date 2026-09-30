@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primer plano del ícono adaptativo: luka-app-icon.svg llevado a 108 dp
+     (el área visible de 72 dp equivale a su cuadro de 100). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#E23D28"
+        android:pathData="M54,27.36a26.64,26.64 0,1 1,0 53.28a26.64,26.64 0,1 1,0 -53.28z" />
+    <group
+        android:translateX="36.72"
+        android:translateY="35.28"
+        android:scaleX="0.3456"
+        android:scaleY="0.3456">
+        <group android:translateY="12">
+            <path
+                android:strokeColor="#FFD27A"
+                android:strokeWidth="15"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:pathData="M10,76C26,76 30,34 48,34C60,34 63,54 72,46L86,30" />
+        </group>
+        <path
+            android:strokeColor="#FFF6F0"
+            android:strokeWidth="15"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M10,76C26,76 30,34 48,34C60,34 63,54 72,46L86,30" />
+        <path
+            android:strokeColor="#FFF6F0"
+            android:strokeWidth="15"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M72,28H88V44" />
+    </group>
+</vector>

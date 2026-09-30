@@ -91,7 +91,7 @@ lib/
 
 ### Sistema de diseño
 
-Paleta "Esmeralda andina", tipografía y tokens en `lib/core/theme/`. El detalle está en spec 008 §7.1 y en el canvas de diseño. Las fuentes van empaquetadas en `assets/fonts` con sus licencias OFL.
+Paleta "Rojo tomate", tipografía y tokens en `lib/core/theme/`; el logo en `assets/brand/` (lo dibuja `BrandMark`). El detalle está en spec 008 §7.1. Las fuentes van empaquetadas en `assets/fonts` con sus licencias OFL.
 
 ### Base de datos local y sincronización (F4.1)
 

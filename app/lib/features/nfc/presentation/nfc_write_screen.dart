@@ -11,7 +11,7 @@ import 'package:luka/features/nfc/domain/nfc_ports.dart';
 import 'package:luka/features/nfc/presentation/nfc_format.dart';
 
 /// "Acerca el tag al teléfono" (diseño B "Escribir a pantalla completa",
-/// F4.5b, AC-4.3): pantalla esmeralda que espera un tag y le escribe el
+/// F4.5b, AC-4.3): pantalla café que espera un tag y le escribe el
 /// enlace de [template]. Muestra el resultado y deja reintentar.
 class NfcWriteScreen extends ConsumerStatefulWidget {
   const NfcWriteScreen({required this.template, super.key});

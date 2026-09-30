@@ -1,47 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 
-/// Gema de talla esmeralda + wordmark "luka".
+/// Logo de luka: círculo con la flecha que sube + wordmark "luka".
+///
+/// Las proporciones son las del logo horizontal oficial: el símbolo mide
+/// 100 unidades, el wordmark 56 y los separa un hueco de 10.
 class BrandMark extends StatelessWidget {
   const BrandMark({
-    required this.gemColor,
     required this.textColor,
+    this.onDark = false,
     this.size = 26,
     this.showWordmark = true,
     this.direction = Axis.horizontal,
     super.key,
   });
 
-  /// Relleno de la gema (el borde y las facetas son siempre oro).
-  final Color gemColor;
+  /// Color del wordmark.
   final Color textColor;
 
-  /// Tamaño del wordmark; la gema escala con él.
+  /// Sobre fondos oscuros (el hero café) el símbolo va en su variante
+  /// amarilla con la flecha tomate.
+  final bool onDark;
+
+  /// Tamaño de referencia del wordmark (como un tamaño de fuente); el
+  /// símbolo escala con él.
   final double size;
   final bool showWordmark;
   final Axis direction;
 
+  /// El palo de la "l" (51 unidades) mide lo mismo que las ascendentes de
+  /// una fuente de tamaño [size] (0.75 × size).
+  static const double _unit = 0.75 / 51;
+
   @override
   Widget build(BuildContext context) {
-    final gem = SvgPicture.asset(
-      'assets/brand/gem.svg',
-      height: size * 1.25,
-      theme: SvgTheme(currentColor: gemColor),
+    final unit = size * _unit;
+    final mark = SvgPicture.asset(
+      onDark
+          ? 'assets/brand/logo_mark_on_dark.svg'
+          : 'assets/brand/logo_mark.svg',
+      height: 100 * unit,
       excludeFromSemantics: true,
     );
-    if (!showWordmark) return gem;
+    if (!showWordmark) return mark;
 
-    final wordmark = Text(
-      'luka',
-      style: TextStyle(
-        fontFamily: FontFamilies.display,
-        fontWeight: FontWeight.w700,
-        fontSize: size,
-        letterSpacing: -size * 0.02,
-        color: textColor,
-        height: 1,
-      ),
+    final wordmark = SvgPicture.asset(
+      'assets/brand/wordmark.svg',
+      height: 56 * unit,
+      theme: SvgTheme(currentColor: textColor),
+      excludeFromSemantics: true,
     );
     return Semantics(
       label: 'luka',
@@ -49,8 +56,8 @@ class BrandMark extends StatelessWidget {
       child: Flex(
         direction: direction,
         mainAxisSize: MainAxisSize.min,
-        spacing: size * (direction == Axis.horizontal ? 0.4 : 0.5),
-        children: [gem, wordmark],
+        spacing: direction == Axis.horizontal ? 10 * unit : size * 0.5,
+        children: [mark, wordmark],
       ),
     );
   }

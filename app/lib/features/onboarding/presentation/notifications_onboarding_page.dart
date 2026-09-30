@@ -164,7 +164,7 @@ class NotificationsOnboardingPage extends ConsumerWidget {
   }
 }
 
-/// Hero esmeralda con la marca, el progreso y un ejemplo: la notificación
+/// Hero café con la marca, el progreso y un ejemplo: la notificación
 /// de una compra que queda registrada sola.
 class _Hero extends StatelessWidget {
   const _Hero();
@@ -198,7 +198,7 @@ class _Hero extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  BrandMark(gemColor: brand.gem, textColor: brand.onHero),
+                  BrandMark(onDark: true, textColor: brand.onHero),
                   const Spacer(),
                   const OnboardingDots(
                     step: OnboardingStep.notifications,

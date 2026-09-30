@@ -42,7 +42,7 @@ class DashboardPage extends ConsumerWidget {
 
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        // La banda esmeralda va detrás de la barra de estado en ambos temas.
+        // La banda café va detrás de la barra de estado en ambos temas.
         value: SystemUiOverlayStyle.light,
         child: SyncRefresh(
           child: SingleChildScrollView(

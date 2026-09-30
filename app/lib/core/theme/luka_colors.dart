@@ -21,7 +21,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
     required this.heroChip,
     required this.card,
     required this.tile,
-    required this.gem,
   });
 
   static const light = LukaColors(
@@ -29,8 +28,8 @@ class LukaColors extends ThemeExtension<LukaColors> {
     onExpense: LightTokens.onExpense,
     income: LightTokens.income,
     transfer: LightTokens.transfer,
-    gold: brandGold,
-    onGold: onBrandGold,
+    gold: brandYellow,
+    onGold: onBrandYellow,
     goldContainer: LightTokens.goldContainer,
     warningContainer: LightTokens.warningContainer,
     onWarningContainer: LightTokens.onWarningContainer,
@@ -40,7 +39,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
     heroChip: LightTokens.heroChip,
     card: LightTokens.card,
     tile: LightTokens.tile,
-    gem: LightTokens.gem,
   );
 
   static const dark = LukaColors(
@@ -48,8 +46,8 @@ class LukaColors extends ThemeExtension<LukaColors> {
     onExpense: DarkTokens.onExpense,
     income: DarkTokens.income,
     transfer: DarkTokens.transfer,
-    gold: brandGold,
-    onGold: onBrandGold,
+    gold: brandYellow,
+    onGold: onBrandYellow,
     goldContainer: DarkTokens.goldContainer,
     warningContainer: DarkTokens.warningContainer,
     onWarningContainer: DarkTokens.onWarningContainer,
@@ -59,17 +57,18 @@ class LukaColors extends ThemeExtension<LukaColors> {
     heroChip: DarkTokens.heroChip,
     card: DarkTokens.card,
     tile: DarkTokens.tile,
-    gem: DarkTokens.gem,
   );
 
   final Color expense;
   final Color onExpense;
   final Color income;
   final Color transfer;
+
+  /// Amarillo de marca (spec 008 §7.1): relleno del sello y acentos.
   final Color gold;
   final Color onGold;
 
-  /// Fondo del sello dorado "1 registro" (con borde [gold]).
+  /// Fondo del sello amarillo "1 registro" (con borde `tertiary`).
   final Color goldContainer;
 
   final Color warningContainer;
@@ -84,9 +83,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
 
   /// Opciones en rejilla dentro de una hoja (p. ej. las categorías).
   final Color tile;
-
-  /// Relleno de la gema de marca en ilustraciones (p. ej. el estado vacío).
-  final Color gem;
 
   @override
   LukaColors copyWith({
@@ -105,7 +101,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
     Color? heroChip,
     Color? card,
     Color? tile,
-    Color? gem,
   }) {
     return LukaColors(
       expense: expense ?? this.expense,
@@ -123,7 +118,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
       heroChip: heroChip ?? this.heroChip,
       card: card ?? this.card,
       tile: tile ?? this.tile,
-      gem: gem ?? this.gem,
     );
   }
 
@@ -154,7 +148,6 @@ class LukaColors extends ThemeExtension<LukaColors> {
       heroChip: Color.lerp(heroChip, other.heroChip, t)!,
       card: Color.lerp(card, other.card, t)!,
       tile: Color.lerp(tile, other.tile, t)!,
-      gem: Color.lerp(gem, other.gem, t)!,
     );
   }
 }

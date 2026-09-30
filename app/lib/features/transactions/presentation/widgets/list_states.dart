@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
-import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/core/widgets/brand_mark.dart';
 
@@ -16,14 +15,14 @@ class EmptyTransactions extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    final gem = context.lukaColors.gem;
+    final scheme = Theme.of(context).colorScheme;
 
     return _CenteredState(
-      // La gema de marca, como en el login y el splash.
+      // El símbolo de marca, como en el login y el splash.
       art: BrandMark(
-        gemColor: gem,
-        textColor: gem,
-        size: 51,
+        textColor: scheme.primary,
+        onDark: scheme.brightness == Brightness.dark,
+        size: 44,
         showWordmark: false,
       ),
       title: l10n.emptyTitle,

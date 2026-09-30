@@ -9,7 +9,7 @@ import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
-/// Banda esmeralda del Inicio (diseño A "Balance protagonista"): saludo,
+/// Banda café del Inicio (diseño A "Balance protagonista"): saludo,
 /// línea de sync, selector de mes y, si hay [summary], el balance con las
 /// tarjetas de gastos e ingresos. Al final, [alert] (la franja de captura
 /// detenida), que pone su propio espacio arriba cuando se ve.

@@ -16,7 +16,7 @@ import 'package:luka/features/onboarding/presentation/onboarding_navigation.dart
 import 'package:luka/features/onboarding/presentation/widgets/onboarding_parts.dart';
 
 /// Paso "Conecta tu Gmail" tras el login (spec 008 §3.1, AC-1.2/AC-1.3), con
-/// el lenguaje del login "Veta esmeralda": hero esmeralda y titular
+/// el lenguaje del login "Veta esmeralda": hero café y titular
 /// Bricolage. Conectar y "Ahora no" siguen al próximo paso del onboarding;
 /// si la conexión quedó guardada pero sin captura (`error`/`revoked`), avisa
 /// que se reintenta desde Ajustes. Con Gmail ya activo (deep link o estado
@@ -215,7 +215,7 @@ class _Hero extends StatelessWidget {
               Row(
                 children: [
                   BrandMark(
-                    gemColor: context.lukaColors.gem,
+                    onDark: true,
                     textColor: onColor,
                   ),
                   const Spacer(),

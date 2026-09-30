@@ -229,7 +229,7 @@ class _Hero extends StatelessWidget {
             spacing: Space.xl - 4,
             children: [
               BrandMark(
-                gemColor: context.lukaColors.gem,
+                onDark: true,
                 textColor: onColor,
               ),
               const CaptureTicker(),

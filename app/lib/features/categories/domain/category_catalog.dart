@@ -20,8 +20,9 @@ const categoryIconKeys = <String>[
   'school',
 ];
 
-/// Colores de la paleta "Esmeralda andina" para categorías propias; todos
-/// dejan un ícono blanco con contraste AA. El primero es el de por defecto.
+/// Colores para categorías propias (heredados de la paleta "Esmeralda andina";
+/// no son de marca). Todos dejan un ícono blanco con contraste AA. El primero
+/// es el de por defecto.
 const categoryColors = <String>[
   '#0E4D3F',
   '#17774E',

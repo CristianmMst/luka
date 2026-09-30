@@ -156,7 +156,7 @@ class _ApplePayOnboardingPageState
   }
 }
 
-/// Hero esmeralda: marca y progreso en el onboarding, o volver en Ajustes.
+/// Hero café: marca y progreso en el onboarding, o volver en Ajustes.
 class _Hero extends StatelessWidget {
   const _Hero({required this.inOnboarding, required this.onBack});
 
@@ -193,7 +193,7 @@ class _Hero extends StatelessWidget {
               Row(
                 children: [
                   if (inOnboarding) ...[
-                    BrandMark(gemColor: brand.gem, textColor: brand.onHero),
+                    BrandMark(onDark: true, textColor: brand.onHero),
                     const Spacer(),
                     const OnboardingDots(
                       step: OnboardingStep.applePay,

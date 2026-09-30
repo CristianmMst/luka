@@ -23,7 +23,7 @@ import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/presentation/sync_sheet.dart';
 
 /// "Ajustes" (diseño B "Perfil arriba + lista plana", F4.8b, spec 008 §3.7):
-/// hero esmeralda con el perfil y la línea de sync (abre la hoja de
+/// hero café con el perfil y la línea de sync (abre la hoja de
 /// sincronización), y debajo las conexiones, mis datos, privacidad y cerrar
 /// sesión.
 class AjustesPage extends ConsumerWidget {

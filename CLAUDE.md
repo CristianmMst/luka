@@ -51,7 +51,7 @@ GitHub Actions solo despliega: `.github/workflows/deploy-backend.yml` corre, en 
 - **Montos:** siempre en `Cop` (centavos `int`, `lib/core/format/money.dart`); nunca `double`. `formatCop` da `$1.234.567`, y el gasto usa U+2212.
 - **UI:**
   - Textos solo en `lib/core/l10n/arb/app_es.arb`.
-  - Colores, tipografía y espaciado desde `lib/core/theme` (sistema "Esmeralda andina", spec 008 §7.1).
+  - Colores, tipografía y espaciado desde `lib/core/theme` (sistema "Rojo tomate", spec 008 §7.1).
   - Contraste AA y áreas táctiles de 48 dp o más.
 - **Versiones fijadas** por el analyzer 7 de Flutter 3.35: freezed <3.2, json_serializable <6.11, drift 2.28, build_runner <2.8. No subirlas sin actualizar Flutter.
 

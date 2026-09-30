@@ -219,7 +219,7 @@ class _ResultCard extends StatelessWidget {
             ? scheme.surfaceContainerLowest
             : scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: brand.gold, width: 1.5),
+        border: Border.all(color: scheme.tertiary, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Space.md - 2),
