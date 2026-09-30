@@ -6,3 +6,8 @@ paths = [
   '''backend/\.env\.example''',
   '''backend/tests/fixtures/.*''',
 ]
+# Llave de Gmail de ejemplo de backend/.env.example: publica a proposito y
+# rechazada en produccion (settings.py). La usan los tests de Settings.
+regexes = [
+  '''62aisewZDhTFPU8eKAYDMaVzeVR4usdqlWxZgK7Abbg=''',
+]
