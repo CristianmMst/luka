@@ -214,6 +214,7 @@ Todas tienen el prefijo `LUKA_`. Solo las 6 marcadas como **obligatoria** van en
 | `LUKA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
 | `LUKA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
 | `LUKA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `luka-510204`) |
+| `LUKA_GOOGLE_IOS_CLIENT_ID` | Client ID OAuth de iOS (default el de `luka-510204`); también se acepta como `aud` del `id_token`, porque en iOS Google lo emite para ese cliente |
 | `LUKA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
 | `LUKA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3). En `prod` se rechaza la llave de ejemplo de `.env.example` |
 | `LUKA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/luka-510204/topics/gmail-push`) |

@@ -1,6 +1,7 @@
 """Verificadores de `id_token` de Google Sign-In (spec 009 SS2.1, controller ruling 2)."""
 
 import asyncio
+from collections.abc import Sequence
 
 import cachecontrol
 import requests
@@ -15,10 +16,16 @@ _VALID_ISSUERS = frozenset({"accounts.google.com", "https://accounts.google.com"
 
 
 class GoogleAuthIdTokenVerifier:
-    """Verifica el `id_token` contra las claves publicas oficiales de Google."""
+    """Verifica el `id_token` contra las claves publicas oficiales de Google.
 
-    def __init__(self, client_id: str) -> None:
-        self._client_id = client_id
+    `audiences` son los clientes OAuth validos como `aud`: el web (el
+    `serverClientId` con el que Android pide el token) y el de iOS, porque en
+    iOS Google emite el `id_token` para el cliente iOS aunque la app declare
+    el web como servidor.
+    """
+
+    def __init__(self, audiences: Sequence[str]) -> None:
+        self.audiences = tuple(audiences)
         self._request = Request(session=cachecontrol.CacheControl(requests.Session()))
 
     async def verify(self, id_token: str) -> GoogleIdentity:
@@ -28,7 +35,7 @@ class GoogleAuthIdTokenVerifier:
                 google_id_token.verify_oauth2_token,
                 id_token,
                 self._request,
-                self._client_id,
+                list(self.audiences),
             )
         except (ValueError, GoogleAuthError) as exc:
             raise InvalidGoogleToken from exc

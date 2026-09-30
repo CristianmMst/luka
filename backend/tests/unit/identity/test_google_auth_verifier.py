@@ -24,7 +24,7 @@ _VALID_CLAIMS: dict[str, Any] = {
 
 @pytest.fixture
 def verifier() -> GoogleAuthIdTokenVerifier:
-    return GoogleAuthIdTokenVerifier(client_id="test-client")
+    return GoogleAuthIdTokenVerifier(audiences=("test-client",))
 
 
 @pytest.mark.unit
@@ -43,6 +43,26 @@ async def test_claims_validos_devuelve_google_identity(
     assert identity.email_verified is True
     assert identity.name == "Ana"
     assert identity.picture == "https://example.com/ana.png"
+
+
+@pytest.mark.unit
+async def test_acepta_el_cliente_web_y_el_de_ios(monkeypatch: pytest.MonkeyPatch) -> None:
+    """En iOS el `id_token` llega con `aud` = cliente iOS, no el web (Android):
+    el backend debe aceptar ambos (spec 009 SS2.1)."""
+    seen: list[object] = []
+
+    def _verify(_token: str, _request: object, audience: object) -> dict[str, Any]:
+        seen.append(audience)
+        return dict(_VALID_CLAIMS)
+
+    monkeypatch.setattr(
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        _verify,
+    )
+
+    await GoogleAuthIdTokenVerifier(audiences=("web-client", "ios-client")).verify("token")
+
+    assert seen == [["web-client", "ios-client"]]
 
 
 @pytest.mark.unit
@@ -161,3 +181,5 @@ async def test_google_verifier_es_el_mismo_objeto_en_dos_requests() -> None:
         second = get_google_verifier(_FakeRequest(app))  # type: ignore[arg-type]
 
     assert first is second
+    assert isinstance(first, GoogleAuthIdTokenVerifier)
+    assert first.audiences == ("test-client", settings.google_ios_client_id)

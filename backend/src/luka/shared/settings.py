@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     refresh_ttl_days: int = 60
 
     google_client_id: str
+    # Cliente OAuth iOS (luka-510204, bundle co.luka.luka): en iOS es el `aud`
+    # del id_token. Publico, como el web; va en GoogleSignIn.xcconfig de la app.
+    google_ios_client_id: str = (
+        "918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de.apps.googleusercontent.com"
+    )
     google_client_secret: SecretStr
 
     # Cifrado AES-256-GCM de `gmail_connections.refresh_token_enc` (spec 009 §3, F3.2).

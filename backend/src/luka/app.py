@@ -172,7 +172,7 @@ def create_app(
         # sesion HTTP con cache de claves publicas de Google en cada login (review
         # final, item D).
         app.state.google_verifier = google_verifier or GoogleAuthIdTokenVerifier(
-            resolved_settings.google_client_id
+            (resolved_settings.google_client_id, resolved_settings.google_ios_client_id)
         )
         # Un solo `httpx.AsyncClient` por proceso para Google OAuth + Gmail API
         # (F3.3): reusa conexiones entre requests y se cierra al apagar.
