@@ -52,6 +52,10 @@ Tras el login, mientras el usuario no haya terminado el onboarding (F4.4, marca 
 
 En Ajustes, la fila "Gmail" (`lib/features/gmail/presentation/widgets/gmail_settings_tile.dart`) muestra el estado real (`GET /gmail/status`): conectado ("Conectado · `<email>`" + botón "Desconectar" con diálogo de confirmación), revocado o con error ("Reconectar"), sin conectar ("Conectar") o sin poder consultarlo ("Reintentar"). Como el consent screen sigue en modo de prueba, un grant vencido a los 7 días también aparece como revocado — se resuelve reconectando desde aquí, no es un error de la app.
 
+### Recordatorios push (F7.7)
+
+La app usa Firebase Cloud Messaging solo si `lib/features/push/data/firebase_options.dart` trae las opciones del proyecto `luka-510204`. Mientras valgan `null`, arranca sin push y todo lo demás funciona igual. Para activarlo, se corre `dart pub global activate flutterfire_cli` y luego `flutterfire configure --project=luka-510204`, y se copian a ese archivo las `FirebaseOptions` de Android e iOS. No hace falta `google-services.json` ni el plugin de Gradle. En iOS también hay que subir la llave APNs en la consola de Firebase (spec 011 §6).
+
 ## Arquitectura
 
 ```

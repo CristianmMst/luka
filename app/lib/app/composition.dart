@@ -19,6 +19,8 @@ import 'package:luka/features/onboarding/application/onboarding_gate.dart';
 import 'package:luka/features/onboarding/data/onboarding_data_providers.dart';
 import 'package:luka/features/privacy/application/privacy_actions.dart';
 import 'package:luka/features/privacy/data/privacy_data_providers.dart';
+import 'package:luka/features/push/application/push_registrar.dart';
+import 'package:luka/features/push/data/push_data_providers.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
 import 'package:luka/features/recurring/data/recurring_data_providers.dart';
 import 'package:luka/features/review/application/review_providers.dart';
@@ -54,6 +56,17 @@ List<Override> get appOverrides => [
   ),
   recurringStoreProvider.overrideWith(
     (ref) => ref.watch(driftRecurringStoreProvider),
+  ),
+  pushServiceProvider.overrideWith(
+    (ref) => ref.watch(firebasePushServiceProvider),
+  ),
+  pushTokenRemoteProvider.overrideWith(
+    (ref) => ref.watch(pushTokenApiProvider),
+  ),
+  pushPrefsProvider.overrideWith((ref) => ref.watch(driftPushPrefsProvider)),
+  // Antes de cerrar la sesión se borra el token de push (spec 011 §6).
+  signOutHooksProvider.overrideWith(
+    (ref) => [() => ref.read(pushRegistrarProvider.notifier).unregister()],
   ),
   connectivityProvider.overrideWith(
     (ref) => ref.watch(connectivityStreamProvider),

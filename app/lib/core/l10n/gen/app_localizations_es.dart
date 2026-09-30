@@ -2332,4 +2332,40 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get detailCreateRecurring => 'Crear gasto fijo con esto';
+
+  @override
+  String get pushAskTitle => '¿Te avisamos antes de cada pago?';
+
+  @override
+  String get pushAskBody =>
+      'Te mandamos una notificación 1 o 2 días antes del vencimiento, solo si el pago todavía no aparece en luka.';
+
+  @override
+  String get pushAskExampleTitle => 'Se acerca tu pago de Spotify';
+
+  @override
+  String get pushAskExampleBody =>
+      'Mañana, 22 de octubre, se te descontarán \$16.900 de tu cuenta.';
+
+  @override
+  String get pushAskAllow => 'Sí, avisarme';
+
+  @override
+  String get pushAskLater => 'Ahora no';
+
+  @override
+  String get pushOffBanner => 'Los avisos están apagados';
+
+  @override
+  String get pushOffAction => 'Activar';
+
+  @override
+  String get pushOffSettingsHint =>
+      'Actívalos en los ajustes del teléfono: Notificaciones → luka.';
+
+  @override
+  String get pushForeground => 'Tienes un pago por vencer';
+
+  @override
+  String get pushForegroundAction => 'Ver';
 }

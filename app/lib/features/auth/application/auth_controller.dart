@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luka/features/auth/domain/auth_failure.dart';
 import 'package:luka/features/auth/domain/auth_repository.dart';
@@ -51,11 +52,30 @@ class AuthController extends AsyncNotifier<AuthState> {
 
   void signedIn(User user) => state = AsyncData(Authenticated(user));
 
+  /// Corre los [signOutHooksProvider] (mientras la sesión sigue viva, p. ej.
+  /// para borrar el token de push, spec 011 §6) y luego cierra la sesión. Un
+  /// hook que falla o tarda más de [_hookTimeout] no impide salir.
   Future<void> signOut() async {
+    for (final hook in ref.read(signOutHooksProvider)) {
+      try {
+        await hook().timeout(_hookTimeout);
+      } on Object catch (e) {
+        // Solo el tipo (P1).
+        debugPrint('[auth] hook de salida: ${e.runtimeType}');
+      }
+    }
     await ref.read(authRepositoryProvider).signOut();
     state = const AsyncData(Unauthenticated());
   }
+
+  static const _hookTimeout = Duration(seconds: 4);
 }
+
+/// Tareas que necesitan la sesión viva justo antes de cerrarla; se
+/// sobrescribe en `lib/app/composition.dart`.
+final signOutHooksProvider = Provider<List<Future<void> Function()>>(
+  (ref) => const [],
+);
 
 final authControllerProvider = AsyncNotifierProvider<AuthController, AuthState>(
   AuthController.new,

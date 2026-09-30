@@ -4,6 +4,9 @@
          instala en teléfonos sin NFC. -->
     <uses-permission android:name="android.permission.NFC"/>
     <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+    <!-- Recordatorios de gastos fijos por FCM (spec 011 §5): en Android 13+
+         se pide en contexto al guardar el primer gasto fijo. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="luka"
         android:name="${applicationName}"
@@ -58,6 +61,17 @@
                 <action android:name="android.service.notification.NotificationListenerService"/>
             </intent-filter>
         </service>
+        <!-- Canal, icono y color por defecto de los avisos de FCM (spec 008 §4.3).
+             El canal lo crea MainActivity al arrancar. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="recordatorios_pagos" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_luka" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/launch_background" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -8,6 +8,7 @@ import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/core/time/colombia_month.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/push/presentation/push_permission.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
 import 'package:luka/features/recurring/domain/recurring_models.dart';
 import 'package:luka/features/recurring/presentation/occurrence_actions.dart';
@@ -141,6 +142,7 @@ class _RecurringPageState extends ConsumerState<RecurringPage> {
             Space.xl,
           ),
           children: [
+            const PushOffBanner(),
             Row(
               children: [
                 IconButton(

@@ -4,11 +4,23 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luka/app/app.dart';
 import 'package:luka/app/composition.dart';
+import 'package:luka/features/push/data/firebase_push_service.dart';
+import 'package:luka/features/push/data/push_data_providers.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(_fontLicenses);
-  runApp(ProviderScope(overrides: appOverrides, child: const LukaApp()));
+  // Sin opciones de Firebase la app arranca igual, sin push (spec 011 §6).
+  final firebaseReady = await initFirebase();
+  runApp(
+    ProviderScope(
+      overrides: [
+        ...appOverrides,
+        firebaseReadyProvider.overrideWithValue(firebaseReady),
+      ],
+      child: const LukaApp(),
+    ),
+  );
 }
 
 /// Licencias OFL de las fuentes empaquetadas (pantalla de licencias).

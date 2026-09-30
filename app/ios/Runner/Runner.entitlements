@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Recordatorios push por APNs (spec 011 §6). En la build de la tienda
+	     Xcode lo cambia a production. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<!-- Lectura de tags NFC en primer plano (spec 006 §5). -->
 	<key>com.apple.developer.nfc.readersession.formats</key>
 	<array>

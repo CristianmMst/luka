@@ -12,6 +12,7 @@ import 'package:luka/core/widgets/inline_notice.dart';
 import 'package:luka/features/accounts/application/account_actions.dart';
 import 'package:luka/features/accounts/presentation/account_picker_sheet.dart';
 import 'package:luka/features/accounts/presentation/linked_account_row.dart';
+import 'package:luka/features/push/presentation/push_permission.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
 import 'package:luka/features/recurring/domain/recurring_draft.dart';
 import 'package:luka/features/recurring/domain/recurring_models.dart';
@@ -34,14 +35,22 @@ class RecurringFormSheet extends ConsumerStatefulWidget {
   /// Borrador prellenado ("Crear gasto fijo con esto" desde un movimiento).
   final RecurringDraft? initial;
 
+  /// Tras crear un gasto fijo, ofrece los avisos si aún no se preguntó
+  /// (spec 008 §3.8).
   static Future<RecurringExpense?> show(
     BuildContext context, {
     RecurringExpense? existing,
     RecurringDraft? initial,
-  }) => showLukaSheet<RecurringExpense>(
-    context,
-    builder: (_) => RecurringFormSheet(existing: existing, initial: initial),
-  );
+  }) async {
+    final saved = await showLukaSheet<RecurringExpense>(
+      context,
+      builder: (_) => RecurringFormSheet(existing: existing, initial: initial),
+    );
+    if (saved != null && existing == null && context.mounted) {
+      await maybeAskPushPermission(context);
+    }
+    return saved;
+  }
 
   @override
   ConsumerState<RecurringFormSheet> createState() => _RecurringFormSheetState();

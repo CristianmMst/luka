@@ -3915,6 +3915,72 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Crear gasto fijo con esto'**
   String get detailCreateRecurring;
+
+  /// No description provided for @pushAskTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Te avisamos antes de cada pago?'**
+  String get pushAskTitle;
+
+  /// No description provided for @pushAskBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Te mandamos una notificación 1 o 2 días antes del vencimiento, solo si el pago todavía no aparece en luka.'**
+  String get pushAskBody;
+
+  /// No description provided for @pushAskExampleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Se acerca tu pago de Spotify'**
+  String get pushAskExampleTitle;
+
+  /// No description provided for @pushAskExampleBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana, 22 de octubre, se te descontarán \$16.900 de tu cuenta.'**
+  String get pushAskExampleBody;
+
+  /// No description provided for @pushAskAllow.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, avisarme'**
+  String get pushAskAllow;
+
+  /// No description provided for @pushAskLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get pushAskLater;
+
+  /// No description provided for @pushOffBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Los avisos están apagados'**
+  String get pushOffBanner;
+
+  /// No description provided for @pushOffAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar'**
+  String get pushOffAction;
+
+  /// No description provided for @pushOffSettingsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Actívalos en los ajustes del teléfono: Notificaciones → luka.'**
+  String get pushOffSettingsHint;
+
+  /// No description provided for @pushForeground.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes un pago por vencer'**
+  String get pushForeground;
+
+  /// No description provided for @pushForegroundAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get pushForegroundAction;
 }
 
 class _AppLocalizationsDelegate
