@@ -7,11 +7,15 @@ from typing import TYPE_CHECKING
 from luka.modules.recurring.application.use_cases.background import (
     EnsureAllOccurrences,
     EnsureSummary,
+    PublishDueReminders,
+    ReminderStatus,
 )
+from luka.modules.recurring.events import PaymentDueSoon
 from luka.modules.recurring.infrastructure.consumers import (
     make_transaction_captured_handler,
     make_transaction_deleted_handler,
 )
+from luka.modules.recurring.infrastructure.event_publisher import BusEventPublisher
 from luka.modules.recurring.infrastructure.id_generator import UuidGenerator
 from luka.modules.recurring.infrastructure.repositories import (
     SqlAlchemyOccurrenceRepository,
@@ -25,13 +29,18 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from luka.modules.recurring.application.ports import ClockPort
+    from luka.shared.events.port import EventBusPort
 
 __all__ = [
     "EnsureSummary",
+    "PaymentDueSoon",
     "ensure_occurrences",
     "export_user_data",
     "make_transaction_captured_handler",
     "make_transaction_deleted_handler",
+    "mark_reminded",
+    "publish_due_reminders",
+    "reminder_still_due",
 ]
 
 
@@ -45,6 +54,38 @@ async def ensure_occurrences(session: AsyncSession, clock: ClockPort) -> EnsureS
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute()
+
+
+async def publish_due_reminders(
+    session: AsyncSession, event_bus: EventBusPort, clock: ClockPort
+) -> int:
+    """Cron diario: publica `PaymentDueSoon` de los avisos que tocan hoy (spec 011 SS5)."""
+    use_case = PublishDueReminders(
+        occurrences=SqlAlchemyOccurrenceRepository(session),
+        events=BusEventPublisher(event_bus),
+        clock=clock,
+    )
+    return await use_case.execute()
+
+
+async def reminder_still_due(session: AsyncSession, clock: ClockPort, occurrence_id: UUID) -> bool:
+    """`True` si la ocurrencia sigue pendiente, sin aviso y hoy toca avisarla."""
+    status = ReminderStatus(
+        occurrences=SqlAlchemyOccurrenceRepository(session),
+        clock=clock,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await status.still_due(occurrence_id)
+
+
+async def mark_reminded(session: AsyncSession, clock: ClockPort, occurrence_id: UUID) -> bool:
+    """Marca `reminded_at` si seguia nulo (a lo sumo un aviso por ocurrencia, AC-12.7)."""
+    status = ReminderStatus(
+        occurrences=SqlAlchemyOccurrenceRepository(session),
+        clock=clock,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await status.mark_reminded(occurrence_id)
 
 
 async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, object]:

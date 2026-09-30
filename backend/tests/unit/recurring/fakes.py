@@ -172,6 +172,14 @@ class InMemoryOccurrences:
             ]
         )
 
+    async def get_with_expense(
+        self, occurrence_id: UUID
+    ) -> tuple[Occurrence, RecurringExpense] | None:
+        row = self.rows.get(occurrence_id)
+        if row is None:
+            return None
+        return row, self._expenses.rows[row.recurring_expense_id]
+
     async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
         row = self.rows.get(occurrence_id)
         if row is None or row.reminded_at is not None:

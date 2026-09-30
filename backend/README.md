@@ -230,6 +230,7 @@ Todas tienen el prefijo `LUKA_`. Solo las 6 marcadas como **obligatoria** van en
 | `LUKA_DB_POOL_SIZE` | Tamaño del pool de conexiones a la base de datos |
 | `LUKA_DB_ECHO` | Loguear las sentencias SQL ejecutadas (nunca `true` en prod) |
 | `LUKA_RATE_LIMIT_INGEST_PER_MINUTE` | Límite de requests/min por usuario para `/v1/ingest/*` (regla `ingest_user`, F2.1, spec 009 §4), además del límite global |
+| `LUKA_FCM_CREDENTIALS_JSON` | JSON de la cuenta de servicio de Firebase (rol `Firebase Cloud Messaging API Admin`) en base64, para los recordatorios push de gastos fijos (spec 011 §6). Vacía → el worker no arranca el consumer de `notifications` (`worker_push_status enabled=false`) y los avisos quedan en el stream; el resto funciona igual |
 | `LUKA_DEEPSEEK_API_KEY` | API key de DeepSeek (LLM de parsing). Vacía → adapter `DisabledLlmParser`, todo mensaje sin plantilla cae a revisión con `reason=llm_disabled` (legítimo también en prod) |
 | `LUKA_DEEPSEEK_BASE_URL` | URL base de la API de DeepSeek (compatible OpenAI) |
 | `LUKA_DEEPSEEK_MODEL` | Modelo usado para el parseo por LLM (`deepseek-v4-flash`) |

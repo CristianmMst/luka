@@ -220,7 +220,7 @@ Reglas en spec 011, tablas en spec 004 §2.12–2.15. Todo es autenticado, filtr
 | POST | `/recurring-occurrences/{id}/unmark` | Vuelve a `pending`; si era `auto`, crea el rechazo (spec 004 §2.14). Sobre una `pending` → 409. 200 con la ocurrencia |
 | POST | `/recurring-occurrences/{id}/skip` | `skipped`, liberando la transacción si tenía. 200 con la ocurrencia. `unmark` la devuelve a `pending` |
 | PUT | `/devices/push-token` | Body `{ "token", "platform": "android" \| "ios" }`. Upsert por `token`: lo asigna al usuario del JWT (aunque antes fuera de otro) y actualiza `last_seen_at`. `token` de 1 a 4096 caracteres. 204 |
-| DELETE | `/devices/push-token` | Body `{ "token" }`. Borra ese token si es del usuario; si no existe, igual responde 204 (idempotente) |
+| DELETE | `/devices/push-token` | Body `{ "token" }`. Borra ese token si es del usuario; si no existe o es de otro usuario, igual responde 204 (idempotente) y no toca nada. Ambos endpoints de `/devices/` tienen su propio límite de 10/min por usuario (spec 009 §4) |
 
 Validaciones (400 `validation_error` con `field`): `name` de 1 a 60 caracteres (se colapsan los espacios); `merchant_keyword` de 2 a 40 y con al menos 2 letras o dígitos después de normalizar; `expected_amount` > 0 como string decimal (§1); `amount_tolerance_pct` de 0 a 50; `day_of_month` de 1 a 31; `remind_days_before` 1 o 2. En un `PATCH`, esos campos no aceptan `null` (400); `category_id` y `account_id` sí (lo quita). Un `category_id` o `account_id` que no es del sistema ni del usuario responde 404 con ese `field`. `from`/`to` que no son `AAAA-MM` responden 400 con su `field`.
 

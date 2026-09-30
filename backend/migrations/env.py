@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 import luka.modules.identity.infrastructure.orm
 import luka.modules.ingestion.infrastructure.orm
 import luka.modules.ledger.infrastructure.orm
+import luka.modules.notifications.infrastructure.orm
 import luka.modules.recurring.infrastructure.orm  # noqa: F401
 from luka.shared.db.base import Base
 from luka.shared.settings import Settings

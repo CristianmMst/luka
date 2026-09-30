@@ -4,7 +4,16 @@ from pathlib import Path
 
 import pytest
 
-MODULOS = ["identity", "ingestion", "parsing", "ledger", "fiscal", "insights", "recurring"]
+MODULOS = [
+    "identity",
+    "ingestion",
+    "parsing",
+    "ledger",
+    "fiscal",
+    "insights",
+    "recurring",
+    "notifications",
+]
 
 ARCHIVOS_ESPERADOS = [
     "__init__.py",

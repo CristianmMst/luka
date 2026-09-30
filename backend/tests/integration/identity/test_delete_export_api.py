@@ -30,6 +30,7 @@ _USER_TABLES = (
     "review_queue WHERE user_id = :u",
     "recurring_expenses WHERE user_id = :u",
     "recurring_occurrences WHERE user_id = :u",
+    "device_tokens WHERE user_id = :u",
 )
 
 
@@ -71,6 +72,12 @@ async def _seed(client: AsyncClient, user: AuthedUser) -> None:
         headers=user.headers,
     )
     assert recurring.status_code == 201, recurring.text
+    device = await client.put(
+        "/v1/devices/push-token",
+        json={"token": f"tok-{user.id}", "platform": "android"},
+        headers=user.headers,
+    )
+    assert device.status_code == 204, device.text
 
 
 async def test_exportar_trae_solo_los_datos_del_usuario(
@@ -97,6 +104,9 @@ async def test_exportar_trae_solo_los_datos_del_usuario(
     assert tx["sources"] == [{"channel": "manual", "received_at": tx["sources"][0]["received_at"]}]
     assert body["gmail"] == {"status": "none"}
     assert [r["name"] for r in body["recurring_expenses"]] == ["Veterinaria mensual"]
+    (device,) = body["push_devices"]
+    assert device["platform"] == "android"
+    assert "token" not in device
     assert all(
         o["recurring_expense_id"] == body["recurring_expenses"][0]["id"]
         for o in body["recurring_occurrences"]

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 #: solo se borran las categorias de usuario (`user_id IS NOT NULL`) para preservar
 #: el seed de las 24 categorias del sistema.
 _DELETES = (
+    "DELETE FROM device_tokens",
     "DELETE FROM recurring_match_rejections",
     "DELETE FROM recurring_occurrences",
     "DELETE FROM recurring_expenses",

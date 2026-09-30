@@ -126,14 +126,14 @@ type = "layers"
 layers = ["infrastructure", "application", "domain"]
 containers = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
   "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights",
-  "luka.modules.recurring"]
+  "luka.modules.recurring","luka.modules.notifications"]
 
 [[tool.importlinter.contracts]]  # R4
 name = "R4 - modulos independientes salvo public.py y events.py"
 type = "independence"
 modules = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
   "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights",
-  "luka.modules.recurring"]
+  "luka.modules.recurring","luka.modules.notifications"]
 # Pares explicitos que existen hoy: cada cruce entre modulos pasa por la fachada
 # publica del modulo destino (`<modulo>.public`) o por sus eventos de dominio
 # (`<modulo>.events`), nunca por internals (domain/application/infrastructure
@@ -154,6 +154,10 @@ ignore_imports = ["luka.modules.ledger.infrastructure.api.deps -> luka.modules.i
   "luka.modules.recurring.infrastructure.api.deps -> luka.modules.identity.public",
   "luka.modules.recurring.infrastructure.ledger_gateway -> luka.modules.ledger.public",
   "luka.modules.recurring.infrastructure.consumers -> luka.modules.ledger.events",
+  "luka.modules.identity.infrastructure.data_export -> luka.modules.notifications.public",
+  "luka.modules.notifications.infrastructure.api.router -> luka.modules.identity.public",
+  "luka.modules.notifications.infrastructure.recurring_gateway -> luka.modules.recurring.public",
+  "luka.modules.notifications.infrastructure.consumers -> luka.modules.recurring.events",
   "luka.modules.identity.infrastructure.data_export -> luka.modules.ingestion.public"]
 
 [[tool.importlinter.contracts]]  # Kernel

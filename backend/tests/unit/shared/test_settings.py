@@ -255,3 +255,34 @@ def test_los_errores_no_muestran_los_valores_de_los_secretos(
     assert "database_url" in mensaje
     for secreto in (jwt_corto, llave_rota, "clave-db-secreta"):
         assert secreto not in mensaje
+
+
+def _b64_json(data: object) -> str:
+    import base64  # noqa: PLC0415
+    import json  # noqa: PLC0415
+
+    return base64.b64encode(json.dumps(data).encode()).decode()
+
+
+@pytest.mark.unit
+def test_fcm_credentials_json_es_opcional(monkeypatch: pytest.MonkeyPatch) -> None:
+    _setear_env_valido(monkeypatch)
+    monkeypatch.delenv("LUKA_FCM_CREDENTIALS_JSON", raising=False)
+
+    assert _construir_settings().fcm_credentials_json is None
+
+
+@pytest.mark.unit
+def test_fcm_credentials_json_valida_la_cuenta_de_servicio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _setear_env_valido(monkeypatch)
+    good = _b64_json({"project_id": "p", "client_email": "c@p.iam", "private_key": "k"})
+    monkeypatch.setenv("LUKA_FCM_CREDENTIALS_JSON", good)
+    settings = _construir_settings()
+    assert settings.fcm_credentials_json is not None
+
+    for bad in ("no-es-base64!!", _b64_json({"project_id": "p"}), _b64_json(["x"])):
+        monkeypatch.setenv("LUKA_FCM_CREDENTIALS_JSON", bad)
+        with pytest.raises(ValidationError, match="fcm_credentials_json"):
+            _construir_settings()

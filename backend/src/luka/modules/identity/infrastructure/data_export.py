@@ -28,12 +28,14 @@ class ModulesDataExport:
         # titular, spec 004 SS4.1) y este modulo lo carga `identity.public` via
         # las dependencias de la API; importarlo arriba seria un ciclo.
         from luka.modules.ledger import public as ledger_public  # noqa: PLC0415
+        from luka.modules.notifications import public as notifications_public  # noqa: PLC0415
         from luka.modules.recurring import public as recurring_public  # noqa: PLC0415
 
         ledger = await ledger_public.export_user_data(self._session, user_id)
         recurring = await recurring_public.export_user_data(self._session, user_id)
+        devices = await notifications_public.export_user_data(self._session, user_id)
         gmail = await ingestion_public.gmail_connection_status(self._session, user_id)
-        return {**ledger, **recurring, "gmail": {"status": gmail}}
+        return {**ledger, **recurring, **devices, "gmail": {"status": gmail}}
 
 
 __all__ = ["ModulesDataExport"]

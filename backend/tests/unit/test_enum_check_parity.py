@@ -30,6 +30,8 @@ from luka.modules.ledger.domain.enums import Bank
 from luka.modules.ledger.domain.enums import Channel as LedgerChannel
 from luka.modules.ledger.domain.review import ReviewReason, ReviewResolution
 from luka.modules.ledger.infrastructure import orm as ledger_orm
+from luka.modules.notifications.domain.entities import Platform
+from luka.modules.notifications.infrastructure import orm as notifications_orm
 from luka.modules.parsing.domain.enums import Channel as ParsingChannel
 from luka.modules.parsing.domain.enums import ParseFailureReason
 from luka.modules.recurring.domain.enums import MatchedBy, OccurrenceStatus
@@ -58,6 +60,7 @@ _M0003 = _load_migration("0003_raw_messages_review.py")
 _M0005 = _load_migration("0005_gmail_connections.py")
 _M0007 = _load_migration("0007_review_resolution_reparsed.py")
 _M0008 = _load_migration("0008_recurring_expenses.py")
+_M0009 = _load_migration("0009_device_tokens.py")
 
 
 def _values(sql_list: str) -> tuple[str, ...]:
@@ -138,3 +141,10 @@ def test_matched_by_coincide_con_orm_y_migracion() -> None:
 
     assert _values(recurring_orm._MATCHED_BY_VALUES) == esperado
     assert _values(_M0008._MATCHED_BY_VALUES) == esperado
+
+
+def test_plataformas_de_push_coinciden_con_orm_y_migracion() -> None:
+    esperado = tuple(p.value for p in Platform)
+
+    assert _values(notifications_orm._PLATFORM_VALUES) == esperado
+    assert _values(_M0009._PLATFORM_VALUES) == esperado

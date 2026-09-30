@@ -48,6 +48,8 @@ from luka.modules.ledger.infrastructure.api.router_review import (
 from luka.modules.ledger.infrastructure.api.router_transactions import (
     router as ledger_transactions_router,
 )
+from luka.modules.notifications.infrastructure.api.errors import NOTIFICATIONS_EXCEPTION_MAP
+from luka.modules.notifications.infrastructure.api.router import router as notifications_router
 from luka.modules.recurring.infrastructure.api.errors import RECURRING_EXCEPTION_MAP
 from luka.modules.recurring.infrastructure.api.router import router as recurring_router
 from luka.shared.db.engine import create_engine, create_session_factory
@@ -77,6 +79,7 @@ _REDIS_SOCKET_TIMEOUT_S = 5.0
 # Webhooks publicos (spec 005 §4): los autentica su propio token (OIDC de Google),
 # no el Bearer de la app, asi que no aplican rate limit por usuario ni idempotencia.
 _WEBHOOKS_PREFIX = "/v1/webhooks/"
+_DEVICES_PER_MINUTE = 10
 
 
 def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
@@ -91,6 +94,9 @@ def _default_rate_limit_rules(settings: Settings) -> list[Rule]:
     return [
         Rule("/v1/auth/", "ip", settings.rate_limit_auth_per_minute, 60, "auth_ip"),
         Rule("/v1/ingest/", "user", settings.rate_limit_ingest_per_minute, 60, "ingest_user"),
+        # Registro del token de push (spec 009 SS4): la app lo llama al arrancar y al
+        # renovarse el token; 10/min por usuario sobra.
+        Rule("/v1/devices/", "user", _DEVICES_PER_MINUTE, 60, "devices_user"),
         Rule("/v1/", "user", settings.rate_limit_user_per_minute, 60, "user_global"),
     ]
 
@@ -223,6 +229,7 @@ def create_app(
             LEDGER_EXCEPTION_MAP,
             INGESTION_EXCEPTION_MAP,
             RECURRING_EXCEPTION_MAP,
+            NOTIFICATIONS_EXCEPTION_MAP,
         ],
     )
 
@@ -237,4 +244,5 @@ def create_app(
     app.include_router(ingestion_gmail_router, prefix="/v1")
     app.include_router(ingestion_webhooks_router, prefix="/v1")
     app.include_router(recurring_router, prefix="/v1")
+    app.include_router(notifications_router, prefix="/v1")
     return app

@@ -281,6 +281,23 @@ class SqlAlchemyOccurrenceRepository:
             for occ, exp in result.tuples()
         ]
 
+    async def get_with_expense(
+        self, occurrence_id: UUID
+    ) -> tuple[Occurrence, RecurringExpense] | None:
+        stmt = (
+            select(RecurringOccurrenceRow, RecurringExpenseRow)
+            .join(
+                RecurringExpenseRow,
+                RecurringExpenseRow.id == RecurringOccurrenceRow.recurring_expense_id,
+            )
+            .where(RecurringOccurrenceRow.id == occurrence_id)
+        )
+        row = (await self._session.execute(stmt)).tuples().one_or_none()
+        if row is None:
+            return None
+        occ, exp = row
+        return occurrence_row_to_entity(occ), expense_row_to_entity(exp)
+
     async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
         stmt = (
             update(RecurringOccurrenceRow)

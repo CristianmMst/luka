@@ -1,3 +1,32 @@
 """Eventos de dominio que publica recurring. Puro: solo stdlib."""
 
-__all__: list[str] = []
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from typing import ClassVar
+from uuid import UUID
+
+
+@dataclass(frozen=True, slots=True)
+class PaymentDueSoon:
+    """Toca avisar un gasto fijo pendiente (spec 011 SS5); lo consume notifications.
+
+    `event_id` es determinista por ocurrencia y dia: republicarlo el mismo dia no
+    duplica el aviso (el `IdempotentHandler` lo absorbe).
+    """
+
+    event_id: UUID
+    occurred_at: datetime
+    user_id: UUID
+    occurrence_id: UUID
+    name: str
+    expected_amount: Decimal
+    #: `AAAA-MM-DD`; el codec del bus no serializa `date` (spec 003 SS2.3).
+    due_date: str
+
+    event_type: ClassVar[str] = "recurring.PaymentDueSoon"
+
+
+__all__ = ["PaymentDueSoon"]

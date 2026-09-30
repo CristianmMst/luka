@@ -366,3 +366,64 @@ async def test_cron_crea_lo_que_falta_y_respeta_la_fecha_de_creacion() -> None:
     assert summary.expenses == 1
     assert summary.created == 2
     assert all(o.recurring_expense_id == expense.id for o in repos.occurrences.rows.values())
+
+
+# --- Recordatorios (spec 011 SS5) ----------------------------------------------------------
+
+
+class _Bus:
+    def __init__(self) -> None:
+        self.events: list[object] = []
+
+    async def publish(self, event: object) -> None:
+        self.events.append(event)
+
+
+async def test_publica_el_aviso_el_dia_anterior_con_event_id_por_dia() -> None:
+    from luka.modules.recurring.application.use_cases.background import (  # noqa: PLC0415
+        PublishDueReminders,
+        ReminderStatus,
+        reminder_event_id,
+    )
+    from luka.modules.recurring.events import PaymentDueSoon  # noqa: PLC0415
+
+    repos = RecurringRepos(datetime(2026, 10, 21, 14, 0, tzinfo=UTC))
+    await _create(repos).execute(_USER, _input())
+    bus = _Bus()
+    publish = PublishDueReminders(occurrences=repos.occurrences, events=bus, clock=repos.clock)
+
+    assert await publish.execute() == 1
+    (event,) = bus.events
+    assert isinstance(event, PaymentDueSoon)
+    assert event.due_date == "2026-10-22"
+    assert event.expected_amount == Decimal("16900.00")
+    assert event.event_id == reminder_event_id(event.occurrence_id, date(2026, 10, 21))
+
+    status = ReminderStatus(occurrences=repos.occurrences, clock=repos.clock, uow=repos.uow)
+    assert await status.still_due(event.occurrence_id) is True
+    assert await status.mark_reminded(event.occurrence_id) is True
+    assert await status.mark_reminded(event.occurrence_id) is False
+    assert await status.still_due(event.occurrence_id) is False
+    assert await status.still_due(uuid4()) is False
+    assert await publish.execute() == 0
+
+
+async def test_no_publica_antes_de_tiempo_ni_si_ya_esta_pagado() -> None:
+    from luka.modules.recurring.application.use_cases.background import (  # noqa: PLC0415
+        PublishDueReminders,
+    )
+
+    repos = RecurringRepos(datetime(2026, 10, 20, 14, 0, tzinfo=UTC))
+    await _create(repos).execute(_USER, _input())
+    await _create(repos).execute(
+        _USER, _input(name="Netflix", merchant_keyword="netflix", day_of_month=21)
+    )
+    tx = _tx(day=20, merchant="NETFLIX")
+    await _match(repos).execute(_USER, tx)
+    bus = _Bus()
+
+    published = await PublishDueReminders(
+        occurrences=repos.occurrences, events=bus, clock=repos.clock
+    ).execute()
+
+    assert published == 0

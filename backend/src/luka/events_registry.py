@@ -9,6 +9,7 @@ from luka.modules.identity.events import UserDeleted
 from luka.modules.ingestion.events import RawMessageReceived
 from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
 from luka.modules.parsing.events import ParseFailed, TransactionParsed
+from luka.modules.recurring.events import PaymentDueSoon
 from luka.shared.events.codec import EventRegistry
 from luka.shared.events.redis_streams import RedisStreamsEventBus
 
@@ -25,6 +26,7 @@ CONSUMER_GROUPS: tuple[tuple[str, str], ...] = (
     ("ledger.TransactionCaptured", "ledger-observer"),
     ("ledger.TransactionCaptured", "recurring"),
     ("ledger.TransactionDeleted", "recurring"),
+    ("recurring.PaymentDueSoon", "notifications"),
 )
 
 
@@ -37,6 +39,7 @@ def build_registry() -> EventRegistry:
     registry.register(RawMessageReceived)
     registry.register(TransactionParsed)
     registry.register(ParseFailed)
+    registry.register(PaymentDueSoon)
     return registry
 
 

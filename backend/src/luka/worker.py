@@ -53,6 +53,7 @@ from luka.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
 )
+from luka.modules.notifications import public as notifications_public
 from luka.modules.parsing import public as parsing_public
 from luka.modules.recurring import public as recurring_public
 from luka.shared.clock import SystemClock
@@ -166,6 +167,34 @@ async def ensure_recurring_occurrences(ctx: dict[str, Any]) -> None:
     _logger.info(
         "recurring_occurrences_ensured", expenses=summary.expenses, created=summary.created
     )
+
+
+async def send_recurring_reminders(ctx: dict[str, Any]) -> None:
+    """Cron diario 14:00 UTC = 09:00 Bogota: publica `recurring.PaymentDueSoon` de cada
+    gasto fijo pendiente al que le toca aviso hoy (spec 011 SS5). Lo envia el consumer
+    de notifications. Solo loguea el conteo (P1).
+    """
+    session_factory = ctx.get("events_session_factory")
+    bus = ctx.get("events_bus")
+    if session_factory is None or bus is None:
+        _logger.warning("cron_sin_contexto", job="send_recurring_reminders")
+        return
+    async with session_factory() as session:
+        published = await recurring_public.publish_due_reminders(session, bus, SystemClock())
+    _logger.info("recurring_reminders_published", count=published)
+
+
+async def purge_stale_device_tokens(ctx: dict[str, Any]) -> None:
+    """Cron diario 08:00 UTC = 03:00 Bogota: borra tokens de push sin registrarse en
+    270 dias (spec 004 SS6). Solo loguea el conteo.
+    """
+    session_factory = ctx.get("events_session_factory")
+    if session_factory is None:
+        _logger.warning("cron_sin_contexto", job="purge_stale_device_tokens")
+        return
+    async with session_factory() as session:
+        removed = await notifications_public.purge_stale_tokens(session, SystemClock())
+    _logger.info("device_tokens_purged", count=removed)
 
 
 async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
@@ -368,6 +397,11 @@ async def on_startup(ctx: dict[str, Any]) -> None:
 
     # Indexado por `(event_type, group)`: un mismo evento puede tener varios grupos
     # (`ledger.TransactionCaptured` -> observador y recurring, spec 011 SS4).
+    # Sin `LUKA_FCM_CREDENTIALS_JSON` no hay push: el consumer de notifications no
+    # arranca y los `PaymentDueSoon` esperan en el stream (spec 011 SS6).
+    push_sender = notifications_public.build_push_sender(settings, http_client)
+    _logger.info("worker_push_status", enabled=push_sender is not None)
+
     handlers: dict[tuple[str, str], EventHandler] = {
         ("ingestion.RawMessageReceived", "parsing"): parsing_handler,
         ("parsing.TransactionParsed", "ledger"): ledger_transaction_handler,
@@ -383,6 +417,12 @@ async def on_startup(ctx: dict[str, Any]) -> None:
             recurring_public.make_transaction_deleted_handler(session_factory=session_factory)
         ),
     }
+    if push_sender is not None:
+        handlers[("recurring.PaymentDueSoon", "notifications")] = (
+            notifications_public.make_payment_due_soon_handler(
+                session_factory=session_factory, sender=push_sender, clock=clock
+            )
+        )
 
     # `_TEST_CONSUMER_BLOCK_MS_CTX_KEY` (fix round 1, Task 9): un test que llama a
     # `on_startup(ctx)` directo puede precargar `ctx` con esta clave para bajar el
@@ -400,6 +440,8 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     stop = asyncio.Event()
     tasks: list[asyncio.Task[None]] = []
     for event_type, group in CONSUMER_GROUPS:
+        if (event_type, group) not in handlers:
+            continue
         consumer = StreamConsumer(
             bus,
             redis_client,
@@ -486,6 +528,9 @@ class WorkerSettings:
         cron(renew_gmail_watches, hour=8, minute=0, run_at_startup=False),
         # F7.4: 10:00 UTC = 05:00 Bogota, antes de que el usuario abra la app.
         cron(ensure_recurring_occurrences, hour=10, minute=0, run_at_startup=False),
+        # F7.5: 14:00 UTC = 09:00 Bogota (spec 011 SS5), para no avisar de madrugada.
+        cron(send_recurring_reminders, hour=14, minute=0, run_at_startup=False),
+        cron(purge_stale_device_tokens, hour=8, minute=0, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))
     on_startup = on_startup

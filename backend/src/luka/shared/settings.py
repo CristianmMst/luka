@@ -2,8 +2,9 @@
 
 import base64
 import binascii
+import json
 from functools import lru_cache
-from typing import Literal, Self
+from typing import Literal, Self, cast
 
 from pydantic import PostgresDsn, RedisDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -76,6 +77,10 @@ class Settings(BaseSettings):
     raw_message_retention_days: int = 90
     raw_message_body_max_bytes: int = 8192
 
+    # JSON de la cuenta de servicio de Firebase en base64 (spec 011 SS6). Sin ella,
+    # el worker no envia recordatorios push; el resto funciona igual.
+    fcm_credentials_json: SecretStr | None = None
+
     @field_validator("jwt_secret")
     @classmethod
     def _jwt_secret_debe_ser_largo(cls, value: SecretStr) -> SecretStr:
@@ -118,6 +123,24 @@ class Settings(BaseSettings):
             raise ValueError(msg) from exc
         if len(decodificada) != _GMAIL_TOKEN_KEY_LENGTH_BYTES:
             msg = f"gmail_token_key debe decodificar a {_GMAIL_TOKEN_KEY_LENGTH_BYTES} bytes"
+            raise ValueError(msg)
+        return value
+
+    @field_validator("fcm_credentials_json")
+    @classmethod
+    def _fcm_credentials_json_debe_ser_una_cuenta_de_servicio(
+        cls, value: SecretStr | None
+    ) -> SecretStr | None:
+        if value is None or not value.get_secret_value():
+            return None
+        try:
+            info: object = json.loads(base64.b64decode(value.get_secret_value(), validate=True))
+        except (binascii.Error, ValueError) as exc:
+            msg = "fcm_credentials_json debe ser el JSON de la cuenta de servicio en base64"
+            raise ValueError(msg) from exc
+        fields = cast("dict[str, object]", info) if isinstance(info, dict) else {}
+        if not all(fields.get(key) for key in ("project_id", "client_email", "private_key")):
+            msg = "fcm_credentials_json no trae project_id, client_email y private_key"
             raise ValueError(msg)
         return value
 

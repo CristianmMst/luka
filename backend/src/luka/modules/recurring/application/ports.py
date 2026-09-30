@@ -73,6 +73,12 @@ class OccurrenceRepositoryPort(Protocol):
         """`pending` sin aviso de gastos activos con `due_date` en el rango (todos los usuarios)."""
         ...
 
+    async def get_with_expense(
+        self, occurrence_id: UUID
+    ) -> tuple[Occurrence, RecurringExpense] | None:
+        """La ocurrencia con su gasto fijo, sin filtrar por usuario (solo para el consumer)."""
+        ...
+
     async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
         """Pone `reminded_at` si seguia nulo; `True` si lo marco."""
         ...
