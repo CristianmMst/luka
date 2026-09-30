@@ -6,3 +6,8 @@
 // com.googleusercontent.apps.1234-abcd
 GOOGLE_IOS_CLIENT_ID = 918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de.apps.googleusercontent.com
 GOOGLE_IOS_REVERSED_CLIENT_ID = com.googleusercontent.apps.918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de
+// Cliente web (el mismo GOOGLE_SERVER_CLIENT_ID de la app): Info.plist lo
+// pone en GIDServerClientID. Sin el, Google no emite serverAuthCode en iOS y
+// no se puede conectar Gmail: el plugin descarta el serverClientId que pasa
+// Dart cuando la configuracion sale de Info.plist.
+GOOGLE_SERVER_CLIENT_ID = 918126641294-eldnsshsmu7vufdajkesk69qim7ft9ph.apps.googleusercontent.com

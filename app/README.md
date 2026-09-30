@@ -44,7 +44,7 @@ El proyecto de Google Cloud es `luka-510204` (Google Auth Platform, público ext
 
 Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.
 
-- **iOS**: cliente de tipo iOS con el bundle `co.luka.luka`. Su client ID y el invertido (`com.googleusercontent.apps.…`) van en `ios/Flutter/GoogleSignIn.xcconfig`; `Info.plist` los toma de ahí para `GIDClientID` y el esquema de URL de vuelta. Sin ellos el build de Codemagic se detiene.
+- **iOS**: cliente de tipo iOS con el bundle `co.luka.luka`. Su client ID y el invertido (`com.googleusercontent.apps.…`) van en `ios/Flutter/GoogleSignIn.xcconfig`; `Info.plist` los toma de ahí para `GIDClientID` y el esquema de URL de vuelta, y también el cliente web (`GOOGLE_SERVER_CLIENT_ID`) para `GIDServerClientID`: sin él Google no emite el `serverAuthCode` en iOS y no se puede conectar Gmail, porque el plugin descarta el `serverClientId` que pasa Dart cuando la configuración sale de `Info.plist`. Sin ellos el build de Codemagic se detiene.
 
 ### Gmail (F3.6)
 
