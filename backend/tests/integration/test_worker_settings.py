@@ -297,7 +297,7 @@ def test_cron_jobs_tiene_los_seis_jobs_con_sus_horarios(worker_settings_module) 
     assert recurring_job.run_at_startup is False
 
     reminders_job = by_name["cron:send_recurring_reminders"]
-    assert reminders_job.hour == 14  # UTC = 09:00 America/Bogota
+    assert reminders_job.hour == {14, 22}  # UTC = 09:00 y 17:00 America/Bogota
     assert reminders_job.minute == 0
 
     tokens_job = by_name["cron:purge_stale_device_tokens"]

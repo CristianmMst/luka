@@ -170,8 +170,9 @@ async def ensure_recurring_occurrences(ctx: dict[str, Any]) -> None:
 
 
 async def send_recurring_reminders(ctx: dict[str, Any]) -> None:
-    """Cron diario 14:00 UTC = 09:00 Bogota: publica `recurring.PaymentDueSoon` de cada
-    gasto fijo pendiente al que le toca aviso hoy (spec 011 SS5). Lo envia el consumer
+    """Cron a las 14:00 y 22:00 UTC = 09:00 y 17:00 Bogota: publica
+    `recurring.PaymentDueSoon` de cada gasto fijo pendiente al que le toca aviso (spec 011
+    SS5). Lo envia el consumer
     de notifications. Solo loguea el conteo (P1).
     """
     session_factory = ctx.get("events_session_factory")
@@ -528,8 +529,8 @@ class WorkerSettings:
         cron(renew_gmail_watches, hour=8, minute=0, run_at_startup=False),
         # F7.4: 10:00 UTC = 05:00 Bogota, antes de que el usuario abra la app.
         cron(ensure_recurring_occurrences, hour=10, minute=0, run_at_startup=False),
-        # F7.5: 14:00 UTC = 09:00 Bogota (spec 011 SS5), para no avisar de madrugada.
-        cron(send_recurring_reminders, hour=14, minute=0, run_at_startup=False),
+        # F7.5: 14:00 y 22:00 UTC = 09:00 y 17:00 Bogota (spec 011 SS5).
+        cron(send_recurring_reminders, hour={14, 22}, minute=0, run_at_startup=False),
         cron(purge_stale_device_tokens, hour=8, minute=0, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))

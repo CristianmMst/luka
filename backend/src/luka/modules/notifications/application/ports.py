@@ -41,11 +41,11 @@ class PushSenderPort(Protocol):
 class RecurringRemindersPort(Protocol):
     """Lo que notifications consulta o marca en recurring via `recurring.public` (R4)."""
 
-    async def still_due(self, occurrence_id: UUID, days_before: int) -> bool:
-        """`True` si hoy sigue tocando ese aviso (7, 2 o 1 dias antes)."""
+    async def still_due(self, occurrence_id: UUID, slot: int) -> bool:
+        """`True` si ahora sigue tocando ese aviso (1-4, spec 011 SS5)."""
         ...
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int) -> bool: ...
+    async def mark_reminded(self, occurrence_id: UUID, slot: int) -> bool: ...
 
 
 class ClockPort(Protocol):

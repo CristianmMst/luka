@@ -238,7 +238,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | day_of_month | SMALLINT NOT NULL | `CHECK (day_of_month BETWEEN 1 AND 31)`; en meses más cortos vence el último día (spec 011 §3) |
 | category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher. La API exige que sea del sistema o del usuario (404 si no) |
 | account_id | UUID FK NULL | `→ linked_accounts ON DELETE SET NULL`; si está, el matcher exige esa cuenta |
-| remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))`. **Sin uso** desde que los avisos son siempre 7, 2 y 1 días antes (spec 011 §5); la API lo sigue aceptando para no romper builds viejos de la app |
+| remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))`. **Sin uso** desde que los avisos tienen horarios fijos (spec 011 §5); la API lo sigue aceptando para no romper builds viejos de la app |
 | active | BOOLEAN NOT NULL DEFAULT true | pausado = no genera ocurrencias ni avisa |
 | created_at / updated_at | TIMESTAMPTZ | |
 
@@ -258,7 +258,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | matched_by | TEXT NULL | `auto` / `manual` |
 | paid_at | TIMESTAMPTZ NULL | cuándo quedó pagada (el emparejamiento o la marca del usuario, no la fecha del movimiento) |
 | reminded_at | TIMESTAMPTZ NULL | cuándo se envió el último recordatorio push |
-| last_reminder_days | SMALLINT NULL | el aviso más cercano ya enviado: 7, 2 o 1 (`CHECK`); nunca se envía uno igual o más lejano, así cada aviso sale a lo sumo una vez (AC-12.7, migración 0010) |
+| last_reminder_slot | SMALLINT NULL | último aviso enviado, 1–4 (`CHECK`): 1 = 7 días antes a las 9, 2 = 2 días a las 9, 3 = el día antes a las 9 y 4 = el día antes a las 17. Nunca se envía uno igual o anterior, así cada aviso sale a lo sumo una vez (AC-12.7, migración 0010) |
 | created_at / updated_at | TIMESTAMPTZ | |
 | UNIQUE | `(recurring_expense_id, period)` | una ocurrencia por mes; la generación usa `ON CONFLICT DO NOTHING` |
 | UNIQUE parcial | `(transaction_id) WHERE transaction_id IS NOT NULL` | una transacción paga a lo sumo una ocurrencia (spec 011 §4, regla 7) |

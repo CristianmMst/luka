@@ -21,7 +21,8 @@ from luka.modules.recurring.domain.matcher import (
     TxCandidate,
     matches,
     pick_occurrence,
-    reminder_offset_due,
+    reminder_fire_at,
+    reminder_slot_due,
     within_tolerance,
 )
 from luka.modules.recurring.domain.schedule import (
@@ -362,45 +363,59 @@ def test_rechazo_de_una_ocurrencia_no_bloquea_las_demas() -> None:
     assert pick_occurrence(_tx(), [(occ_a, expense_a), (occ_b, expense_b)], {occ_a.id}) == occ_b
 
 
-# --- Caso 10: recordatorios de 7, 2 y 1 dias --------------------------------------------
+# --- Caso 10: avisos 7d 9:00, 2d 9:00, 1d 9:00 y 1d 17:00 ------------------------------
+
+
+def _bogota(day: int, hour: int, minute: int = 0) -> datetime:
+    return datetime(2026, 10, day, hour, minute, tzinfo=_BOGOTA)
+
+
+def test_reminder_fire_at_en_hora_de_colombia() -> None:
+    due = date(2026, 10, 22)
+    assert [reminder_fire_at(due, slot) for slot in (1, 2, 3, 4)] == [
+        _bogota(15, 9),
+        _bogota(20, 9),
+        _bogota(21, 9),
+        _bogota(21, 17),
+    ]
 
 
 @pytest.mark.parametrize(
-    ("today", "last", "expected"),
+    ("now", "last", "expected"),
     [
-        (date(2026, 10, 14), None, None),  # 8 dias antes: todavia no
-        (date(2026, 10, 15), None, 7),
-        (date(2026, 10, 16), None, 7),  # el cron fallo el dia 15: sale igual
-        (date(2026, 10, 16), 7, None),  # ya salio el de 7
-        (date(2026, 10, 20), 7, 2),
-        (date(2026, 10, 20), 2, None),
-        (date(2026, 10, 21), 2, 1),
-        (date(2026, 10, 21), None, 1),  # sin avisos previos: el mas cercano
-        (date(2026, 10, 22), 2, 1),  # el dia del pago cuenta como el de 1
-        (date(2026, 10, 22), 1, None),
-        (date(2026, 10, 23), None, None),  # vencido: nunca se avisa
+        (_bogota(15, 8, 59), None, None),  # justo antes del primero
+        (_bogota(15, 9), None, 1),
+        (_bogota(16, 9), 1, None),  # ya salio el 1
+        (_bogota(20, 9), 1, 2),
+        (_bogota(21, 9), 2, 3),
+        (_bogota(21, 16, 59), 3, None),
+        (_bogota(21, 17), 3, 4),
+        (_bogota(21, 17), None, 4),  # si el cron no corrio: solo el ultimo, no todos
+        (_bogota(22, 9), 4, None),
+        (_bogota(22, 9), 3, 4),  # el de las 17 atrasado sale el dia del pago
+        (_bogota(23, 9), None, None),  # vencido: nunca se avisa
     ],
 )
-def test_reminder_offset_due_elige_el_aviso_que_toca(
-    today: date, last: int | None, expected: int | None
+def test_reminder_slot_due_elige_el_aviso_que_toca(
+    now: datetime, last: int | None, expected: int | None
 ) -> None:
     expense = _expense()
-    occ = _occurrence(expense, date(2026, 10, 22), last_reminder_days=last)
-    assert reminder_offset_due(occ, expense, today) == expected
+    occ = _occurrence(expense, date(2026, 10, 22), last_reminder_slot=last)
+    assert reminder_slot_due(occ, expense, now) == expected
 
 
 def test_no_avisa_pagado_omitido_o_pausado() -> None:
     expense = _expense()
-    today = date(2026, 10, 21)
+    now = _bogota(21, 9)
     due = date(2026, 10, 22)
     paid = _occurrence(
         expense, due, status=OccurrenceStatus.PAID, matched_by=MatchedBy.AUTO, paid_at=_NOW
     )
-    assert reminder_offset_due(paid, expense, today) is None
+    assert reminder_slot_due(paid, expense, now) is None
     skipped = _occurrence(expense, due, status=OccurrenceStatus.SKIPPED)
-    assert reminder_offset_due(skipped, expense, today) is None
+    assert reminder_slot_due(skipped, expense, now) is None
     paused = replace(expense, active=False)
-    assert reminder_offset_due(_occurrence(paused, due), paused, today) is None
+    assert reminder_slot_due(_occurrence(paused, due), paused, now) is None
 
 
 # --- Nombre como palabra clave (spec 011 SS4) ---------------------------------------

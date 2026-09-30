@@ -379,7 +379,7 @@ class _Bus:
         self.events.append(event)
 
 
-async def test_avisa_a_los_7_2_y_1_dias_una_vez_cada_uno() -> None:
+async def test_avisa_4_veces_una_vez_cada_una() -> None:
     from luka.modules.recurring.application.use_cases.background import (  # noqa: PLC0415
         PublishDueReminders,
         ReminderStatus,
@@ -392,21 +392,22 @@ async def test_avisa_a_los_7_2_y_1_dias_una_vez_cada_uno() -> None:
     status = ReminderStatus(occurrences=repos.occurrences, clock=repos.clock, uow=repos.uow)
     sent: list[int] = []
 
-    for day in (15, 16, 20, 21, 22):
-        repos.clock._now = datetime(2026, 10, day, 14, 0, tzinfo=UTC)
+    # Corridas del cron a las 09:00 (14 UTC) y 17:00 (22 UTC) de Colombia.
+    for day, hour in [(15, 14), (15, 22), (16, 14), (20, 14), (21, 14), (21, 22), (22, 14)]:
+        repos.clock._now = datetime(2026, 10, day, hour, 0, tzinfo=UTC)
         bus = _Bus()
         await PublishDueReminders(
             occurrences=repos.occurrences, events=bus, clock=repos.clock
         ).execute()
         for event in bus.events:
             assert isinstance(event, PaymentDueSoon)
-            assert event.event_id == reminder_event_id(event.occurrence_id, event.days_before)
-            assert await status.still_due(event.occurrence_id, event.days_before)
-            assert await status.mark_reminded(event.occurrence_id, event.days_before)
-            assert not await status.mark_reminded(event.occurrence_id, event.days_before)
-            sent.append(event.days_before)
+            assert event.event_id == reminder_event_id(event.occurrence_id, event.slot)
+            assert await status.still_due(event.occurrence_id, event.slot)
+            assert await status.mark_reminded(event.occurrence_id, event.slot)
+            assert not await status.mark_reminded(event.occurrence_id, event.slot)
+            sent.append(event.slot)
 
-    assert sent == [7, 2, 1]
+    assert sent == [1, 2, 3, 4]
     assert await status.still_due(uuid4(), 1) is False
 
 

@@ -13,8 +13,8 @@ from uuid import UUID
 class PaymentDueSoon:
     """Toca avisar un gasto fijo pendiente (spec 011 SS5); lo consume notifications.
 
-    `event_id` es determinista por ocurrencia y aviso (7, 2 o 1 dias): republicarlo
-    no duplica el aviso (el `IdempotentHandler` lo absorbe).
+    `event_id` es determinista por ocurrencia y aviso (1-4): republicarlo no duplica
+    el aviso (el `IdempotentHandler` lo absorbe).
     """
 
     event_id: UUID
@@ -25,8 +25,8 @@ class PaymentDueSoon:
     expected_amount: Decimal
     #: `AAAA-MM-DD`; el codec del bus no serializa `date` (spec 003 SS2.3).
     due_date: str
-    #: Que aviso es: 7, 2 o 1 dias antes. Default para eventos viejos del stream.
-    days_before: int = 1
+    #: Que aviso es, 1-4 segun `REMINDER_SLOTS` de recurring. Default para eventos viejos.
+    slot: int = 3
 
     event_type: ClassVar[str] = "recurring.PaymentDueSoon"
 

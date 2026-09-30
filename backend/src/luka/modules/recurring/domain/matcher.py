@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
 from luka.modules.recurring.domain.entities import Occurrence, RecurringExpense, normalize_text
 from luka.modules.recurring.domain.enums import OccurrenceStatus
-from luka.modules.recurring.domain.schedule import colombia_date, window
+from luka.modules.recurring.domain.schedule import BOGOTA, colombia_date, window
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,26 +79,42 @@ def pick_occurrence(
     return best[2]
 
 
-#: Avisos de cada gasto fijo, en dias antes del vencimiento (spec 011 SS5).
-REMINDER_OFFSETS = (7, 2, 1)
+#: Avisos de cada gasto fijo (spec 011 SS5): (dias antes, hora en Colombia). El numero
+#: de aviso (1-4) es su posicion: 7 dias a las 9, 2 dias a las 9 y el dia antes a las 9
+#: y a las 17.
+REMINDER_SLOTS = ((7, 9), (2, 9), (1, 9), (1, 17))
+REMINDER_HORIZON_DAYS = max(days for days, _ in REMINDER_SLOTS)
 
 
-def reminder_offset_due(
-    occurrence: Occurrence, expense: RecurringExpense, today: date
+def reminder_fire_at(due: date, slot: int) -> datetime:
+    """Instante (hora de Colombia) del aviso `slot` de un pago que vence `due`."""
+    days, hour = REMINDER_SLOTS[slot - 1]
+    day = due - timedelta(days=days)
+    return datetime(day.year, day.month, day.day, hour, tzinfo=BOGOTA)
+
+
+def reminder_slot_due(
+    occurrence: Occurrence, expense: RecurringExpense, now: datetime
 ) -> int | None:
-    """El aviso (7, 2 o 1 dias antes) que toca enviar hoy, o `None` (spec 011 SS5).
+    """El aviso (1-4) que toca enviar ahora, o `None` (spec 011 SS5).
 
-    Cada aviso sale una sola vez y nunca uno mas lejano que el ultimo enviado. Si
-    el cron no corrio un dia, sale el aviso que correspondia (p. ej. el de 7 dias
-    a 6 dias del pago). El dia del vencimiento cuenta como el de 1 dia.
+    Toca el mas reciente cuya hora ya paso, si es posterior al ultimo enviado: cada
+    aviso sale a lo sumo una vez y, si el cron no corrio, no se mandan de golpe los
+    atrasados, solo el ultimo. Nunca se avisa de un pago ya vencido.
     """
     if occurrence.status is not OccurrenceStatus.PENDING or not expense.active:
         return None
-    days_left = (occurrence.due_date - today).days
-    if days_left < 0 or days_left > max(REMINDER_OFFSETS):
+    if colombia_date(now) > occurrence.due_date:
         return None
-    offset = min(o for o in REMINDER_OFFSETS if o >= days_left) if days_left else 1
-    last = occurrence.last_reminder_days
-    if last is not None and offset >= last:
+    fired = [
+        slot
+        for slot in range(1, len(REMINDER_SLOTS) + 1)
+        if reminder_fire_at(occurrence.due_date, slot) <= now
+    ]
+    if not fired:
         return None
-    return offset
+    slot = max(fired)
+    last = occurrence.last_reminder_slot
+    if last is not None and slot <= last:
+        return None
+    return slot

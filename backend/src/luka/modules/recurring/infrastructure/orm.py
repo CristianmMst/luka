@@ -96,8 +96,8 @@ class RecurringOccurrenceRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         Index(None, "user_id", "period"),
         Index(None, "user_id", "updated_at", "id"),
         CheckConstraint(
-            "last_reminder_days IS NULL OR last_reminder_days IN (1, 2, 7)",
-            name="last_reminder_days_valido",
+            "last_reminder_slot IS NULL OR last_reminder_slot BETWEEN 1 AND 4",
+            name="last_reminder_slot_valido",
         ),
         Index(
             "ix_recurring_occurrences_due_date_pendientes",
@@ -125,7 +125,7 @@ class RecurringOccurrenceRow(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     matched_by: Mapped[str | None] = mapped_column(Text, nullable=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_reminder_days: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    last_reminder_slot: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
 
 
 class RecurringMatchRejectionRow(Base):

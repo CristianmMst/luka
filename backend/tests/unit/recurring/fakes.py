@@ -178,12 +178,12 @@ class InMemoryOccurrences:
             return None
         return row, self._expenses.rows[row.recurring_expense_id]
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
+    async def mark_reminded(self, occurrence_id: UUID, slot: int, now: datetime) -> bool:
         row = self.rows.get(occurrence_id)
-        last = row.last_reminder_days if row is not None else None
-        if row is None or (last is not None and last <= days_before):
+        last = row.last_reminder_slot if row is not None else None
+        if row is None or (last is not None and last >= slot):
             return False
-        self.rows[occurrence_id] = replace(row, reminded_at=now, last_reminder_days=days_before)
+        self.rows[occurrence_id] = replace(row, reminded_at=now, last_reminder_slot=slot)
         return True
 
 

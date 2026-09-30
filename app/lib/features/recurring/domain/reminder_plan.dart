@@ -13,7 +13,7 @@ final class LocalReminder {
     required this.body,
   });
 
-  /// Id del aviso en el sistema: hash estable de `occurrence_id:días`.
+  /// Id del aviso en el sistema: hash estable de `occurrence_id:aviso`.
   final int id;
   final String occurrenceId;
 
@@ -52,8 +52,8 @@ final class NoReminderScheduler implements ReminderScheduler {
   Future<void> replaceAll(List<LocalReminder> reminders) async {}
 }
 
-/// 09:00 en Colombia = 14:00 UTC (UTC−5 fijo, sin horario de verano).
-const _reminderHourUtc = 14;
+/// Colombia es UTC−5 fijo, sin horario de verano.
+const _colombiaOffsetHours = 5;
 
 const _months = [
   'enero',
@@ -70,12 +70,18 @@ const _months = [
   'diciembre',
 ];
 
-/// Avisos de cada gasto fijo, en días antes del vencimiento (spec 011 §5).
-const reminderOffsets = [7, 2, 1];
+/// Avisos de cada gasto fijo (spec 011 §5): días antes y hora de Colombia. El
+/// día antes se avisa dos veces, a las 9 y a las 17.
+const List<({int days, int hour})> reminderSlots = [
+  (days: 7, hour: 9),
+  (days: 2, hour: 9),
+  (days: 1, hour: 9),
+  (days: 1, hour: 17),
+];
 
-/// Los avisos que deben quedar programados ahora (spec 011 §5.1): tres por
-/// ocurrencia pendiente de un gasto fijo activo (7, 2 y 1 días antes), a las
-/// 09:00 de Colombia. Los que ya pasaron no se programan.
+/// Los avisos que deben quedar programados ahora (spec 011 §5.1): cuatro por
+/// ocurrencia pendiente de un gasto fijo activo ([reminderSlots]). Los que ya
+/// pasaron no se programan.
 List<LocalReminder> plannedReminders({
   required List<RecurringOccurrence> occurrences,
   required List<RecurringExpense> expenses,
@@ -90,18 +96,18 @@ List<LocalReminder> plannedReminders({
     if (occurrence.status != OccurrenceStatus.pending) continue;
     if (!seen.add(occurrence.id)) continue;
     final due = occurrence.dueDate;
-    for (final days in reminderOffsets) {
+    for (final (i, (:days, :hour)) in reminderSlots.indexed) {
       final fireDay = due.subtract(Duration(days: days));
       final fireAt = DateTime.utc(
         fireDay.year,
         fireDay.month,
         fireDay.day,
-        _reminderHourUtc,
+        hour + _colombiaOffsetHours,
       );
       if (!fireAt.isAfter(now)) continue;
       reminders.add(
         LocalReminder(
-          id: reminderIdFor('${occurrence.id}:$days'),
+          id: reminderIdFor('${occurrence.id}:${i + 1}'),
           occurrenceId: occurrence.id,
           fireAt: fireAt,
           title: 'Se acerca tu pago de ${occurrence.name}',

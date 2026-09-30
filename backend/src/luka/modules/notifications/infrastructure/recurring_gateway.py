@@ -21,15 +21,13 @@ class RecurringReminders:
         self._session = session
         self._clock = clock
 
-    async def still_due(self, occurrence_id: UUID, days_before: int) -> bool:
+    async def still_due(self, occurrence_id: UUID, slot: int) -> bool:
         return await recurring_public.reminder_still_due(
-            self._session, self._clock, occurrence_id, days_before
+            self._session, self._clock, occurrence_id, slot
         )
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int) -> bool:
-        return await recurring_public.mark_reminded(
-            self._session, self._clock, occurrence_id, days_before
-        )
+    async def mark_reminded(self, occurrence_id: UUID, slot: int) -> bool:
+        return await recurring_public.mark_reminded(self._session, self._clock, occurrence_id, slot)
 
 
 __all__ = ["RecurringReminders"]

@@ -29,30 +29,38 @@ RecurringOccurrence _occ({
   status: status,
 );
 
+const _twoDays =
+    r'Pasado mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.';
+
 void main() {
   // 15 de octubre, 07:00 en Colombia: antes del aviso de 7 días (09:00).
   final now = DateTime.utc(2026, 10, 15, 12);
 
-  test('programa 3 avisos a las 09:00 de Colombia: 7, 2 y 1 días antes', () {
-    final planned = plannedReminders(
-      occurrences: [_occ()],
-      expenses: const [_spotify],
-      now: now,
-    );
+  test(
+    'programa 4 avisos: 7 y 2 días antes a las 9, y el día antes a las 9 y 17',
+    () {
+      final planned = plannedReminders(
+        occurrences: [_occ()],
+        expenses: const [_spotify],
+        now: now,
+      );
 
-    expect(planned.map((r) => r.fireAt), [
-      DateTime.utc(2026, 10, 15, 14),
-      DateTime.utc(2026, 10, 20, 14),
-      DateTime.utc(2026, 10, 21, 14),
-    ]);
-    expect(planned.first.title, 'Se acerca tu pago de Spotify');
-    expect(planned.map((r) => r.body), [
-      r'El 22 de octubre se te descontarán $16.900 de tu cuenta.',
-      r'Pasado mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.',
-      r'Mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.',
-    ]);
-    expect(planned.map((r) => r.id).toSet(), hasLength(3));
-  });
+      expect(planned.map((r) => r.fireAt), [
+        DateTime.utc(2026, 10, 15, 14),
+        DateTime.utc(2026, 10, 20, 14),
+        DateTime.utc(2026, 10, 21, 14),
+        DateTime.utc(2026, 10, 21, 22),
+      ]);
+      expect(planned.first.title, 'Se acerca tu pago de Spotify');
+      expect(planned.map((r) => r.body), [
+        r'El 22 de octubre se te descontarán $16.900 de tu cuenta.',
+        _twoDays,
+        r'Mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.',
+        r'Mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.',
+      ]);
+      expect(planned.map((r) => r.id).toSet(), hasLength(4));
+    },
+  );
 
   test('solo quedan los avisos que no han pasado', () {
     final planned = plannedReminders(
@@ -61,7 +69,10 @@ void main() {
       now: DateTime.utc(2026, 10, 20, 15),
     );
 
-    expect(planned.map((r) => r.fireAt), [DateTime.utc(2026, 10, 21, 14)]);
+    expect(planned.map((r) => r.fireAt), [
+      DateTime.utc(2026, 10, 21, 14),
+      DateTime.utc(2026, 10, 21, 22),
+    ]);
   });
 
   test('omite pagadas, omitidas, pausadas y sin gasto', () {
@@ -101,6 +112,8 @@ void main() {
       'a',
       'a',
       'a',
+      'a',
+      'b',
       'b',
       'b',
       'b',

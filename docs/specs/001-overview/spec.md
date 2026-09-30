@@ -39,7 +39,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 - Deduplicación multi-fuente y detección de transferencias entre cuentas propias.
 - Categorías (personalizables) con etiqueta fiscal; corrección manual reentrenable (reglas por comercio).
 - Dashboard mensual, historial, cola de revisión.
-- Gastos fijos mensuales: se tachan solos cuando la captura detecta el pago y avisan 7 días, 2 días y 1 día antes del vencimiento: por push de Firebase en Android y con avisos locales en iPhone (spec 011).
+- Gastos fijos mensuales: se tachan solos cuando la captura detecta el pago y avisan 7 y 2 días antes a las 9:00 a. m., y el día antes a las 9:00 a. m. y a las 5:00 p. m. (hora de Colombia): por push de Firebase en Android y con avisos locales en iPhone (spec 011).
 - Reporte anual estilo formulario 210 (JSON + Excel) y simulación básica de si está obligado a declarar (topes UVT).
 - iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + NFC en foreground + pagos con Apple Pay por una automatización de Atajos, iOS 17+, spec 006 §3.3).
 
@@ -75,4 +75,4 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 | **Watch** | Suscripción de Gmail API que publica en Pub/Sub cuando llega correo; expira cada 7 días y se renueva a diario |
 | **Gasto fijo** | Pago que el usuario declara que se repite cada mes (comercio, monto aproximado y día); luka espera la transacción que lo paga, no la crea (spec 011) |
 | **Ocurrencia** | La instancia de un gasto fijo en un mes concreto, con su fecha de vencimiento y estado: pendiente, pagada (tachada) u omitida |
-| **Recordatorio push** | Aviso de un gasto fijo aún no pagado, 7 días, 2 días y 1 día antes del vencimiento: en Android lo envía el backend por Firebase Cloud Messaging y en iPhone lo programa el teléfono |
+| **Recordatorio push** | Aviso de un gasto fijo aún no pagado, 7 y 2 días antes a las 9:00 a. m., y el día antes a las 9:00 a. m. y a las 5:00 p. m.: en Android lo envía el backend por Firebase Cloud Messaging y en iPhone lo programa el teléfono |

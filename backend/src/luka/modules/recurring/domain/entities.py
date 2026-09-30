@@ -131,5 +131,5 @@ class Occurrence:
     matched_by: MatchedBy | None
     paid_at: datetime | None
     reminded_at: datetime | None
-    #: El aviso mas cercano ya enviado (7, 2 o 1 dias antes), o `None` (spec 011 SS5).
-    last_reminder_days: int | None = None
+    #: Ultimo aviso enviado, 1-4 segun `REMINDER_SLOTS`, o `None` (spec 011 SS5).
+    last_reminder_slot: int | None = None

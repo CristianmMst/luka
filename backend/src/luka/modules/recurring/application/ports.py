@@ -79,8 +79,8 @@ class OccurrenceRepositoryPort(Protocol):
         """La ocurrencia con su gasto fijo, sin filtrar por usuario (solo para el consumer)."""
         ...
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
-        """Registra el aviso `days_before` si es mas cercano que el ultimo; `True` si lo marco."""
+    async def mark_reminded(self, occurrence_id: UUID, slot: int, now: datetime) -> bool:
+        """Registra el aviso `slot` si es posterior al ultimo enviado; `True` si lo marco."""
         ...
 
 

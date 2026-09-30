@@ -3877,7 +3877,7 @@ abstract class AppLocalizations {
   /// No description provided for @pushAskBody.
   ///
   /// In es, this message translates to:
-  /// **'Te mandamos una notificación 7 días, 2 días y 1 día antes del vencimiento, solo si el pago todavía no aparece en luka.'**
+  /// **'Te avisamos 7 días y 2 días antes del pago, y el día antes en la mañana y en la tarde, solo si el pago todavía no aparece en luka.'**
   String get pushAskBody;
 
   /// No description provided for @pushAskExampleTitle.
@@ -3937,7 +3937,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurringFormRemindNote.
   ///
   /// In es, this message translates to:
-  /// **'Te avisamos 7 días, 2 días y 1 día antes, si el pago todavía no aparece.'**
+  /// **'Te avisamos 7 días y 2 días antes a las 9 a. m., y el día antes a las 9 a. m. y a las 5 p. m., si el pago todavía no aparece.'**
   String get recurringFormRemindNote;
 
   /// No description provided for @recurringMyExpensesTitle.

@@ -69,27 +69,27 @@ async def publish_due_reminders(
 
 
 async def reminder_still_due(
-    session: AsyncSession, clock: ClockPort, occurrence_id: UUID, days_before: int
+    session: AsyncSession, clock: ClockPort, occurrence_id: UUID, slot: int
 ) -> bool:
-    """`True` si hoy sigue tocando el aviso `days_before` (7, 2 o 1) de la ocurrencia."""
+    """`True` si ahora sigue tocando el aviso `slot` (1-4) de la ocurrencia."""
     status = ReminderStatus(
         occurrences=SqlAlchemyOccurrenceRepository(session),
         clock=clock,
         uow=SqlAlchemyUnitOfWork(session),
     )
-    return await status.still_due(occurrence_id, days_before)
+    return await status.still_due(occurrence_id, slot)
 
 
 async def mark_reminded(
-    session: AsyncSession, clock: ClockPort, occurrence_id: UUID, days_before: int
+    session: AsyncSession, clock: ClockPort, occurrence_id: UUID, slot: int
 ) -> bool:
-    """Registra el aviso `days_before` (cada uno a lo sumo una vez, AC-12.7)."""
+    """Registra el aviso `slot` (cada uno a lo sumo una vez, AC-12.7)."""
     status = ReminderStatus(
         occurrences=SqlAlchemyOccurrenceRepository(session),
         clock=clock,
         uow=SqlAlchemyUnitOfWork(session),
     )
-    return await status.mark_reminded(occurrence_id, days_before)
+    return await status.mark_reminded(occurrence_id, slot)
 
 
 async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, object]:

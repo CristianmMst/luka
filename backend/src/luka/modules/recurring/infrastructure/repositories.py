@@ -50,7 +50,7 @@ def occurrence_row_to_entity(row: RecurringOccurrenceRow) -> Occurrence:
         matched_by=MatchedBy(row.matched_by) if row.matched_by is not None else None,
         paid_at=row.paid_at,
         reminded_at=row.reminded_at,
-        last_reminder_days=row.last_reminder_days,
+        last_reminder_slot=row.last_reminder_slot,
     )
 
 
@@ -298,15 +298,15 @@ class SqlAlchemyOccurrenceRepository:
         occ, exp = row
         return occurrence_row_to_entity(occ), expense_row_to_entity(exp)
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
-        last = RecurringOccurrenceRow.last_reminder_days
+    async def mark_reminded(self, occurrence_id: UUID, slot: int, now: datetime) -> bool:
+        last = RecurringOccurrenceRow.last_reminder_slot
         stmt = (
             update(RecurringOccurrenceRow)
             .where(
                 RecurringOccurrenceRow.id == occurrence_id,
-                or_(last.is_(None), last > days_before),
+                or_(last.is_(None), last < slot),
             )
-            .values(reminded_at=now, last_reminder_days=days_before)
+            .values(reminded_at=now, last_reminder_slot=slot)
             .returning(RecurringOccurrenceRow.id)
         )
         return (await self._session.execute(stmt)).scalar_one_or_none() is not None

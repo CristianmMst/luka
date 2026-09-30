@@ -281,12 +281,12 @@ class _Reminders:
         self.due = due
         self.marked: list[UUID] = []
 
-    async def still_due(self, occurrence_id: UUID, days_before: int) -> bool:
-        del occurrence_id, days_before
+    async def still_due(self, occurrence_id: UUID, slot: int) -> bool:
+        del occurrence_id, slot
         return self.due
 
-    async def mark_reminded(self, occurrence_id: UUID, days_before: int) -> bool:
-        del days_before
+    async def mark_reminded(self, occurrence_id: UUID, slot: int) -> bool:
+        del slot
         self.marked.append(occurrence_id)
         return True
 
