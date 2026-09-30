@@ -245,6 +245,11 @@ void main() {
       const GmailUnexpected(),
       'No pudimos conectar Gmail. Inténtalo de nuevo.',
     ),
+    (
+      'inesperado con código de la plataforma',
+      const GmailUnexpected(null, 'uiUnavailable'),
+      'No pudimos conectar Gmail. Inténtalo de nuevo. (código: uiUnavailable)',
+    ),
   ];
 
   for (final (name, failure, message) in failures) {

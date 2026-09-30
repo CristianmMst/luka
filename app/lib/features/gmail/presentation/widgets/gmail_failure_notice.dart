@@ -46,10 +46,16 @@ class GmailFailureNotice extends StatelessWidget {
         // En debug se añade la causa técnica para diagnosticar el setup.
         kDebugMode
             ? '${l10n.gmailErrorMisconfigured}\n($detail)'
-            : l10n.gmailErrorMisconfigured,
+            : l10n.gmailErrorWithCode(l10n.gmailErrorMisconfigured, detail),
         null,
       ),
-      GmailUnexpected() => (NoticeTone.error, l10n.gmailErrorUnexpected, null),
+      GmailUnexpected(:final code) => (
+        NoticeTone.error,
+        code == null
+            ? l10n.gmailErrorUnexpected
+            : l10n.gmailErrorWithCode(l10n.gmailErrorUnexpected, code),
+        null,
+      ),
     };
     if (notice == null) return const SizedBox.shrink();
     final (tone, message, icon) = notice;

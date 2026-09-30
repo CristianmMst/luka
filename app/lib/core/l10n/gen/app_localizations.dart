@@ -3411,6 +3411,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Guía para crear el Atajo que los registra'**
   String get settingsApplePaySubtitle;
+
+  /// No description provided for @gmailErrorWithCode.
+  ///
+  /// In es, this message translates to:
+  /// **'{message} (código: {code})'**
+  String gmailErrorWithCode(String message, String code);
 }
 
 class _AppLocalizationsDelegate

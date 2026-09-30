@@ -35,7 +35,10 @@ class GmailAuthorizer {
       );
       // `null`: la plataforma no entregó código. Sin él no hay conexión.
       if (authorization == null) {
-        throw const GmailUnexpected('Google no entregó serverAuthCode');
+        throw const GmailUnexpected(
+          'Google no entregó serverAuthCode',
+          'sinServerAuthCode',
+        );
       }
       return authorization.serverAuthCode;
     } on GoogleSignInException catch (e) {
@@ -49,7 +52,10 @@ class GmailAuthorizer {
           GmailMisconfigured(e.code.name),
         GoogleSignInExceptionCode.uiUnavailable ||
         GoogleSignInExceptionCode.userMismatch ||
-        GoogleSignInExceptionCode.unknownError => GmailUnexpected(e.code),
+        GoogleSignInExceptionCode.unknownError => GmailUnexpected(
+          e.code,
+          e.code.name,
+        ),
       };
     }
   }

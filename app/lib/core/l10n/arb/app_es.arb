@@ -1207,5 +1207,16 @@
   "applePayOpenShortcuts": "Abrir Atajos",
   "applePayOpenShortcutsError": "No se pudo abrir Atajos. Búscala en tu iPhone.",
   "settingsApplePayTitle": "Pagos con Apple Pay",
-  "settingsApplePaySubtitle": "Guía para crear el Atajo que los registra"
+  "settingsApplePaySubtitle": "Guía para crear el Atajo que los registra",
+  "gmailErrorWithCode": "{message} (código: {code})",
+  "@gmailErrorWithCode": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -41,7 +41,12 @@ class GmailOnboardingPage extends ConsumerWidget {
     final failure = loadFailed
         ? switch (gmail.error) {
             final GmailFailure f => f,
-            _ => const GmailUnexpected(),
+            // Solo el tipo como código: el mensaje puede traer la cuenta.
+            final Object error => GmailUnexpected(
+              error,
+              error.runtimeType.toString(),
+            ),
+            null => const GmailUnexpected(),
           }
         : current?.failure;
     final showNotice = failure != null && failure is! GmailConsentCancelled;

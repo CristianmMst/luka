@@ -2024,4 +2024,9 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsApplePaySubtitle =>
       'Guía para crear el Atajo que los registra';
+
+  @override
+  String gmailErrorWithCode(String message, String code) {
+    return '$message (código: $code)';
+  }
 }

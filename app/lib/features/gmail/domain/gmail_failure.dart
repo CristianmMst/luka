@@ -52,7 +52,11 @@ final class GmailMisconfigured extends GmailFailure {
 }
 
 final class GmailUnexpected extends GmailFailure {
-  const GmailUnexpected([this.cause]);
+  const GmailUnexpected([this.cause, this.code]);
 
   final Object? cause;
+
+  /// Código corto y sin datos de la cuenta (p. ej. `uiUnavailable`) que la
+  /// app muestra para diagnosticar desde el teléfono.
+  final String? code;
 }

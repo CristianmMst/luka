@@ -74,7 +74,13 @@ void main() {
     ).thenAnswer((_) async => null);
     await expectLater(
       GmailAuthorizer(setup).obtainServerAuthCode(),
-      throwsA(isA<GmailUnexpected>()),
+      throwsA(
+        isA<GmailUnexpected>().having(
+          (f) => f.code,
+          'code',
+          'sinServerAuthCode',
+        ),
+      ),
     );
   });
 
@@ -86,7 +92,11 @@ void main() {
           isA<GmailMisconfigured>(),
       GoogleSignInExceptionCode.providerConfigurationError:
           isA<GmailMisconfigured>(),
-      GoogleSignInExceptionCode.uiUnavailable: isA<GmailUnexpected>(),
+      GoogleSignInExceptionCode.uiUnavailable: isA<GmailUnexpected>().having(
+        (f) => f.code,
+        'code',
+        'uiUnavailable',
+      ),
       GoogleSignInExceptionCode.userMismatch: isA<GmailUnexpected>(),
       GoogleSignInExceptionCode.unknownError: isA<GmailUnexpected>(),
     };

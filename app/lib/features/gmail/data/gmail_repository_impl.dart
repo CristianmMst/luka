@@ -52,7 +52,7 @@ class GmailRepositoryImpl implements GmailRepository {
     ApiErrorCode.upstreamUnavailable => const GmailUpstreamUnavailable(),
     ApiErrorCode.validationError when e.field == 'server_auth_code' =>
       _codeFailure(e),
-    _ => GmailUnexpected(e),
+    _ => GmailUnexpected(e, e.code.name),
   };
 
   /// Los tres rechazos del código llegan como `400 validation_error` con
