@@ -1330,9 +1330,7 @@
   "recurringFormEditTitle": "Editar gasto fijo",
   "recurringFormName": "Nombre",
   "recurringFormNameHint": "Spotify",
-  "recurringFormKeyword": "¿Cómo aparece en tu banco?",
-  "recurringFormKeywordHint": "SPOTIFY",
-  "recurringFormKeywordHelp": "Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.",
+  "recurringFormNameHelp": "Escríbelo como aparece en tu banco (por ejemplo Spotify o Netflix) y lo tachamos solo cuando llegue el pago.",
   "recurringFormAmount": "¿Cuánto pagas?",
   "recurringFormDay": "Día de pago",
   "recurringFormDayValue": "El {day} de cada mes",
@@ -1345,16 +1343,6 @@
   },
   "recurringFormDayShortMonth": "Si el mes es más corto, usamos el último día.",
   "recurringFormDaySheetTitle": "¿Qué día pagas?",
-  "recurringFormTolerance": "Margen de monto",
-  "recurringFormToleranceHelp": "Aceptamos pagos un poco distintos, por si cambia el precio.",
-  "recurringFormToleranceValue": "±{pct} %",
-  "@recurringFormToleranceValue": {
-    "placeholders": {
-      "pct": {
-        "type": "int"
-      }
-    }
-  },
   "recurringFormCategory": "Categoría",
   "recurringFormNoCategory": "Sin categoría",
   "recurringFormAccount": "Cuenta",
@@ -1373,9 +1361,8 @@
   "recurringFormPause": "Pausar",
   "recurringFormResume": "Reanudar",
   "recurringFormDelete": "Borrar gasto fijo",
-  "recurringNameRequired": "Escribe un nombre.",
+  "recurringNameRequired": "Escribe un nombre (al menos 2 letras).",
   "recurringNameTooLong": "Máximo 60 caracteres.",
-  "recurringKeywordInvalid": "Escribe entre 2 y 40 letras o números.",
   "recurringAmountRequired": "Escribe cuánto pagas.",
   "recurringDayInvalid": "Elige el día de pago.",
   "recurringCreated": "Gasto fijo guardado",

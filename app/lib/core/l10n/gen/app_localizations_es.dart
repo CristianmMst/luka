@@ -2161,14 +2161,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recurringFormNameHint => 'Spotify';
 
   @override
-  String get recurringFormKeyword => '¿Cómo aparece en tu banco?';
-
-  @override
-  String get recurringFormKeywordHint => 'SPOTIFY';
-
-  @override
-  String get recurringFormKeywordHelp =>
-      'Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.';
+  String get recurringFormNameHelp =>
+      'Escríbelo como aparece en tu banco (por ejemplo Spotify o Netflix) y lo tachamos solo cuando llegue el pago.';
 
   @override
   String get recurringFormAmount => '¿Cuánto pagas?';
@@ -2187,18 +2181,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recurringFormDaySheetTitle => '¿Qué día pagas?';
-
-  @override
-  String get recurringFormTolerance => 'Margen de monto';
-
-  @override
-  String get recurringFormToleranceHelp =>
-      'Aceptamos pagos un poco distintos, por si cambia el precio.';
-
-  @override
-  String recurringFormToleranceValue(int pct) {
-    return '±$pct %';
-  }
 
   @override
   String get recurringFormCategory => 'Categoría';
@@ -2242,14 +2224,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recurringFormDelete => 'Borrar gasto fijo';
 
   @override
-  String get recurringNameRequired => 'Escribe un nombre.';
+  String get recurringNameRequired => 'Escribe un nombre (al menos 2 letras).';
 
   @override
   String get recurringNameTooLong => 'Máximo 60 caracteres.';
-
-  @override
-  String get recurringKeywordInvalid =>
-      'Escribe entre 2 y 40 letras o números.';
 
   @override
   String get recurringAmountRequired => 'Escribe cuánto pagas.';

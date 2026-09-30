@@ -92,13 +92,15 @@ class CreateExpense:
         self._uow = uow
 
     async def execute(self, user_id: UUID, input: ExpenseInput) -> RecurringExpense:
+        own_keyword = input.merchant_keyword is not None
         name, keyword, amount = validate_expense_fields(
             name=input.name,
-            merchant_keyword=input.merchant_keyword,
+            merchant_keyword=input.merchant_keyword or input.name,
             expected_amount=input.expected_amount,
             amount_tolerance_pct=input.amount_tolerance_pct,
             day_of_month=input.day_of_month,
             remind_days_before=input.remind_days_before,
+            keyword_field="merchant_keyword" if own_keyword else "name",
         )
         await _check_references(self._ledger, user_id, input.category_id, input.account_id)
         now = self._clock.now()
@@ -158,6 +160,10 @@ class UpdateExpense:
         if current is None:
             raise RecurringExpenseNotFound
         updated = _apply(current, patch)
+        # Renombrar sin mandar keyword: la keyword sigue al nombre (spec 011 SS4).
+        follows_name = patch.name is not UNSET and patch.merchant_keyword is UNSET
+        if follows_name:
+            updated = replace(updated, merchant_keyword=updated.name)
         name, keyword, amount = validate_expense_fields(
             name=updated.name,
             merchant_keyword=updated.merchant_keyword,
@@ -165,6 +171,7 @@ class UpdateExpense:
             amount_tolerance_pct=updated.amount_tolerance_pct,
             day_of_month=updated.day_of_month,
             remind_days_before=updated.remind_days_before,
+            keyword_field="name" if follows_name else "merchant_keyword",
         )
         await _check_references(
             self._ledger,

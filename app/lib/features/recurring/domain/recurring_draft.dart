@@ -8,23 +8,19 @@ part 'recurring_draft.freezed.dart';
 enum RecurringDraftError {
   nameRequired,
   nameTooLong,
-  keywordInvalid,
   amountRequired,
   dayInvalid,
 }
 
-/// Márgenes de monto que ofrece la hoja (spec 008 §3.8).
-const toleranceChoices = [0, 5, 10, 20, 50];
-
-/// Lo que la hoja "Nuevo gasto fijo" / "Editar gasto fijo" va a enviar.
+/// Lo que la hoja "Nuevo gasto fijo" / "Editar gasto fijo" va a enviar:
+/// nombre, monto exacto y día (spec 008 §3.8). El nombre es también la
+/// palabra que luka busca en el comercio del banco (spec 011 §4).
 @freezed
 abstract class RecurringDraft with _$RecurringDraft {
   const factory RecurringDraft({
     required String name,
-    required String merchantKeyword,
     Cop? expectedAmount,
     @Default(0) int dayOfMonth,
-    @Default(10) int tolerancePct,
     @Default(1) int remindDaysBefore,
     String? categoryId,
     String? accountId,
@@ -36,34 +32,29 @@ abstract class RecurringDraft with _$RecurringDraft {
   factory RecurringDraft.fromExpense(RecurringExpense expense) =>
       RecurringDraft(
         name: expense.name,
-        merchantKeyword: expense.merchantKeyword,
         expectedAmount: expense.expectedAmount,
         dayOfMonth: expense.dayOfMonth,
-        tolerancePct: expense.tolerancePct,
         remindDaysBefore: expense.remindDaysBefore,
         categoryId: expense.categoryId,
         accountId: expense.accountId,
       );
 
   static const maxNameLength = 60;
-  static const minKeywordLength = 2;
-  static const maxKeywordLength = 40;
 
-  String get cleanName => _collapse(name);
-  String get cleanKeyword => _collapse(merchantKeyword);
+  /// El backend exige 2 letras o números en el nombre (lo usa como palabra
+  /// clave, spec 005 §10).
+  static const _minAlnum = 2;
+
+  String get cleanName =>
+      name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).join(' ');
 
   Set<RecurringDraftError> validate() {
     final errors = <RecurringDraftError>{};
-    if (cleanName.isEmpty) errors.add(RecurringDraftError.nameRequired);
-    if (cleanName.length > maxNameLength) {
+    final clean = cleanName;
+    final alnum = RegExp(r'[\p{L}\p{N}]', unicode: true).allMatches(clean);
+    if (alnum.length < _minAlnum) errors.add(RecurringDraftError.nameRequired);
+    if (clean.length > maxNameLength) {
       errors.add(RecurringDraftError.nameTooLong);
-    }
-    final keyword = cleanKeyword;
-    final alnum = RegExp(r'[\p{L}\p{N}]', unicode: true).allMatches(keyword);
-    if (keyword.length < minKeywordLength ||
-        keyword.length > maxKeywordLength ||
-        alnum.length < minKeywordLength) {
-      errors.add(RecurringDraftError.keywordInvalid);
     }
     final amount = expectedAmount;
     if (amount == null || amount.cents <= 0) {
@@ -74,7 +65,4 @@ abstract class RecurringDraft with _$RecurringDraft {
     }
     return errors;
   }
-
-  static String _collapse(String value) =>
-      value.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).join(' ');
 }

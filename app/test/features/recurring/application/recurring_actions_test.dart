@@ -35,7 +35,6 @@ final _occurrence = RecurringOccurrence(
 
 const _draft = RecurringDraft(
   name: '  Spotify ',
-  merchantKeyword: ' spotify ',
   expectedAmount: Cop(1690000),
   dayOfMonth: 22,
 );
@@ -75,7 +74,6 @@ void main() {
     expect(created, _expense);
     final sent = verify(() => remote.create(captureAny())).captured.single;
     expect((sent as RecurringDraft).name, 'Spotify');
-    expect(sent.merchantKeyword, 'spotify');
     verify(() => store.upsertExpense(_expense)).called(1);
     expect(syncs, 1);
   });

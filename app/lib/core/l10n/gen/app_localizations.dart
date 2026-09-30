@@ -3634,23 +3634,11 @@ abstract class AppLocalizations {
   /// **'Spotify'**
   String get recurringFormNameHint;
 
-  /// No description provided for @recurringFormKeyword.
+  /// No description provided for @recurringFormNameHelp.
   ///
   /// In es, this message translates to:
-  /// **'¿Cómo aparece en tu banco?'**
-  String get recurringFormKeyword;
-
-  /// No description provided for @recurringFormKeywordHint.
-  ///
-  /// In es, this message translates to:
-  /// **'SPOTIFY'**
-  String get recurringFormKeywordHint;
-
-  /// No description provided for @recurringFormKeywordHelp.
-  ///
-  /// In es, this message translates to:
-  /// **'Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.'**
-  String get recurringFormKeywordHelp;
+  /// **'Escríbelo como aparece en tu banco (por ejemplo Spotify o Netflix) y lo tachamos solo cuando llegue el pago.'**
+  String get recurringFormNameHelp;
 
   /// No description provided for @recurringFormAmount.
   ///
@@ -3681,24 +3669,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'¿Qué día pagas?'**
   String get recurringFormDaySheetTitle;
-
-  /// No description provided for @recurringFormTolerance.
-  ///
-  /// In es, this message translates to:
-  /// **'Margen de monto'**
-  String get recurringFormTolerance;
-
-  /// No description provided for @recurringFormToleranceHelp.
-  ///
-  /// In es, this message translates to:
-  /// **'Aceptamos pagos un poco distintos, por si cambia el precio.'**
-  String get recurringFormToleranceHelp;
-
-  /// No description provided for @recurringFormToleranceValue.
-  ///
-  /// In es, this message translates to:
-  /// **'±{pct} %'**
-  String recurringFormToleranceValue(int pct);
 
   /// No description provided for @recurringFormCategory.
   ///
@@ -3769,7 +3739,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurringNameRequired.
   ///
   /// In es, this message translates to:
-  /// **'Escribe un nombre.'**
+  /// **'Escribe un nombre (al menos 2 letras).'**
   String get recurringNameRequired;
 
   /// No description provided for @recurringNameTooLong.
@@ -3777,12 +3747,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Máximo 60 caracteres.'**
   String get recurringNameTooLong;
-
-  /// No description provided for @recurringKeywordInvalid.
-  ///
-  /// In es, this message translates to:
-  /// **'Escribe entre 2 y 40 letras o números.'**
-  String get recurringKeywordInvalid;
 
   /// No description provided for @recurringAmountRequired.
   ///

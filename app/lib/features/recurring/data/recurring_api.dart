@@ -79,11 +79,11 @@ class RecurringApi implements RecurringRemote {
       _occurrence('$_occurrences/$id/skip', null);
 
   Map<String, Object?> _body(RecurringDraft draft) => {
+    // Sin palabra clave ni margen: el backend usa el nombre y el monto
+    // exacto (spec 011 §4).
     'name': draft.name,
-    'merchant_keyword': draft.merchantKeyword,
     'expected_amount': draft.expectedAmount?.toWire(),
     'day_of_month': draft.dayOfMonth,
-    'amount_tolerance_pct': draft.tolerancePct,
     'remind_days_before': draft.remindDaysBefore,
     'category_id': draft.categoryId,
     'account_id': draft.accountId,

@@ -397,3 +397,43 @@ def test_reminder_no_se_repite_ni_avisa_pagado_omitido_o_pausado() -> None:
     assert not reminder_due(skipped, expense, today)
     paused = replace(expense, active=False)
     assert not reminder_due(_occurrence(paused, due), paused, today)
+
+
+# --- Nombre como palabra clave (spec 011 SS4) ---------------------------------------
+
+
+def test_keyword_tokens_ignora_palabras_genericas_y_cortas() -> None:
+    from luka.modules.recurring.domain.entities import keyword_tokens  # noqa: PLC0415
+
+    assert keyword_tokens("Pago de Spotify Familiar") == ("SPOTIFY", "FAMILIAR")
+    assert keyword_tokens("TV") == ()
+    assert keyword_tokens("Plan celular Claro") == ("CELULAR", "CLARO")
+
+
+def test_basta_una_palabra_del_nombre_en_el_comercio() -> None:
+    expense = _expense(merchant_keyword="Spotify Familiar")
+    occ = _occurrence(expense, date(2026, 10, 22))
+    assert matches(_tx(merchant="SPOTIFY P3A9C1"), occ, expense)
+    arriendo = _expense(merchant_keyword="Arriendo")
+    occ_a = _occurrence(arriendo, date(2026, 10, 22))
+    assert not matches(_tx(merchant="TRANSF INMOBILIARIA XYZ"), occ_a, arriendo)
+
+
+def test_un_nombre_de_solo_palabras_cortas_nunca_empareja() -> None:
+    expense = _expense(merchant_keyword="TV")
+    occ = _occurrence(expense, date(2026, 10, 22))
+    assert not matches(_tx(merchant="TV CABLE"), occ, expense)
+
+
+def test_validacion_reporta_la_keyword_en_el_campo_pedido() -> None:
+    with pytest.raises(InvalidRecurringExpense) as exc:
+        validate_expense_fields(
+            name="*",
+            merchant_keyword="*",
+            expected_amount="1000",
+            amount_tolerance_pct=0,
+            day_of_month=5,
+            remind_days_before=1,
+            keyword_field="name",
+        )
+    assert exc.value.field == "name"

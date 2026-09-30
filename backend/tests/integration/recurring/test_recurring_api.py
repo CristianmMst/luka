@@ -130,7 +130,7 @@ async def test_crear_gasto_fijo_crea_la_ocurrencia_del_mes_y_la_siguiente(
 
     assert expense["name"] == "Spotify"
     assert expense["expected_amount"] == "16900.00"
-    assert expense["amount_tolerance_pct"] == 10
+    assert expense["amount_tolerance_pct"] == 0
     assert expense["remind_days_before"] == 1
     assert expense["active"] is True
 
@@ -261,6 +261,54 @@ async def test_rango_de_meses_invalido_responde_400(
     ):
         response = await client.get("/v1/recurring-occurrences", params=params, headers=ana.headers)
         assert response.status_code == 400, params
+
+
+async def test_sin_palabra_clave_usa_el_nombre_y_monto_exacto(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    """Desde la app solo llegan nombre, monto y dia (spec 011 SS4)."""
+    ana = await user_factory()
+    await _manual_tx(client, ana, amount="16901.00")
+    exact = await _manual_tx(client, ana, merchant="SPOTIFY P3A9C1", amount="16900.00")
+    body = {
+        "name": "Spotify Familiar",
+        "expected_amount": "16900",
+        "day_of_month": min(_today().day, 28),
+    }
+
+    response = await client.post("/v1/recurring-expenses", json=body, headers=ana.headers)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["merchant_keyword"] == "Spotify Familiar"
+    assert response.json()["amount_tolerance_pct"] == 0
+    current = _current(await _occurrences(client, ana))
+    assert current["transaction"]["id"] == exact["id"]
+
+
+async def test_renombrar_mueve_la_palabra_clave_y_un_nombre_sin_letras_falla_en_name(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    ana = await user_factory()
+    created = await client.post(
+        "/v1/recurring-expenses",
+        json={"name": "Netflix", "expected_amount": "38900", "day_of_month": 5},
+        headers=ana.headers,
+    )
+
+    renamed = await client.patch(
+        f"/v1/recurring-expenses/{created.json()['id']}",
+        json={"name": "Disney Plus"},
+        headers=ana.headers,
+    )
+    bad = await client.post(
+        "/v1/recurring-expenses",
+        json={"name": "*", "expected_amount": "1000", "day_of_month": 5},
+        headers=ana.headers,
+    )
+
+    assert renamed.json()["merchant_keyword"] == "Disney Plus"
+    assert bad.status_code == 400
+    assert bad.json()["error"]["field"] == "name"
 
 
 # --- Consumers ------------------------------------------------------------------------------

@@ -59,11 +59,9 @@ class RecurringFormSheet extends ConsumerStatefulWidget {
 class _RecurringFormSheetState extends ConsumerState<RecurringFormSheet> {
   late RecurringDraft _draft = switch (widget.existing) {
     final e? => RecurringDraft.fromExpense(e),
-    null =>
-      widget.initial ?? const RecurringDraft(name: '', merchantKeyword: ''),
+    null => widget.initial ?? const RecurringDraft(name: ''),
   };
   late final _name = TextEditingController(text: _draft.name);
-  late final _keyword = TextEditingController(text: _draft.merchantKeyword);
   late final _amount = TextEditingController(
     text: switch (_draft.expectedAmount) {
       final amount? => copInputText(amount),
@@ -79,14 +77,12 @@ class _RecurringFormSheetState extends ConsumerState<RecurringFormSheet> {
   @override
   void dispose() {
     _name.dispose();
-    _keyword.dispose();
     _amount.dispose();
     super.dispose();
   }
 
   RecurringDraft get _current => _draft.copyWith(
     name: _name.text,
-    merchantKeyword: _keyword.text,
     expectedAmount: parseCopInput(_amount.text),
   );
 
@@ -283,20 +279,8 @@ class _RecurringFormSheetState extends ConsumerState<RecurringFormSheet> {
               error: nameError(),
             ),
           ),
-          Text(l10n.recurringFormKeyword, style: label),
-          TextField(
-            controller: _keyword,
-            textCapitalization: TextCapitalization.characters,
-            maxLength: RecurringDraft.maxKeywordLength,
-            decoration: field(
-              hint: l10n.recurringFormKeywordHint,
-              error: _errors.contains(RecurringDraftError.keywordInvalid)
-                  ? l10n.recurringKeywordInvalid
-                  : null,
-            ),
-          ),
           Text(
-            l10n.recurringFormKeywordHelp,
+            l10n.recurringFormNameHelp,
             style: textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -326,27 +310,6 @@ class _RecurringFormSheetState extends ConsumerState<RecurringFormSheet> {
                 ? l10n.recurringDayInvalid
                 : null,
             onTap: _busy ? null : () => unawaited(_pickDay()),
-          ),
-          Text(l10n.recurringFormTolerance, style: label),
-          Wrap(
-            spacing: Space.xs,
-            runSpacing: Space.xs,
-            children: [
-              for (final pct in toleranceChoices)
-                ChoiceChip(
-                  label: Text(l10n.recurringFormToleranceValue(pct)),
-                  selected: _draft.tolerancePct == pct,
-                  onSelected: (_) => setState(
-                    () => _draft = _draft.copyWith(tolerancePct: pct),
-                  ),
-                ),
-            ],
-          ),
-          Text(
-            l10n.recurringFormToleranceHelp,
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
           ),
           _PickerRow(
             title: l10n.recurringFormCategory,
@@ -615,7 +578,6 @@ RecurringDraft recurringDraftFrom(TransactionView tx) {
   final merchant = tx.merchant ?? '';
   return RecurringDraft(
     name: merchant,
-    merchantKeyword: merchant,
     expectedAmount: tx.amount,
     dayOfMonth: toColombiaLocal(tx.occurredAt).day,
     categoryId: tx.categoryId,

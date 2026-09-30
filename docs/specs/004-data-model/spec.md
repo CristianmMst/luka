@@ -232,9 +232,9 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | id | UUID PK | |
 | user_id | UUID FK | |
 | name | TEXT NOT NULL | nombre visible (1–60), p. ej. "Spotify" |
-| merchant_keyword | TEXT NOT NULL | palabra clave (2–40) que debe aparecer en el comercio normalizado (spec 011 §4); se guarda como la escribió el usuario y se normaliza al comparar |
+| merchant_keyword | TEXT NOT NULL | palabra clave (2–40) que se busca en el comercio normalizado (spec 011 §4). Desde la app es el nombre y lo sigue al renombrar; se normaliza al comparar |
 | expected_amount | NUMERIC(14,2) NOT NULL | `CHECK (expected_amount > 0)` |
-| amount_tolerance_pct | SMALLINT NOT NULL DEFAULT 10 | `CHECK (amount_tolerance_pct BETWEEN 0 AND 50)` |
+| amount_tolerance_pct | SMALLINT NOT NULL DEFAULT 10 | `CHECK (amount_tolerance_pct BETWEEN 0 AND 50)`. La API inserta siempre 0 si no se envía (monto exacto); el `DEFAULT 10` de la columna quedó de la migración 0008 y no se usa |
 | day_of_month | SMALLINT NOT NULL | `CHECK (day_of_month BETWEEN 1 AND 31)`; en meses más cortos vence el último día (spec 011 §3) |
 | category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher. La API exige que sea del sistema o del usuario (404 si no) |
 | account_id | UUID FK NULL | `→ linked_accounts ON DELETE SET NULL`; si está, el matcher exige esa cuenta |

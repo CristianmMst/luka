@@ -16,7 +16,7 @@ Un gasto fijo **no crea transacciones**: solo espera la que llega por la captura
 
 | Término | Definición |
 |---|---|
-| **Gasto fijo** (`recurring_expense`) | Pago que se repite cada mes: nombre visible ("Spotify"), palabra clave del comercio (`merchant_keyword`, p. ej. `SPOTIFY`), monto esperado, tolerancia en %, día del mes (1–31), cuenta y categoría opcionales, y cuántos días antes se avisa (1 o 2) |
+| **Gasto fijo** (`recurring_expense`) | Pago que se repite cada mes. El usuario solo pone nombre ("Spotify"), monto exacto y día del mes (1–31); la cuenta, la categoría y el aviso (1 o 2 días antes) son opcionales. El nombre hace también de palabra clave del comercio (`merchant_keyword` = nombre) y el margen de monto es 0 %. La API acepta otra keyword o margen, pero la app no los pide: el usuario no los entiende |
 | **Ocurrencia** (`recurring_occurrence`) | La instancia de un gasto fijo en un mes concreto (`period` = primer día del mes) con su `due_date`. Estados: `pending`, `paid` y `skipped` |
 | **Ventana de detección** | `[due_date − 5 días, due_date + 5 días]` en fecha local de Colombia (America/Bogotá, UTC−5 fija). Es fija en v1 y cubre cobros adelantados, fines de semana y festivos |
 | **Emparejamiento** | Vínculo ocurrencia ↔ transacción. Puede ser automático (`matched_by = auto`, §4) o manual (`matched_by = manual`, lo elige el usuario) |
@@ -52,7 +52,7 @@ flowchart TD
     E["ledger.TransactionCaptured<br/>(o gasto fijo creado/editado)"] --> K{"kind = expense<br/>y direction = debit?"}
     K -->|no| X[No empareja]
     K -->|sí| C["Candidatas: ocurrencias pending del usuario<br/>con la fecha local de la transacción<br/>dentro de due_date ± 5 d"]
-    C --> F{"merchant normalizado contiene la keyword<br/>y el monto está en expected ± tolerancia<br/>y la cuenta coincide si el gasto fijo la tiene<br/>y no hay rechazo previo del par"}
+    C --> F{"el comercio contiene alguna palabra del nombre<br/>y el monto es exacto<br/>y la cuenta coincide si el gasto fijo la tiene<br/>y no hay rechazo previo del par"}
     F -->|ninguna| X
     F -->|una| P["Ocurrencia → paid<br/>matched_by = auto"]
     F -->|varias| T{"desempate: monto más cercano,<br/>luego fecha más cercana a due_date"}
@@ -63,8 +63,8 @@ flowchart TD
 Reglas:
 
 1. **Tipo:** solo `kind = expense` con `direction = debit`. Ingresos, transferencias (`kind = transfer`, RF-6) y reversos no pagan un gasto fijo.
-2. **Comercio:** se normalizan `transactions.merchant` y `merchant_keyword` igual que el matcher de titular (spec 004 §4.1): sin tildes, en mayúsculas y sin puntuación. Coincide si la keyword es una subcadena del comercio (`SPOTIFY` coincide con `SPOTIFY P3A9C1` y con `PAYU*SPOTIFY`). Un comercio vacío nunca coincide.
-3. **Monto:** `|amount − expected_amount| ≤ expected_amount × amount_tolerance_pct / 100`, con aritmética `Decimal`. El borde cuenta como dentro. Con tolerancia 0 exige monto exacto.
+2. **Comercio:** se normalizan `transactions.merchant` y `merchant_keyword` (el nombre) igual que el matcher de titular (spec 004 §4.1): sin tildes, en mayúsculas y sin puntuación. De la keyword se toman las palabras de 3 letras o más que no sean genéricas (DE, DEL, LA, EL, LOS, LAS, Y, EN, PAGO, PLAN, MES, CUOTA, SERVICIO). Coincide si **alguna** es subcadena del comercio: "Spotify Familiar" coincide con `SPOTIFY P3A9C1` y con `PAYU*SPOTIFY`; "Plan celular Claro" coincide con `CLARO COLOMBIA`. Un nombre que el banco no muestra ("Arriendo" frente a `TRANSF INMOBILIARIA XYZ`) no se tacha solo: el usuario lo marca con un toque (§4.1). Un comercio vacío nunca coincide.
+3. **Monto:** exacto, porque la app crea todo con `amount_tolerance_pct = 0`. La regla general es `|amount − expected_amount| ≤ expected_amount × amount_tolerance_pct / 100`, con aritmética `Decimal` y el borde incluido; sigue para quien use el campo por API.
 4. **Fecha:** la fecha local (America/Bogotá) de `occurred_at` debe caer en la ventana de detección, con ambos bordes incluidos.
 5. **Cuenta:** si el gasto fijo tiene `account_id`, la transacción debe tener esa misma cuenta. Si el gasto fijo no tiene cuenta, se acepta cualquiera (incluida ninguna).
 6. **Estado:** solo ocurrencias `pending` de gastos fijos `active`, y sin un rechazo `(occurrence_id, transaction_id)`.
@@ -74,7 +74,7 @@ Reglas:
 **Disparadores:**
 
 - `ledger.TransactionCaptured`, el evento de toda transacción nueva, capturada o manual (spec 003 §2.3). Se amplía con `merchant` (el comercio ya normalizado de la transacción) y `account_id`, que el matcher necesita. `recurring` no lee tablas de `ledger`: usa el evento y, para el barrido retroactivo, `ledger.public`.
-- **Crear o editar un gasto fijo** (keyword, monto, tolerancia, día o cuenta) dispara un barrido retroactivo: se piden a `ledger.public.expenses_in_window(user_id, desde, hasta)` las transacciones de la ventana de cada ocurrencia `pending` y se les aplica el mismo matcher. Así, si el usuario registra Spotify el 23 y el pago del 22 ya estaba capturado, la ocurrencia nace tachada.
+- **Crear o editar un gasto fijo** (nombre, monto, día o cuenta) dispara un barrido retroactivo: se piden a `ledger.public.expenses_in_window(user_id, desde, hasta)` las transacciones de la ventana de cada ocurrencia `pending` y se les aplica el mismo matcher. Así, si el usuario registra Spotify el 23 y el pago del 22 ya estaba capturado, la ocurrencia nace tachada.
 - **Editar una transacción** (comercio, `kind`) no vuelve a correr el matcher en v1. Si un emparejamiento automático queda mal, el usuario lo deshace (§4.1).
 - `ledger.TransactionDeleted` (evento nuevo, publicado por `DELETE /transactions/{id}` después del commit; solo aplica a transacciones manuales): la ocurrencia que esa transacción pagaba vuelve a `pending` y se limpian `transaction_id`, `paid_at` y `matched_by`. Por eso `transaction_id` no lleva FK (spec 004 §2.13): el consumer la busca por ese id después del borrado. Si el evento se pierde (el bus no respondió), la ocurrencia queda pagada con un id que ya no existe y la app la muestra "Pagado" sin movimiento; el usuario la corrige con "Deshacer".
 
@@ -130,7 +130,8 @@ Apple solo entrega push (APNs) a apps firmadas con el Apple Developer Program, y
 Dominio puro, sin infraestructura:
 
 1. `due_date`: día 31 en febrero (no bisiesto y bisiesto), día 31 en abril, día 30 en febrero y día 1.
-2. Monto justo en el borde de la tolerancia (10 % de $16.900: $15.210 y $18.590 coinciden; $18.591 no). Con tolerancia 0, solo el monto exacto.
+2. Monto exacto: con margen 0 solo coincide el mismo monto ($16.900 sí; $16.901 no). La regla general con margen se sigue probando en el borde (10 % de $16.900: $15.210 y $18.590 coinciden; $18.591 no).
+2b. Nombre como keyword: basta una palabra ("Spotify Familiar" contra `SPOTIFY P3A9C1`), se ignoran las genéricas y las de menos de 3 letras, y renombrar el gasto mueve la keyword.
 3. Fecha en los bordes de la ventana (`due − 5 d` y `due + 5 d` coinciden; `due − 6 d` no), calculada en hora de Colombia: un pago a las 23:30 del día 16 (hora de Colombia) es el 17 en UTC y cuenta como el 16.
 4. Keyword con tildes o minúsculas contra un comercio en mayúsculas; comercio vacío.
 5. Transacción `income` o `transfer` con el comercio y el monto exactos: no empareja.

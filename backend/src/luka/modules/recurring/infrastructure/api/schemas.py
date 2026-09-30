@@ -23,10 +23,11 @@ class CreateRecurringExpenseRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(max_length=200)
-    merchant_keyword: str = Field(max_length=200)
     expected_amount: AmountStr
     day_of_month: DayOfMonth
-    amount_tolerance_pct: Tolerance = 10
+    # Opcionales: sin ellos se usa el nombre como keyword y monto exacto (spec 011 SS4).
+    merchant_keyword: str | None = Field(default=None, max_length=200)
+    amount_tolerance_pct: Tolerance = 0
     remind_days_before: RemindDays = 1
     category_id: UUID | None = None
     account_id: UUID | None = None

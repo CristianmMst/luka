@@ -37,9 +37,10 @@ class ExpenseInput:
     """Body de `POST /recurring-expenses` ya validado en forma (spec 005 SS10)."""
 
     name: str
-    merchant_keyword: str
     expected_amount: Decimal
     day_of_month: int
+    #: `None` = se usa el nombre (lo normal desde la app, spec 011 SS4).
+    merchant_keyword: str | None = None
     amount_tolerance_pct: int = DEFAULT_TOLERANCE_PCT
     remind_days_before: int = DEFAULT_REMIND_DAYS_BEFORE
     category_id: UUID | None = None

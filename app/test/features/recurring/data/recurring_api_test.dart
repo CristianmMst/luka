@@ -53,7 +53,6 @@ Map<String, dynamic> _occurrenceJson({String status = 'paid'}) => {
 
 const _draft = RecurringDraft(
   name: 'Spotify',
-  merchantKeyword: 'spotify',
   expectedAmount: Cop(1690000),
   dayOfMonth: 22,
 );
@@ -70,10 +69,8 @@ void main() {
     expect(request.path, '/v1/recurring-expenses');
     expect(jsonDecode(request.data as String), {
       'name': 'Spotify',
-      'merchant_keyword': 'spotify',
       'expected_amount': '16900.00',
       'day_of_month': 22,
-      'amount_tolerance_pct': 10,
       'remind_days_before': 1,
       'category_id': null,
       'account_id': null,

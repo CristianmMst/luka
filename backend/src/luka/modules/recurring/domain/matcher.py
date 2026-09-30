@@ -41,8 +41,9 @@ def matches(tx: TxCandidate, occurrence: Occurrence, expense: RecurringExpense) 
     if occurrence.status is not OccurrenceStatus.PENDING:
         return False
     merchant = normalize_text(tx.merchant or "")
-    keyword = expense.normalized_keyword
-    if not merchant or not keyword or keyword not in merchant:
+    tokens = expense.keyword_tokens
+    # Basta una palabra del nombre en el comercio: "Spotify Familiar" -> SPOTIFY P3A9C1.
+    if not merchant or not any(token in merchant for token in tokens):
         return False
     if not within_tolerance(tx.amount, expense.expected_amount, expense.amount_tolerance_pct):
         return False

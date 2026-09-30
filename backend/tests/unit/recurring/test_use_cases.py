@@ -427,3 +427,14 @@ async def test_no_publica_antes_de_tiempo_ni_si_ya_esta_pagado() -> None:
     ).execute()
 
     assert published == 0
+
+
+async def test_sin_keyword_usa_el_nombre_y_renombrar_la_mueve() -> None:
+    repos = _repos()
+
+    expense = await _create(repos).execute(_USER, _input(merchant_keyword=None))
+    assert expense.merchant_keyword == "Spotify"
+    assert expense.amount_tolerance_pct == 0
+
+    renamed = await _update(repos).execute(_USER, expense.id, ExpensePatch(name="YouTube Premium"))
+    assert renamed.merchant_keyword == "YouTube Premium"

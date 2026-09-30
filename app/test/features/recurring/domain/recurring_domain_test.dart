@@ -77,19 +77,14 @@ void main() {
   group('RecurringDraft.validate', () {
     const ok = RecurringDraft(
       name: 'Spotify',
-      merchantKeyword: 'spotify',
       expectedAmount: Cop(1690000),
       dayOfMonth: 22,
     );
 
     test('un borrador completo no tiene errores y limpia espacios', () {
-      final draft = ok.copyWith(
-        name: '  Spotify   Familiar ',
-        merchantKeyword: ' spo tify ',
-      );
+      final draft = ok.copyWith(name: '  Spotify   Familiar ');
       expect(draft.validate(), isEmpty);
       expect(draft.cleanName, 'Spotify Familiar');
-      expect(draft.cleanKeyword, 'spo tify');
     });
 
     test('marca cada campo inválido', () {
@@ -101,10 +96,11 @@ void main() {
         ok.copyWith(name: 'x' * 61).validate(),
         contains(RecurringDraftError.nameTooLong),
       );
-      for (final keyword in ['x', '*-', 'x' * 41]) {
+      // El nombre hace de palabra clave: necesita 2 letras o números.
+      for (final name in ['x', '*-']) {
         expect(
-          ok.copyWith(merchantKeyword: keyword).validate(),
-          contains(RecurringDraftError.keywordInvalid),
+          ok.copyWith(name: name).validate(),
+          contains(RecurringDraftError.nameRequired),
         );
       }
       expect(
@@ -141,7 +137,6 @@ void main() {
         ),
       );
       expect(draft.name, 'Arriendo');
-      expect(draft.tolerancePct, 0);
       expect(draft.remindDaysBefore, 2);
       expect(draft.accountId, 'a-1');
     });

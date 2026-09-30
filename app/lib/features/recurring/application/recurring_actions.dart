@@ -115,10 +115,7 @@ class RecurringActions {
   RecurringDraft _checked(RecurringDraft draft) {
     final errors = draft.validate();
     if (errors.isNotEmpty) throw InvalidRecurringDraft(errors);
-    return draft.copyWith(
-      name: draft.cleanName,
-      merchantKeyword: draft.cleanKeyword,
-    );
+    return draft.copyWith(name: draft.cleanName);
   }
 }
 

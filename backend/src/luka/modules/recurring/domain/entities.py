@@ -15,7 +15,8 @@ NAME_MAX = 60
 KEYWORD_MIN = 2
 KEYWORD_MAX = 40
 TOLERANCE_MAX = 50
-DEFAULT_TOLERANCE_PCT = 10
+#: Monto exacto por defecto: el usuario solo pone nombre, monto y dia (spec 011 SS4).
+DEFAULT_TOLERANCE_PCT = 0
 DEFAULT_REMIND_DAYS_BEFORE = 1
 REMIND_DAYS_CHOICES = (1, 2)
 _CENTS = Decimal("0.01")
@@ -31,6 +32,23 @@ def normalize_text(value: str) -> str:
     no_marks = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
     cleaned = "".join(ch if ch.isalnum() else " " for ch in no_marks.upper())
     return " ".join(cleaned.split())
+
+
+#: Palabras del nombre que no identifican al comercio ("Pago de Spotify" -> SPOTIFY).
+_STOPWORDS = frozenset(
+    {"DE", "DEL", "LA", "EL", "LOS", "LAS", "Y", "EN", "PAGO", "PLAN", "MES", "CUOTA", "SERVICIO"}
+)
+#: Una palabra corta ("TV") coincide con demasiados comercios.
+_TOKEN_MIN = 3
+
+
+def keyword_tokens(keyword: str) -> tuple[str, ...]:
+    """Palabras normalizadas de la keyword que sirven para reconocer el comercio."""
+    return tuple(
+        word
+        for word in normalize_text(keyword).split()
+        if len(word) >= _TOKEN_MIN and word not in _STOPWORDS
+    )
 
 
 def quantize_amount(value: Decimal | int | str) -> Decimal:
@@ -63,8 +81,8 @@ class RecurringExpense:
     updated_at: datetime
 
     @property
-    def normalized_keyword(self) -> str:
-        return normalize_text(self.merchant_keyword)
+    def keyword_tokens(self) -> tuple[str, ...]:
+        return keyword_tokens(self.merchant_keyword)
 
 
 def validate_expense_fields(  # noqa: PLR0913 - un parametro por campo editable
@@ -75,6 +93,7 @@ def validate_expense_fields(  # noqa: PLR0913 - un parametro por campo editable
     amount_tolerance_pct: int,
     day_of_month: int,
     remind_days_before: int,
+    keyword_field: str = "merchant_keyword",
 ) -> tuple[str, str, Decimal]:
     """Valida los campos editables (spec 005 SS10) y devuelve nombre, keyword y monto limpios.
 
@@ -86,7 +105,8 @@ def validate_expense_fields(  # noqa: PLR0913 - un parametro por campo editable
     clean_keyword = " ".join(merchant_keyword.split())
     alnum = sum(1 for ch in normalize_text(clean_keyword) if ch.isalnum())
     if not KEYWORD_MIN <= len(clean_keyword) <= KEYWORD_MAX or alnum < KEYWORD_MIN:
-        raise InvalidRecurringExpense("merchant_keyword")
+        # Sin keyword propia se usa el nombre: el error se reporta en `name`.
+        raise InvalidRecurringExpense(keyword_field)
     amount = quantize_amount(expected_amount)
     if not 0 <= amount_tolerance_pct <= TOLERANCE_MAX:
         raise InvalidRecurringExpense("amount_tolerance_pct")
