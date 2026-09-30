@@ -5,6 +5,7 @@ import os
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+from support.settings import GOOGLE_SETTINGS
 
 from luka.app import create_app
 from luka.shared.settings import Settings
@@ -40,7 +41,7 @@ async def test_health_ready_degrada_si_redis_no_es_alcanzable() -> None:
         ),
         redis_url="redis://localhost:1/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",
-        google_client_id="test-client",
+        **GOOGLE_SETTINGS,
         google_client_secret="test-google-client-secret",
         gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
     )

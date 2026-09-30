@@ -1,6 +1,7 @@
 """Unit tests de `create_app`: OpenAPI/docs apagados en prod (review final, item H)."""
 
 import pytest
+from support.settings import GOOGLE_SETTINGS
 
 from luka.app import create_app
 from luka.shared.settings import Settings
@@ -11,7 +12,7 @@ _DEV_SETTINGS = Settings(
     database_url="postgresql+asyncpg://luka:luka@localhost:5432/luka_test_unused",
     redis_url="redis://localhost:6379/1",
     jwt_secret="test-secret-test-secret-test-secret-1234",
-    google_client_id="test-client",
+    **GOOGLE_SETTINGS,
     google_client_secret="test-google-client-secret",
     gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
 )

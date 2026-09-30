@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from asgi_lifespan import LifespanManager
 from google.auth.exceptions import GoogleAuthError
+from support.settings import GOOGLE_SETTINGS, TEST_GOOGLE_CLIENT_ID, TEST_GOOGLE_IOS_CLIENT_ID
 
 from luka.app import create_app
 from luka.modules.identity.domain.errors import InvalidGoogleToken
@@ -170,7 +171,7 @@ async def test_google_verifier_es_el_mismo_objeto_en_dos_requests() -> None:
         database_url="postgresql+asyncpg://luka:luka@localhost:5432/luka_test_unused",
         redis_url="redis://localhost:6379/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",
-        google_client_id="test-client",
+        **GOOGLE_SETTINGS,
         google_client_secret="test-google-client-secret",
         gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
     )
@@ -182,4 +183,4 @@ async def test_google_verifier_es_el_mismo_objeto_en_dos_requests() -> None:
 
     assert first is second
     assert isinstance(first, GoogleAuthIdTokenVerifier)
-    assert first.audiences == ("test-client", settings.google_ios_client_id)
+    assert first.audiences == (TEST_GOOGLE_CLIENT_ID, TEST_GOOGLE_IOS_CLIENT_ID)

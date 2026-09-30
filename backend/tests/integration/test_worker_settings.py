@@ -30,6 +30,7 @@ from support.auth import AuthedUser
 from support.fake_google import FakeGoogle
 from support.gmail_connections import insert_gmail_connection
 from support.raw_messages import insert_raw_message
+from support.settings import GOOGLE_ENV
 
 from luka.modules.ingestion import public as ingestion_public
 from luka.modules.ingestion.infrastructure import gmail_sync as gmail_sync_infra
@@ -74,7 +75,8 @@ def worker_settings_module(monkeypatch: pytest.MonkeyPatch, settings: Settings):
     monkeypatch.setenv("LUKA_DATABASE_URL", str(settings.database_url))
     monkeypatch.setenv("LUKA_REDIS_URL", str(settings.redis_url))
     monkeypatch.setenv("LUKA_JWT_SECRET", settings.jwt_secret.get_secret_value())
-    monkeypatch.setenv("LUKA_GOOGLE_CLIENT_ID", settings.google_client_id)
+    for name, value in GOOGLE_ENV.items():
+        monkeypatch.setenv(name, value)
     get_settings.cache_clear()
 
     # Import perezoso, deliberado: `luka.worker` calcula `redis_settings` a

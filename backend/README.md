@@ -124,7 +124,7 @@ Import-linter (`uv run lint-imports`) verifica 6 contratos (`pyproject.toml`, se
 
 ## 7. Login con Google
 
-`POST /v1/auth/google` verifica siempre el `id_token` contra Google: firma, `iss`, `exp` y `aud = LUKA_GOOGLE_CLIENT_ID`, que es el client ID web del proyecto `luka-510204`. No hay modo simulado. El login se hace desde la app Flutter (`app/README.md`, `just app-run` con el backend corriendo).
+`POST /v1/auth/google` verifica siempre el `id_token` contra Google: firma, `iss`, `exp` y que `aud` sea `LUKA_GOOGLE_CLIENT_ID` (cliente web, el de Android) o `LUKA_GOOGLE_IOS_CLIENT_ID` (en iOS Google emite el token para el cliente iOS). No hay modo simulado. El login se hace desde la app Flutter (`app/README.md`, `just app-run` con el backend corriendo).
 
 La respuesta trae `access_token`, `refresh_token`, `expires_in` y `user`. El acceso se usa como `Authorization: Bearer <access_token>` en el resto de endpoints autenticados.
 
@@ -213,13 +213,13 @@ Todas tienen el prefijo `LUKA_`. Solo las 6 marcadas como **obligatoria** van en
 | `LUKA_JWT_SECRET` | **Obligatoria.** Secreto para firmar JWT (≥32 caracteres; único por entorno real) |
 | `LUKA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
 | `LUKA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
-| `LUKA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `luka-510204`) |
-| `LUKA_GOOGLE_IOS_CLIENT_ID` | Client ID OAuth de iOS (default el de `luka-510204`); también se acepta como `aud` del `id_token`, porque en iOS Google lo emite para ese cliente |
+| `LUKA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth: audiencia del `id_token` en Android y cliente con el que se canjea el `serverAuthCode` (dev: proyecto `luka-510204`) |
+| `LUKA_GOOGLE_IOS_CLIENT_ID` | **Obligatoria.** Client ID OAuth de iOS; también se acepta como `aud` del `id_token`, porque en iOS Google lo emite para ese cliente |
 | `LUKA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
 | `LUKA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3). En `prod` se rechaza la llave de ejemplo de `.env.example` |
-| `LUKA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/luka-510204/topics/gmail-push`) |
-| `LUKA_GMAIL_PUSH_AUDIENCE` | Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail` (default fijo `luka-gmail-push`; no cambia con la URL del túnel, ver §16) |
-| `LUKA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@luka-510204.iam.gserviceaccount.com`) |
+| `LUKA_GMAIL_PUBSUB_TOPIC` | **Obligatoria.** Topic de Pub/Sub al que se suscribe `users.watch` (dev: `projects/luka-510204/topics/gmail-push`) |
+| `LUKA_GMAIL_PUSH_AUDIENCE` | **Obligatoria.** Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail`; es la configurada en la suscripción push (dev: `luka-gmail-push`; no cambia con la URL, ver §16) |
+| `LUKA_GMAIL_PUSH_SERVICE_ACCOUNT` | **Obligatoria.** Cuenta de servicio (`email`) exigida al mismo token OIDC (dev: `gmail-push-invoker@luka-510204.iam.gserviceaccount.com`) |
 | `LUKA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
 | `LUKA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
 | `LUKA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás del nginx de producción) |

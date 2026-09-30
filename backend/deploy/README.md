@@ -58,6 +58,10 @@ POSTGRES_PASSWORD=$(openssl rand -hex 32)
 LUKA_JWT_SECRET=$(openssl rand -base64 48)
 LUKA_GOOGLE_CLIENT_ID=918126641294-eldnsshsmu7vufdajkesk69qim7ft9ph.apps.googleusercontent.com
 LUKA_GOOGLE_CLIENT_SECRET=PEGA_AQUI_EL_SECRETO
+LUKA_GOOGLE_IOS_CLIENT_ID=918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de.apps.googleusercontent.com
+LUKA_GMAIL_PUBSUB_TOPIC=projects/luka-510204/topics/gmail-push
+LUKA_GMAIL_PUSH_AUDIENCE=luka-gmail-push
+LUKA_GMAIL_PUSH_SERVICE_ACCOUNT=gmail-push-invoker@luka-510204.iam.gserviceaccount.com
 LUKA_GMAIL_TOKEN_KEY=$(openssl rand -base64 32)
 LUKA_IMAGE=ghcr.io/cristianmmst/luka-backend:latest
 EOF
@@ -66,6 +70,7 @@ nano .env
 ```
 
 - **`LUKA_GOOGLE_CLIENT_SECRET`:** pega aquí el secreto del cliente OAuth web de `luka-510204`.
+- **Google y Pub/Sub:** no tienen default en el código porque dependen del proyecto GCP. Si cambias de proyecto, cambia las cinco.
 - **`LUKA_GMAIL_TOKEN_KEY`:** guarda una copia fuera del VPS. Sin ella hay que reconectar Gmail de todos los usuarios.
 
 Los secretos de la app viven solo aquí, nunca en GitHub.

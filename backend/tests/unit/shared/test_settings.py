@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from support.settings import GOOGLE_ENV
 
 from luka.shared.settings import Settings
 
@@ -16,7 +17,7 @@ _ENV_VALIDO = {
     "LUKA_DATABASE_URL": "postgresql+asyncpg://luka:luka@localhost:5432/luka_test",
     "LUKA_REDIS_URL": "redis://localhost:6379/1",
     "LUKA_JWT_SECRET": "a" * 32,
-    "LUKA_GOOGLE_CLIENT_ID": "test-client",
+    **GOOGLE_ENV,
     "LUKA_GOOGLE_CLIENT_SECRET": "test-google-client-secret",
     "LUKA_GMAIL_TOKEN_KEY": _GMAIL_TOKEN_KEY_VALIDA,
 }
@@ -43,6 +44,19 @@ def test_lee_variables_con_prefijo_luka(monkeypatch: pytest.MonkeyPatch) -> None
     assert settings.env == "test"
     assert str(settings.database_url).startswith("postgresql+asyncpg://")
     assert settings.google_client_id == "test-client"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("variable", sorted(GOOGLE_ENV))
+def test_la_configuracion_de_google_no_tiene_default(
+    monkeypatch: pytest.MonkeyPatch, variable: str
+) -> None:
+    """Depende del proyecto GCP del entorno: si falta, el arranque falla."""
+    _setear_env_valido(monkeypatch)
+    monkeypatch.delenv(variable)
+
+    with pytest.raises(ValidationError, match=variable.removeprefix("LUKA_").lower()):
+        _construir_settings()
 
 
 @pytest.mark.unit
@@ -125,12 +139,6 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.llm_confidence_threshold == 0.8
     assert settings.raw_message_retention_days == 90
     assert settings.raw_message_body_max_bytes == 8192
-    assert settings.gmail_pubsub_topic == "projects/luka-510204/topics/gmail-push"
-    assert settings.gmail_push_audience == "luka-gmail-push"
-    assert (
-        settings.gmail_push_service_account
-        == "gmail-push-invoker@luka-510204.iam.gserviceaccount.com"
-    )
 
 
 @pytest.mark.unit

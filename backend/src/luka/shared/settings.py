@@ -36,19 +36,20 @@ class Settings(BaseSettings):
     jwt_access_ttl_seconds: int = 900
     refresh_ttl_days: int = 60
 
+    # Todo lo de Google depende del proyecto GCP del entorno: sin defaults, para
+    # que un entorno nunca herede el proyecto de otro sin darse cuenta.
+    # Cliente OAuth web: canjea el serverAuthCode y es `aud` del id_token en Android.
     google_client_id: str
-    # Cliente OAuth iOS (luka-510204, bundle co.luka.luka): en iOS es el `aud`
-    # del id_token. Publico, como el web; va en GoogleSignIn.xcconfig de la app.
-    google_ios_client_id: str = (
-        "918126641294-67ug6b5u8fprmgj395em1mbu7jrrs5de.apps.googleusercontent.com"
-    )
+    # Cliente OAuth iOS: en iOS Google emite el id_token con este `aud`.
+    google_ios_client_id: str
     google_client_secret: SecretStr
 
     # Cifrado AES-256-GCM de `gmail_connections.refresh_token_enc` (spec 009 §3, F3.2).
     gmail_token_key: SecretStr
-    gmail_pubsub_topic: str = "projects/luka-510204/topics/gmail-push"
-    gmail_push_audience: str = "luka-gmail-push"
-    gmail_push_service_account: str = "gmail-push-invoker@luka-510204.iam.gserviceaccount.com"
+    # Topic de `users.watch` y lo que se exige al token OIDC del push (spec 009 §1).
+    gmail_pubsub_topic: str
+    gmail_push_audience: str
+    gmail_push_service_account: str
 
     log_level: str = "INFO"
     log_json: bool | None = None

@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from support.settings import GOOGLE_SETTINGS
 
 from luka.modules.parsing.application.dto import LlmInvalidOutput, LlmOutput
 from luka.modules.parsing.domain.errors import LlmUnavailable
@@ -58,7 +59,7 @@ def _settings(**overrides: Any) -> Settings:
         database_url="postgresql+asyncpg://u:p@localhost:5432/db",
         redis_url="redis://localhost:6379/0",
         jwt_secret="test-secret-test-secret-test-secret-1234",
-        google_client_id="test-client",
+        **GOOGLE_SETTINGS,
         google_client_secret="test-google-client-secret",
         gmail_token_key="AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
         **overrides,

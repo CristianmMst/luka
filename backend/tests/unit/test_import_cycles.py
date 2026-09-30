@@ -25,6 +25,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from support.settings import GOOGLE_ENV
 
 pytestmark = pytest.mark.unit
 
@@ -40,7 +41,7 @@ _REQUIRED_ENV = {
     "LUKA_DATABASE_URL": "postgresql+asyncpg://luka:luka@localhost:5432/luka_test",
     "LUKA_REDIS_URL": "redis://localhost:6379/1",
     "LUKA_JWT_SECRET": "test-secret-test-secret-test-secret-1234",
-    "LUKA_GOOGLE_CLIENT_ID": "test-client",
+    **GOOGLE_ENV,
 }
 
 

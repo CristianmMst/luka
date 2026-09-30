@@ -21,7 +21,7 @@ Aplica P1. Referencia de verificación: OWASP ASVS 4.0 nivel 2 (además exigido 
 
 ### 2.1 Flujo Google Sign-In
 1. App obtiene `id_token` (y `serverAuthCode` si el usuario aceptó Gmail).
-2. `POST /auth/google`: backend verifica el `id_token` contra las claves públicas de Google (firma, `aud` = client_id propio, `iss`, `exp`) usando la librería oficial. Nunca se confía en datos del cliente sin verificar.
+2. `POST /auth/google`: backend verifica el `id_token` contra las claves públicas de Google (firma, `aud` ∈ client IDs propios —el web, que es el de Android, y el de iOS, porque en iOS Google emite el token para el cliente iOS—, `iss`, `exp`) usando la librería oficial. Nunca se confía en datos del cliente sin verificar.
 3. Usuario creado/encontrado por `google_sub` (no por email, que puede cambiar).
 
 ### 2.2 Tokens propios

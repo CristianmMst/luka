@@ -37,7 +37,7 @@ from luka.modules.ingestion.domain.errors import (
 pytestmark = pytest.mark.unit
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
-TOPIC = "projects/luka-510204/topics/gmail-push"
+TOPIC = "projects/test-project/topics/gmail-push"
 BANK = "alertas@bancolombia.com.co"
 
 
