@@ -258,7 +258,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | matched_by | TEXT NULL | `auto` / `manual` |
 | paid_at | TIMESTAMPTZ NULL | cuándo quedó pagada (el emparejamiento o la marca del usuario, no la fecha del movimiento) |
 | reminded_at | TIMESTAMPTZ NULL | cuándo se envió el último recordatorio push |
-| last_reminder_slot | SMALLINT NULL | último aviso enviado, 1–4 (`CHECK`): 1 = 7 días antes a las 9, 2 = 2 días a las 9, 3 = el día antes a las 9 y 4 = el día antes a las 17. Nunca se envía uno igual o anterior, así cada aviso sale a lo sumo una vez (AC-12.7, migración 0010) |
+| last_reminder_slot | SMALLINT NULL | último aviso enviado, 1–4 (`CHECK`): 1 = 7 días antes a las 9, 2 = 2 días a las 9, 3 = el día antes a las 9 y 4 = el día antes a las 17. Nunca se envía uno igual o anterior, así cada aviso sale a lo sumo una vez (AC-12.7). Reemplazó a `last_reminder_days` de la 0010 en la migración 0011 |
 | created_at / updated_at | TIMESTAMPTZ | |
 | UNIQUE | `(recurring_expense_id, period)` | una ocurrencia por mes; la generación usa `ON CONFLICT DO NOTHING` |
 | UNIQUE parcial | `(transaction_id) WHERE transaction_id IS NOT NULL` | una transacción paga a lo sumo una ocurrencia (spec 011 §4, regla 7) |
