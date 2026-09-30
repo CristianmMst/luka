@@ -644,4 +644,6 @@ uv run arq finanzia.worker.WorkerSettings | grep -E "gmail_|parsing_metric"
 
 En producción la pantalla de consentimiento pasa a público verificado (Verificación OAuth de
 Google + auditoría CASA, spec 010 §1, roadmap F6.7) — sin el límite de usuarios de prueba ni el
-vencimiento a 7 días — y la suscripción push apunta al dominio real de la API en vez de un túnel.
+vencimiento a 7 días — y la suscripción push apunta al dominio real de la API en vez de un túnel: desde el 2026-09-29
+`gmail-push-dev` entrega a `https://luka.a360soft.tech/v1/webhooks/gmail` (backend/deploy/README.md).
+Para volver a probar Gmail contra el backend local hay que apuntarla otra vez al túnel.

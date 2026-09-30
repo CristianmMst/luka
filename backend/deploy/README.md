@@ -47,7 +47,7 @@ Todo en el VPS, con el usuario de `VPS_USER`, que debe poder usar `docker`.
 
 ### 1. DNS
 
-Crea un registro `A` para `api-finanzia.a360soft.tech` apuntando a la IP del VPS. Comprueba que resuelve con `dig +short api-finanzia.a360soft.tech`.
+Crea un registro `A` para `luka.a360soft.tech` apuntando a la IP del VPS. Comprueba que resuelve con `dig +short luka.a360soft.tech`.
 
 ### 2. `.env`
 
@@ -84,8 +84,8 @@ Después, emite el certificado con el certbot del servidor. Usa la misma red y e
 cd ~/apps/certbot
 docker compose run --rm --entrypoint certbot certbot certonly \
   --webroot -w /var/www/certbot \
-  -d api-finanzia.a360soft.tech \
-  --cert-name finanzia-a360soft-tech \
+  -d luka.a360soft.tech \
+  --cert-name luka-a360soft-tech \
   --email <tu-correo> --agree-tos --no-eff-email
 ```
 
@@ -95,9 +95,9 @@ Por último, descomenta el bloque de 443 y recarga otra vez con el mismo `nginx 
 
 Sube a `main` (o corre **Actions → Deploy backend → Run workflow**). Cuando termine:
 
-- `https://api-finanzia.a360soft.tech/health/ready` debe responder `{"status":"ok",...}`.
-- En Google Cloud (`finanzia-509500`), cambia la URL del extremo de la suscripción push `gmail-push-dev` a `https://api-finanzia.a360soft.tech/v1/webhooks/gmail`.
-- Compila la app con `--dart-define=API_BASE_URL=https://api-finanzia.a360soft.tech`. En Codemagic, pon ese valor en el grupo `finanzia`.
+- `https://luka.a360soft.tech/health/ready` debe responder `{"status":"ok",...}`.
+- En Google Cloud (`finanzia-509500`), cambia la URL del extremo de la suscripción push `gmail-push-dev` a `https://luka.a360soft.tech/v1/webhooks/gmail`.
+- Compila la app con `--dart-define=API_BASE_URL=https://luka.a360soft.tech`. En Codemagic, pon ese valor en el grupo `finanzia`.
 - Programa el respaldo con `crontab -e`, con la línea que trae `backup.sh`.
 
 ## Operación

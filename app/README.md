@@ -157,7 +157,7 @@ iOS no deja leer notificaciones. La captura automática es una automatización p
 
 **Compilar e instalar.** Este equipo es Windows, así que el `.ipa` sale de Codemagic (`codemagic.yaml` en la raíz, workflow `ios-unsigned`, corrida manual):
 
-1. En codemagic.io, crear la app desde el repo y un grupo de variables `finanzia` con `API_BASE_URL`: una URL pública del backend, p. ej. la de `just tunnel` (cambia en cada corrida del túnel, así que hay que recompilar).
+1. En codemagic.io, crear la app desde el repo y un grupo de variables `finanzia` con `API_BASE_URL=https://luka.a360soft.tech` (el backend de producción, backend/deploy/README.md).
 2. Correr `ios-unsigned` y descargar `finanzia.ipa` de los artefactos.
 3. Instalarlo con SideStore, que lo firma con el Apple ID; con un Apple ID gratuito hay que refrescarlo cada 7 días.
 

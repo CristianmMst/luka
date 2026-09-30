@@ -22,6 +22,9 @@ class Settings(BaseSettings):
         env_prefix="FINANZIA_",
         env_file=".env",
         extra="ignore",
+        # Un error de validacion nombra el campo y el motivo, nunca el valor:
+        # casi todo aqui es secreto y los logs de despliegue son publicos (P1).
+        hide_input_in_errors=True,
     )
 
     env: Literal["dev", "test", "prod"] = "dev"

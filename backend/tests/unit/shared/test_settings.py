@@ -222,3 +222,28 @@ def test_gmail_token_key_que_no_decodifica_a_32_bytes_falla(
 
     with pytest.raises(ValidationError):
         _construir_settings()
+
+
+@pytest.mark.unit
+def test_los_errores_no_muestran_los_valores_de_los_secretos(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Los logs de despliegue son publicos (repo publico): un `.env` mal escrito
+    no puede filtrar sus secretos en el mensaje de error (spec 009, P1)."""
+    _setear_env_valido(monkeypatch)
+    jwt_corto = "secreto-jwt-demasiado-corto"
+    llave_rota = "no-es-base64-valido-XYZ123!!"
+    database_url = "postgresql+asyncpg://finanzia:clave-db-secreta@db:5432/finanzia"
+    monkeypatch.setenv("FINANZIA_JWT_SECRET", jwt_corto)
+    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", llave_rota)
+    monkeypatch.setenv("FINANZIA_DATABASE_URL", database_url.replace("postgresql", "mysql"))
+
+    with pytest.raises(ValidationError) as excinfo:
+        _construir_settings()
+
+    mensaje = str(excinfo.value)
+    assert "jwt_secret" in mensaje
+    assert "gmail_token_key" in mensaje
+    assert "database_url" in mensaje
+    for secreto in (jwt_corto, llave_rota, "clave-db-secreta"):
+        assert secreto not in mensaje

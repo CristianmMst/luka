@@ -5,8 +5,8 @@
 #
 # Se corre a mano desde codemagic.io (sin disparadores). Variables, en el
 # grupo `finanzia` de la app en Codemagic:
-#   API_BASE_URL  obligatoria: URL pública del backend (p. ej. la de
-#                 `just tunnel`). El default de desarrollo, localhost, no
+#   API_BASE_URL  obligatoria: URL pública del backend, en producción
+#                 https://luka.a360soft.tech. El default de desarrollo, localhost, no
 #                 llega desde el iPhone.
 # GOOGLE_SERVER_CLIENT_ID no hace falta: el default de la app es el de
 # finanzia-509500.

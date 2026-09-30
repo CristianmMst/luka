@@ -58,6 +58,12 @@ class TestDeployWorkflow:
         assert workflow["permissions"] == {"contents": "read"}
         assert workflow["concurrency"]["cancel-in-progress"] is False
 
+    def test_checkouts_sin_credenciales_persistidas(self, workflow: dict[Any, Any]) -> None:
+        for job in workflow["jobs"].values():
+            for step in job["steps"]:
+                if str(step.get("uses", "")).startswith("actions/checkout"):
+                    assert step["with"]["persist-credentials"] is False
+
     def test_gate_bloquea_el_build(self, workflow: dict[Any, Any]) -> None:
         jobs = workflow["jobs"]
         assert list(jobs) == ["gate", "build", "deploy"]
@@ -97,13 +103,17 @@ class TestDeployWorkflow:
         assert "ssh -n vps" in script
         assert "docker logout" in script
 
-    def test_deploy_sh_migra_sin_stdin_y_verifica_el_stack(self) -> None:
+    def test_deploy_sh_valida_migra_sin_stdin_y_verifica_el_stack(self) -> None:
         deploy_sh = (COMPOSE_PATH.parent / "deploy.sh").read_text(encoding="utf-8")
+        check = deploy_sh.index("get_settings()")
         migrate = deploy_sh.index("docker compose run --rm -T migrate < /dev/null")
         up = deploy_sh.index("docker compose up -d")
-        assert migrate < up
+        assert check < migrate < up
         assert "--wait" in deploy_sh
         assert "for service in api worker postgres redis" in deploy_sh
+        # Su salida va al log publico de Actions: nunca los logs de la app.
+        assert "compose logs --" not in deploy_sh
+        assert 'compose logs "' not in deploy_sh
 
 
 @pytest.mark.ci
@@ -120,6 +130,8 @@ class TestProductionCompose:
         conf = (COMPOSE_PATH.parent / "nginx-finanzia.conf").read_text(encoding="utf-8")
         assert "http://finanzia-api:8000" in conf
         assert "access_log off;" in conf
+        assert conf.count("server_name luka.a360soft.tech;") == 2
+        assert "/etc/nginx/ssl/live/luka-a360soft-tech/fullchain.pem" in conf
 
     def test_datos_en_red_interna(self, services: dict[str, Any]) -> None:
         networks = _yaml(COMPOSE_PATH)["networks"]
