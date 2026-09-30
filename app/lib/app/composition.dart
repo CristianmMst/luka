@@ -21,6 +21,7 @@ import 'package:luka/features/privacy/application/privacy_actions.dart';
 import 'package:luka/features/privacy/data/privacy_data_providers.dart';
 import 'package:luka/features/push/application/push_registrar.dart';
 import 'package:luka/features/push/data/push_data_providers.dart';
+import 'package:luka/features/recurring/application/local_reminder_sync.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
 import 'package:luka/features/recurring/data/recurring_data_providers.dart';
 import 'package:luka/features/review/application/review_providers.dart';
@@ -58,7 +59,10 @@ List<Override> get appOverrides => [
     (ref) => ref.watch(driftRecurringStoreProvider),
   ),
   pushServiceProvider.overrideWith(
-    (ref) => ref.watch(firebasePushServiceProvider),
+    (ref) => ref.watch(platformPushServiceProvider),
+  ),
+  reminderSchedulerProvider.overrideWith(
+    (ref) => ref.watch(platformReminderSchedulerProvider),
   ),
   pushTokenRemoteProvider.overrideWith(
     (ref) => ref.watch(pushTokenApiProvider),

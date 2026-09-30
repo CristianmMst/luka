@@ -11,6 +11,9 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications (avisos locales de iPhone, spec 011
+        // §5.1) exige desugaring en Android aunque ahí no se use.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -45,5 +48,6 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     testImplementation("junit:junit:4.13.2")
 }

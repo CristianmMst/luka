@@ -101,9 +101,21 @@ Reglas:
   - Android: canal `recordatorios_pagos` ("Recordatorios de pagos"), importancia por defecto. iOS: alerta estándar sin sonido crítico.
 - **Privacidad (P1, P6):** el nombre y el monto viajan dentro del push, por FCM y APNs, porque sin ellos el aviso no sirve. Se declaran como datos que recibe Firebase (spec 010 §4) y se ocultan en la pantalla de bloqueo (`visibility: private` en Android). Los logs solo registran `push_sent` y `push_failed` con conteos y el código de error de FCM, nunca el nombre, el monto ni el token (spec 009 §5).
 
+## 5.1 iPhone: avisos locales
+
+Apple solo entrega push (APNs) a apps firmadas con el Apple Developer Program, y hoy la app de iPhone se instala sin firmar con SideStore (F4.3b). Por eso en **iOS el recordatorio lo programa el propio teléfono** con `flutter_local_notifications`, y FCM queda solo para Android (ADR-9).
+
+- **Qué se programa:** cada ocurrencia `pending` de un gasto fijo activo, del mes actual y del siguiente, que la app tiene en Drift (spec 004 §5). El aviso sale a las **09:00 hora de Colombia** del día `due_date − remind_days_before`, con el mismo título y cuerpo que el push de §5. El `payload` es el `occurrence_id`; tocarlo abre `/gastos-fijos?ocurrencia=<id>`.
+- **Cuándo se reprograma:** cada vez que cambian las ocurrencias o los gastos fijos en Drift (sync, marcar pagado, omitir, pausar, borrar). La app cancela todos los avisos pendientes y vuelve a programar la lista, así que un pago que el sync trae tachado cancela su aviso. El id de cada aviso sale de un hash estable del `occurrence_id`.
+- **No se avisa tarde:** un aviso cuya hora ya pasó no se programa (a diferencia del cron del servidor, §5). Si no, cada apertura de la app lo repetiría.
+- **Limitación aceptada:** el teléfono solo se entera de un pago cuando la app sincroniza. Si el correo del banco llegó con la app cerrada desde antes del aviso, el aviso puede sonar aunque el pago ya esté hecho (AC-12.5 se cumple solo con la app sincronizada en iOS). Se corrige solo cuando la app tenga firma de Apple Developer y use FCM como Android.
+- **Permiso:** el mismo flujo de §6 (hoja explicativa al guardar el primer gasto fijo), con el permiso de notificaciones de iOS. Negado, no se programa nada visible y los gastos se tachan igual (AC-12.6).
+- **Cerrar sesión** cancela todos los avisos programados, igual que borrar el token en Android.
+- **Privacidad:** el texto del aviso nunca sale del teléfono; en iOS no hay tercero que reciba el nombre ni el monto.
+
 ## 6. Integración con Firebase
 
-- **Proyecto:** Firebase se agrega al proyecto GCP existente `luka-510204` (el mismo de Google Sign-In y Pub/Sub). Se registran la app Android `co.luka.luka` y la iOS `co.luka.luka`, y en iOS se sube la llave APNs (`.p8`) en la consola de Firebase.
+- **Proyecto:** Firebase se agrega al proyecto GCP existente `luka-510204` (el mismo de Google Sign-In y Pub/Sub). Se registra solo la app Android `co.luka.luka`: iPhone usa avisos locales (§5.1). Si más adelante la app de iPhone se firma con Apple Developer, se registra también la iOS y se sube la llave APNs (`.p8`).
 - **Configuración de la app:** las `FirebaseOptions` de Android e iOS van en Dart, en `app/lib/features/push/data/firebase_options.dart`. Se generan con `flutterfire configure --project=luka-510204`. No hacen falta `google-services.json`, `GoogleService-Info.plist` ni el plugin de Gradle, porque `Firebase.initializeApp(options:)` recibe las opciones directamente. Son identificadores públicos (no secretos) y se versionan como el client ID de OAuth. Mientras valgan `null`, la app arranca sin push (`DisabledPushService`). La app no lleva ninguna llave de servidor (P1).
 - **Servidor:** FCM HTTP v1 (`POST https://fcm.googleapis.com/v1/projects/luka-510204/messages:send`), autenticado con OAuth2 de una cuenta de servicio con el rol `Firebase Cloud Messaging API Admin`. La llave JSON de esa cuenta vive solo en el env del servidor (`LUKA_FCM_CREDENTIALS_JSON`, en base64), igual que los demás secretos (spec 009 §3). Si falta, el consumer de `notifications` no se registra y el resto de la app funciona. No se usa la API heredada de FCM.
 - **Tokens de dispositivo** (`device_tokens`, spec 004 §2.15):

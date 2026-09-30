@@ -6,6 +6,7 @@ import 'package:luka/core/theme/app_theme.dart';
 import 'package:luka/features/auth/application/auth_controller.dart';
 import 'package:luka/features/capture/application/capture_flusher.dart';
 import 'package:luka/features/push/application/push_registrar.dart';
+import 'package:luka/features/recurring/application/local_reminder_sync.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 /// Mensajero raíz: muestra el aviso push que llega con la app abierta.
@@ -22,6 +23,8 @@ class LukaApp extends ConsumerWidget {
       ..listen(syncCoordinatorProvider, (_, _) {})
       ..listen(captureFlusherProvider, (_, _) {})
       ..listen(pushRegistrarProvider, (_, push) => _onPush(ref, push))
+      // Avisos locales de iPhone (spec 011 §5.1); en Android no hace nada.
+      ..listen(localReminderSyncProvider, (_, _) {})
       // Un aviso tocado antes de restaurar la sesión se abre al entrar.
       ..listen(
         authControllerProvider,

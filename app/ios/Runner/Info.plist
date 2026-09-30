@@ -2,11 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Recordatorios push de gastos fijos (spec 011 §6). -->
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>NFCReaderUsageDescription</key>
 	<string>luka lee tus tags NFC para abrir el registro rápido.</string>
 	<key>CFBundleURLTypes</key>

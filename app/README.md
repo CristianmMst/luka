@@ -54,7 +54,7 @@ En Ajustes, la fila "Gmail" (`lib/features/gmail/presentation/widgets/gmail_sett
 
 ### Recordatorios push (F7.7)
 
-La app usa Firebase Cloud Messaging solo si `lib/features/push/data/firebase_options.dart` trae las opciones del proyecto `luka-510204`. Mientras valgan `null`, arranca sin push y todo lo demás funciona igual. Para activarlo, se corre `dart pub global activate flutterfire_cli` y luego `flutterfire configure --project=luka-510204`, y se copian a ese archivo las `FirebaseOptions` de Android e iOS. No hace falta `google-services.json` ni el plugin de Gradle. En iOS también hay que subir la llave APNs en la consola de Firebase (spec 011 §6).
+La app usa Firebase Cloud Messaging solo si `lib/features/push/data/firebase_options.dart` trae las opciones del proyecto `luka-510204`. Mientras valgan `null`, arranca sin push y todo lo demás funciona igual. Para activarlo, se corre `dart pub global activate flutterfire_cli` y luego `flutterfire configure --project=luka-510204`, y se copian a ese archivo las `FirebaseOptions` de Android e iOS. No hace falta `google-services.json` ni el plugin de Gradle. En iPhone no se usa Firebase: la app programa los avisos en el propio teléfono con `flutter_local_notifications` (spec 011 §5.1), porque APNs exige el Apple Developer Program y la app se instala sin firmar con SideStore.
 
 ## Arquitectura
 

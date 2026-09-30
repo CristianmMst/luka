@@ -17,5 +17,6 @@ FirebaseOptions? firebaseOptionsFor(TargetPlatform platform) =>
 /// App Android `co.luka.luka`.
 const FirebaseOptions? _android = null;
 
-/// App iOS `co.luka.luka`.
+/// App iOS `co.luka.luka`. Sin Apple Developer no hay APNs: iPhone usa
+/// avisos locales (spec 011 §5.1) y esto queda en `null`.
 const FirebaseOptions? _ios = null;
