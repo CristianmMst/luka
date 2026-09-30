@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Despliega una imagen en ~/apps/finanzia (backend/deploy/README.md). Lo
+# Despliega una imagen en ~/apps/luka (backend/deploy/README.md). Lo
 # corre el workflow por SSH despues de copiar compose.yml y este archivo;
 # tambien sirve a mano:
 #
-#   ~/apps/finanzia/deploy.sh ghcr.io/cristianmmst/finanzia-backend@sha256:...
+#   ~/apps/luka/deploy.sh ghcr.io/cristianmmst/luka-backend@sha256:...
 #
 # Es un archivo y no un script por stdin a proposito: `docker compose run`
 # lee stdin y se comia el resto del script (el primer despliegue migro y
@@ -19,15 +19,15 @@ cd "$(dirname "$0")"
 
 test -f .env || { echo "Falta $(pwd)/.env (backend/deploy/README.md)." >&2; exit 1; }
 
-sed -i '/^FINANZIA_IMAGE=/d' .env
-echo "FINANZIA_IMAGE=$image" >> .env
+sed -i '/^LUKA_IMAGE=/d' .env
+echo "LUKA_IMAGE=$image" >> .env
 
 docker compose pull --quiet
 
 # El .env se valida con la imagen nueva antes de tocar nada. Settings oculta
 # los valores en sus errores (hide_input_in_errors): sale el campo y el motivo.
 if ! docker compose run --rm -T --no-deps api \
-    python -c "from finanzia.shared.settings import get_settings; get_settings()" < /dev/null; then
+    python -c "from luka.shared.settings import get_settings; get_settings()" < /dev/null; then
   echo "El .env de $(pwd) no es valido: corrigelo y vuelve a desplegar." >&2
   exit 1
 fi

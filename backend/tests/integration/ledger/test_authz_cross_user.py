@@ -11,7 +11,7 @@ import pytest
 from httpx import AsyncClient
 from support.auth import AuthedUser
 
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
+from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
 
 pytestmark = pytest.mark.integration
 

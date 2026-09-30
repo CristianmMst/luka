@@ -1,13 +1,13 @@
 # Produccion en el VPS compartido (backend/deploy/README.md), en
-# ~/apps/finanzia junto a las otras apps.
+# ~/apps/luka junto a las otras apps.
 #
 # No publica puertos: el nginx del servidor (~/apps/nginx, con certbot) llega
-# a la API por la red Docker compartida `proxy` con el nombre `finanzia-api`
-# (nginx-finanzia.conf). Postgres y Redis viven en una red interna sin salida
+# a la API por la red Docker compartida `proxy` con el nombre `luka-api`
+# (nginx-luka.conf). Postgres y Redis viven en una red interna sin salida
 # a internet. Los valores salen de `.env` (ver `.env.example`); el workflow de
-# despliegue escribe FINANZIA_IMAGE con el digest de la imagen publicada.
+# despliegue escribe LUKA_IMAGE con el digest de la imagen publicada.
 
-name: finanzia
+name: luka
 
 x-logging: &logging
   driver: json-file
@@ -16,13 +16,13 @@ x-logging: &logging
     max-file: "5"
 
 x-backend-env: &backend-env
-  FINANZIA_ENV: prod
-  FINANZIA_DATABASE_URL: postgresql+asyncpg://finanzia:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@postgres:5432/finanzia
-  FINANZIA_REDIS_URL: redis://redis:6379/0
+  LUKA_ENV: prod
+  LUKA_DATABASE_URL: postgresql+asyncpg://luka:${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}@postgres:5432/luka
+  LUKA_REDIS_URL: redis://redis:6379/0
 
 x-backend: &backend
-  image: ${FINANZIA_IMAGE:?falta FINANZIA_IMAGE}
-  # Secretos de la app (FINANZIA_*). Lo que no lleva ese prefijo se ignora.
+  image: ${LUKA_IMAGE:?falta LUKA_IMAGE}
+  # Secretos de la app (LUKA_*). Lo que no lleva ese prefijo se ignora.
   env_file: .env
   read_only: true
   tmpfs:
@@ -39,7 +39,7 @@ services:
     environment:
       <<: *backend-env
       # nginx agrega la IP del cliente al final de X-Forwarded-For.
-      FINANZIA_TRUST_PROXY_HEADERS: "true"
+      LUKA_TRUST_PROXY_HEADERS: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
     depends_on:
       postgres:
@@ -48,16 +48,16 @@ services:
         condition: service_healthy
     networks:
       proxy:
-        aliases: [finanzia-api]
+        aliases: [luka-api]
       data: {}
 
   worker:
     <<: *backend
-    command: ["arq", "finanzia.worker.WorkerSettings"]
+    command: ["arq", "luka.worker.WorkerSettings"]
     environment:
       <<: *backend-env
     healthcheck:
-      test: ["CMD", "arq", "--check", "finanzia.worker.WorkerSettings"]
+      test: ["CMD", "arq", "--check", "luka.worker.WorkerSettings"]
       interval: 60s
       timeout: 10s
       start_period: 30s
@@ -92,13 +92,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: finanzia
+      POSTGRES_USER: luka
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}
-      POSTGRES_DB: finanzia
+      POSTGRES_DB: luka
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U finanzia -d finanzia"]
+      test: ["CMD-SHELL", "pg_isready -U luka -d luka"]
       interval: 10s
       timeout: 5s
       retries: 5

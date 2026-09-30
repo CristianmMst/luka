@@ -7,8 +7,8 @@ from uuid import uuid4
 import pytest
 import redis.asyncio as redis_asyncio
 
-from finanzia.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
-from finanzia.shared.settings import Settings
+from luka.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

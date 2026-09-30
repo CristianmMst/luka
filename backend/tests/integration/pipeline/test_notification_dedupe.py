@@ -20,12 +20,12 @@ from support.pipeline import (
     pipeline_drained,
 )
 
-from finanzia.modules.ingestion.application.dto import RawMessageInput
-from finanzia.modules.ingestion.domain.enums import Channel
-from finanzia.modules.ingestion.events import RawMessageReceived
-from finanzia.modules.ingestion.public import Accepted, Duplicate, ingest_raw_message
-from finanzia.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
-from finanzia.shared.clock import SystemClock
+from luka.modules.ingestion.application.dto import RawMessageInput
+from luka.modules.ingestion.domain.enums import Channel
+from luka.modules.ingestion.events import RawMessageReceived
+from luka.modules.ingestion.public import Accepted, Duplicate, ingest_raw_message
+from luka.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
+from luka.shared.clock import SystemClock
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -35,9 +35,9 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
     from support.auth import AuthedUser
 
-    from finanzia.shared.events.codec import EventRegistry
-    from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-    from finanzia.shared.settings import Settings
+    from luka.shared.events.codec import EventRegistry
+    from luka.shared.events.redis_streams import RedisStreamsEventBus
+    from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

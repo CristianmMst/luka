@@ -1,7 +1,7 @@
 """Tests de integracion del middleware `Idempotency-Key` (spec 005 SS1, 009 SS4, Task 12).
 
 Cada test construye su propia app via `create_app(settings)` con una ruta descartable
-protegida por `finanzia.modules.identity.public.get_current_user_id` (los tests pueden
+protegida por `luka.modules.identity.public.get_current_user_id` (los tests pueden
 importar modulos; `shared` no puede). Los usuarios se crean con `user_factory`, que
 loguea contra la app generica de `conftest.py`; el access token resultante es valido
 contra cualquier app construida con los mismos `settings` (mismo `jwt_secret`), asi
@@ -24,10 +24,10 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from httpx import ASGITransport, AsyncClient
 from support.auth import AuthedUser
 
-from finanzia.app import create_app
-from finanzia.modules.identity.public import get_current_user_id
-from finanzia.shared.security import encode_access_token
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.modules.identity.public import get_current_user_id
+from luka.shared.security import encode_access_token
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

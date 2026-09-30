@@ -4,8 +4,8 @@ import logging
 
 import pytest
 
-from finanzia.shared.logging import FORBIDDEN_LOG_KEYS, configure_logging, redact_forbidden_keys
-from finanzia.shared.settings import Settings
+from luka.shared.logging import FORBIDDEN_LOG_KEYS, configure_logging, redact_forbidden_keys
+from luka.shared.settings import Settings
 
 
 @pytest.mark.unit

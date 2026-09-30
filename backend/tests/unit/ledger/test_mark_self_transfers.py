@@ -6,14 +6,14 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import CapturedTransactionCommand, SourceInput
-from finanzia.modules.ledger.application.use_cases.mark_self_transfers import MarkSelfTransfers
-from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
+from ledger.fakes import FixedClock, LedgerRepos, build_ledger_repos
+from luka.modules.ledger.application.dto import CapturedTransactionCommand, SourceInput
+from luka.modules.ledger.application.use_cases.mark_self_transfers import MarkSelfTransfers
+from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
-from finanzia.modules.ledger.domain.entities import Transaction
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
-from ledger.fakes import FixedClock, LedgerRepos, build_ledger_repos
+from luka.modules.ledger.domain.entities import Transaction
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 LATER = NOW + timedelta(days=1)

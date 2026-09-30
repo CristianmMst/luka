@@ -3,7 +3,7 @@
 import pytest
 from support.google_stub import StubGoogleIdTokenVerifier
 
-from finanzia.modules.identity.domain.errors import InvalidGoogleToken
+from luka.modules.identity.domain.errors import InvalidGoogleToken
 
 
 @pytest.fixture

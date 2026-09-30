@@ -5,8 +5,8 @@ from decimal import Decimal
 
 import pytest
 
-from finanzia.modules.parsing.domain.enums import Direction
-from finanzia.modules.parsing.domain.parsed import ParsedTransaction
+from luka.modules.parsing.domain.enums import Direction
+from luka.modules.parsing.domain.parsed import ParsedTransaction
 
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
 

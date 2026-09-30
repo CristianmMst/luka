@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.identity.domain.errors import (
+from luka.modules.identity.domain.errors import (
     EmailNotVerified,
     IdentityError,
     InvalidGoogleToken,
@@ -13,8 +13,8 @@ from finanzia.modules.identity.domain.errors import (
     RefreshTokenReused,
     UserNotFound,
 )
-from finanzia.modules.identity.infrastructure.api.errors import EXCEPTION_MAP
-from finanzia.shared.errors import UnauthorizedError
+from luka.modules.identity.infrastructure.api.errors import EXCEPTION_MAP
+from luka.shared.errors import UnauthorizedError
 
 _ERRORS: list[IdentityError] = [
     InvalidGoogleToken(),

@@ -5,8 +5,8 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.domain.entities import RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from luka.modules.ingestion.domain.entities import RawMessage
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
 
 NOW_NAIVE = datetime(2026, 5, 1, 12, 0)
 

@@ -7,8 +7,8 @@ from uuid import UUID, uuid4
 # Reutilizado como `ClockPort`: ya expone `now()` y `advance(delta)` (referenciado en `__all__`).
 from support.clock import FixedClock
 
-from finanzia.modules.identity.domain.entities import GoogleIdentity, RefreshToken, User
-from finanzia.modules.identity.domain.errors import InvalidGoogleToken
+from luka.modules.identity.domain.entities import GoogleIdentity, RefreshToken, User
+from luka.modules.identity.domain.errors import InvalidGoogleToken
 
 __all__ = [
     "FakeAccessTokenIssuer",

@@ -19,8 +19,8 @@ from support.auth import AuthedUser
 from support.db import clean_user_tables
 from support.google_stub import create_test_app
 
-from finanzia.shared.security import encode_access_token
-from finanzia.shared.settings import Settings
+from luka.shared.security import encode_access_token
+from luka.shared.settings import Settings
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
 _ALEMBIC_INI = _BACKEND_DIR / "alembic.ini"
@@ -28,15 +28,15 @@ _ALEMBIC_INI = _BACKEND_DIR / "alembic.ini"
 
 @pytest.fixture(scope="session")
 def settings() -> Settings:
-    """Settings de test: apunta a `finanzia_test` y a la db 1 de Redis."""
+    """Settings de test: apunta a `luka_test` y a la db 1 de Redis."""
     return Settings(
         _env_file=None,  # pyright: ignore[reportCallIssue]
         env="test",
         database_url=os.environ.get(
-            "FINANZIA_TEST_DATABASE_URL",
-            "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test",
+            "LUKA_TEST_DATABASE_URL",
+            "postgresql+asyncpg://luka:luka@localhost:5432/luka_test",
         ),
-        redis_url=os.environ.get("FINANZIA_TEST_REDIS_URL", "redis://localhost:6379/1"),
+        redis_url=os.environ.get("LUKA_TEST_REDIS_URL", "redis://localhost:6379/1"),
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",
         google_client_secret="test-google-client-secret",
@@ -70,7 +70,7 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture(scope="session")
 async def migrated_db(settings: Settings) -> None:
-    """Aplica `alembic upgrade head` contra `settings.database_url` (finanzia_test).
+    """Aplica `alembic upgrade head` contra `settings.database_url` (luka_test).
 
     No es autouse: los tests que necesitan tablas (a partir de Task 7) la piden
     explicitamente. `client`/`app` no dependen de esta fixture porque los tests de

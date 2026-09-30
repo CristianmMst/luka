@@ -6,7 +6,7 @@ Create Date: 2026-09-24 20:00:00.000000
 
 Agrega `reparsed` al `CHECK resolution_valida` de `review_queue` (spec 005 §7):
 ledger cierra asi un item abierto cuando su mensaje, reprocesado con
-`finanzia.tools.reparse`, produce por fin una transaccion.
+`luka.tools.reparse`, produce por fin una transaccion.
 
 El downgrade falla si ya hay filas `reparsed` (el `CHECK` viejo no las acepta):
 se prefiere eso a reescribir en silencio como se cerro un item.

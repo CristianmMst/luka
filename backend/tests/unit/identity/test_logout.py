@@ -5,9 +5,9 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.identity.application.use_cases.logout import Logout
-from finanzia.modules.identity.domain.sessions import hash_refresh_token, new_family
 from identity.fakes import FixedClock, InMemoryRefreshTokenRepo, NoopUoW
+from luka.modules.identity.application.use_cases.logout import Logout
+from luka.modules.identity.domain.sessions import hash_refresh_token, new_family
 
 NOW = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 

@@ -24,21 +24,21 @@ from support.auth import AuthedUser
 from support.fake_google import ACCOUNT_EMAIL, HISTORY_ID, REFRESH_TOKEN, FakeGoogle
 from support.gmail_connections import insert_gmail_connection
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ingestion import public as ingestion_public
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
-from finanzia.modules.ingestion.infrastructure.gmail_client import (
+from luka.events_registry import build_registry
+from luka.modules.ingestion import public as ingestion_public
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus
+from luka.modules.ingestion.infrastructure.gmail_client import (
     GoogleGmailClient,
     build_gmail_client,
 )
-from finanzia.modules.ingestion.infrastructure.repositories import (
+from luka.modules.ingestion.infrastructure.repositories import (
     SqlAlchemyGmailConnectionRepository,
 )
-from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.memory import InMemoryEventBus
-from finanzia.shared.settings import Settings
+from luka.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
+from luka.shared.clock import SystemClock
+from luka.shared.events.memory import InMemoryEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

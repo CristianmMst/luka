@@ -2,7 +2,7 @@
 
 import pytest
 
-from finanzia.modules.parsing.infrastructure.config_loader import ParsingConfig, load_parsing_config
+from luka.modules.parsing.infrastructure.config_loader import ParsingConfig, load_parsing_config
 
 
 @pytest.mark.unit

@@ -5,11 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
-from finanzia.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
-from finanzia.modules.ingestion.domain.entities import RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
 from ingestion.fakes import InMemoryRawMessageRepo, NoopUoW
+from luka.modules.ingestion.application.use_cases.mark_raw_message import MarkRawMessage
+from luka.modules.ingestion.application.use_cases.purge_bodies import PurgeExpiredBodies
+from luka.modules.ingestion.domain.entities import RawMessage
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 USER = uuid4()

@@ -9,9 +9,9 @@ import pytest
 from fastapi import Depends, FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from finanzia.shared.errors import ValidationAppError
-from finanzia.shared.http.error_handlers import install_error_handlers
-from finanzia.shared.http.pagination import PageParams, decode_cursor, encode_cursor, page_params
+from luka.shared.errors import ValidationAppError
+from luka.shared.http.error_handlers import install_error_handlers
+from luka.shared.http.pagination import PageParams, decode_cursor, encode_cursor, page_params
 
 
 def _b64(payload: object) -> str:

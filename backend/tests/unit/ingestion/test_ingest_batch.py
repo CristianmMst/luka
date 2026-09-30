@@ -5,16 +5,6 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.dto import (
-    BankDecision,
-    BatchResult,
-    NotificationItemInput,
-)
-from finanzia.modules.ingestion.application.use_cases.ingest_notifications_batch import (
-    IngestNotificationsBatch,
-)
-from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
-from finanzia.modules.ingestion.domain.enums import Channel
 from ingestion.fakes import (
     FakeSenderPolicy,
     FixedClock,
@@ -23,6 +13,16 @@ from ingestion.fakes import (
     RecordingPublisher,
     SequenceIdGenerator,
 )
+from luka.modules.ingestion.application.dto import (
+    BankDecision,
+    BatchResult,
+    NotificationItemInput,
+)
+from luka.modules.ingestion.application.use_cases.ingest_notifications_batch import (
+    IngestNotificationsBatch,
+)
+from luka.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
+from luka.modules.ingestion.domain.enums import Channel
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 USER = uuid4()

@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.domain.dedupe import (
+from luka.modules.ledger.domain.dedupe import (
     BUCKET_SECONDS,
     SAME_CAPTURE_WINDOW,
     candidate_keys,
@@ -16,7 +16,7 @@ from finanzia.modules.ledger.domain.dedupe import (
     normalize_bank,
     time_bucket,
 )
-from finanzia.modules.ledger.domain.enums import Bank, Direction
+from luka.modules.ledger.domain.enums import Bank, Direction
 
 USER_ID = uuid4()
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)

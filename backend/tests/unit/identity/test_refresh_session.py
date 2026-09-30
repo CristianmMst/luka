@@ -5,15 +5,6 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.identity.application.use_cases.refresh_session import RefreshSession
-from finanzia.modules.identity.domain.entities import User, UserStatus
-from finanzia.modules.identity.domain.errors import (
-    RefreshTokenExpired,
-    RefreshTokenInvalid,
-    RefreshTokenReused,
-    UserNotFound,
-)
-from finanzia.modules.identity.domain.sessions import hash_refresh_token, new_family
 from identity.fakes import (
     FakeAccessTokenIssuer,
     FixedClock,
@@ -23,6 +14,15 @@ from identity.fakes import (
     RecordingAudit,
     SequenceTokenGenerator,
 )
+from luka.modules.identity.application.use_cases.refresh_session import RefreshSession
+from luka.modules.identity.domain.entities import User, UserStatus
+from luka.modules.identity.domain.errors import (
+    RefreshTokenExpired,
+    RefreshTokenInvalid,
+    RefreshTokenReused,
+    UserNotFound,
+)
+from luka.modules.identity.domain.sessions import hash_refresh_token, new_family
 
 NOW = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 REFRESH_TTL = timedelta(days=60)

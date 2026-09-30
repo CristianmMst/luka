@@ -11,12 +11,12 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from finanzia.modules.parsing.application.dto import LlmInvalidOutput, LlmOutput
-from finanzia.modules.parsing.domain.errors import LlmUnavailable
-from finanzia.modules.parsing.infrastructure.llm import build_llm_parser
-from finanzia.modules.parsing.infrastructure.llm.deepseek import DeepSeekLlmParser
-from finanzia.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
-from finanzia.shared.settings import Settings
+from luka.modules.parsing.application.dto import LlmInvalidOutput, LlmOutput
+from luka.modules.parsing.domain.errors import LlmUnavailable
+from luka.modules.parsing.infrastructure.llm import build_llm_parser
+from luka.modules.parsing.infrastructure.llm.deepseek import DeepSeekLlmParser
+from luka.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
+from luka.shared.settings import Settings
 
 _EXCERPT = (
     "Bancolombia: Compraste $176.824,00 en OXXO con tu T.Deb *1234, el 01/05/2026 a las 16:00."

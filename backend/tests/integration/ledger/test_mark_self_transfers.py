@@ -14,10 +14,10 @@ import pytest
 from sqlalchemy import text
 from support.clock import FixedClock
 
-from finanzia.modules.ledger import public as ledger_public
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
-from finanzia.modules.parsing import public as parsing_public
-from finanzia.tools.mark_self_transfers import parse_args
+from luka.modules.ledger import public as ledger_public
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction
+from luka.modules.parsing import public as parsing_public
+from luka.tools.mark_self_transfers import parse_args
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

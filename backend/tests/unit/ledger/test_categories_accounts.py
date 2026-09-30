@@ -6,35 +6,35 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import (
+from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.application.dto import (
     AccountInput,
     AccountPatch,
     CategoryInput,
     CategoryPatch,
     ManualTransactionCommand,
 )
-from finanzia.modules.ledger.application.use_cases.create_account import CreateAccount
-from finanzia.modules.ledger.application.use_cases.create_category import CreateCategory
-from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
+from luka.modules.ledger.application.use_cases.create_account import CreateAccount
+from luka.modules.ledger.application.use_cases.create_category import CreateCategory
+from luka.modules.ledger.application.use_cases.create_manual_transaction import (
     CreateManualTransaction,
 )
-from finanzia.modules.ledger.application.use_cases.delete_account import DeleteAccount
-from finanzia.modules.ledger.application.use_cases.delete_category import DeleteCategory
-from finanzia.modules.ledger.application.use_cases.list_accounts import ListAccounts
-from finanzia.modules.ledger.application.use_cases.list_categories import ListCategories
-from finanzia.modules.ledger.application.use_cases.update_account import UpdateAccount
-from finanzia.modules.ledger.application.use_cases.update_category import UpdateCategory
-from finanzia.modules.ledger.domain.entities import MerchantRule
-from finanzia.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag, Kind
-from finanzia.modules.ledger.domain.errors import (
+from luka.modules.ledger.application.use_cases.delete_account import DeleteAccount
+from luka.modules.ledger.application.use_cases.delete_category import DeleteCategory
+from luka.modules.ledger.application.use_cases.list_accounts import ListAccounts
+from luka.modules.ledger.application.use_cases.list_categories import ListCategories
+from luka.modules.ledger.application.use_cases.update_account import UpdateAccount
+from luka.modules.ledger.application.use_cases.update_category import UpdateCategory
+from luka.modules.ledger.domain.entities import MerchantRule
+from luka.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.errors import (
     AccountNotFound,
     DuplicateAccount,
     DuplicateCategoryName,
     InvalidLast4,
     SystemCategoryImmutable,
 )
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
-from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

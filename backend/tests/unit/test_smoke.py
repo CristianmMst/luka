@@ -5,13 +5,13 @@ import importlib
 import pytest
 
 MODULOS = [
-    "finanzia.shared",
-    "finanzia.modules.identity",
-    "finanzia.modules.ingestion",
-    "finanzia.modules.parsing",
-    "finanzia.modules.ledger",
-    "finanzia.modules.fiscal",
-    "finanzia.modules.insights",
+    "luka.shared",
+    "luka.modules.identity",
+    "luka.modules.ingestion",
+    "luka.modules.parsing",
+    "luka.modules.ledger",
+    "luka.modules.fiscal",
+    "luka.modules.insights",
 ]
 
 

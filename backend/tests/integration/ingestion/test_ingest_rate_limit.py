@@ -13,7 +13,7 @@ from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 from support.google_stub import create_test_app
 
-from finanzia.shared.settings import Settings
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

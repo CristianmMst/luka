@@ -18,11 +18,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.modules.ingestion import public
-from finanzia.modules.ledger.infrastructure.consumers import make_parse_failed_handler
-from finanzia.modules.parsing.domain.enums import ParseFailureReason
-from finanzia.modules.parsing.events import ParseFailed
-from finanzia.shared.clock import SystemClock
+from luka.modules.ingestion import public
+from luka.modules.ledger.infrastructure.consumers import make_parse_failed_handler
+from luka.modules.parsing.domain.enums import ParseFailureReason
+from luka.modules.parsing.events import ParseFailed
+from luka.shared.clock import SystemClock
 
 pytestmark = pytest.mark.integration
 

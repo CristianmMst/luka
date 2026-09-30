@@ -15,8 +15,8 @@ import pytest
 import structlog
 from support.email_fixtures import bancolombia_fixtures
 
-from finanzia.modules.ingestion.application.ports import GmailClientPort
-from finanzia.modules.ingestion.domain.errors import (
+from luka.modules.ingestion.application.ports import GmailClientPort
+from luka.modules.ingestion.domain.errors import (
     GmailAuthRevoked,
     GmailHistoryExpired,
     GmailMessageNotFound,
@@ -25,9 +25,9 @@ from finanzia.modules.ingestion.domain.errors import (
     GmailRequestRejected,
     GmailTransientError,
 )
-from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
-from finanzia.shared.logging import configure_logging
-from finanzia.shared.settings import Settings
+from luka.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
+from luka.shared.logging import configure_logging
+from luka.shared.settings import Settings
 
 _API = "https://gmail.googleapis.com/gmail/v1/users/me"
 _TOKEN_URL = "https://oauth2.googleapis.com/token"

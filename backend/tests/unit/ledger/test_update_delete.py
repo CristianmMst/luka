@@ -6,28 +6,29 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import (
+from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.application.dto import (
     CapturedTransactionCommand,
     ManualTransactionCommand,
     SourceInput,
     TransactionPatch,
 )
-from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
+from luka.modules.ledger.application.use_cases.create_manual_transaction import (
     CreateManualTransaction,
 )
-from finanzia.modules.ledger.application.use_cases.delete_transaction import DeleteTransaction
-from finanzia.modules.ledger.application.use_cases.get_transaction import GetTransaction
-from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
+from luka.modules.ledger.application.use_cases.delete_transaction import DeleteTransaction
+from luka.modules.ledger.application.use_cases.get_transaction import GetTransaction
+from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
-from finanzia.modules.ledger.application.use_cases.update_transaction import UpdateTransaction
-from finanzia.modules.ledger.domain.entities import (
+from luka.modules.ledger.application.use_cases.update_transaction import UpdateTransaction
+from luka.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
     MerchantRule,
     Transaction,
 )
-from finanzia.modules.ledger.domain.enums import (
+from luka.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
     Channel,
@@ -35,10 +36,9 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.errors import NotManualTransaction, TransactionNotFound
-from finanzia.modules.ledger.domain.merchant import normalize_merchant
-from finanzia.modules.ledger.domain.transfers import NoMatch, find_transfer_match
-from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.domain.errors import NotManualTransaction, TransactionNotFound
+from luka.modules.ledger.domain.merchant import normalize_merchant
+from luka.modules.ledger.domain.transfers import NoMatch, find_transfer_match
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

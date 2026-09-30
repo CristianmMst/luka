@@ -13,9 +13,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 
-from finanzia.modules.ingestion.domain.entities import RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
-from finanzia.modules.ingestion.infrastructure.repositories import SqlAlchemyRawMessageRepository
+from luka.modules.ingestion.domain.entities import RawMessage
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from luka.modules.ingestion.infrastructure.repositories import SqlAlchemyRawMessageRepository
 
 pytestmark = pytest.mark.integration
 

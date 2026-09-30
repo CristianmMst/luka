@@ -7,10 +7,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.domain.entities import Category, Transaction
-from finanzia.modules.ledger.domain.enums import Bank, Direction, FiscalTag, Kind
-from finanzia.modules.ledger.domain.errors import TransferPairInvalid
-from finanzia.modules.ledger.domain.transfers import (
+from luka.modules.ledger.domain.entities import Category, Transaction
+from luka.modules.ledger.domain.enums import Bank, Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.errors import TransferPairInvalid
+from luka.modules.ledger.domain.transfers import (
     TRANSFER_WINDOW,
     Ambiguous,
     Matched,

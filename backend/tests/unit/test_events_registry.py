@@ -2,11 +2,11 @@
 
 import pytest
 
-from finanzia.events_registry import CONSUMER_GROUPS, build_registry
-from finanzia.modules.identity.events import UserDeleted
-from finanzia.modules.ingestion.events import RawMessageReceived
-from finanzia.modules.ledger.events import TransactionCaptured
-from finanzia.modules.parsing.events import ParseFailed, TransactionParsed
+from luka.events_registry import CONSUMER_GROUPS, build_registry
+from luka.modules.identity.events import UserDeleted
+from luka.modules.ingestion.events import RawMessageReceived
+from luka.modules.ledger.events import TransactionCaptured
+from luka.modules.parsing.events import ParseFailed, TransactionParsed
 
 pytestmark = pytest.mark.unit
 

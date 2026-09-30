@@ -1,8 +1,8 @@
-"""Integration: `arq.Worker` con `finanzia.worker.WorkerSettings` (spec 003 SS2.4, F1.8).
+"""Integration: `arq.Worker` con `luka.worker.WorkerSettings` (spec 003 SS2.4, F1.8).
 
-`finanzia.worker` calcula `WorkerSettings.redis_settings` a nivel de modulo
+`luka.worker` calcula `WorkerSettings.redis_settings` a nivel de modulo
 (`RedisSettings.from_dsn(str(get_settings().redis_url))`); por eso el import de
-`finanzia.worker` debe ocurrir *despues* de fijar las variables `FINANZIA_*` de test
+`luka.worker` debe ocurrir *despues* de fijar las variables `LUKA_*` de test
 (incluida la Redis de test, db 1) y de limpiar el cache de `get_settings`. El
 fixture `worker_settings_module` hace ese import de forma perezosa, dentro del
 propio test, para garantizar el orden.
@@ -31,18 +31,18 @@ from support.fake_google import FakeGoogle
 from support.gmail_connections import insert_gmail_connection
 from support.raw_messages import insert_raw_message
 
-from finanzia.modules.ingestion import public as ingestion_public
-from finanzia.modules.ingestion.infrastructure import gmail_sync as gmail_sync_infra
-from finanzia.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
-from finanzia.modules.ingestion.infrastructure.gmail_sync import SYNC_GMAIL_TIMEOUT_S
-from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
-from finanzia.shared.settings import Settings, get_settings
+from luka.modules.ingestion import public as ingestion_public
+from luka.modules.ingestion.infrastructure import gmail_sync as gmail_sync_infra
+from luka.modules.ingestion.infrastructure.gmail_client import GoogleGmailClient
+from luka.modules.ingestion.infrastructure.gmail_sync import SYNC_GMAIL_TIMEOUT_S
+from luka.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
+from luka.shared.settings import Settings, get_settings
 
 pytestmark = pytest.mark.integration
 
 # Fix round 1 (review Task 9, finding 2): los tests que llaman `on_startup(ctx)`
 # directo controlan `ctx` por completo, asi que pueden precargar la clave de
-# prueba `_test_consumer_block_ms` (ver `finanzia.worker`) para que los 4
+# prueba `_test_consumer_block_ms` (ver `luka.worker`) para que los 4
 # `StreamConsumer` respondan a `stop` casi al instante en `on_shutdown`, en vez
 # de hasta ~6s (block_ms/1000+1 de produccion) cada uno. Sin esto, cada test que
 # arranca+apaga consumers reales tardaba varios segundos, y una tarea que
@@ -70,17 +70,17 @@ def _sigusr1_shim(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture
 def worker_settings_module(monkeypatch: pytest.MonkeyPatch, settings: Settings):
-    monkeypatch.setenv("FINANZIA_ENV", "test")
-    monkeypatch.setenv("FINANZIA_DATABASE_URL", str(settings.database_url))
-    monkeypatch.setenv("FINANZIA_REDIS_URL", str(settings.redis_url))
-    monkeypatch.setenv("FINANZIA_JWT_SECRET", settings.jwt_secret.get_secret_value())
-    monkeypatch.setenv("FINANZIA_GOOGLE_CLIENT_ID", settings.google_client_id)
+    monkeypatch.setenv("LUKA_ENV", "test")
+    monkeypatch.setenv("LUKA_DATABASE_URL", str(settings.database_url))
+    monkeypatch.setenv("LUKA_REDIS_URL", str(settings.redis_url))
+    monkeypatch.setenv("LUKA_JWT_SECRET", settings.jwt_secret.get_secret_value())
+    monkeypatch.setenv("LUKA_GOOGLE_CLIENT_ID", settings.google_client_id)
     get_settings.cache_clear()
 
-    # Import perezoso, deliberado: `finanzia.worker` calcula `redis_settings` a
+    # Import perezoso, deliberado: `luka.worker` calcula `redis_settings` a
     # nivel de modulo a partir de `get_settings()`, y debe ejecutarse *despues* de
-    # fijar las variables FINANZIA_* de arriba (ver docstring del modulo).
-    import finanzia.worker as worker_module  # noqa: PLC0415
+    # fijar las variables LUKA_* de arriba (ver docstring del modulo).
+    import luka.worker as worker_module  # noqa: PLC0415
 
     try:
         yield worker_module
@@ -187,7 +187,7 @@ async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabili
     redis_clean: None,
     db_clean: None,
 ) -> None:
-    """Task 9: sin `FINANZIA_DEEPSEEK_API_KEY` (dev/test), el worker arranca los 4
+    """Task 9: sin `LUKA_DEEPSEEK_API_KEY` (dev/test), el worker arranca los 4
     consumers igual (`parsing`, `ledger`, `ledger-review`, `ledger-observer`, uno
     por entrada de `CONSUMER_GROUPS`) con el LLM deshabilitado, y lo deja
     explicito en el log de arranque (nunca la api key, P1).
@@ -198,7 +198,7 @@ async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabili
     ejecucion con otros archivos.
     """
     del redis_clean, db_clean
-    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LUKA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
     ctx = _new_worker_ctx()
@@ -235,7 +235,7 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
     `httpx.AsyncClient` compartido y no deja tareas de fondo colgadas.
     """
     del redis_clean, db_clean
-    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LUKA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
     ctx = _new_worker_ctx()
@@ -321,7 +321,7 @@ async def test_purge_raw_message_bodies_cron_purga_y_loguea_count(  # noqa: PLR0
     otra suite, con independencia de que `db_clean` ya aisle cada test.
     """
     del redis_clean, db_clean
-    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LUKA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
     user = await user_factory(sub="worker-cron-purge", email="worker-cron-purge@example.com")
@@ -377,7 +377,7 @@ async def test_requeue_pending_raw_messages_cron_republica_huerfanos_y_loguea_co
     finding 2).
     """
     del redis_clean, db_clean
-    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LUKA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
     user = await user_factory(sub="worker-cron-requeue", email="worker-cron-requeue@example.com")
@@ -435,7 +435,7 @@ async def test_renew_gmail_watches_renueva_y_loguea_solo_contadores(  # noqa: PL
     solo los contadores (nunca el email de la cuenta ni el refresh token, P1/P6).
     """
     del redis_clean, db_clean
-    monkeypatch.delenv("FINANZIA_DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("LUKA_DEEPSEEK_API_KEY", raising=False)
     get_settings.cache_clear()
 
     user = await user_factory(sub="worker-cron-renew", email="worker-cron-renew@example.com")

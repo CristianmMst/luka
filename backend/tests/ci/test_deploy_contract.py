@@ -119,16 +119,16 @@ class TestDeployWorkflow:
 @pytest.mark.ci
 class TestProductionCompose:
     def test_nada_publica_puertos(self, services: dict[str, Any]) -> None:
-        # El nginx del servidor es la unica entrada (nginx-finanzia.conf).
+        # El nginx del servidor es la unica entrada (nginx-luka.conf).
         assert not [name for name, svc in services.items() if svc.get("ports")]
 
     def test_api_en_la_red_del_proxy_con_su_alias(self, services: dict[str, Any]) -> None:
         networks = _yaml(COMPOSE_PATH)["networks"]
         assert networks["proxy"]["external"] is True
-        assert services["api"]["networks"]["proxy"]["aliases"] == ["finanzia-api"]
+        assert services["api"]["networks"]["proxy"]["aliases"] == ["luka-api"]
         assert "proxy" not in services["worker"]["networks"]
-        conf = (COMPOSE_PATH.parent / "nginx-finanzia.conf").read_text(encoding="utf-8")
-        assert "http://finanzia-api:8000" in conf
+        conf = (COMPOSE_PATH.parent / "nginx-luka.conf").read_text(encoding="utf-8")
+        assert "http://luka-api:8000" in conf
         assert "access_log off;" in conf
         assert conf.count("server_name luka.a360soft.tech;") == 2
         assert "/etc/nginx/ssl/live/luka-a360soft-tech/fullchain.pem" in conf
@@ -145,8 +145,8 @@ class TestProductionCompose:
         assert svc["read_only"] is True
         assert svc["cap_drop"] == ["ALL"]
         assert "no-new-privileges:true" in svc["security_opt"]
-        assert svc["environment"]["FINANZIA_ENV"] == "prod"
-        assert svc["image"].startswith("${FINANZIA_IMAGE:?")
+        assert svc["environment"]["LUKA_ENV"] == "prod"
+        assert svc["image"].startswith("${LUKA_IMAGE:?")
 
     def test_migraciones_solo_a_pedido(self, services: dict[str, Any]) -> None:
         assert services["migrate"]["profiles"] == ["migrate"]

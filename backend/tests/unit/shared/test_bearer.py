@@ -2,8 +2,8 @@
 
 import pytest
 
-from finanzia.shared.errors import UnauthorizedError
-from finanzia.shared.security import bearer_token
+from luka.shared.errors import UnauthorizedError
+from luka.shared.security import bearer_token
 
 
 @pytest.mark.unit

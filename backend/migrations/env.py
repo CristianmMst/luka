@@ -2,7 +2,7 @@
 objetivo a partir de los modelos ORM de cada modulo (spec 004, F1.1).
 
 Solo aqui se importan los `infrastructure.orm` de los modulos: `shared` nunca
-importa `finanzia.modules` (ver import-linter, contrato Kernel).
+importa `luka.modules` (ver import-linter, contrato Kernel).
 """
 
 import asyncio
@@ -15,11 +15,11 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Composition root de metadata: import explicito de cada modulo con tablas.
-import finanzia.modules.identity.infrastructure.orm
-import finanzia.modules.ingestion.infrastructure.orm
-import finanzia.modules.ledger.infrastructure.orm  # noqa: F401
-from finanzia.shared.db.base import Base
-from finanzia.shared.settings import Settings
+import luka.modules.identity.infrastructure.orm
+import luka.modules.ingestion.infrastructure.orm
+import luka.modules.ledger.infrastructure.orm  # noqa: F401
+from luka.shared.db.base import Base
+from luka.shared.settings import Settings
 
 config = context.config
 
@@ -35,7 +35,7 @@ def _resolve_url() -> str:
     if configured:
         return configured
 
-    env_url = os.environ.get("FINANZIA_DATABASE_URL")
+    env_url = os.environ.get("LUKA_DATABASE_URL")
     if env_url:
         return env_url
 

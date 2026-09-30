@@ -5,8 +5,8 @@ from decimal import Decimal
 
 import pytest
 
-from finanzia.modules.parsing.domain.errors import AmountInvalid, DateInvalid
-from finanzia.modules.parsing.domain.normalizers import (
+from luka.modules.parsing.domain.errors import AmountInvalid, DateInvalid
+from luka.modules.parsing.domain.normalizers import (
     clean_text,
     parse_amount,
     parse_local_datetime,

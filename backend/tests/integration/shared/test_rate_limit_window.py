@@ -11,8 +11,8 @@ import pytest
 import redis.asyncio as redis_asyncio
 from redis.asyncio import Redis
 
-from finanzia.shared.http.rate_limit import SlidingWindowLimiter
-from finanzia.shared.settings import Settings
+from luka.shared.http.rate_limit import SlidingWindowLimiter
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

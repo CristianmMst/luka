@@ -7,21 +7,6 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.use_cases.gmail_sync import (
-    HandleGmailPush,
-    SyncGmail,
-)
-from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import Channel, GmailConnectionStatus
-from finanzia.modules.ingestion.domain.errors import (
-    GmailAuthRevoked,
-    GmailMessageUnreadable,
-    GmailRequestRejected,
-    GmailSyncEnqueueFailed,
-    GmailTransientError,
-)
-from finanzia.modules.ingestion.domain.gmail_push import GmailPushNotification
 from ingestion.fakes import (
     FakeGmailClient,
     FakeSenderPolicy,
@@ -34,6 +19,21 @@ from ingestion.fakes import (
     RecordingSyncQueue,
     SequenceIdGenerator,
 )
+from luka.modules.ingestion.application.use_cases.gmail_sync import (
+    HandleGmailPush,
+    SyncGmail,
+)
+from luka.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import Channel, GmailConnectionStatus
+from luka.modules.ingestion.domain.errors import (
+    GmailAuthRevoked,
+    GmailMessageUnreadable,
+    GmailRequestRejected,
+    GmailSyncEnqueueFailed,
+    GmailTransientError,
+)
+from luka.modules.ingestion.domain.gmail_push import GmailPushNotification
 
 pytestmark = pytest.mark.unit
 

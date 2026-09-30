@@ -5,7 +5,7 @@ import re
 import pytest
 from support.email_fixtures import bancolombia_fixtures
 
-from finanzia.modules.parsing.domain.excerpt import extract_excerpt, looks_monetary
+from luka.modules.parsing.domain.excerpt import extract_excerpt, looks_monetary
 
 PREFIX = "Bancolombia:"
 

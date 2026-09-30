@@ -2,7 +2,7 @@
 
 import pytest
 
-from finanzia.modules.ledger.domain.self_transfer import is_same_person, normalize_person_name
+from luka.modules.ledger.domain.self_transfer import is_same_person, normalize_person_name
 
 
 @pytest.mark.unit

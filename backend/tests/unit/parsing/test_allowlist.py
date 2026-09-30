@@ -2,8 +2,8 @@
 
 import pytest
 
-from finanzia.modules.parsing.domain.allowlist import CaptureConfig, SenderAllowlist
-from finanzia.modules.parsing.domain.errors import TemplateConfigError
+from luka.modules.parsing.domain.allowlist import CaptureConfig, SenderAllowlist
+from luka.modules.parsing.domain.errors import TemplateConfigError
 
 SENDERS_CONFIG = {
     "version": 1,

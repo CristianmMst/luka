@@ -6,24 +6,24 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import (
+from ledger.fakes import FakeReviewSource, FixedClock, InMemoryReviewQueueRepo, build_ledger_repos
+from luka.modules.ledger.application.dto import (
     ConvertReviewCommand,
     EnqueueForReviewCommand,
     ReviewSourceView,
 )
-from finanzia.modules.ledger.application.use_cases.convert_review_item import ConvertReviewItem
-from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
+from luka.modules.ledger.application.use_cases.convert_review_item import ConvertReviewItem
+from luka.modules.ledger.application.use_cases.create_manual_transaction import (
     CreateManualTransaction,
 )
-from finanzia.modules.ledger.application.use_cases.discard_review_item import DiscardReviewItem
-from finanzia.modules.ledger.application.use_cases.enqueue_for_review import EnqueueForReview
-from finanzia.modules.ledger.application.use_cases.get_transaction import GetTransaction
-from finanzia.modules.ledger.application.use_cases.list_review import ListReview
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
-from finanzia.modules.ledger.domain.errors import ReviewAlreadyResolved, ReviewItemNotFound
-from finanzia.modules.ledger.domain.review import ReviewReason, ReviewResolution
-from finanzia.modules.ledger.events import TransactionCaptured
-from ledger.fakes import FakeReviewSource, FixedClock, InMemoryReviewQueueRepo, build_ledger_repos
+from luka.modules.ledger.application.use_cases.discard_review_item import DiscardReviewItem
+from luka.modules.ledger.application.use_cases.enqueue_for_review import EnqueueForReview
+from luka.modules.ledger.application.use_cases.get_transaction import GetTransaction
+from luka.modules.ledger.application.use_cases.list_review import ListReview
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction
+from luka.modules.ledger.domain.errors import ReviewAlreadyResolved, ReviewItemNotFound
+from luka.modules.ledger.domain.review import ReviewReason, ReviewResolution
+from luka.modules.ledger.events import TransactionCaptured
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

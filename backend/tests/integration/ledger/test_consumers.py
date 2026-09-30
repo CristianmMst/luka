@@ -16,13 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ledger.infrastructure.consumers import make_transaction_parsed_handler
-from finanzia.modules.parsing.domain.enums import Direction as ParsingDirection
-from finanzia.modules.parsing.events import TransactionParsed
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.events_registry import build_registry
+from luka.modules.ledger.infrastructure.consumers import make_transaction_parsed_handler
+from luka.modules.parsing.domain.enums import Direction as ParsingDirection
+from luka.modules.parsing.events import TransactionParsed
+from luka.shared.clock import SystemClock
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

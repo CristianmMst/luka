@@ -1,0 +1,400 @@
+"""Adaptador httpx de `GmailClientPort`: Google OAuth (`oauth2.googleapis.com`) y
+Gmail REST API (`gmail.googleapis.com/gmail/v1/users/me`), spec 006 §2 y 005 §3/§4.
+
+Nunca loguea tokens, codigos, emails, ids de mensaje ni contenido (spec 009 §5):
+solo `gmail_request` con `operation` (plantilla fija), `status_code` y `latency_ms`.
+El refresh token de `revoke` viaja en el cuerpo del POST, no en la URL.
+"""
+
+from __future__ import annotations
+
+import base64
+import binascii
+import re
+import time
+from datetime import UTC, datetime
+from typing import Any, cast
+
+import httpx
+import structlog
+
+from luka.modules.ingestion.application.dto import GmailGrant
+from luka.modules.ingestion.domain.errors import (
+    GmailAuthRevoked,
+    GmailHistoryExpired,
+    GmailMessageNotFound,
+    GmailMessageUnreadable,
+    GmailRefreshTokenMissing,
+    GmailRequestRejected,
+    GmailTransientError,
+)
+from luka.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
+from luka.shared.settings import Settings
+
+_logger = structlog.get_logger()
+
+TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105 - URL publica, no secreto
+REVOKE_URL = "https://oauth2.googleapis.com/revoke"
+GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
+
+_PAGE_SIZE = 100
+#: Tope del resync (spec 006 §2.1): `messages.list` devuelve del mas nuevo al mas
+#: viejo, asi que el tope conserva los mas recientes.
+RESYNC_MAX_MESSAGES = 500
+#: Cualquiera de estos scopes permite leer el buzon; la app pide `gmail.readonly`.
+#: `error.errors[].reason` de los 403 de cuota de la Gmail API: son reintentables.
+_RATE_LIMIT_REASONS = frozenset(
+    {"userRateLimitExceeded", "rateLimitExceeded", "dailyLimitExceeded", "quotaExceeded"}
+)
+_GMAIL_READ_SCOPES = frozenset(
+    {
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.modify",
+        "https://mail.google.com/",
+    }
+)
+_CHARSET_PATTERN = re.compile(r"""charset\s*=\s*["']?([^"';\s]+)""", re.IGNORECASE)
+
+
+class GoogleGmailClient:
+    """`GmailClientPort` real sobre un `httpx.AsyncClient` compartido.
+
+    `redirect_uri` va vacio por defecto: es lo que exige Google al canjear un
+    `serverAuthCode` emitido para una app Android (sin redirect propio).
+    """
+
+    def __init__(
+        self,
+        client: httpx.AsyncClient,
+        *,
+        client_id: str,
+        client_secret: str,
+        redirect_uri: str = "",
+        timeout_s: float = 10.0,
+    ) -> None:
+        self._client = client
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._redirect_uri = redirect_uri
+        self._timeout_s = timeout_s
+
+    # --- OAuth ---------------------------------------------------------------
+
+    async def exchange_code(self, code: str) -> GmailGrant:
+        grant = await self._token_request(
+            {
+                "grant_type": "authorization_code",
+                "code": code,
+                "client_id": self._client_id,
+                "client_secret": self._client_secret,
+                "redirect_uri": self._redirect_uri,
+            }
+        )
+        refresh_token = grant.get("refresh_token")
+        access_token = grant.get("access_token")
+        if not isinstance(refresh_token, str) or not refresh_token:
+            # Google solo entrega refresh token en el primer consentimiento (o con
+            # `forceCodeForRefreshToken`); sin el no hay conexion posible.
+            raise GmailRefreshTokenMissing("token: respuesta sin refresh_token")
+        if not isinstance(access_token, str) or not access_token:
+            raise GmailRequestRejected("token: respuesta sin access_token")
+        scope = grant.get("scope")
+        if isinstance(scope, str) and _GMAIL_READ_SCOPES.isdisjoint(scope.split()):
+            # Permiso de Gmail desmarcado: el caso de uso decide si revocar.
+            return GmailGrant(refresh_token=refresh_token, email=None, scope_granted=False)
+        response = await self._send(
+            "profile", "GET", f"{GMAIL_API_BASE}/profile", headers=_bearer(access_token)
+        )
+        if response.status_code == httpx.codes.FORBIDDEN:
+            # Con el scope concedido, un 403 es cuota, API sin habilitar u otro fallo
+            # del lado de Google, nunca "permiso denegado": no se revoca nada.
+            raise GmailTransientError("profile: 403")
+        profile = _json_object("profile", response)
+        email = profile.get("emailAddress")
+        if not isinstance(email, str) or not email:
+            raise GmailRequestRejected("profile: respuesta sin emailAddress")
+        return GmailGrant(refresh_token=refresh_token, email=email)
+
+    async def access_token(self, refresh_token: str) -> str:
+        grant = await self._token_request(
+            {
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "client_id": self._client_id,
+                "client_secret": self._client_secret,
+            }
+        )
+        access_token = grant.get("access_token")
+        if not isinstance(access_token, str) or not access_token:
+            raise GmailRequestRejected("token: respuesta sin access_token")
+        return access_token
+
+    async def revoke(self, refresh_token: str) -> None:
+        response = await self._send("revoke", "POST", REVOKE_URL, data={"token": refresh_token})
+        # 400 `invalid_token`: ya estaba revocado/expirado; revocar es idempotente.
+        if response.status_code != httpx.codes.BAD_REQUEST:
+            _raise_for_status("revoke", response)
+
+    # --- Gmail API -----------------------------------------------------------
+
+    async def watch(self, access_token: str, topic: str) -> tuple[int, datetime]:
+        # `labelIds` ya filtra por inclusion (default de Google); sin `labelFilterBehavior`.
+        body = {"topicName": topic, "labelIds": ["INBOX"]}
+        data = await self._api("watch", "POST", "/watch", access_token, json=body)
+        try:
+            history_id = int(data["historyId"])
+            expires_at = datetime.fromtimestamp(int(data["expiration"]) / 1000, tz=UTC)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise GmailRequestRejected("watch: respuesta ilegible") from exc
+        return history_id, expires_at
+
+    async def stop(self, access_token: str) -> None:
+        response = await self._send(
+            "stop", "POST", f"{GMAIL_API_BASE}/stop", headers=_bearer(access_token)
+        )
+        _raise_for_status("stop", response)
+
+    async def history_new_message_ids(
+        self, access_token: str, start_history_id: int
+    ) -> tuple[list[str], int]:
+        ids: dict[str, None] = {}  # dict como set ordenado
+        params: dict[str, str] = {
+            "startHistoryId": str(start_history_id),
+            "historyTypes": "messageAdded",
+            "labelId": "INBOX",
+        }
+        while True:
+            response = await self._send(
+                "history.list",
+                "GET",
+                f"{GMAIL_API_BASE}/history",
+                headers=_bearer(access_token),
+                params=params,
+            )
+            if response.status_code == httpx.codes.NOT_FOUND:
+                raise GmailHistoryExpired("history.list: startHistoryId demasiado viejo")
+            page = _json_object("history.list", response)
+            try:
+                for record in page.get("history", []):
+                    for added in record.get("messagesAdded", []):
+                        ids[str(added["message"]["id"])] = None
+                new_history_id = int(page["historyId"])
+            except (KeyError, TypeError, ValueError, AttributeError) as exc:
+                raise GmailRequestRejected("history.list: respuesta ilegible") from exc
+            next_token = page.get("nextPageToken")
+            if not next_token:
+                return list(ids), new_history_id
+            params = {**params, "pageToken": str(next_token)}
+
+    async def recent_message_ids(
+        self, access_token: str, days: int = 7, limit: int = RESYNC_MAX_MESSAGES
+    ) -> list[str]:
+        ids: list[str] = []
+        params: dict[str, str] = {
+            "q": f"in:inbox newer_than:{days}d",
+            "maxResults": str(_PAGE_SIZE),
+        }
+        while True:
+            page = await self._api("messages.list", "GET", "/messages", access_token, params=params)
+            try:
+                ids.extend(str(item["id"]) for item in page.get("messages", []))
+            except (KeyError, TypeError) as exc:
+                raise GmailRequestRejected("messages.list: respuesta ilegible") from exc
+            next_token = page.get("nextPageToken")
+            if len(ids) >= limit:
+                return ids[:limit]
+            if not next_token:
+                return ids
+            params = {**params, "pageToken": str(next_token)}
+
+    async def profile_history_id(self, access_token: str) -> int:
+        data = await self._api("profile", "GET", "/profile", access_token)
+        try:
+            return int(data["historyId"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise GmailRequestRejected("profile: respuesta ilegible") from exc
+
+    async def get_message(self, access_token: str, message_id: str) -> GmailMessage:
+        response = await self._send(
+            "messages.get",
+            "GET",
+            f"{GMAIL_API_BASE}/messages/{message_id}",
+            headers=_bearer(access_token),
+            params={"format": "full"},
+        )
+        if response.status_code in {httpx.codes.NOT_FOUND, httpx.codes.BAD_REQUEST}:
+            raise GmailMessageNotFound(f"messages.get: {response.status_code}")
+        if response.status_code == httpx.codes.FORBIDDEN:
+            # Cuota por usuario u otro 403: reintentar (la ingesta es idempotente)
+            # en vez de saltar el mensaje y avanzar el cursor sin el.
+            raise GmailTransientError("messages.get: 403")
+        _raise_for_status("messages.get", response)  # otros 4xx: rechazo, se propaga
+        try:
+            data = _json_object("messages.get", response)
+            payload = data["payload"]
+            internal_date = datetime.fromtimestamp(int(data["internalDate"]) / 1000, tz=UTC)
+            return GmailMessage(
+                id=str(data["id"]),
+                sender=_header(payload, "from") or "",
+                internal_date=internal_date,
+                payload=_parse_part(payload),
+            )
+        except (
+            GmailRequestRejected,
+            KeyError,
+            TypeError,
+            ValueError,
+            AttributeError,
+            binascii.Error,
+        ) as exc:
+            # Nunca el id del mensaje ni el cuerpo (spec 009 §5): solo el motivo.
+            _logger.warning("gmail_message_skipped", reason="unreadable")
+            raise GmailMessageUnreadable("messages.get: respuesta ilegible") from exc
+
+    # --- HTTP ----------------------------------------------------------------
+
+    async def _token_request(self, form: dict[str, str]) -> dict[str, Any]:
+        response = await self._send("token", "POST", TOKEN_URL, data=form)
+        if response.is_client_error and _oauth_error(response) == "invalid_grant":
+            raise GmailAuthRevoked("token: invalid_grant")
+        return _json_object("token", response)
+
+    async def _api(
+        self,
+        operation: str,
+        method: str,
+        path: str,
+        access_token: str,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        response = await self._send(
+            operation, method, f"{GMAIL_API_BASE}{path}", headers=_bearer(access_token), **kwargs
+        )
+        return _json_object(operation, response)
+
+    async def _send(self, operation: str, method: str, url: str, **kwargs: Any) -> httpx.Response:
+        """Hace la peticion y traduce timeouts/red/5xx/429 a `GmailTransientError`.
+
+        Los demas codigos vuelven al llamador, que decide (404 de history,
+        `invalid_grant`, 400 de revoke) antes de `_raise_for_status`.
+        """
+        start = time.monotonic()
+        status_code: int | None = None
+        try:
+            response = await self._client.request(method, url, timeout=self._timeout_s, **kwargs)
+            status_code = response.status_code
+        except httpx.RequestError as exc:
+            raise GmailTransientError(f"{operation}: {type(exc).__name__}") from exc
+        finally:
+            _logger.info(
+                "gmail_request",
+                operation=operation,
+                status_code=status_code,
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
+        if response.is_server_error or response.status_code == httpx.codes.TOO_MANY_REQUESTS:
+            raise GmailTransientError(f"{operation}: {response.status_code}")
+        if response.status_code == httpx.codes.UNAUTHORIZED and url.startswith(GMAIL_API_BASE):
+            # Access token vencido a mitad del job: reintentar genera uno nuevo. El 401
+            # del endpoint de token (`invalid_client`) no pasa por aqui: es rechazo.
+            raise GmailTransientError(f"{operation}: {response.status_code}")
+        if response.status_code == httpx.codes.FORBIDDEN and _is_rate_limited(response):
+            # La Gmail API responde la cuota por usuario como 403, no 429.
+            raise GmailTransientError(f"{operation}: 403 rate limit")
+        return response
+
+
+def build_gmail_client(settings: Settings, http_client: httpx.AsyncClient) -> GoogleGmailClient:
+    """`GoogleGmailClient` real con el cliente OAuth web de `settings`.
+
+    Lo usan los composition roots (`luka.app`, `luka.worker`); el llamador
+    es dueno de `http_client` y lo cierra al apagar el proceso.
+    """
+    return GoogleGmailClient(
+        http_client,
+        client_id=settings.google_client_id,
+        client_secret=settings.google_client_secret.get_secret_value(),
+    )
+
+
+def _bearer(access_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+def _raise_for_status(operation: str, response: httpx.Response) -> None:
+    if response.is_error:
+        raise GmailRequestRejected(f"{operation}: {response.status_code}")
+
+
+def _json_object(operation: str, response: httpx.Response) -> dict[str, Any]:
+    _raise_for_status(operation, response)
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise GmailRequestRejected(f"{operation}: cuerpo no JSON") from exc
+    if not isinstance(data, dict):
+        raise GmailRequestRejected(f"{operation}: cuerpo no es un objeto")
+    return data  # pyright: ignore[reportUnknownVariableType]
+
+
+def _is_rate_limited(response: httpx.Response) -> bool:
+    """`True` si el cuerpo del error es de cuota (`reason` o `RESOURCE_EXHAUSTED`)."""
+    try:
+        data: object = response.json()
+    except ValueError:
+        return False
+    error = cast("dict[str, Any]", data).get("error") if isinstance(data, dict) else None
+    if not isinstance(error, dict):
+        return False
+    error = cast("dict[str, Any]", error)
+    if error.get("status") == "RESOURCE_EXHAUSTED":
+        return True
+    details = error.get("errors")
+    if not isinstance(details, list):
+        return False
+    return any(
+        isinstance(item, dict) and cast("dict[str, Any]", item).get("reason") in _RATE_LIMIT_REASONS
+        for item in cast("list[object]", details)
+    )
+
+
+def _oauth_error(response: httpx.Response) -> str | None:
+    try:
+        data = response.json()
+    except ValueError:
+        return None
+    return data.get("error") if isinstance(data, dict) else None  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+
+
+def _header(part: dict[str, Any], name: str) -> str | None:
+    for header in part.get("headers") or []:
+        if str(header.get("name", "")).lower() == name:
+            return str(header.get("value", ""))
+    return None
+
+
+def _b64url_decode(data: str) -> bytes:
+    return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
+
+
+def _parse_part(part: dict[str, Any]) -> MimePart:
+    content_type = _header(part, "content-type") or ""
+    charset_match = _CHARSET_PATTERN.search(content_type)
+    raw = (part.get("body") or {}).get("data")
+    return MimePart(
+        mime_type=str(part.get("mimeType", "")),
+        data=_b64url_decode(raw) if raw else b"",
+        charset=charset_match.group(1) if charset_match else None,
+        filename=str(part.get("filename") or ""),
+        parts=tuple(_parse_part(child) for child in part.get("parts") or []),
+    )
+
+
+__all__ = [
+    "GMAIL_API_BASE",
+    "RESYNC_MAX_MESSAGES",
+    "REVOKE_URL",
+    "TOKEN_URL",
+    "GoogleGmailClient",
+    "build_gmail_client",
+]

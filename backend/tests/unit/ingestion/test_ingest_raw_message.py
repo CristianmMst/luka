@@ -5,17 +5,6 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.dto import (
-    Accepted,
-    BankDecision,
-    Discarded,
-    Duplicate,
-    RawMessageInput,
-)
-from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
-from finanzia.modules.ingestion.domain.errors import IngestionError, InvalidExternalId
-from finanzia.modules.ingestion.events import RawMessageReceived
 from ingestion.fakes import (
     FakeSenderPolicy,
     FixedClock,
@@ -24,6 +13,17 @@ from ingestion.fakes import (
     RecordingPublisher,
     SequenceIdGenerator,
 )
+from luka.modules.ingestion.application.dto import (
+    Accepted,
+    BankDecision,
+    Discarded,
+    Duplicate,
+    RawMessageInput,
+)
+from luka.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from luka.modules.ingestion.domain.errors import IngestionError, InvalidExternalId
+from luka.modules.ingestion.events import RawMessageReceived
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 USER = uuid4()

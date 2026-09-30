@@ -6,9 +6,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from finanzia.modules.ingestion.domain.errors import InvalidPushEnvelope
-from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
-from finanzia.modules.ingestion.domain.gmail_push import GmailPushNotification, decode_push_envelope
+from luka.modules.ingestion.domain.errors import InvalidPushEnvelope
+from luka.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
+from luka.modules.ingestion.domain.gmail_push import GmailPushNotification, decode_push_envelope
 
 pytestmark = pytest.mark.unit
 

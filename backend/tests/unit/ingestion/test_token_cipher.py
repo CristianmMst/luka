@@ -5,8 +5,8 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.domain.errors import GmailTokenUndecryptable
-from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
+from luka.modules.ingestion.domain.errors import GmailTokenUndecryptable
+from luka.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
 
 pytestmark = pytest.mark.unit
 

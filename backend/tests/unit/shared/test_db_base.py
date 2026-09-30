@@ -14,7 +14,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
-from finanzia.shared.db.base import NAMING_CONVENTION
+from luka.shared.db.base import NAMING_CONVENTION
 
 
 @pytest.mark.unit

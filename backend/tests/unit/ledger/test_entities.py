@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.domain.entities import (
+from luka.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
     TransactionSource,
@@ -14,7 +14,7 @@ from finanzia.modules.ledger.domain.entities import (
     new_manual_transaction,
     quantize_amount,
 )
-from finanzia.modules.ledger.domain.enums import (
+from luka.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
     Channel,
@@ -22,7 +22,7 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.errors import InvalidAmount, InvalidKindChange, InvalidLast4
+from luka.modules.ledger.domain.errors import InvalidAmount, InvalidKindChange, InvalidLast4
 
 NOW = datetime(2026, 8, 5, 15, 0, 0, tzinfo=UTC)
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)

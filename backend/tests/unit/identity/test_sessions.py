@@ -5,8 +5,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.identity.domain.entities import RefreshToken
-from finanzia.modules.identity.domain.sessions import (
+from luka.modules.identity.domain.entities import RefreshToken
+from luka.modules.identity.domain.sessions import (
     RefreshDecision,
     evaluate_refresh,
     hash_refresh_token,

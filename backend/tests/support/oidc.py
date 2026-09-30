@@ -20,16 +20,16 @@ from google.auth import crypt
 from google.auth import jwt as google_jwt
 from google.auth.transport import Request, Response
 
-from finanzia.modules.ingestion.infrastructure.push_verifier import GoogleOidcPushVerifier
+from luka.modules.ingestion.infrastructure.push_verifier import GoogleOidcPushVerifier
 
-PUSH_AUDIENCE = "finanzia-gmail-push"
+PUSH_AUDIENCE = "luka-gmail-push"
 PUSH_SERVICE_ACCOUNT = "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
 _KEY_ID = "clave-de-prueba"
 
 
 def _make_key_and_cert() -> tuple[bytes, bytes]:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "finanzia-test")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "luka-test")])
     now = datetime.now(UTC)
     cert = (
         x509.CertificateBuilder()

@@ -19,17 +19,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
-from finanzia.modules.ledger.public import (
+from luka.events_registry import build_registry
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction
+from luka.modules.ledger.public import (
     CapturedTransactionCommand,
     Recorded,
     SourceInput,
     record_captured_transaction,
 )
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.shared.clock import SystemClock
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -89,7 +89,7 @@ async def _count_sources(session_factory: async_sessionmaker[AsyncSession], user
 async def _stream_entries(settings: Settings, event_type: str) -> list[dict[bytes, bytes]]:
     client = redis_asyncio.from_url(str(settings.redis_url))
     try:
-        entries = await client.xrange(f"finanzia:events:{event_type}")
+        entries = await client.xrange(f"luka:events:{event_type}")
         return [fields for _, fields in entries]
     finally:
         await client.aclose()

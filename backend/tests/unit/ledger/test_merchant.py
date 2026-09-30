@@ -4,8 +4,8 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.domain.entities import MerchantRule
-from finanzia.modules.ledger.domain.merchant import match_rule, normalize_merchant
+from luka.modules.ledger.domain.entities import MerchantRule
+from luka.modules.ledger.domain.merchant import match_rule, normalize_merchant
 
 
 def _rule(pattern: str) -> MerchantRule:

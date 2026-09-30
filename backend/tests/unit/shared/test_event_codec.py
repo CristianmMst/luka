@@ -8,18 +8,18 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.identity.events import UserDeleted
-from finanzia.modules.ingestion.events import RawMessageReceived
-from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
-from finanzia.modules.ledger.events import TransactionCaptured
-from finanzia.modules.parsing.domain.enums import (
+from luka.modules.identity.events import UserDeleted
+from luka.modules.ingestion.events import RawMessageReceived
+from luka.modules.ledger.domain.enums import Direction, FiscalTag, Kind
+from luka.modules.ledger.events import TransactionCaptured
+from luka.modules.parsing.domain.enums import (
     Direction as ParsingDirection,
 )
-from finanzia.modules.parsing.domain.enums import (
+from luka.modules.parsing.domain.enums import (
     ParseFailureReason,
 )
-from finanzia.modules.parsing.events import ParseFailed, TransactionParsed
-from finanzia.shared.events.codec import EventRegistry, UnknownEventType
+from luka.modules.parsing.events import ParseFailed, TransactionParsed
+from luka.shared.events.codec import EventRegistry, UnknownEventType
 
 pytestmark = pytest.mark.unit
 

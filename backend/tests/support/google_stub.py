@@ -7,11 +7,11 @@ La app de produccion no tiene modo simulado; los tests inyectan este stub con
 
 from fastapi import FastAPI
 
-from finanzia.app import create_app
-from finanzia.modules.identity.domain.entities import GoogleIdentity
-from finanzia.modules.identity.domain.errors import InvalidGoogleToken
-from finanzia.modules.ingestion.application.ports import GmailClientPort, PushTokenVerifierPort
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.modules.identity.domain.entities import GoogleIdentity
+from luka.modules.identity.domain.errors import InvalidGoogleToken
+from luka.modules.ingestion.application.ports import GmailClientPort, PushTokenVerifierPort
+from luka.shared.settings import Settings
 from support.oidc import build_test_push_verifier
 
 _PARTS_WITH_FLAG = 4

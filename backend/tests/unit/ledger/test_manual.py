@@ -6,15 +6,15 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import ManualTransactionCommand
-from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
+from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.application.dto import ManualTransactionCommand
+from luka.modules.ledger.application.use_cases.create_manual_transaction import (
     CreateManualTransaction,
 )
-from finanzia.modules.ledger.domain.entities import Category, LinkedAccount
-from finanzia.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag, Kind
-from finanzia.modules.ledger.domain.errors import CategoryNotFound
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID, TRANSFERENCIAS_ID
-from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.domain.entities import Category, LinkedAccount
+from luka.modules.ledger.domain.enums import AccountKind, Bank, Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.errors import CategoryNotFound
+from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID, TRANSFERENCIAS_ID
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

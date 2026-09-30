@@ -6,14 +6,14 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.domain.classification import (
+from luka.modules.ledger.domain.classification import (
     derive_kind,
     mark_as_transfer,
     resolve_fiscal_tag,
     unmark_transfer,
 )
-from finanzia.modules.ledger.domain.entities import Transaction
-from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.entities import Transaction
+from luka.modules.ledger.domain.enums import Direction, FiscalTag, Kind
 
 NOW = datetime(2026, 8, 5, 15, 0, 0, tzinfo=UTC)
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)

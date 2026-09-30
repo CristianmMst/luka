@@ -10,7 +10,7 @@ from datetime import timedelta
 import pytest
 from support.oidc import PushClaims, build_test_push_verifier, sign_push_token
 
-from finanzia.modules.ingestion.domain.errors import InvalidPushToken
+from luka.modules.ingestion.domain.errors import InvalidPushToken
 
 pytestmark = pytest.mark.unit
 

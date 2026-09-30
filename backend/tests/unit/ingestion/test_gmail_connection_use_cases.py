@@ -5,27 +5,27 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.use_cases.gmail_connection import (
-    ConnectGmail,
-    DisconnectGmail,
-    GetGmailStatus,
-)
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
-from finanzia.modules.ingestion.domain.errors import (
-    GmailAuthRevoked,
-    GmailRefreshTokenMissing,
-    GmailRequestRejected,
-    GmailScopeNotGranted,
-    GmailTransientError,
-    InvalidServerAuthCode,
-)
 from ingestion.fakes import (
     FakeGmailClient,
     FakeTokenCipher,
     FixedClock,
     InMemoryGmailConnectionRepo,
     NoopUoW,
+)
+from luka.modules.ingestion.application.use_cases.gmail_connection import (
+    ConnectGmail,
+    DisconnectGmail,
+    GetGmailStatus,
+)
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus
+from luka.modules.ingestion.domain.errors import (
+    GmailAuthRevoked,
+    GmailRefreshTokenMissing,
+    GmailRequestRejected,
+    GmailScopeNotGranted,
+    GmailTransientError,
+    InvalidServerAuthCode,
 )
 
 pytestmark = pytest.mark.unit

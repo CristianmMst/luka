@@ -6,16 +6,16 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import ManualTransactionCommand
-from finanzia.modules.ledger.application.use_cases.create_manual_transaction import (
+from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.application.dto import ManualTransactionCommand
+from luka.modules.ledger.application.use_cases.create_manual_transaction import (
     CreateManualTransaction,
 )
-from finanzia.modules.ledger.application.use_cases.set_transfer_pair import SetTransferPair
-from finanzia.modules.ledger.application.use_cases.unset_transfer_pair import UnsetTransferPair
-from finanzia.modules.ledger.domain.entities import Transaction
-from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
-from finanzia.modules.ledger.domain.errors import AlreadyPaired, TransferPairInvalid
-from ledger.fakes import FixedClock, build_ledger_repos
+from luka.modules.ledger.application.use_cases.set_transfer_pair import SetTransferPair
+from luka.modules.ledger.application.use_cases.unset_transfer_pair import UnsetTransferPair
+from luka.modules.ledger.domain.entities import Transaction
+from luka.modules.ledger.domain.enums import Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.errors import AlreadyPaired, TransferPairInvalid
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

@@ -9,10 +9,10 @@ from decimal import Decimal
 import pytest
 from support.email_fixtures import nequi_fixtures
 
-from finanzia.modules.parsing.domain.errors import TemplateExtractionInvalid
-from finanzia.modules.parsing.domain.excerpt import extract_excerpt
-from finanzia.modules.parsing.domain.templates import TemplateRegistry
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
+from luka.modules.parsing.domain.errors import TemplateExtractionInvalid
+from luka.modules.parsing.domain.excerpt import extract_excerpt
+from luka.modules.parsing.domain.templates import TemplateRegistry
+from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
 
 TEMPLATE_ID_BY_FIXTURE = {"breb_recibida.txt": "breb_recibida"}
 

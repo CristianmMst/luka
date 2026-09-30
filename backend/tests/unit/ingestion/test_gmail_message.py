@@ -9,7 +9,7 @@ import pytest
 from support.email_fixtures import FIXTURES_DIR as EMAIL_FIXTURES_DIR
 from support.email_fixtures import EmailFixture, bancolombia_fixtures, load_email_fixtures
 
-from finanzia.modules.ingestion.domain.gmail_message import (
+from luka.modules.ingestion.domain.gmail_message import (
     GMAIL_BODY_MAX_BYTES,
     GmailMessage,
     MimePart,

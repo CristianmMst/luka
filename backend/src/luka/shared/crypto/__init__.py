@@ -1,0 +1,5 @@
+"""Cifrado compartido (spec 009 §3)."""
+
+from luka.shared.crypto.aesgcm import DecryptionError, decrypt, encrypt
+
+__all__ = ["DecryptionError", "decrypt", "encrypt"]

@@ -6,13 +6,13 @@ from decimal import Decimal
 import pytest
 from support.email_fixtures import FIXTURES_DIR, load_email_fixtures
 
-from finanzia.modules.parsing.domain.enums import Direction, ParseFailureReason
-from finanzia.modules.parsing.domain.llm_validation import (
+from luka.modules.parsing.domain.enums import Direction, ParseFailureReason
+from luka.modules.parsing.domain.llm_validation import (
     LlmExtraction,
     Rejected,
     validate_extraction,
 )
-from finanzia.modules.parsing.domain.parsed import ParsedTransaction
+from luka.modules.parsing.domain.parsed import ParsedTransaction
 
 RECEIVED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
 KNOWN_BANKS = frozenset({"bancolombia", "nequi", "davivienda", "daviplata", "bbva", "banco_bogota"})

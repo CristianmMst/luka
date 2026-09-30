@@ -16,7 +16,7 @@ from uuid import uuid4
 import pytest
 from support.email_fixtures import FIXTURES_DIR, bancolombia_fixtures, load_email_fixtures
 
-from finanzia.modules.parsing.application.dto import (
+from luka.modules.parsing.application.dto import (
     Discarded,
     Failed,
     LlmInvalidOutput,
@@ -25,10 +25,10 @@ from finanzia.modules.parsing.application.dto import (
     RawMessageView,
     Skipped,
 )
-from finanzia.modules.parsing.domain.enums import Direction, ParseFailureReason
-from finanzia.modules.parsing.domain.errors import LlmUnavailable
-from finanzia.modules.parsing.domain.llm_validation import LlmExtraction
-from finanzia.modules.parsing.events import ParseFailed, TransactionParsed, deterministic_event_id
+from luka.modules.parsing.domain.enums import Direction, ParseFailureReason
+from luka.modules.parsing.domain.errors import LlmUnavailable
+from luka.modules.parsing.domain.llm_validation import LlmExtraction
+from luka.modules.parsing.events import ParseFailed, TransactionParsed, deterministic_event_id
 from parsing.fakes import (
     FakeGateway,
     FakeLlmParser,

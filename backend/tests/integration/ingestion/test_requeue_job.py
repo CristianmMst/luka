@@ -15,11 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ingestion import public
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.events_registry import build_registry
+from luka.modules.ingestion import public
+from luka.shared.clock import SystemClock
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -49,7 +49,7 @@ async def _set_requeue_attempts(
 async def _stream_entries(settings: Settings, event_type: str) -> list[object]:
     client = redis_asyncio.from_url(str(settings.redis_url))
     try:
-        entries = await client.xrange(f"finanzia:events:{event_type}")
+        entries = await client.xrange(f"luka:events:{event_type}")
         registry = build_registry()
         return [registry.decode(fields) for _, fields in entries]
     finally:

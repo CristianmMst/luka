@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.modules.parsing.application.dto import RawMessageView
-from finanzia.modules.parsing.infrastructure.raw_message_gateway import IngestionRawMessageGateway
+from luka.modules.parsing.application.dto import RawMessageView
+from luka.modules.parsing.infrastructure.raw_message_gateway import IngestionRawMessageGateway
 
 pytestmark = pytest.mark.integration
 

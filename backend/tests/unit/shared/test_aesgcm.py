@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from finanzia.shared.crypto.aesgcm import DecryptionError, decrypt, encrypt
+from luka.shared.crypto.aesgcm import DecryptionError, decrypt, encrypt
 
 _KEY = os.urandom(32)
 _OTRA_KEY = os.urandom(32)

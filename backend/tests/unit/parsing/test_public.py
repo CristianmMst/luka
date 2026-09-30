@@ -2,9 +2,9 @@
 
 import pytest
 
-from finanzia.modules.parsing import public
-from finanzia.modules.parsing.domain.allowlist import NotificationDecision
-from finanzia.modules.parsing.domain.errors import ParsingError
+from luka.modules.parsing import public
+from luka.modules.parsing.domain.allowlist import NotificationDecision
+from luka.modules.parsing.domain.errors import ParsingError
 
 
 @pytest.mark.unit

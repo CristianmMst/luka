@@ -1,19 +1,19 @@
 """Harness de tests: arranca los 3 `StreamConsumer` del pipeline de captura
-(parsing + ledger) sobre Redis/DB reales, igual que `finanzia.worker` pero con
+(parsing + ledger) sobre Redis/DB reales, igual que `luka.worker` pero con
 timings cortos para tests (spec 003 SS2.3-2.4, F2.2/F2.5/F2.6, Task 9).
 
 Deliberadamente NO arranca el `ledger-observer` (`ledger.TransactionCaptured`):
 ningun test e2e del pipeline necesita ese logger, solo los 3 consumers que
 mueven un `raw_message` hasta convertirse en transaccion o en revision.
 
-`parsing` se importa por su fachada (`finanzia.modules.parsing.public`), NO por
+`parsing` se importa por su fachada (`luka.modules.parsing.public`), NO por
 `infrastructure.consumers`/`infrastructure.config_loader` directo: igual que en
-`finanzia.worker` (fix round 1, Task 9), entrar al modulo por ahi dispara un
+`luka.worker` (fix round 1, Task 9), entrar al modulo por ahi dispara un
 import circular real (`parsing.infrastructure.consumers` ->
 `parsing.infrastructure.raw_message_gateway` -> `ingestion.public` ->
 `ingestion.infrastructure.sender_policy` -> `parsing.public` ->
 `parsing.infrastructure.consumers`, a medio inicializar). `pytest` nunca lo
-expone porque el conftest raiz importa `finanzia.app` (que resuelve
+expone porque el conftest raiz importa `luka.app` (que resuelve
 `parsing.public` primero) antes que cualquier test module; un
 `python -c "import tests.support.pipeline"` aislado (sin pytest) si revienta.
 Ver `tests/unit/test_import_cycles.py`, que pinea el fix en un subproceso limpio.
@@ -28,12 +28,12 @@ from uuid import uuid4
 import redis.exceptions as redis_exceptions
 from sqlalchemy import text
 
-from finanzia.modules.ledger.infrastructure.consumers import (
+from luka.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
 )
-from finanzia.modules.parsing import public as parsing_public
-from finanzia.shared.events.consumer import StreamConsumer
+from luka.modules.parsing import public as parsing_public
+from luka.shared.events.consumer import StreamConsumer
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -43,15 +43,15 @@ if TYPE_CHECKING:
     import redis.asyncio as redis_asyncio
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-    from finanzia.modules.parsing.application.dto import LlmResult
-    from finanzia.modules.parsing.application.ports import (
+    from luka.modules.parsing.application.dto import LlmResult
+    from luka.modules.parsing.application.ports import (
         ClockPort,
         LlmBudgetPort,
         LlmParserPort,
     )
-    from finanzia.shared.events.codec import EventRegistry
-    from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-    from finanzia.shared.settings import Settings
+    from luka.shared.events.codec import EventRegistry
+    from luka.shared.events.redis_streams import RedisStreamsEventBus
+    from luka.shared.settings import Settings
 
 _BLOCK_MS = 200
 _CLAIM_MIN_IDLE_MS = 0
@@ -88,7 +88,7 @@ class PipelineHarness:
         budget: LlmBudgetPort,
         settings: Settings,
     ) -> None:
-        """Cablea los 3 handlers (misma fabrica que `finanzia.worker`) y arranca
+        """Cablea los 3 handlers (misma fabrica que `luka.worker`) y arranca
         sus `StreamConsumer` bajo `asyncio.create_task`, con `ensure_group` antes
         de cualquier publish del test (evita perder el primer evento por la
         ventana `$` de `XGROUP CREATE`).

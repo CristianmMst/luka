@@ -2,13 +2,13 @@
 
 import pytest
 
-from finanzia.app import create_app
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.shared.settings import Settings
 
 _DEV_SETTINGS = Settings(
     _env_file=None,  # pyright: ignore[reportCallIssue]
     env="dev",
-    database_url="postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test_unused",
+    database_url="postgresql+asyncpg://luka:luka@localhost:5432/luka_test_unused",
     redis_url="redis://localhost:6379/1",
     jwt_secret="test-secret-test-secret-test-secret-1234",
     google_client_id="test-client",

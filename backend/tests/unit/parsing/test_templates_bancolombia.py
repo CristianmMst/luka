@@ -17,10 +17,10 @@ from decimal import Decimal
 import pytest
 from support.email_fixtures import bancolombia_fixtures
 
-from finanzia.modules.parsing.domain.errors import TemplateConfigError, TemplateExtractionInvalid
-from finanzia.modules.parsing.domain.excerpt import extract_excerpt
-from finanzia.modules.parsing.domain.templates import TemplateRegistry
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
+from luka.modules.parsing.domain.errors import TemplateConfigError, TemplateExtractionInvalid
+from luka.modules.parsing.domain.excerpt import extract_excerpt
+from luka.modules.parsing.domain.templates import TemplateRegistry
+from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
 
 TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb.txt": "compra_tdeb",

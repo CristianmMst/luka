@@ -11,14 +11,14 @@ from uuid import uuid4
 import pytest
 from support.clock import FixedClock
 
-from finanzia.modules.ingestion.application.dto import RequeueSummary
-from finanzia.modules.ingestion.application.use_cases.requeue_pending import (
+from ingestion.fakes import InMemoryRawMessageRepo, NoopUoW, RecordingPublisher, SequenceIdGenerator
+from luka.modules.ingestion.application.dto import RequeueSummary
+from luka.modules.ingestion.application.use_cases.requeue_pending import (
     RequeuePendingRawMessages,
 )
-from finanzia.modules.ingestion.domain.entities import RawMessage
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
-from finanzia.modules.ingestion.events import RawMessageReceived
-from ingestion.fakes import InMemoryRawMessageRepo, NoopUoW, RecordingPublisher, SequenceIdGenerator
+from luka.modules.ingestion.domain.entities import RawMessage
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from luka.modules.ingestion.events import RawMessageReceived
 
 NOW = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 USER = uuid4()

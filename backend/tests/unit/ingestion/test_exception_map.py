@@ -2,14 +2,14 @@
 
 import pytest
 
-from finanzia.modules.ingestion.domain.errors import (
+from luka.modules.ingestion.domain.errors import (
     GmailRefreshTokenMissing,
     GmailScopeNotGranted,
     GmailTokenUndecryptable,
     GmailTransientError,
     InvalidServerAuthCode,
 )
-from finanzia.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
+from luka.modules.ingestion.infrastructure.api.errors import INGESTION_EXCEPTION_MAP
 
 pytestmark = pytest.mark.unit
 

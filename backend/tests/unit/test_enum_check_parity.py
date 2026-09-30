@@ -23,15 +23,15 @@ from types import ModuleType
 
 import pytest
 
-from finanzia.modules.ingestion.domain.enums import Channel as IngestionChannel
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus, RawMessageStatus
-from finanzia.modules.ingestion.infrastructure import orm as ingestion_orm
-from finanzia.modules.ledger.domain.enums import Bank
-from finanzia.modules.ledger.domain.enums import Channel as LedgerChannel
-from finanzia.modules.ledger.domain.review import ReviewReason, ReviewResolution
-from finanzia.modules.ledger.infrastructure import orm as ledger_orm
-from finanzia.modules.parsing.domain.enums import Channel as ParsingChannel
-from finanzia.modules.parsing.domain.enums import ParseFailureReason
+from luka.modules.ingestion.domain.enums import Channel as IngestionChannel
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus, RawMessageStatus
+from luka.modules.ingestion.infrastructure import orm as ingestion_orm
+from luka.modules.ledger.domain.enums import Bank
+from luka.modules.ledger.domain.enums import Channel as LedgerChannel
+from luka.modules.ledger.domain.review import ReviewReason, ReviewResolution
+from luka.modules.ledger.infrastructure import orm as ledger_orm
+from luka.modules.parsing.domain.enums import Channel as ParsingChannel
+from luka.modules.parsing.domain.enums import ParseFailureReason
 
 pytestmark = pytest.mark.unit
 

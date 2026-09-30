@@ -7,8 +7,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from finanzia.modules.identity.domain.entities import RefreshToken, User, UserStatus
-from finanzia.modules.identity.infrastructure.repositories import (
+from luka.modules.identity.domain.entities import RefreshToken, User, UserStatus
+from luka.modules.identity.infrastructure.repositories import (
     SqlAlchemyRefreshTokenRepository,
     SqlAlchemyUserRepository,
 )

@@ -1,11 +1,11 @@
-"""Tests unitarios de los argumentos del CLI `finanzia.tools.reparse` (spec 005 §7)."""
+"""Tests unitarios de los argumentos del CLI `luka.tools.reparse` (spec 005 §7)."""
 
 from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
 
-from finanzia.tools import reparse
+from luka.tools import reparse
 
 pytestmark = pytest.mark.unit
 

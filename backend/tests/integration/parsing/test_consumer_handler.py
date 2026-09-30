@@ -18,16 +18,16 @@ from support.auth import AuthedUser
 from support.clock import FixedClock
 from support.raw_messages import insert_raw_message
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
-from finanzia.modules.parsing.infrastructure.consumers import make_raw_message_received_handler
-from finanzia.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
-from finanzia.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
-from finanzia.modules.parsing.infrastructure.metrics import StructlogMetrics
-from finanzia.modules.parsing.infrastructure.raw_message_gateway import IngestionRawMessageGateway
-from finanzia.shared.events.codec import EventRegistry
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.events_registry import build_registry
+from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
+from luka.modules.parsing.infrastructure.consumers import make_raw_message_received_handler
+from luka.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
+from luka.modules.parsing.infrastructure.llm.disabled import DisabledLlmParser
+from luka.modules.parsing.infrastructure.metrics import StructlogMetrics
+from luka.modules.parsing.infrastructure.raw_message_gateway import IngestionRawMessageGateway
+from luka.shared.events.codec import EventRegistry
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

@@ -8,10 +8,10 @@ from fastapi import APIRouter, FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel
 
-from finanzia.app import create_app
-from finanzia.shared.errors import AppError, ConflictError, NotFoundError, ValidationAppError
-from finanzia.shared.http.error_handlers import install_error_handlers
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.shared.errors import AppError, ConflictError, NotFoundError, ValidationAppError
+from luka.shared.http.error_handlers import install_error_handlers
+from luka.shared.settings import Settings
 
 
 class BoomError(Exception):

@@ -10,13 +10,13 @@ import structlog.testing
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 
-from finanzia import app as app_module
-from finanzia.app import create_app
-from finanzia.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
-from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
-from finanzia.modules.ledger.events import TransactionCaptured
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka import app as app_module
+from luka.app import create_app
+from luka.events_registry import CONSUMER_GROUPS, build_registry, ensure_consumer_groups
+from luka.modules.ledger.domain.enums import Direction, FiscalTag, Kind
+from luka.modules.ledger.events import TransactionCaptured
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

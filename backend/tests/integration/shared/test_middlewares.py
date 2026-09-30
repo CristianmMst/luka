@@ -11,8 +11,8 @@ from asgi_lifespan import LifespanManager
 from fastapi import APIRouter, Request
 from httpx import ASGITransport, AsyncClient
 
-from finanzia.app import create_app
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.shared.settings import Settings
 
 _UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE

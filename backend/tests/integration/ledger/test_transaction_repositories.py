@@ -17,9 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.modules.ledger.application.dto import Filters
-from finanzia.modules.ledger.domain.entities import LinkedAccount, Transaction, TransactionSource
-from finanzia.modules.ledger.domain.enums import (
+from luka.modules.ledger.application.dto import Filters
+from luka.modules.ledger.domain.entities import LinkedAccount, Transaction, TransactionSource
+from luka.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
     Channel,
@@ -27,17 +27,17 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.system_categories import (
+from luka.modules.ledger.domain.system_categories import (
     SIN_CATEGORIA_ID,
     system_category_id,
 )
-from finanzia.modules.ledger.infrastructure.repositories.accounts import (
+from luka.modules.ledger.infrastructure.repositories.accounts import (
     SqlAlchemyLinkedAccountRepository,
 )
-from finanzia.modules.ledger.infrastructure.repositories.sources import (
+from luka.modules.ledger.infrastructure.repositories.sources import (
     SqlAlchemyTransactionSourceRepository,
 )
-from finanzia.modules.ledger.infrastructure.repositories.transactions import (
+from luka.modules.ledger.infrastructure.repositories.transactions import (
     SqlAlchemyTransactionRepository,
 )
 

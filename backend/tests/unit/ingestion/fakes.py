@@ -10,19 +10,19 @@ from uuid import UUID
 
 from support.clock import FixedClock
 
-from finanzia.modules.ingestion.application.dto import BankDecision, GmailGrant
-from finanzia.modules.ingestion.domain.entities import GmailConnection, RawMessage
-from finanzia.modules.ingestion.domain.enums import (
+from luka.modules.ingestion.application.dto import BankDecision, GmailGrant
+from luka.modules.ingestion.domain.entities import GmailConnection, RawMessage
+from luka.modules.ingestion.domain.enums import (
     Channel,
     GmailConnectionStatus,
     RawMessageStatus,
 )
-from finanzia.modules.ingestion.domain.errors import (
+from luka.modules.ingestion.domain.errors import (
     GmailHistoryExpired,
     GmailMessageNotFound,
     GmailTokenUndecryptable,
 )
-from finanzia.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
+from luka.modules.ingestion.domain.gmail_message import GmailMessage, MimePart
 
 __all__ = [
     "FakeGmailClient",
@@ -168,7 +168,7 @@ class SequenceIdGenerator:
 
     def new_id(self) -> UUID:
         self._counter += 1
-        return uuid.uuid5(uuid.NAMESPACE_URL, f"https://finanzia.app/test-ids/{self._counter}")
+        return uuid.uuid5(uuid.NAMESPACE_URL, f"https://luka.app/test-ids/{self._counter}")
 
 
 class NoopUoW:

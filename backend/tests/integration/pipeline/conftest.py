@@ -2,9 +2,9 @@
 
 `redis_clean`/`db_clean` autouse: cada test arranca con la Redis de test (db 1) y
 las tablas de usuario vacias, para no interferir entre streams/consumer groups de
-distintos tests (todos publican sobre el mismo prefijo real `finanzia:events`,
+distintos tests (todos publican sobre el mismo prefijo real `luka:events`,
 D7/D10). `redis_client`/`registry`/`bus` son los mismos objetos que arma
-`finanzia.worker` (composition root), reutilizables por cualquier test del paquete.
+`luka.worker` (composition root), reutilizables por cualquier test del paquete.
 """
 
 from __future__ import annotations
@@ -14,12 +14,12 @@ from typing import TYPE_CHECKING
 import pytest
 import redis.asyncio as redis_asyncio
 
-from finanzia.events_registry import build_registry
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
+from luka.events_registry import build_registry
+from luka.shared.events.redis_streams import RedisStreamsEventBus
 
 if TYPE_CHECKING:
-    from finanzia.shared.events.codec import EventRegistry
-    from finanzia.shared.settings import Settings
+    from luka.shared.events.codec import EventRegistry
+    from luka.shared.settings import Settings
 
 
 @pytest.fixture(autouse=True)

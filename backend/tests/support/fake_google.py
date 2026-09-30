@@ -13,7 +13,7 @@ from urllib.parse import parse_qs
 
 import httpx
 
-from finanzia.modules.ingestion.infrastructure.gmail_client import (
+from luka.modules.ingestion.infrastructure.gmail_client import (
     GMAIL_API_BASE,
     REVOKE_URL,
     TOKEN_URL,

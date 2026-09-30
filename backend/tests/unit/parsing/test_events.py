@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.parsing.events import deterministic_event_id
+from luka.modules.parsing.events import deterministic_event_id
 
 pytestmark = pytest.mark.unit
 

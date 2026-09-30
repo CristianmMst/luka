@@ -5,14 +5,14 @@ from typing import cast
 
 import pytest
 
-from finanzia.modules.ingestion.domain.body import (
+from luka.modules.ingestion.domain.body import (
     compose_body,
     purge_after_for,
     truncate_utf8,
     validate_external_id,
 )
-from finanzia.modules.ingestion.domain.enums import Channel
-from finanzia.modules.ingestion.domain.errors import InvalidChannel, InvalidExternalId
+from luka.modules.ingestion.domain.enums import Channel
+from luka.modules.ingestion.domain.errors import InvalidChannel, InvalidExternalId
 
 
 @pytest.mark.unit

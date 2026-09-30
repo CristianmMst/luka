@@ -6,9 +6,9 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from finanzia.modules.parsing.domain.enums import Direction
-from finanzia.modules.parsing.domain.llm_validation import LlmExtraction
-from finanzia.modules.parsing.infrastructure.llm.schema import LlmResponseSchema
+from luka.modules.parsing.domain.enums import Direction
+from luka.modules.parsing.domain.llm_validation import LlmExtraction
+from luka.modules.parsing.infrastructure.llm.schema import LlmResponseSchema
 
 
 @pytest.mark.unit

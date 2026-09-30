@@ -1,6 +1,6 @@
 """CI: analiza (via AST) llamadas de logging/bind que podrian filtrar PII (spec 009 SS5).
 
-No requiere Docker. Usa `finanzia.shared.logging.FORBIDDEN_LOG_KEYS` como unica
+No requiere Docker. Usa `luka.shared.logging.FORBIDDEN_LOG_KEYS` como unica
 fuente de verdad de claves prohibidas.
 """
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from finanzia.shared.logging import FORBIDDEN_LOG_KEYS
+from luka.shared.logging import FORBIDDEN_LOG_KEYS
 
 _IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
@@ -28,7 +28,7 @@ _LOG_METHOD_NAMES = frozenset(
     }
 )
 
-REPO_SRC = Path(__file__).resolve().parents[2] / "src" / "finanzia"
+REPO_SRC = Path(__file__).resolve().parents[2] / "src" / "luka"
 
 
 def _joined_str_referencia_clave_prohibida(node: ast.JoinedStr) -> bool:
@@ -89,7 +89,7 @@ def find_violations(directory: Path) -> list[str]:
 
 
 @pytest.mark.ci
-def test_codigo_de_finanzia_no_filtra_pii_en_logs() -> None:
+def test_codigo_de_luka_no_filtra_pii_en_logs() -> None:
     violaciones = find_violations(REPO_SRC)
 
     assert not violaciones, "Llamadas de log con posible PII:\n" + "\n".join(violaciones)

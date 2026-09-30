@@ -23,12 +23,12 @@ from support.fake_google import (
 from support.gmail_connections import insert_gmail_connection
 from support.google_stub import create_test_app
 
-from finanzia.modules.ingestion.infrastructure.gmail_client import build_gmail_client
-from finanzia.modules.ingestion.infrastructure.repositories import (
+from luka.modules.ingestion.infrastructure.gmail_client import build_gmail_client
+from luka.modules.ingestion.infrastructure.repositories import (
     SqlAlchemyGmailConnectionRepository,
 )
-from finanzia.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
-from finanzia.shared.settings import Settings
+from luka.modules.ingestion.infrastructure.token_cipher import AesGcmTokenCipher
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

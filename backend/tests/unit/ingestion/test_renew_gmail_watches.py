@@ -8,20 +8,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.application.dto import RenewWatchesSummary
-from finanzia.modules.ingestion.application.use_cases.gmail_sync import SyncGmail
-from finanzia.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
-from finanzia.modules.ingestion.application.use_cases.renew_gmail_watches import (
-    EXPIRING_WITHIN_DEFAULT,
-    RenewGmailWatches,
-)
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
-from finanzia.modules.ingestion.domain.errors import (
-    GmailAuthRevoked,
-    GmailRequestRejected,
-    GmailTransientError,
-)
 from ingestion.fakes import (
     FakeGmailClient,
     FakeSenderPolicy,
@@ -32,6 +18,20 @@ from ingestion.fakes import (
     NoopUoW,
     RecordingPublisher,
     SequenceIdGenerator,
+)
+from luka.modules.ingestion.application.dto import RenewWatchesSummary
+from luka.modules.ingestion.application.use_cases.gmail_sync import SyncGmail
+from luka.modules.ingestion.application.use_cases.ingest_raw_message import IngestRawMessage
+from luka.modules.ingestion.application.use_cases.renew_gmail_watches import (
+    EXPIRING_WITHIN_DEFAULT,
+    RenewGmailWatches,
+)
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus
+from luka.modules.ingestion.domain.errors import (
+    GmailAuthRevoked,
+    GmailRequestRejected,
+    GmailTransientError,
 )
 
 pytestmark = pytest.mark.unit

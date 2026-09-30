@@ -5,12 +5,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.identity.application.use_cases.delete_account import DeleteAccount
-from finanzia.modules.identity.application.use_cases.export_data import ExportUserData
-from finanzia.modules.identity.domain.entities import User, UserStatus
-from finanzia.modules.identity.domain.errors import UserNotFound
-from finanzia.modules.identity.domain.sessions import hash_refresh_token, new_family
-from finanzia.modules.identity.events import UserDeleted
 from identity.fakes import (
     FakeGmailCleanup,
     FixedClock,
@@ -21,6 +15,12 @@ from identity.fakes import (
     RecordingPublisher,
     SequenceTokenGenerator,
 )
+from luka.modules.identity.application.use_cases.delete_account import DeleteAccount
+from luka.modules.identity.application.use_cases.export_data import ExportUserData
+from luka.modules.identity.domain.entities import User, UserStatus
+from luka.modules.identity.domain.errors import UserNotFound
+from luka.modules.identity.domain.sessions import hash_refresh_token, new_family
+from luka.modules.identity.events import UserDeleted
 
 NOW = datetime(2026, 9, 29, 12, 0, tzinfo=UTC)
 

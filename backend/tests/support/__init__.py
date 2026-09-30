@@ -1,1 +1,1 @@
-"""Dobles de prueba compartidos (no forman parte del paquete `finanzia`)."""
+"""Dobles de prueba compartidos (no forman parte del paquete `luka`)."""

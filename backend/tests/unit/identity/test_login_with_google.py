@@ -5,10 +5,6 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.identity.application.use_cases.login_with_google import LoginWithGoogle
-from finanzia.modules.identity.domain.entities import GoogleIdentity, User, UserStatus
-from finanzia.modules.identity.domain.errors import EmailNotVerified, InvalidGoogleToken
-from finanzia.modules.identity.domain.sessions import hash_refresh_token
 from identity.fakes import (
     FakeAccessTokenIssuer,
     FakeGoogleVerifier,
@@ -19,6 +15,10 @@ from identity.fakes import (
     RecordingAudit,
     SequenceTokenGenerator,
 )
+from luka.modules.identity.application.use_cases.login_with_google import LoginWithGoogle
+from luka.modules.identity.domain.entities import GoogleIdentity, User, UserStatus
+from luka.modules.identity.domain.errors import EmailNotVerified, InvalidGoogleToken
+from luka.modules.identity.domain.sessions import hash_refresh_token
 
 NOW = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 

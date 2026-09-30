@@ -16,13 +16,13 @@ import pytest
 import redis.asyncio as redis_asyncio
 import redis.exceptions
 
-from finanzia.modules.ledger.domain.enums import Direction, FiscalTag, Kind
-from finanzia.modules.ledger.events import TransactionCaptured
-from finanzia.shared.events.codec import EventRegistry
-from finanzia.shared.events.consumer import StreamConsumer
-from finanzia.shared.events.memory import InMemoryEventBus
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.modules.ledger.domain.enums import Direction, FiscalTag, Kind
+from luka.modules.ledger.events import TransactionCaptured
+from luka.shared.events.codec import EventRegistry
+from luka.shared.events.consumer import StreamConsumer
+from luka.shared.events.memory import InMemoryEventBus
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -122,7 +122,7 @@ async def test_publish_y_consumo_hace_ack_y_marca_procesado(
     assert received == [event]
     pending = await redis_client.xpending(stream, "g1")
     assert pending["pending"] == 0
-    processed_key = f"finanzia:events:processed:g1:{event.event_id}"
+    processed_key = f"luka:events:processed:g1:{event.event_id}"
     assert await redis_client.exists(processed_key) == 1
 
 

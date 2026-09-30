@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.gmail_connections import insert_gmail_connection
 
-from finanzia.shared.security import encode_access_token
+from luka.shared.security import encode_access_token
 
 
 @pytest.mark.integration

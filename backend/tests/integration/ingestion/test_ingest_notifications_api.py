@@ -15,8 +15,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 
-from finanzia.events_registry import build_registry
-from finanzia.shared.settings import Settings
+from luka.events_registry import build_registry
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -73,7 +73,7 @@ async def _rows(
 async def _stream_entries(settings: Settings, event_type: str) -> list[object]:
     client = redis_asyncio.from_url(str(settings.redis_url))
     try:
-        entries = await client.xrange(f"finanzia:events:{event_type}")
+        entries = await client.xrange(f"luka:events:{event_type}")
         registry = build_registry()
         return [registry.decode(fields) for _, fields in entries]
     finally:

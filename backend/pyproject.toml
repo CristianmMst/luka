@@ -1,7 +1,7 @@
 [project]
-name = "finanzia"
+name = "luka"
 version = "0.1.0"
-description = "Backend de finanzia: monolito modular hexagonal (FastAPI + arq)."
+description = "Backend de luka: monolito modular hexagonal (FastAPI + arq)."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.0,<2",
@@ -29,7 +29,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/finanzia"]
+packages = ["src/luka"]
 
 [dependency-groups]
 dev = [
@@ -72,9 +72,9 @@ venv = ".venv"
 typeCheckingMode = "standard"
 include = ["src", "tests"]
 strict = [
-    "src/finanzia/shared",
-    "src/finanzia/modules/*/domain",
-    "src/finanzia/modules/*/application",
+    "src/luka/shared",
+    "src/luka/modules/*/domain",
+    "src/luka/modules/*/application",
 ]
 
 [tool.pytest.ini_options]
@@ -91,47 +91,47 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["finanzia"]
+source = ["luka"]
 
 [tool.importlinter]
-root_packages = ["finanzia"]
+root_packages = ["luka"]
 include_external_packages = true
 
 [[tool.importlinter.contracts]]  # R1
 name = "R1 - domain solo importa stdlib y a si mismo"
 type = "forbidden"
-source_modules = ["finanzia.modules.*.domain"]
-forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry","finanzia.tools",
-  "finanzia.modules.*.application","finanzia.modules.*.infrastructure","finanzia.modules.*.events","finanzia.modules.*.public",
+source_modules = ["luka.modules.*.domain"]
+forbidden_modules = ["luka.shared","luka.app","luka.main","luka.worker","luka.events_registry","luka.tools",
+  "luka.modules.*.application","luka.modules.*.infrastructure","luka.modules.*.events","luka.modules.*.public",
   "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
 
 [[tool.importlinter.contracts]]  # R2
 name = "R2 - application solo importa domain, ports y events propios"
 type = "forbidden"
-source_modules = ["finanzia.modules.*.application"]
-forbidden_modules = ["finanzia.shared","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry","finanzia.tools",
-  "finanzia.modules.*.infrastructure","finanzia.modules.*.public",
+source_modules = ["luka.modules.*.application"]
+forbidden_modules = ["luka.shared","luka.app","luka.main","luka.worker","luka.events_registry","luka.tools",
+  "luka.modules.*.infrastructure","luka.modules.*.public",
   "fastapi","starlette","pydantic","pydantic_settings","sqlalchemy","alembic","asyncpg","redis","arq","httpx","requests","structlog","jwt","google","uvicorn"]
 
 [[tool.importlinter.contracts]]  # R3a
 name = "R3a - events.py es puro"
 type = "forbidden"
-source_modules = ["finanzia.modules.*.events"]
-forbidden_modules = ["finanzia.shared","finanzia.modules.*.application","finanzia.modules.*.infrastructure",
+source_modules = ["luka.modules.*.events"]
+forbidden_modules = ["luka.shared","luka.modules.*.application","luka.modules.*.infrastructure",
   "fastapi","starlette","pydantic","sqlalchemy","redis","arq","httpx","structlog","jwt","google"]
 
 [[tool.importlinter.contracts]]  # R3b
 name = "R3b - capas hexagonales por modulo"
 type = "layers"
 layers = ["infrastructure", "application", "domain"]
-containers = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
-  "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
+containers = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
+  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights"]
 
 [[tool.importlinter.contracts]]  # R4
 name = "R4 - modulos independientes salvo public.py y events.py"
 type = "independence"
-modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.modules.parsing",
-  "finanzia.modules.ledger","finanzia.modules.fiscal","finanzia.modules.insights"]
+modules = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
+  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights"]
 # Pares explicitos que existen hoy: cada cruce entre modulos pasa por la fachada
 # publica del modulo destino (`<modulo>.public`) o por sus eventos de dominio
 # (`<modulo>.events`), nunca por internals (domain/application/infrastructure
@@ -139,19 +139,19 @@ modules = ["finanzia.modules.identity","finanzia.modules.ingestion","finanzia.mo
 # adapters concretos de `infrastructure` que sí cruzan. Cada entrada nueva
 # necesita uso real: import-linter dispara "No matches for ignored import" con
 # la alerta por defecto ("error") si una lista aqui pero nada la ejercita.
-ignore_imports = ["finanzia.modules.ledger.infrastructure.api.deps -> finanzia.modules.identity.public",
-  "finanzia.modules.ingestion.infrastructure.sender_policy -> finanzia.modules.parsing.public",
-  "finanzia.modules.ingestion.infrastructure.api.deps -> finanzia.modules.identity.public",
-  "finanzia.modules.identity.infrastructure.gmail_status -> finanzia.modules.ingestion.public",
-  "finanzia.modules.parsing.infrastructure.raw_message_gateway -> finanzia.modules.ingestion.public",
-  "finanzia.modules.ledger.infrastructure.consumers -> finanzia.modules.parsing.events",
-  "finanzia.modules.ledger.infrastructure.raw_messages_gateway -> finanzia.modules.ingestion.public",
-  "finanzia.modules.ledger.infrastructure.owner_name_gateway -> finanzia.modules.identity.public",
-  "finanzia.modules.identity.infrastructure.data_export -> finanzia.modules.ledger.public",
-  "finanzia.modules.identity.infrastructure.data_export -> finanzia.modules.ingestion.public"]
+ignore_imports = ["luka.modules.ledger.infrastructure.api.deps -> luka.modules.identity.public",
+  "luka.modules.ingestion.infrastructure.sender_policy -> luka.modules.parsing.public",
+  "luka.modules.ingestion.infrastructure.api.deps -> luka.modules.identity.public",
+  "luka.modules.identity.infrastructure.gmail_status -> luka.modules.ingestion.public",
+  "luka.modules.parsing.infrastructure.raw_message_gateway -> luka.modules.ingestion.public",
+  "luka.modules.ledger.infrastructure.consumers -> luka.modules.parsing.events",
+  "luka.modules.ledger.infrastructure.raw_messages_gateway -> luka.modules.ingestion.public",
+  "luka.modules.ledger.infrastructure.owner_name_gateway -> luka.modules.identity.public",
+  "luka.modules.identity.infrastructure.data_export -> luka.modules.ledger.public",
+  "luka.modules.identity.infrastructure.data_export -> luka.modules.ingestion.public"]
 
 [[tool.importlinter.contracts]]  # Kernel
 name = "Kernel - shared nunca importa modulos ni composition roots"
 type = "forbidden"
-source_modules = ["finanzia.shared"]
-forbidden_modules = ["finanzia.modules","finanzia.app","finanzia.main","finanzia.worker","finanzia.events_registry","finanzia.tools"]
+source_modules = ["luka.shared"]
+forbidden_modules = ["luka.modules","luka.app","luka.main","luka.worker","luka.events_registry","luka.tools"]

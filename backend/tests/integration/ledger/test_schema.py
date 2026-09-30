@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.raw_messages import insert_raw_message
 
-from finanzia.modules.ledger.domain.system_categories import (
+from luka.modules.ledger.domain.system_categories import (
     SIN_CATEGORIA_ID,
     SYSTEM_CATEGORIES,
 )

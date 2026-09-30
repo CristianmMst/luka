@@ -1,6 +1,6 @@
 """Tests de integracion de las migraciones Alembic (spec 004 SS2.1-2.2, F1.1).
 
-Usa una base de datos dedicada `finanzia_test_migrations` (nunca `finanzia_test`,
+Usa una base de datos dedicada `luka_test_migrations` (nunca `luka_test`,
 que usa el resto de la suite) porque estos tests hacen upgrade/downgrade/upgrade y
 dejarian la base sin tablas para el resto de los tests si compartieran base.
 
@@ -27,8 +27,8 @@ _BACKEND_DIR = Path(__file__).resolve().parents[2]
 _ALEMBIC_INI = _BACKEND_DIR / "alembic.ini"
 
 _MIGRATIONS_DATABASE_URL = os.environ.get(
-    "FINANZIA_TEST_MIGRATIONS_DATABASE_URL",
-    "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test_migrations",
+    "LUKA_TEST_MIGRATIONS_DATABASE_URL",
+    "postgresql+asyncpg://luka:luka@localhost:5432/luka_test_migrations",
 )
 
 
@@ -41,7 +41,7 @@ def _alembic_config() -> Config:
 
 @pytest.fixture(scope="module")
 async def engine() -> AsyncIterator[AsyncEngine]:
-    """Engine async contra `finanzia_test_migrations`, sin tocar el esquema."""
+    """Engine async contra `luka_test_migrations`, sin tocar el esquema."""
     eng = create_async_engine(_MIGRATIONS_DATABASE_URL)
     try:
         yield eng

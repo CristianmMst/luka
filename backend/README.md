@@ -1,6 +1,6 @@
 # backend
 
-Monolito modular hexagonal de finanzia (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md). El despliegue en producción (VPS compartido con Docker Compose detrás de su nginx, desde GitHub Actions) está en [`deploy/README.md`](deploy/README.md).
+Monolito modular hexagonal de luka (Python 3.12, FastAPI, arq). Ver [`docs/specs/003-architecture`](../docs/specs/003-architecture/spec.md). El despliegue en producción (VPS compartido con Docker Compose detrás de su nginx, desde GitHub Actions) está en [`deploy/README.md`](deploy/README.md).
 
 Estado: Fase 0 (fundaciones) y Fase 1 (identity + ledger básico + bus de eventos) mergeadas a `main`. Fase 2 (pipeline de captura y parsing, solo Bancolombia — F2.1–F2.6) también en `main`. La app Flutter (F0.6, F1.9) inicia sesión con Google real contra esta API. Fase 3 (Gmail, F3.1–F3.6) está en la rama local `f3-gmail`: watch/sync, cifrado del refresh token, endpoints de conexión, webhook y paso de onboarding en la app, verificado en modo de prueba de Google con túnel de desarrollo (§16). Pendiente: F2.7 (bancos restantes, diferido), la verificación DKIM del remitente (spec 009 §1) y Fases 5+ (fiscal, producción).
 
@@ -29,13 +29,13 @@ uv run alembic upgrade head
 ## 3. Correr la aplicación
 
 ```sh
-uv run uvicorn finanzia.main:app --reload
+uv run uvicorn luka.main:app --reload
 ```
 
 API en `http://localhost:8000`. En otra terminal, el worker de eventos (arq):
 
 ```sh
-uv run arq finanzia.worker.WorkerSettings
+uv run arq luka.worker.WorkerSettings
 ```
 
 El worker arranca el observador `ledger-observer`, que consume `TransactionCaptured` desde Redis Streams y solo loguea metadatos (nunca montos ni comercios, spec 009 §5).
@@ -57,7 +57,7 @@ uv run pytest -q               # toda la suite (unit + integration + ci)
 Gate de cobertura de dominio (≥90 %, se corre en local antes de subir, para `ledger.domain`, `identity.domain`, `parsing.domain` e `ingestion.domain`):
 
 ```sh
-uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain --cov-fail-under=90
+uv run pytest tests/unit -m unit --cov=luka.modules.ledger.domain --cov=luka.modules.identity.domain --cov=luka.modules.parsing.domain --cov=luka.modules.ingestion.domain --cov-fail-under=90
 ```
 
 También disponibles como recetas de [`just`](../justfile) desde la raíz del repo: `just lint`, `just test`, `just test-unit`, `just coverage-domain`, `just ci` (= `lint` + `test` + `coverage-domain`), `just migrate`, `just revision <nombre>`, `just up`/`down`, `just dev`, `just worker` y `just reparse [--since AAAA-MM-DD]` (reprocesa los mensajes `failed` con cuerpo y cierra su revisión como `reparsed`; corre `just migrate` antes si falta la 0007 y necesita el worker en marcha, spec 005 §7) y `just mark-self-transfers [--user UUID]` (marca como transferencia los envíos y recibos ya capturados al propio titular, sin tocar los editados a mano; imprime `marked=<n> skipped_edited=<m>`, spec 004 §4.1).
@@ -78,25 +78,25 @@ tests/
 Markers (`pyproject.toml`, `--strict-markers`): `unit` (sin infraestructura), `integration` (requiere DB/Redis), `ci` (verifica el propio pipeline). `pytest-asyncio` en modo `auto`, loop de fixtures y de tests con scope `session`.
 
 Bases de datos de test (separadas de las de desarrollo):
-- `finanzia_test`: usada por la mayoría de tests de integración (fixture `migrated_db`, que corre `alembic upgrade head` una vez por sesión en un hilo aparte).
-- `finanzia_test_migrations`: usada solo por `tests/integration/test_migrations.py` para probar el ciclo completo de migraciones (`upgrade`/`downgrade`) sin interferir con la DB que ya usan el resto de tests.
+- `luka_test`: usada por la mayoría de tests de integración (fixture `migrated_db`, que corre `alembic upgrade head` una vez por sesión en un hilo aparte).
+- `luka_test_migrations`: usada solo por `tests/integration/test_migrations.py` para probar el ciclo completo de migraciones (`upgrade`/`downgrade`) sin interferir con la DB que ya usan el resto de tests.
 - Redis: base de datos lógica `1` (`redis://localhost:6379/1`), separada de la `0` de desarrollo; se limpia con `FLUSHDB` entre tests (fixture `redis_clean`).
 
 Overrides por variable de entorno (útiles en CI o si tus puertos locales difieren):
 
 | Variable | Uso |
 |---|---|
-| `FINANZIA_TEST_DATABASE_URL` | URL de `finanzia_test` (default `postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test`) |
-| `FINANZIA_TEST_REDIS_URL` | URL de Redis db 1 (default `redis://localhost:6379/1`) |
-| `FINANZIA_TEST_MIGRATIONS_DATABASE_URL` | URL de `finanzia_test_migrations`, usada solo por el test de ciclo de migraciones |
+| `LUKA_TEST_DATABASE_URL` | URL de `luka_test` (default `postgresql+asyncpg://luka:luka@localhost:5432/luka_test`) |
+| `LUKA_TEST_REDIS_URL` | URL de Redis db 1 (default `redis://localhost:6379/1`) |
+| `LUKA_TEST_MIGRATIONS_DATABASE_URL` | URL de `luka_test_migrations`, usada solo por el test de ciclo de migraciones |
 
-Fixtures principales de `tests/conftest.py`: `settings` (session; `env=test`, apunta a `finanzia_test`/Redis db 1, límites de rate limit altos por defecto para no interferir con el resto de la suite); `migrated_db`; `db_clean` (limpia datos de usuario entre tests sin `TRUNCATE`, preservando el seed de categorías del sistema); `redis_clean`; `app`/`client` (app FastAPI creada con `create_test_app` + `httpx.AsyncClient` con lifespan real vía `asgi-lifespan`); `fixed_clock`; `user_factory`/`second_user` (login real contra la API; `tests/support/google_stub.py` inyecta `StubGoogleIdTokenVerifier`, que acepta tokens `stub:<sub>:<email>[:unverified[:<nombre>]]` sin llamar a Google. Es solo de tests: la API no tiene modo simulado); `access_token_expired`. El tiempo siempre se inyecta vía `ClockPort` (nunca `freezegun` ni `datetime.now()` directo). Los dobles de prueba (fakes) viven en `tests/unit/<modulo>/fakes.py`.
+Fixtures principales de `tests/conftest.py`: `settings` (session; `env=test`, apunta a `luka_test`/Redis db 1, límites de rate limit altos por defecto para no interferir con el resto de la suite); `migrated_db`; `db_clean` (limpia datos de usuario entre tests sin `TRUNCATE`, preservando el seed de categorías del sistema); `redis_clean`; `app`/`client` (app FastAPI creada con `create_test_app` + `httpx.AsyncClient` con lifespan real vía `asgi-lifespan`); `fixed_clock`; `user_factory`/`second_user` (login real contra la API; `tests/support/google_stub.py` inyecta `StubGoogleIdTokenVerifier`, que acepta tokens `stub:<sub>:<email>[:unverified[:<nombre>]]` sin llamar a Google. Es solo de tests: la API no tiene modo simulado); `access_token_expired`. El tiempo siempre se inyecta vía `ClockPort` (nunca `freezegun` ni `datetime.now()` directo). Los dobles de prueba (fakes) viven en `tests/unit/<modulo>/fakes.py`.
 
 ## 6. Arquitectura del código
 
 ```
 backend/
-├── src/finanzia/
+├── src/luka/
 │   ├── app.py               # composition root: crea la app FastAPI (routers, middlewares, lifespan)
 │   ├── main.py               # entrypoint ASGI (uvicorn)
 │   ├── worker.py             # composition root del worker arq (consumers de eventos + supervisor)
@@ -110,7 +110,7 @@ backend/
 │       ├── infrastructure/    # adapters: repos SQLAlchemy, routers FastAPI (infrastructure/api/)
 │       ├── events.py          # eventos de dominio del módulo (puro, solo stdlib)
 │       └── public.py          # API pública que otros módulos pueden importar
-└── migrations/                 # Alembic, fuera del paquete `finanzia`
+└── migrations/                 # Alembic, fuera del paquete `luka`
 ```
 
 Import-linter (`uv run lint-imports`) verifica 6 contratos (`pyproject.toml`, sección `[tool.importlinter]`):
@@ -124,7 +124,7 @@ Import-linter (`uv run lint-imports`) verifica 6 contratos (`pyproject.toml`, se
 
 ## 7. Login con Google
 
-`POST /v1/auth/google` verifica siempre el `id_token` contra Google: firma, `iss`, `exp` y `aud = FINANZIA_GOOGLE_CLIENT_ID`, que es el client ID web del proyecto `finanzia-509500`. No hay modo simulado. El login se hace desde la app Flutter (`app/README.md`, `just app-run` con el backend corriendo).
+`POST /v1/auth/google` verifica siempre el `id_token` contra Google: firma, `iss`, `exp` y `aud = LUKA_GOOGLE_CLIENT_ID`, que es el client ID web del proyecto `finanzia-509500`. No hay modo simulado. El login se hace desde la app Flutter (`app/README.md`, `just app-run` con el backend corriendo).
 
 La respuesta trae `access_token`, `refresh_token`, `expires_in` y `user`. El acceso se usa como `Authorization: Bearer <access_token>` en el resto de endpoints autenticados.
 
@@ -182,11 +182,11 @@ Ver §11 de este README para una corrida real con las respuestas efectivamente o
 
 Redis Streams como bus interno (spec 003 §2.3), implementado en `shared/events/`:
 
-- Cada tipo de evento se publica en su propio stream: `finanzia:events:<event_type>` (p. ej. `finanzia:events:ledger.TransactionCaptured`).
+- Cada tipo de evento se publica en su propio stream: `luka:events:<event_type>` (p. ej. `luka:events:ledger.TransactionCaptured`).
 - Los consumers usan grupos de consumidores (`XREADGROUP`). Mensajes pendientes de un consumidor caído se reclaman con `XAUTOCLAIM`.
-- Mensajes que superan el máximo de reintentos van a la DLQ `finanzia:events:dlq`.
+- Mensajes que superan el máximo de reintentos van a la DLQ `luka:events:dlq`.
 - Todo handler pasa por un wrapper idempotente que marca `event_id` procesado por grupo en Redis con un TTL de 7 días (evita reprocesar reentregas at-least-once).
-- Los consumers corren dentro del proceso worker arq (`uv run arq finanzia.worker.WorkerSettings`), cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada.
+- Los consumers corren dentro del proceso worker arq (`uv run arq luka.worker.WorkerSettings`), cada uno bajo un supervisor que los reinicia si terminan por una excepción inesperada.
 - Publicación post-commit sin outbox transaccional en el MVP (riesgo aceptado, ver spec 003 §2.3 y §12.5 de este README).
 - Los grupos se crean (idempotente, `XGROUP CREATE ... $ MKSTREAM`) tanto al arrancar la API como el worker, para que un evento publicado antes del primer arranque del worker no se pierda.
 
@@ -203,40 +203,40 @@ El worker (F2.2/F2.9) arranca 4 consumers bajo supervisor (uno por combinación 
 
 ## 10. Variables de entorno (`.env`)
 
-Todas tienen el prefijo `FINANZIA_`. Solo las 6 marcadas como **obligatoria** van en [`.env.example`](.env.example); el resto tiene default en `src/finanzia/shared/settings.py` y se define únicamente para cambiarlo:
+Todas tienen el prefijo `LUKA_`. Solo las 6 marcadas como **obligatoria** van en [`.env.example`](.env.example); el resto tiene default en `src/luka/shared/settings.py` y se define únicamente para cambiarlo:
 
 | Variable | Significado |
 |---|---|
-| `FINANZIA_ENV` | Entorno de ejecución: `dev` (default), `test` o `prod` |
-| `FINANZIA_DATABASE_URL` | **Obligatoria.** URL asíncrona de Postgres (driver `asyncpg`) |
-| `FINANZIA_REDIS_URL` | **Obligatoria.** URL de Redis |
-| `FINANZIA_JWT_SECRET` | **Obligatoria.** Secreto para firmar JWT (≥32 caracteres; único por entorno real) |
-| `FINANZIA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
-| `FINANZIA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
-| `FINANZIA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `finanzia-509500`) |
-| `FINANZIA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
-| `FINANZIA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3). En `prod` se rechaza la llave de ejemplo de `.env.example` |
-| `FINANZIA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/finanzia-509500/topics/gmail-push`) |
-| `FINANZIA_GMAIL_PUSH_AUDIENCE` | Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail` (default fijo `finanzia-gmail-push`; no cambia con la URL del túnel, ver §16) |
-| `FINANZIA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com`) |
-| `FINANZIA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
-| `FINANZIA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
-| `FINANZIA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás del nginx de producción) |
-| `FINANZIA_RATE_LIMIT_AUTH_PER_MINUTE` | Límite de requests/min para `/auth/*` (por IP) |
-| `FINANZIA_RATE_LIMIT_USER_PER_MINUTE` | Límite de requests/min por usuario autenticado (global) |
-| `FINANZIA_IDEMPOTENCY_TTL_SECONDS` | TTL, en segundos, de las claves `Idempotency-Key` en Redis (default 86400 = 24 h) |
-| `FINANZIA_MAX_BODY_BYTES` | Tamaño máximo aceptado del body de una request, en bytes |
-| `FINANZIA_DB_POOL_SIZE` | Tamaño del pool de conexiones a la base de datos |
-| `FINANZIA_DB_ECHO` | Loguear las sentencias SQL ejecutadas (nunca `true` en prod) |
-| `FINANZIA_RATE_LIMIT_INGEST_PER_MINUTE` | Límite de requests/min por usuario para `/v1/ingest/*` (regla `ingest_user`, F2.1, spec 009 §4), además del límite global |
-| `FINANZIA_DEEPSEEK_API_KEY` | API key de DeepSeek (LLM de parsing). Vacía → adapter `DisabledLlmParser`, todo mensaje sin plantilla cae a revisión con `reason=llm_disabled` (legítimo también en prod) |
-| `FINANZIA_DEEPSEEK_BASE_URL` | URL base de la API de DeepSeek (compatible OpenAI) |
-| `FINANZIA_DEEPSEEK_MODEL` | Modelo usado para el parseo por LLM (`deepseek-v4-flash`) |
-| `FINANZIA_LLM_TIMEOUT_SECONDS` | Timeout, en segundos, de las llamadas HTTP a DeepSeek |
-| `FINANZIA_LLM_MONTHLY_TOKEN_BUDGET_PER_USER` | Presupuesto mensual de tokens LLM por usuario (Redis, clave `llm:budget:{user_id}:{YYYYMM}`, spec 006 §4.2) |
-| `FINANZIA_LLM_CONFIDENCE_THRESHOLD` | Umbral mínimo de `confidence` del LLM para aceptar una extracción (0, 1] |
-| `FINANZIA_RAW_MESSAGE_RETENTION_DAYS` | Días de retención del cuerpo de un mensaje crudo antes de que el cron de purga lo anule (spec 004 §6) |
-| `FINANZIA_RAW_MESSAGE_BODY_MAX_BYTES` | Tamaño máximo, en bytes, del cuerpo persistido de un mensaje crudo (spec 006 §2.3) |
+| `LUKA_ENV` | Entorno de ejecución: `dev` (default), `test` o `prod` |
+| `LUKA_DATABASE_URL` | **Obligatoria.** URL asíncrona de Postgres (driver `asyncpg`) |
+| `LUKA_REDIS_URL` | **Obligatoria.** URL de Redis |
+| `LUKA_JWT_SECRET` | **Obligatoria.** Secreto para firmar JWT (≥32 caracteres; único por entorno real) |
+| `LUKA_JWT_ACCESS_TTL_SECONDS` | TTL del access token, en segundos (default 900 = 15 min) |
+| `LUKA_REFRESH_TTL_DAYS` | TTL deslizante del refresh token, en días (default 60) |
+| `LUKA_GOOGLE_CLIENT_ID` | **Obligatoria.** Client ID web de Google OAuth; audiencia del `id_token` (dev: proyecto `finanzia-509500`) |
+| `LUKA_GOOGLE_CLIENT_SECRET` | **Obligatoria (Fase 3).** Secreto del cliente OAuth web; canjea el `serverAuthCode` de Gmail en `POST /gmail/connect` |
+| `LUKA_GMAIL_TOKEN_KEY` | **Obligatoria (Fase 3).** 32 bytes aleatorios en base64 (`openssl rand -base64 32`) para cifrar con AES-256-GCM el refresh token de Gmail (`gmail_connections.refresh_token_enc`, spec 009 §3). En `prod` se rechaza la llave de ejemplo de `.env.example` |
+| `LUKA_GMAIL_PUBSUB_TOPIC` | Topic de Pub/Sub al que se suscribe `users.watch` (default `projects/finanzia-509500/topics/gmail-push`) |
+| `LUKA_GMAIL_PUSH_AUDIENCE` | Audiencia (`aud`) exigida al token OIDC del webhook `POST /webhooks/gmail` (default fijo `luka-gmail-push`; no cambia con la URL del túnel, ver §16) |
+| `LUKA_GMAIL_PUSH_SERVICE_ACCOUNT` | Cuenta de servicio (`email`) exigida al mismo token OIDC (default `gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com`) |
+| `LUKA_LOG_LEVEL` | Nivel de logging: `DEBUG`, `INFO`, `WARNING` o `ERROR` |
+| `LUKA_LOG_JSON` | Logs en JSON estructurado (default `true` salvo en `dev`) |
+| `LUKA_TRUST_PROXY_HEADERS` | Confiar en `X-Forwarded-For`/proxy reverso (activar solo detrás del nginx de producción) |
+| `LUKA_RATE_LIMIT_AUTH_PER_MINUTE` | Límite de requests/min para `/auth/*` (por IP) |
+| `LUKA_RATE_LIMIT_USER_PER_MINUTE` | Límite de requests/min por usuario autenticado (global) |
+| `LUKA_IDEMPOTENCY_TTL_SECONDS` | TTL, en segundos, de las claves `Idempotency-Key` en Redis (default 86400 = 24 h) |
+| `LUKA_MAX_BODY_BYTES` | Tamaño máximo aceptado del body de una request, en bytes |
+| `LUKA_DB_POOL_SIZE` | Tamaño del pool de conexiones a la base de datos |
+| `LUKA_DB_ECHO` | Loguear las sentencias SQL ejecutadas (nunca `true` en prod) |
+| `LUKA_RATE_LIMIT_INGEST_PER_MINUTE` | Límite de requests/min por usuario para `/v1/ingest/*` (regla `ingest_user`, F2.1, spec 009 §4), además del límite global |
+| `LUKA_DEEPSEEK_API_KEY` | API key de DeepSeek (LLM de parsing). Vacía → adapter `DisabledLlmParser`, todo mensaje sin plantilla cae a revisión con `reason=llm_disabled` (legítimo también en prod) |
+| `LUKA_DEEPSEEK_BASE_URL` | URL base de la API de DeepSeek (compatible OpenAI) |
+| `LUKA_DEEPSEEK_MODEL` | Modelo usado para el parseo por LLM (`deepseek-v4-flash`) |
+| `LUKA_LLM_TIMEOUT_SECONDS` | Timeout, en segundos, de las llamadas HTTP a DeepSeek |
+| `LUKA_LLM_MONTHLY_TOKEN_BUDGET_PER_USER` | Presupuesto mensual de tokens LLM por usuario (Redis, clave `llm:budget:{user_id}:{YYYYMM}`, spec 006 §4.2) |
+| `LUKA_LLM_CONFIDENCE_THRESHOLD` | Umbral mínimo de `confidence` del LLM para aceptar una extracción (0, 1] |
+| `LUKA_RAW_MESSAGE_RETENTION_DAYS` | Días de retención del cuerpo de un mensaje crudo antes de que el cron de purga lo anule (spec 004 §6) |
+| `LUKA_RAW_MESSAGE_BODY_MAX_BYTES` | Tamaño máximo, en bytes, del cuerpo persistido de un mensaje crudo (spec 006 §2.3) |
 
 ## 11. Recorrido de la API (curl) — Fase 2: ingesta, parsing y revisión
 
@@ -270,7 +270,7 @@ curl -s http://localhost:8000/v1/config/capture -H "Authorization: Bearer $TOKEN
 curl -s http://localhost:8000/v1/review -H "Authorization: Bearer $TOKEN"
 
 # 12. Ingerir un texto monetario que NINGUNA plantilla reconoce -> cae al LLM
-#     (llm_disabled en dev sin FINANZIA_DEEPSEEK_API_KEY) -> review_queue
+#     (llm_disabled en dev sin LUKA_DEEPSEEK_API_KEY) -> review_queue
 curl -s -X POST http://localhost:8000/v1/ingest/notifications \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{
@@ -317,7 +317,7 @@ llega en Fase 3). Solo Bancolombia tiene plantillas con fixture real (F2.3); los
 ### 12.2 Correr el worker y leer sus logs de arranque
 
 ```sh
-uv run arq finanzia.worker.WorkerSettings
+uv run arq luka.worker.WorkerSettings
 ```
 
 El `on_startup` del worker (composition root, `worker.py`) crea su propio engine de DB, cliente
@@ -326,7 +326,7 @@ los 2 cron jobs. Logs de arranque relevantes:
 
 - `worker_llm_status` (`enabled=<bool>`, `model=<modelo>`) — qué adapter de LLM quedó activo; nunca
   incluye la API key.
-- `llm_disabled_no_api_key` (warning) — solo aparece si `FINANZIA_DEEPSEEK_API_KEY` está vacía: el
+- `llm_disabled_no_api_key` (warning) — solo aparece si `LUKA_DEEPSEEK_API_KEY` está vacía: el
   adapter activo es `DisabledLlmParser` y todo mensaje sin plantilla regex terminará en
   `review_queue` con `reason=llm_disabled` (comportamiento esperado en dev/CI sin credenciales).
 - `consumer_groups_not_ensured` (warning) — Redis no respondió a `ensure_consumer_groups` dentro del
@@ -374,7 +374,7 @@ logs.
 - **`llm_error` → revisión inmediata** (D11): una caída de DeepSeek de minutos manda mensajes a
   revisión en vez de usar el reintento del consumer de Redis Streams. Elegido visibilidad sobre
   latencia; revisar con métricas tras Fase 3.
-- **Cap de body de 1 MB por request** (`FINANZIA_MAX_BODY_BYTES`) en `/v1/ingest/notifications`:
+- **Cap de body de 1 MB por request** (`LUKA_MAX_BODY_BYTES`) en `/v1/ingest/notifications`:
   documentado como límite duro (spec 009 §4); un cliente con batches muy grandes debe paginar sus
   envíos.
 
@@ -389,7 +389,7 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   (candidato natural: junto con F3, cuando entre el volumen real de Gmail).
 - **El camino HTTP real de DeepSeek nunca se ejercitó contra un endpoint vivo**: toda la cobertura
   de `parsing/infrastructure/llm/deepseek.py` usa `httpx.MockTransport`, y el recorrido de §14 corrió
-  con el LLM deshabilitado (`enabled=False`, sin `FINANZIA_DEEPSEEK_API_KEY`). Lo verificado es la
+  con el LLM deshabilitado (`enabled=False`, sin `LUKA_DEEPSEEK_API_KEY`). Lo verificado es la
   forma del request/respuesta y el mapeo de errores, no la interoperabilidad real con la API de
   DeepSeek (auth, `response_format: json_object`, límites de rate). Pendiente: una corrida manual con
   API key antes de habilitarlo en producción.
@@ -447,7 +447,7 @@ bloquean el cierre de F2.1–F2.6; quedan anotados aquí en vez de en un issue t
   estado a medias), pero no debería pasar nunca en producción (cada consumer responde a `stop` en
   ≤ `block_ms/1000 + 1s`); revisar si alguna vez se observa en logs reales.
 - **`tests/support/raw_messages.py` hardcodea la retención en 90 días** (`_RETENTION_DAYS = 90`) en
-  vez de leerla de `Settings.raw_message_retention_days`: si `FINANZIA_RAW_MESSAGE_RETENTION_DAYS`
+  vez de leerla de `Settings.raw_message_retention_days`: si `LUKA_RAW_MESSAGE_RETENTION_DAYS`
   cambia de valor, este helper de test queda desincronizado con el comportamiento real.
 - **`_BANK_VALUES` duplicado en 3 lugares**: `ingestion/infrastructure/orm.py`,
   `ledger/infrastructure/orm.py` y la migración `0003_raw_messages_review.py` (más
@@ -489,8 +489,8 @@ uv run pyright                # 0 errors, 0 warnings, 0 informations
 uv run lint-imports            # Contracts: 6 kept, 0 broken (R1, R2, R3a, R3b, R4, Kernel)
 uv run pytest -q               # 780 passed, 1 warning (DeprecationWarning preexistente de arq) in 64.81s
 uv run pytest tests/unit -m unit \
-  --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain \
-  --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain \
+  --cov=luka.modules.ledger.domain --cov=luka.modules.identity.domain \
+  --cov=luka.modules.parsing.domain --cov=luka.modules.ingestion.domain \
   --cov-fail-under=90
   # Required test coverage of 90% reached. Total coverage: 98.87% — 524 passed in 4.30s
 uv run alembic upgrade head && uv run alembic check
@@ -555,7 +555,7 @@ uv run ruff format --check . # 333 files already formatted
 uv run pyright               # 0 errors, 0 warnings, 0 informations
 uv run lint-imports          # Contracts: 6 kept, 0 broken
 uv run pytest -q             # 794 passed, 1 warning (DeprecationWarning preexistente de arq) in 67.36s
-uv run pytest tests/unit -m unit   --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain   --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain   --cov-fail-under=90
+uv run pytest tests/unit -m unit   --cov=luka.modules.ledger.domain --cov=luka.modules.identity.domain   --cov=luka.modules.parsing.domain --cov=luka.modules.ingestion.domain   --cov-fail-under=90
   # Required test coverage of 90% reached. Total coverage: 98.87% — 534 passed
 uv run alembic upgrade head && uv run alembic check
   # 0003 -> 0004 (raw_messages_requeue_attempts); No new upgrade operations detected.
@@ -578,10 +578,10 @@ API y la Pub/Sub API, el topic `projects/finanzia-509500/topics/gmail-push` (con
 
 Las dos nuevas de Fase 3 (§10), ya en [`.env.example`](.env.example):
 
-- `FINANZIA_GOOGLE_CLIENT_SECRET`: secreto del cliente OAuth web (consola de Google Cloud →
-  Credenciales → el cliente web usado como `FINANZIA_GOOGLE_CLIENT_ID`). Genera uno nuevo si no lo
+- `LUKA_GOOGLE_CLIENT_SECRET`: secreto del cliente OAuth web (consola de Google Cloud →
+  Credenciales → el cliente web usado como `LUKA_GOOGLE_CLIENT_ID`). Genera uno nuevo si no lo
   tienes a mano.
-- `FINANZIA_GMAIL_TOKEN_KEY`: 32 bytes aleatorios en base64, para AES-256-GCM. Se genera con:
+- `LUKA_GMAIL_TOKEN_KEY`: 32 bytes aleatorios en base64, para AES-256-GCM. Se genera con:
 
   ```sh
   openssl rand -base64 32
@@ -603,15 +603,15 @@ just tunnel   # cloudflared tunnel --url http://localhost:8000
 (Pub/Sub → Suscripciones → `gmail-push-dev` → Editar → URL del extremo) pega
 `https://<random>.trycloudflare.com/v1/webhooks/gmail` y guarda. La suscripción
 `gmail-push-dev` misma (nombre, OIDC con la cuenta `gmail-push-invoker`, audiencia
-`finanzia-gmail-push`) se crea una sola vez en la consola (fuera de este repo); solo la URL del
+`luka-gmail-push`) se crea una sola vez en la consola (fuera de este repo); solo la URL del
 extremo cambia en cada corrida de `just tunnel`, porque un "quick tunnel" no tiene dominio fijo —
-la audiencia OIDC (`FINANZIA_GMAIL_PUSH_AUDIENCE`, default fijo `finanzia-gmail-push`) no cambia
+la audiencia OIDC (`LUKA_GMAIL_PUSH_AUDIENCE`, default fijo `luka-gmail-push`) no cambia
 con la URL, así que no hay que tocar nada del lado del backend.
 
 Con la API, el worker y el túnel corriendo, `just app-run` lanza la app contra el backend local.
 
 La captura es solo de INBOX (spec 006 §2): un correo del banco que un filtro de Gmail archiva o
-mueve a otra etiqueta sin pasar por la bandeja de entrada no llega a finanzia. Para probar, el
+mueve a otra etiqueta sin pasar por la bandeja de entrada no llega a luka. Para probar, el
 correo tiene que quedar en la bandeja de entrada.
 
 ### 16.3 Modo de prueba de Google
@@ -622,7 +622,7 @@ prueba):
 - Solo los usuarios de prueba declarados en la consola (hoy: `cristianmmst@gmail.com`) pueden
   conectar Gmail; cualquier otra cuenta ve un error de Google al autorizar.
 - Google muestra el aviso "Google no verificó esta app" durante el consentimiento: es esperado, no
-  un error (spec 010 §1); hay que continuar el flujo igual ("Avanzado" → "Ir a finanzia (no
+  un error (spec 010 §1); hay que continuar el flujo igual ("Avanzado" → "Ir a luka (no
   seguro)").
 - Los grants de un scope restringido en modo de prueba **vencen a los 7 días**: pasado ese plazo,
   `sync_gmail`/`renew_gmail_watches` reciben `invalid_grant` de Google, la conexión pasa a
@@ -637,7 +637,7 @@ mensaje, un `parsing_metric` (§12.4). El webhook en sí loguea `gmail_push_rece
 `jobs_enqueued`. Filtra la salida del worker, por ejemplo:
 
 ```sh
-uv run arq finanzia.worker.WorkerSettings | grep -E "gmail_|parsing_metric"
+uv run arq luka.worker.WorkerSettings | grep -E "gmail_|parsing_metric"
 ```
 
 ### 16.5 Producción

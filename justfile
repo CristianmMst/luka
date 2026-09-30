@@ -1,4 +1,4 @@
-# Recetas de desarrollo para finanzia. Ver backend/README.md para detalle.
+# Recetas de desarrollo para luka. Ver backend/README.md para detalle.
 
 set shell := ["bash", "-uc"]
 # En Windows, `bash` del PATH es el de WSL (no ve uv ni flutter); se usa Git Bash.
@@ -14,21 +14,21 @@ down:
 
 # Corre la API en modo desarrollo con recarga automatica.
 dev:
-	cd backend && uv run uvicorn finanzia.main:app --reload
+	cd backend && uv run uvicorn luka.main:app --reload
 
 # Corre el worker arq (bus de eventos Redis Streams, F1.8).
 worker:
-	cd backend && uv run arq finanzia.worker.WorkerSettings
+	cd backend && uv run arq luka.worker.WorkerSettings
 
 # Reprocesa los mensajes fallidos con cuerpo y cierra su revision (spec 005 §7).
 # Uso: `just reparse` o `just reparse --since 2026-09-01`. Requiere el worker en marcha.
 reparse *args:
-	cd backend && uv run python -m finanzia.tools.reparse {{args}}
+	cd backend && uv run python -m luka.tools.reparse {{args}}
 
 # Marca como transferencia los envios/recibos ya capturados al propio titular
 # (spec 004 §4.1). Uso: `just mark-self-transfers` o `--user <uuid>`.
 mark-self-transfers *args:
-	cd backend && uv run python -m finanzia.tools.mark_self_transfers {{args}}
+	cd backend && uv run python -m luka.tools.mark_self_transfers {{args}}
 
 # Corre toda la suite de tests.
 test:
@@ -55,7 +55,7 @@ revision name:
 
 # Gate de cobertura de dominio (ledger/identity/parsing/ingestion .domain >= 90%).
 coverage-domain:
-	cd backend && uv run pytest tests/unit -m unit --cov=finanzia.modules.ledger.domain --cov=finanzia.modules.identity.domain --cov=finanzia.modules.parsing.domain --cov=finanzia.modules.ingestion.domain --cov-fail-under=90
+	cd backend && uv run pytest tests/unit -m unit --cov=luka.modules.ledger.domain --cov=luka.modules.identity.domain --cov=luka.modules.parsing.domain --cov=luka.modules.ingestion.domain --cov-fail-under=90
 
 # Pipeline de CI: lint + tests + cobertura de dominio.
 ci: lint test coverage-domain
@@ -66,7 +66,7 @@ ci: lint test coverage-domain
 # actualizar el endpoint de la suscripcion push `gmail-push-dev` (Pub/Sub ->
 # Suscripciones -> gmail-push-dev -> Editar -> URL del extremo) a
 # "<url>/v1/webhooks/gmail" cada vez que se corre este comando. La audiencia OIDC
-# (`gmail_push_audience`, default `finanzia-gmail-push`) no cambia, solo el host.
+# (`gmail_push_audience`, default `luka-gmail-push`) no cambia, solo el host.
 tunnel:
 	cloudflared tunnel --url http://localhost:8000
 

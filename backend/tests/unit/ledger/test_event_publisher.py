@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import pytest
 import structlog.testing
 
-from finanzia.modules.ledger.infrastructure.event_publisher import BusEventPublisher
+from luka.modules.ledger.infrastructure.event_publisher import BusEventPublisher
 
 
 @dataclass(frozen=True, slots=True)

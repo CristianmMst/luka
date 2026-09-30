@@ -1,4 +1,4 @@
-"""Tests del CLI `python -m finanzia.tools.reparse` (spec 005 §7).
+"""Tests del CLI `python -m luka.tools.reparse` (spec 005 §7).
 
 `main` se corre con `get_settings` apuntado a los settings de test (DB y Redis de
 test): nunca toca la base de desarrollo. Solo imprime conteos.
@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.shared.settings import Settings
-from finanzia.tools import reparse
+from luka.shared.settings import Settings
+from luka.tools import reparse
 
 pytestmark = pytest.mark.integration
 

@@ -15,11 +15,11 @@ from uuid import uuid4
 import pytest
 from support.email_fixtures import bancolombia_fixtures
 
-from finanzia.modules.ledger.domain.dedupe import candidate_keys
-from finanzia.modules.ledger.domain.enums import Direction
-from finanzia.modules.parsing.domain.excerpt import extract_excerpt
-from finanzia.modules.parsing.domain.templates import TemplateMatch, TemplateRegistry
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
+from luka.modules.ledger.domain.dedupe import candidate_keys
+from luka.modules.ledger.domain.enums import Direction
+from luka.modules.parsing.domain.excerpt import extract_excerpt
+from luka.modules.parsing.domain.templates import TemplateMatch, TemplateRegistry
+from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
 
 BOGOTA = timezone(timedelta(hours=-5))
 RECEIVED_AT = datetime(2026, 9, 29, 19, 6, tzinfo=UTC)

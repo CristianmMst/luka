@@ -6,8 +6,8 @@ import pytest
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
 
-from finanzia.app import create_app
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.shared.settings import Settings
 
 
 @pytest.mark.integration
@@ -35,8 +35,8 @@ async def test_health_ready_degrada_si_redis_no_es_alcanzable() -> None:
         _env_file=None,  # pyright: ignore[reportCallIssue]
         env="test",
         database_url=os.environ.get(
-            "FINANZIA_TEST_DATABASE_URL",
-            "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test",
+            "LUKA_TEST_DATABASE_URL",
+            "postgresql+asyncpg://luka:luka@localhost:5432/luka_test",
         ),
         redis_url="redis://localhost:1/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",

@@ -11,17 +11,17 @@ from uuid import UUID
 
 from support.clock import FixedClock
 
-from finanzia.modules.ledger.application.dto import Cursor, Filters, ReviewSourceView
-from finanzia.modules.ledger.domain.entities import (
+from luka.modules.ledger.application.dto import Cursor, Filters, ReviewSourceView
+from luka.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
     MerchantRule,
     Transaction,
     TransactionSource,
 )
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
-from finanzia.modules.ledger.domain.review import ReviewItem, ReviewResolution
-from finanzia.modules.ledger.domain.system_categories import SYSTEM_CATEGORIES
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
+from luka.modules.ledger.domain.review import ReviewItem, ReviewResolution
+from luka.modules.ledger.domain.system_categories import SYSTEM_CATEGORIES
 
 __all__ = [
     "FakeReviewSource",
@@ -368,7 +368,7 @@ class SequenceIdGenerator:
 
     def new_id(self) -> UUID:
         self._counter += 1
-        return uuid.uuid5(uuid.NAMESPACE_URL, f"https://finanzia.app/test-ids/{self._counter}")
+        return uuid.uuid5(uuid.NAMESPACE_URL, f"https://luka.app/test-ids/{self._counter}")
 
     def random_hex(self, n_bytes: int) -> str:
         self._counter += 1

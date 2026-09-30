@@ -2,7 +2,7 @@
 
 import pytest
 
-from finanzia.shared.security.hashing import sha256_hex
+from luka.shared.security.hashing import sha256_hex
 
 
 @pytest.mark.unit

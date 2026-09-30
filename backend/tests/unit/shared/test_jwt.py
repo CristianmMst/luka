@@ -8,8 +8,8 @@ from datetime import UTC, datetime, timedelta
 import jwt as pyjwt
 import pytest
 
-from finanzia.shared.errors import TokenExpiredError, UnauthorizedError
-from finanzia.shared.security.jwt import (
+from luka.shared.errors import TokenExpiredError, UnauthorizedError
+from luka.shared.security.jwt import (
     AccessClaims,
     decode_access_token,
     encode_access_token,

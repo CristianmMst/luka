@@ -3,7 +3,7 @@
 # 1. gate: pip-audit de las dependencias de produccion y gitleaks.
 # 2. build: construye backend/Dockerfile y lo publica en GHCR con el sha del
 #    commit (y `latest`), con SBOM y procedencia.
-# 3. deploy: copia compose.yml y backup.sh a ~/apps/finanzia por SSH, fija la imagen
+# 3. deploy: copia compose.yml y backup.sh a ~/apps/luka por SSH, fija la imagen
 #    por digest, corre las migraciones y levanta el stack esperando a que
 #    todo quede sano.
 #
@@ -27,7 +27,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE: ghcr.io/cristianmmst/finanzia-backend
+  IMAGE: ghcr.io/cristianmmst/luka-backend
 
 jobs:
   # Gate de release (constitucion P1, spec 009 §8): una vulnerabilidad
@@ -46,7 +46,7 @@ jobs:
 
       - name: pip-audit (dependencias de la imagen)
         working-directory: backend
-        # --no-emit-project: el paquete finanzia no esta en PyPI.
+        # --no-emit-project: el paquete luka no esta en PyPI.
         run: |
           uv export --frozen --no-dev --no-emit-project --format requirements-txt -o /tmp/requirements.txt
           uvx pip-audit --strict --desc --disable-pip --require-hashes -r /tmp/requirements.txt
@@ -116,7 +116,7 @@ jobs:
       packages: read
     env:
       # Junto a las otras apps del servidor (~/apps/<app>).
-      DEPLOY_DIR: apps/finanzia
+      DEPLOY_DIR: apps/luka
     steps:
       - uses: actions/checkout@v4
         with:

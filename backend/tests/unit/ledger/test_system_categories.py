@@ -4,7 +4,7 @@ import uuid
 
 import pytest
 
-from finanzia.modules.ledger.domain.system_categories import (
+from luka.modules.ledger.domain.system_categories import (
     SYSTEM_CATEGORIES,
     system_category_by_slug,
     system_category_id,

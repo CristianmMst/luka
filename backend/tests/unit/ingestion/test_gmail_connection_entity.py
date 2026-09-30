@@ -5,8 +5,8 @@ from uuid import uuid4
 
 import pytest
 
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus
 
 NOW_AWARE = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
 NOW_NAIVE = datetime(2026, 5, 1, 12, 0)

@@ -6,21 +6,22 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.ledger.application.dto import (
+from ledger.fakes import FixedClock, InMemoryTransactionRepo, build_ledger_repos
+from luka.modules.ledger.application.dto import (
     CapturedTransactionCommand,
     Filters,
     SourceInput,
 )
-from finanzia.modules.ledger.application.use_cases.record_captured_transaction import (
+from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
-from finanzia.modules.ledger.domain.entities import (
+from luka.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
     MerchantRule,
     Transaction,
 )
-from finanzia.modules.ledger.domain.enums import (
+from luka.modules.ledger.domain.enums import (
     AccountKind,
     Bank,
     Channel,
@@ -28,12 +29,11 @@ from finanzia.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from finanzia.modules.ledger.domain.errors import CaptureAlreadyResolved
-from finanzia.modules.ledger.domain.merchant import normalize_merchant
-from finanzia.modules.ledger.domain.review import ReviewItem, ReviewReason, ReviewResolution
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
-from finanzia.modules.ledger.events import TransactionCaptured
-from ledger.fakes import FixedClock, InMemoryTransactionRepo, build_ledger_repos
+from luka.modules.ledger.domain.errors import CaptureAlreadyResolved
+from luka.modules.ledger.domain.merchant import normalize_merchant
+from luka.modules.ledger.domain.review import ReviewItem, ReviewReason, ReviewResolution
+from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
+from luka.modules.ledger.events import TransactionCaptured
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()

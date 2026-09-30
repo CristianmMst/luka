@@ -6,11 +6,11 @@ import pytest
 from asgi_lifespan import LifespanManager
 from google.auth.exceptions import GoogleAuthError
 
-from finanzia.app import create_app
-from finanzia.modules.identity.domain.errors import InvalidGoogleToken
-from finanzia.modules.identity.infrastructure.api.deps import get_google_verifier
-from finanzia.modules.identity.infrastructure.google_verifier import GoogleAuthIdTokenVerifier
-from finanzia.shared.settings import Settings
+from luka.app import create_app
+from luka.modules.identity.domain.errors import InvalidGoogleToken
+from luka.modules.identity.infrastructure.api.deps import get_google_verifier
+from luka.modules.identity.infrastructure.google_verifier import GoogleAuthIdTokenVerifier
+from luka.shared.settings import Settings
 
 _VALID_CLAIMS: dict[str, Any] = {
     "iss": "accounts.google.com",
@@ -32,7 +32,7 @@ async def test_claims_validos_devuelve_google_identity(
     monkeypatch: pytest.MonkeyPatch, verifier: GoogleAuthIdTokenVerifier
 ) -> None:
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         lambda *_args, **_kwargs: dict(_VALID_CLAIMS),
     )
 
@@ -51,7 +51,7 @@ async def test_issuer_invalido_lanza_invalid_google_token(
 ) -> None:
     bad_claims = {**_VALID_CLAIMS, "iss": "https://evil.example.com"}
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         lambda *_args, **_kwargs: bad_claims,
     )
 
@@ -67,7 +67,7 @@ async def test_value_error_de_la_libreria_lanza_invalid_google_token(
         raise ValueError("firma invalida")
 
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         _raise,
     )
 
@@ -83,7 +83,7 @@ async def test_google_auth_error_de_la_libreria_lanza_invalid_google_token(
         raise GoogleAuthError("no se pudieron obtener las claves publicas")
 
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         _raise,
     )
 
@@ -97,7 +97,7 @@ async def test_claims_sin_email_lanza_invalid_google_token(
 ) -> None:
     claims_sin_email = {k: v for k, v in _VALID_CLAIMS.items() if k != "email"}
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         lambda *_args, **_kwargs: claims_sin_email,
     )
 
@@ -111,7 +111,7 @@ async def test_claims_sin_sub_lanza_invalid_google_token(
 ) -> None:
     claims_sin_sub = {k: v for k, v in _VALID_CLAIMS.items() if k != "sub"}
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         lambda *_args, **_kwargs: claims_sin_sub,
     )
 
@@ -125,7 +125,7 @@ async def test_email_verified_ausente_se_normaliza_a_false(
 ) -> None:
     claims_sin_flag = {k: v for k, v in _VALID_CLAIMS.items() if k != "email_verified"}
     monkeypatch.setattr(
-        "finanzia.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
+        "luka.modules.identity.infrastructure.google_verifier.google_id_token.verify_oauth2_token",
         lambda *_args, **_kwargs: claims_sin_flag,
     )
 
@@ -147,7 +147,7 @@ async def test_google_verifier_es_el_mismo_objeto_en_dos_requests() -> None:
     settings = Settings(
         _env_file=None,  # pyright: ignore[reportCallIssue]
         env="test",
-        database_url="postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test_unused",
+        database_url="postgresql+asyncpg://luka:luka@localhost:5432/luka_test_unused",
         redis_url="redis://localhost:6379/1",
         jwt_secret="test-secret-test-secret-test-secret-1234",
         google_client_id="test-client",

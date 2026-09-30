@@ -8,9 +8,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 
-from finanzia.modules.ingestion.domain.entities import GmailConnection
-from finanzia.modules.ingestion.domain.enums import GmailConnectionStatus
-from finanzia.modules.ingestion.infrastructure.repositories import (
+from luka.modules.ingestion.domain.entities import GmailConnection
+from luka.modules.ingestion.domain.enums import GmailConnectionStatus
+from luka.modules.ingestion.infrastructure.repositories import (
     SqlAlchemyGmailConnectionRepository,
 )
 

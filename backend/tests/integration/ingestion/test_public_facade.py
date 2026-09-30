@@ -17,13 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.email_fixtures import FIXTURES_DIR, bancolombia_fixtures, load_email_fixtures
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ingestion import public
-from finanzia.modules.ingestion.application.dto import Accepted, Discarded, RawMessageInput
-from finanzia.modules.ingestion.domain.enums import Channel, RawMessageStatus
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.events_registry import build_registry
+from luka.modules.ingestion import public
+from luka.modules.ingestion.application.dto import Accepted, Discarded, RawMessageInput
+from luka.modules.ingestion.domain.enums import Channel, RawMessageStatus
+from luka.shared.clock import SystemClock
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -40,7 +40,7 @@ async def _row_count(session_factory: async_sessionmaker[AsyncSession], user_id:
 async def _stream_entries(settings: Settings, event_type: str) -> list[object]:
     client = redis_asyncio.from_url(str(settings.redis_url))
     try:
-        entries = await client.xrange(f"finanzia:events:{event_type}")
+        entries = await client.xrange(f"luka:events:{event_type}")
         registry = build_registry()
         return [registry.decode(fields) for _, fields in entries]
     finally:

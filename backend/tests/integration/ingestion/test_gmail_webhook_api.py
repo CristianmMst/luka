@@ -26,8 +26,8 @@ from support.auth import AuthedUser
 from support.gmail_connections import insert_gmail_connection
 from support.oidc import PushClaims, sign_push_token
 
-from finanzia.modules.ingestion.infrastructure.gmail_sync import ArqGmailSyncQueue
-from finanzia.shared.settings import Settings
+from luka.modules.ingestion.infrastructure.gmail_sync import ArqGmailSyncQueue
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 

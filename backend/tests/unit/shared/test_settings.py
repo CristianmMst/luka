@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from finanzia.shared.settings import Settings
+from luka.shared.settings import Settings
 
 #: `backend/.env.example`: su llave de ejemplo no debe valer en produccion.
 _ENV_EXAMPLE = Path(__file__).resolve().parents[3] / ".env.example"
@@ -13,12 +13,12 @@ _ENV_EXAMPLE = Path(__file__).resolve().parents[3] / ".env.example"
 _GMAIL_TOKEN_KEY_VALIDA = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="  # 32 bytes en base64
 
 _ENV_VALIDO = {
-    "FINANZIA_DATABASE_URL": "postgresql+asyncpg://finanzia:finanzia@localhost:5432/finanzia_test",
-    "FINANZIA_REDIS_URL": "redis://localhost:6379/1",
-    "FINANZIA_JWT_SECRET": "a" * 32,
-    "FINANZIA_GOOGLE_CLIENT_ID": "test-client",
-    "FINANZIA_GOOGLE_CLIENT_SECRET": "test-google-client-secret",
-    "FINANZIA_GMAIL_TOKEN_KEY": _GMAIL_TOKEN_KEY_VALIDA,
+    "LUKA_DATABASE_URL": "postgresql+asyncpg://luka:luka@localhost:5432/luka_test",
+    "LUKA_REDIS_URL": "redis://localhost:6379/1",
+    "LUKA_JWT_SECRET": "a" * 32,
+    "LUKA_GOOGLE_CLIENT_ID": "test-client",
+    "LUKA_GOOGLE_CLIENT_SECRET": "test-google-client-secret",
+    "LUKA_GMAIL_TOKEN_KEY": _GMAIL_TOKEN_KEY_VALIDA,
 }
 
 
@@ -34,9 +34,9 @@ def _construir_settings() -> Settings:
 
 
 @pytest.mark.unit
-def test_lee_variables_con_prefijo_finanzia(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lee_variables_con_prefijo_luka(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "test")
+    monkeypatch.setenv("LUKA_ENV", "test")
 
     settings = _construir_settings()
 
@@ -48,7 +48,7 @@ def test_lee_variables_con_prefijo_finanzia(monkeypatch: pytest.MonkeyPatch) -> 
 @pytest.mark.unit
 def test_jwt_secret_menor_a_32_caracteres_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_JWT_SECRET", "muy-corto")
+    monkeypatch.setenv("LUKA_JWT_SECRET", "muy-corto")
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -57,8 +57,8 @@ def test_jwt_secret_menor_a_32_caracteres_falla(monkeypatch: pytest.MonkeyPatch)
 @pytest.mark.unit
 def test_db_echo_true_en_prod_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "prod")
-    monkeypatch.setenv("FINANZIA_DB_ECHO", "true")
+    monkeypatch.setenv("LUKA_ENV", "prod")
+    monkeypatch.setenv("LUKA_DB_ECHO", "true")
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -69,11 +69,11 @@ def test_gmail_token_key_de_env_example_en_prod_falla(monkeypatch: pytest.Monkey
     ejemplo = next(
         line.split("=", 1)[1].strip()
         for line in _ENV_EXAMPLE.read_text(encoding="utf-8").splitlines()
-        if line.startswith("FINANZIA_GMAIL_TOKEN_KEY=")
+        if line.startswith("LUKA_GMAIL_TOKEN_KEY=")
     )
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "prod")
-    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", ejemplo)
+    monkeypatch.setenv("LUKA_ENV", "prod")
+    monkeypatch.setenv("LUKA_GMAIL_TOKEN_KEY", ejemplo)
 
     with pytest.raises(ValidationError, match=r"env\.example"):
         _construir_settings()
@@ -85,8 +85,8 @@ def test_gmail_token_key_de_env_example_fuera_de_prod_pasa(
     monkeypatch: pytest.MonkeyPatch, env: str
 ) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", env)
-    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", "62aisewZDhTFPU8eKAYDMaVzeVR4usdqlWxZgK7Abbg=")
+    monkeypatch.setenv("LUKA_ENV", env)
+    monkeypatch.setenv("LUKA_GMAIL_TOKEN_KEY", "62aisewZDhTFPU8eKAYDMaVzeVR4usdqlWxZgK7Abbg=")
 
     assert _construir_settings().env == env
 
@@ -94,7 +94,7 @@ def test_gmail_token_key_de_env_example_fuera_de_prod_pasa(
 @pytest.mark.unit
 def test_gmail_token_key_propia_en_prod_pasa(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "prod")
+    monkeypatch.setenv("LUKA_ENV", "prod")
 
     assert _construir_settings().env == "prod"
 
@@ -126,7 +126,7 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.raw_message_retention_days == 90
     assert settings.raw_message_body_max_bytes == 8192
     assert settings.gmail_pubsub_topic == "projects/finanzia-509500/topics/gmail-push"
-    assert settings.gmail_push_audience == "finanzia-gmail-push"
+    assert settings.gmail_push_audience == "luka-gmail-push"
     assert (
         settings.gmail_push_service_account
         == "gmail-push-invoker@finanzia-509500.iam.gserviceaccount.com"
@@ -136,7 +136,7 @@ def test_valores_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_log_json_por_defecto_es_true_fuera_de_dev(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "test")
+    monkeypatch.setenv("LUKA_ENV", "test")
 
     settings = _construir_settings()
 
@@ -147,7 +147,7 @@ def test_log_json_por_defecto_es_true_fuera_de_dev(monkeypatch: pytest.MonkeyPat
 def test_deepseek_api_key_none_en_prod_no_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     """LLM deshabilitado (sin API key) es legitimo incluso en prod."""
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_ENV", "prod")
+    monkeypatch.setenv("LUKA_ENV", "prod")
 
     settings = _construir_settings()
 
@@ -160,7 +160,7 @@ def test_llm_confidence_threshold_fuera_de_rango_falla(
     monkeypatch: pytest.MonkeyPatch, valor: str
 ) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_LLM_CONFIDENCE_THRESHOLD", valor)
+    monkeypatch.setenv("LUKA_LLM_CONFIDENCE_THRESHOLD", valor)
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -169,7 +169,7 @@ def test_llm_confidence_threshold_fuera_de_rango_falla(
 @pytest.mark.unit
 def test_llm_confidence_threshold_uno_es_valido(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_LLM_CONFIDENCE_THRESHOLD", "1")
+    monkeypatch.setenv("LUKA_LLM_CONFIDENCE_THRESHOLD", "1")
 
     settings = _construir_settings()
 
@@ -179,7 +179,7 @@ def test_llm_confidence_threshold_uno_es_valido(monkeypatch: pytest.MonkeyPatch)
 @pytest.mark.unit
 def test_raw_message_retention_days_menor_a_uno_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_RAW_MESSAGE_RETENTION_DAYS", "0")
+    monkeypatch.setenv("LUKA_RAW_MESSAGE_RETENTION_DAYS", "0")
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -188,7 +188,7 @@ def test_raw_message_retention_days_menor_a_uno_falla(monkeypatch: pytest.Monkey
 @pytest.mark.unit
 def test_raw_message_body_max_bytes_menor_a_512_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_RAW_MESSAGE_BODY_MAX_BYTES", "511")
+    monkeypatch.setenv("LUKA_RAW_MESSAGE_BODY_MAX_BYTES", "511")
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -218,7 +218,7 @@ def test_gmail_token_key_que_no_decodifica_a_32_bytes_falla(
     monkeypatch: pytest.MonkeyPatch, valor: str
 ) -> None:
     _setear_env_valido(monkeypatch)
-    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", valor)
+    monkeypatch.setenv("LUKA_GMAIL_TOKEN_KEY", valor)
 
     with pytest.raises(ValidationError):
         _construir_settings()
@@ -233,10 +233,10 @@ def test_los_errores_no_muestran_los_valores_de_los_secretos(
     _setear_env_valido(monkeypatch)
     jwt_corto = "secreto-jwt-demasiado-corto"
     llave_rota = "no-es-base64-valido-XYZ123!!"
-    database_url = "postgresql+asyncpg://finanzia:clave-db-secreta@db:5432/finanzia"
-    monkeypatch.setenv("FINANZIA_JWT_SECRET", jwt_corto)
-    monkeypatch.setenv("FINANZIA_GMAIL_TOKEN_KEY", llave_rota)
-    monkeypatch.setenv("FINANZIA_DATABASE_URL", database_url.replace("postgresql", "mysql"))
+    database_url = "postgresql+asyncpg://luka:clave-db-secreta@db:5432/luka"
+    monkeypatch.setenv("LUKA_JWT_SECRET", jwt_corto)
+    monkeypatch.setenv("LUKA_GMAIL_TOKEN_KEY", llave_rota)
+    monkeypatch.setenv("LUKA_DATABASE_URL", database_url.replace("postgresql", "mysql"))
 
     with pytest.raises(ValidationError) as excinfo:
         _construir_settings()

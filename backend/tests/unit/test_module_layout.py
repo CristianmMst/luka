@@ -17,7 +17,7 @@ ARCHIVOS_ESPERADOS = [
     "public.py",
 ]
 
-RAIZ_MODULOS = Path(__file__).resolve().parents[2] / "src" / "finanzia" / "modules"
+RAIZ_MODULOS = Path(__file__).resolve().parents[2] / "src" / "luka" / "modules"
 
 
 @pytest.mark.unit

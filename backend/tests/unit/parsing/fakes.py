@@ -10,11 +10,11 @@ from uuid import UUID
 from support.clock import FixedClock
 from support.email_fixtures import EmailFixture
 
-from finanzia.modules.parsing.application.dto import (
+from luka.modules.parsing.application.dto import (
     LlmResult,
     RawMessageView,
 )
-from finanzia.modules.parsing.application.ports import (
+from luka.modules.parsing.application.ports import (
     ClockPort,
     EventPublisherPort,
     LlmBudgetPort,
@@ -24,8 +24,8 @@ from finanzia.modules.parsing.application.ports import (
     TemplateRegistryPort,
     UnitOfWorkPort,
 )
-from finanzia.modules.parsing.application.use_cases.parse_raw_message import ParseRawMessage
-from finanzia.modules.parsing.infrastructure.config_loader import load_parsing_config
+from luka.modules.parsing.application.use_cases.parse_raw_message import ParseRawMessage
+from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
 
 __all__ = [
     "FakeGateway",
@@ -40,7 +40,7 @@ __all__ = [
     "view_from_fixture",
 ]
 
-_EMAIL_FIXTURE_ID_NAMESPACE = "https://finanzia.app/test-raw-messages/"
+_EMAIL_FIXTURE_ID_NAMESPACE = "https://luka.app/test-raw-messages/"
 
 
 class FakeGateway:

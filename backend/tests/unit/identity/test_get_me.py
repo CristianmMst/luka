@@ -5,10 +5,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from finanzia.modules.identity.application.use_cases.get_me import GetMe
-from finanzia.modules.identity.domain.entities import User, UserStatus
-from finanzia.modules.identity.domain.errors import UserNotFound
 from identity.fakes import InMemoryUserRepo
+from luka.modules.identity.application.use_cases.get_me import GetMe
+from luka.modules.identity.domain.entities import User, UserStatus
+from luka.modules.identity.domain.errors import UserNotFound
 
 NOW = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
 

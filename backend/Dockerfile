@@ -33,9 +33,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # --- runtime: solo el venv, alembic y las migraciones ------------------------
 FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
-LABEL org.opencontainers.image.title="finanzia-backend" \
-      org.opencontainers.image.description="API FastAPI y worker arq de finanzia" \
-      org.opencontainers.image.source="https://github.com/CristianmMst/finanzia" \
+LABEL org.opencontainers.image.title="luka-backend" \
+      org.opencontainers.image.description="API FastAPI y worker arq de luka" \
+      org.opencontainers.image.source="https://github.com/CristianmMst/luka" \
       org.opencontainers.image.licenses="LicenseRef-Proprietary"
 
 RUN groupadd --system --gid 10001 app \
@@ -61,4 +61,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 
 # uvicorn toma los procesos de WEB_CONCURRENCY (1 por defecto). El rate limit
 # vive en Redis, asi que varios procesos comparten el conteo.
-CMD ["uvicorn", "finanzia.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--timeout-graceful-shutdown", "20"]
+CMD ["uvicorn", "luka.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--timeout-graceful-shutdown", "20"]

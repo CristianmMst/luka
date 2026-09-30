@@ -15,18 +15,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from support.auth import AuthedUser
 from support.raw_messages import insert_raw_message
 
-from finanzia.events_registry import build_registry
-from finanzia.modules.ledger.domain.enums import Bank, Channel, Direction
-from finanzia.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
-from finanzia.modules.ledger.public import (
+from luka.events_registry import build_registry
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction
+from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
+from luka.modules.ledger.public import (
     CapturedTransactionCommand,
     SourceInput,
     TransactionCaptured,
     record_captured_transaction,
 )
-from finanzia.shared.clock import SystemClock
-from finanzia.shared.events.redis_streams import RedisStreamsEventBus
-from finanzia.shared.settings import Settings
+from luka.shared.clock import SystemClock
+from luka.shared.events.redis_streams import RedisStreamsEventBus
+from luka.shared.settings import Settings
 
 pytestmark = pytest.mark.integration
 
@@ -371,7 +371,7 @@ async def test_post_manual_publica_evento_decodable_y_dedupe_hit_no_agrega_event
     registry = build_registry()
     redis_client = redis_asyncio.from_url(str(settings.redis_url))
     try:
-        entries = await redis_client.xrange("finanzia:events:ledger.TransactionCaptured")
+        entries = await redis_client.xrange("luka:events:ledger.TransactionCaptured")
         assert len(entries) == 1
         _, fields = entries[0]
         event = registry.decode(fields)
@@ -406,7 +406,7 @@ async def test_post_manual_publica_evento_decodable_y_dedupe_hit_no_agrega_event
             second = await record_captured_transaction(session, bus, SystemClock(), cmd)
         assert second.created is False
 
-        entries_after = await redis_client.xrange("finanzia:events:ledger.TransactionCaptured")
+        entries_after = await redis_client.xrange("luka:events:ledger.TransactionCaptured")
         assert len(entries_after) == 2
     finally:
         await redis_client.aclose()

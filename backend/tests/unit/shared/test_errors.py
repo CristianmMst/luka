@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import pytest
 
-from finanzia.shared.errors import (
+from luka.shared.errors import (
     AppError,
     ConflictError,
     ForbiddenError,
