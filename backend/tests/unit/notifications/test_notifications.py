@@ -68,7 +68,14 @@ def test_aviso_de_un_dia_dice_manana() -> None:
     assert message.data == {"type": "recurring_due", "occurrence_id": str(_OCC)}
 
 
-def test_aviso_de_dos_dias_y_atrasado() -> None:
+def test_aviso_de_siete_y_dos_dias_y_atrasado() -> None:
+    week = due_reminder_message(
+        occurrence_id=_OCC,
+        name="Arriendo",
+        amount=Decimal("1500000"),
+        due_date=date(2026, 11, 5),
+        today=date(2026, 10, 29),
+    )
     two_days = due_reminder_message(
         occurrence_id=_OCC,
         name="Arriendo",
@@ -84,7 +91,10 @@ def test_aviso_de_dos_dias_y_atrasado() -> None:
         today=date(2026, 11, 5),
     )
 
-    assert two_days.body == "El 5 de noviembre se te descontarán $1.500.000 de tu cuenta."
+    assert week.body == "El 5 de noviembre se te descontarán $1.500.000 de tu cuenta."
+    assert two_days.body == (
+        "Pasado mañana, 5 de noviembre, se te descontarán $1.500.000 de tu cuenta."
+    )
     assert late.body == "Hoy se te descontarán $1.500.000 de tu cuenta."
 
 
@@ -271,11 +281,12 @@ class _Reminders:
         self.due = due
         self.marked: list[UUID] = []
 
-    async def still_due(self, occurrence_id: UUID) -> bool:
-        del occurrence_id
+    async def still_due(self, occurrence_id: UUID, days_before: int) -> bool:
+        del occurrence_id, days_before
         return self.due
 
-    async def mark_reminded(self, occurrence_id: UUID) -> bool:
+    async def mark_reminded(self, occurrence_id: UUID, days_before: int) -> bool:
+        del days_before
         self.marked.append(occurrence_id)
         return True
 

@@ -29,6 +29,7 @@ class DueReminderCommand:
     expected_amount: Decimal
     due_date: date
     today: date
+    days_before: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,7 +67,7 @@ class SendDueReminder:
         self._uow = uow
 
     async def execute(self, cmd: DueReminderCommand) -> ReminderResult:
-        if not await self._reminders.still_due(cmd.occurrence_id):
+        if not await self._reminders.still_due(cmd.occurrence_id, cmd.days_before):
             return ReminderResult(skipped=True, sent=0, removed=0)
         message = due_reminder_message(
             occurrence_id=cmd.occurrence_id,
@@ -89,7 +90,7 @@ class SendDueReminder:
                 await self._tokens.delete_token(token.token)
                 removed += 1
         if sent:
-            await self._reminders.mark_reminded(cmd.occurrence_id)
+            await self._reminders.mark_reminded(cmd.occurrence_id, cmd.days_before)
         await self._uow.commit()
         if not sent and unavailable is not None:
             raise unavailable

@@ -79,11 +79,26 @@ def pick_occurrence(
     return best[2]
 
 
-def reminder_due(occurrence: Occurrence, expense: RecurringExpense, today: date) -> bool:
-    """El aviso toca desde `due - remind_days_before` hasta `due`, una sola vez (spec 011 SS5)."""
-    if occurrence.status is not OccurrenceStatus.PENDING or occurrence.reminded_at is not None:
-        return False
-    if not expense.active:
-        return False
-    first_day = occurrence.due_date.toordinal() - expense.remind_days_before
-    return first_day <= today.toordinal() <= occurrence.due_date.toordinal()
+#: Avisos de cada gasto fijo, en dias antes del vencimiento (spec 011 SS5).
+REMINDER_OFFSETS = (7, 2, 1)
+
+
+def reminder_offset_due(
+    occurrence: Occurrence, expense: RecurringExpense, today: date
+) -> int | None:
+    """El aviso (7, 2 o 1 dias antes) que toca enviar hoy, o `None` (spec 011 SS5).
+
+    Cada aviso sale una sola vez y nunca uno mas lejano que el ultimo enviado. Si
+    el cron no corrio un dia, sale el aviso que correspondia (p. ej. el de 7 dias
+    a 6 dias del pago). El dia del vencimiento cuenta como el de 1 dia.
+    """
+    if occurrence.status is not OccurrenceStatus.PENDING or not expense.active:
+        return None
+    days_left = (occurrence.due_date - today).days
+    if days_left < 0 or days_left > max(REMINDER_OFFSETS):
+        return None
+    offset = min(o for o in REMINDER_OFFSETS if o >= days_left) if days_left else 1
+    last = occurrence.last_reminder_days
+    if last is not None and offset >= last:
+        return None
+    return offset

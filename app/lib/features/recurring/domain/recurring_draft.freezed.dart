@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RecurringDraft {
 
- String get name; Cop? get expectedAmount; int get dayOfMonth; int get remindDaysBefore; String? get categoryId; String? get accountId;
+ String get name; Cop? get expectedAmount; int get dayOfMonth; String? get categoryId; String? get accountId;
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RecurringDraftCopyWith<RecurringDraft> get copyWith => _$RecurringDraftCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.expectedAmount, expectedAmount) || other.expectedAmount == expectedAmount)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.remindDaysBefore, remindDaysBefore) || other.remindDaysBefore == remindDaysBefore)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecurringDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.expectedAmount, expectedAmount) || other.expectedAmount == expectedAmount)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,expectedAmount,dayOfMonth,remindDaysBefore,categoryId,accountId);
+int get hashCode => Object.hash(runtimeType,name,expectedAmount,dayOfMonth,categoryId,accountId);
 
 @override
 String toString() {
-  return 'RecurringDraft(name: $name, expectedAmount: $expectedAmount, dayOfMonth: $dayOfMonth, remindDaysBefore: $remindDaysBefore, categoryId: $categoryId, accountId: $accountId)';
+  return 'RecurringDraft(name: $name, expectedAmount: $expectedAmount, dayOfMonth: $dayOfMonth, categoryId: $categoryId, accountId: $accountId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $RecurringDraftCopyWith<$Res>  {
   factory $RecurringDraftCopyWith(RecurringDraft value, $Res Function(RecurringDraft) _then) = _$RecurringDraftCopyWithImpl;
 @useResult
 $Res call({
- String name, Cop? expectedAmount, int dayOfMonth, int remindDaysBefore, String? categoryId, String? accountId
+ String name, Cop? expectedAmount, int dayOfMonth, String? categoryId, String? accountId
 });
 
 
@@ -62,12 +62,11 @@ class _$RecurringDraftCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? expectedAmount = freezed,Object? dayOfMonth = null,Object? remindDaysBefore = null,Object? categoryId = freezed,Object? accountId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? expectedAmount = freezed,Object? dayOfMonth = null,Object? categoryId = freezed,Object? accountId = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,expectedAmount: freezed == expectedAmount ? _self.expectedAmount : expectedAmount // ignore: cast_nullable_to_non_nullable
 as Cop?,dayOfMonth: null == dayOfMonth ? _self.dayOfMonth : dayOfMonth // ignore: cast_nullable_to_non_nullable
-as int,remindDaysBefore: null == remindDaysBefore ? _self.remindDaysBefore : remindDaysBefore // ignore: cast_nullable_to_non_nullable
 as int,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -155,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  Cop? expectedAmount,  int dayOfMonth,  int remindDaysBefore,  String? categoryId,  String? accountId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  Cop? expectedAmount,  int dayOfMonth,  String? categoryId,  String? accountId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RecurringDraft() when $default != null:
-return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDaysBefore,_that.categoryId,_that.accountId);case _:
+return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.categoryId,_that.accountId);case _:
   return orElse();
 
 }
@@ -176,10 +175,10 @@ return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  Cop? expectedAmount,  int dayOfMonth,  int remindDaysBefore,  String? categoryId,  String? accountId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  Cop? expectedAmount,  int dayOfMonth,  String? categoryId,  String? accountId)  $default,) {final _that = this;
 switch (_that) {
 case _RecurringDraft():
-return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDaysBefore,_that.categoryId,_that.accountId);case _:
+return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.categoryId,_that.accountId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +195,10 @@ return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDay
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  Cop? expectedAmount,  int dayOfMonth,  int remindDaysBefore,  String? categoryId,  String? accountId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  Cop? expectedAmount,  int dayOfMonth,  String? categoryId,  String? accountId)?  $default,) {final _that = this;
 switch (_that) {
 case _RecurringDraft() when $default != null:
-return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDaysBefore,_that.categoryId,_that.accountId);case _:
+return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.categoryId,_that.accountId);case _:
   return null;
 
 }
@@ -211,13 +210,12 @@ return $default(_that.name,_that.expectedAmount,_that.dayOfMonth,_that.remindDay
 
 
 class _RecurringDraft extends RecurringDraft {
-  const _RecurringDraft({required this.name, this.expectedAmount, this.dayOfMonth = 0, this.remindDaysBefore = 1, this.categoryId, this.accountId}): super._();
+  const _RecurringDraft({required this.name, this.expectedAmount, this.dayOfMonth = 0, this.categoryId, this.accountId}): super._();
   
 
 @override final  String name;
 @override final  Cop? expectedAmount;
 @override@JsonKey() final  int dayOfMonth;
-@override@JsonKey() final  int remindDaysBefore;
 @override final  String? categoryId;
 @override final  String? accountId;
 
@@ -231,16 +229,16 @@ _$RecurringDraftCopyWith<_RecurringDraft> get copyWith => __$RecurringDraftCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.expectedAmount, expectedAmount) || other.expectedAmount == expectedAmount)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.remindDaysBefore, remindDaysBefore) || other.remindDaysBefore == remindDaysBefore)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RecurringDraft&&(identical(other.name, name) || other.name == name)&&(identical(other.expectedAmount, expectedAmount) || other.expectedAmount == expectedAmount)&&(identical(other.dayOfMonth, dayOfMonth) || other.dayOfMonth == dayOfMonth)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.accountId, accountId) || other.accountId == accountId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,expectedAmount,dayOfMonth,remindDaysBefore,categoryId,accountId);
+int get hashCode => Object.hash(runtimeType,name,expectedAmount,dayOfMonth,categoryId,accountId);
 
 @override
 String toString() {
-  return 'RecurringDraft(name: $name, expectedAmount: $expectedAmount, dayOfMonth: $dayOfMonth, remindDaysBefore: $remindDaysBefore, categoryId: $categoryId, accountId: $accountId)';
+  return 'RecurringDraft(name: $name, expectedAmount: $expectedAmount, dayOfMonth: $dayOfMonth, categoryId: $categoryId, accountId: $accountId)';
 }
 
 
@@ -251,7 +249,7 @@ abstract mixin class _$RecurringDraftCopyWith<$Res> implements $RecurringDraftCo
   factory _$RecurringDraftCopyWith(_RecurringDraft value, $Res Function(_RecurringDraft) _then) = __$RecurringDraftCopyWithImpl;
 @override @useResult
 $Res call({
- String name, Cop? expectedAmount, int dayOfMonth, int remindDaysBefore, String? categoryId, String? accountId
+ String name, Cop? expectedAmount, int dayOfMonth, String? categoryId, String? accountId
 });
 
 
@@ -268,12 +266,11 @@ class __$RecurringDraftCopyWithImpl<$Res>
 
 /// Create a copy of RecurringDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? expectedAmount = freezed,Object? dayOfMonth = null,Object? remindDaysBefore = null,Object? categoryId = freezed,Object? accountId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? expectedAmount = freezed,Object? dayOfMonth = null,Object? categoryId = freezed,Object? accountId = freezed,}) {
   return _then(_RecurringDraft(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,expectedAmount: freezed == expectedAmount ? _self.expectedAmount : expectedAmount // ignore: cast_nullable_to_non_nullable
 as Cop?,dayOfMonth: null == dayOfMonth ? _self.dayOfMonth : dayOfMonth // ignore: cast_nullable_to_non_nullable
-as int,remindDaysBefore: null == remindDaysBefore ? _self.remindDaysBefore : remindDaysBefore // ignore: cast_nullable_to_non_nullable
 as int,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String?,

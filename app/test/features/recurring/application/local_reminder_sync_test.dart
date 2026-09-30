@@ -95,7 +95,12 @@ void main() {
     await emit(c, OccurrenceStatus.pending);
 
     final [reminders] = scheduler.calls;
-    expect(reminders.single.fireAt, DateTime.utc(2026, 10, 21, 14));
+    // Faltan 7 días a las 09:00 del 15: se programan los tres avisos.
+    expect(reminders.map((r) => r.fireAt), [
+      DateTime.utc(2026, 10, 15, 14),
+      DateTime.utc(2026, 10, 20, 14),
+      DateTime.utc(2026, 10, 21, 14),
+    ]);
   });
 
   test('un pago tachado por el sync cancela el aviso', () async {

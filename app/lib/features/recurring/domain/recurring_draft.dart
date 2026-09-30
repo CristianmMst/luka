@@ -21,7 +21,6 @@ abstract class RecurringDraft with _$RecurringDraft {
     required String name,
     Cop? expectedAmount,
     @Default(0) int dayOfMonth,
-    @Default(1) int remindDaysBefore,
     String? categoryId,
     String? accountId,
   }) = _RecurringDraft;
@@ -34,7 +33,6 @@ abstract class RecurringDraft with _$RecurringDraft {
         name: expense.name,
         expectedAmount: expense.expectedAmount,
         dayOfMonth: expense.dayOfMonth,
-        remindDaysBefore: expense.remindDaysBefore,
         categoryId: expense.categoryId,
         accountId: expense.accountId,
       );

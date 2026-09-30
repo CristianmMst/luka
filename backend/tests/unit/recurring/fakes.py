@@ -166,9 +166,7 @@ class InMemoryOccurrences:
             [
                 r
                 for r in self.rows.values()
-                if r.status is OccurrenceStatus.PENDING
-                and r.reminded_at is None
-                and due_from <= r.due_date <= due_to
+                if r.status is OccurrenceStatus.PENDING and due_from <= r.due_date <= due_to
             ]
         )
 
@@ -180,11 +178,12 @@ class InMemoryOccurrences:
             return None
         return row, self._expenses.rows[row.recurring_expense_id]
 
-    async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
+    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
         row = self.rows.get(occurrence_id)
-        if row is None or row.reminded_at is not None:
+        last = row.last_reminder_days if row is not None else None
+        if row is None or (last is not None and last <= days_before):
             return False
-        self.rows[occurrence_id] = replace(row, reminded_at=now)
+        self.rows[occurrence_id] = replace(row, reminded_at=now, last_reminder_days=days_before)
         return True
 
 

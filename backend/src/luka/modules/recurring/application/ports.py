@@ -70,7 +70,7 @@ class OccurrenceRepositoryPort(Protocol):
     async def reminder_candidates(
         self, due_from: date, due_to: date
     ) -> list[tuple[Occurrence, RecurringExpense]]:
-        """`pending` sin aviso de gastos activos con `due_date` en el rango (todos los usuarios)."""
+        """`pending` de gastos activos con `due_date` en el rango (todos los usuarios)."""
         ...
 
     async def get_with_expense(
@@ -79,8 +79,8 @@ class OccurrenceRepositoryPort(Protocol):
         """La ocurrencia con su gasto fijo, sin filtrar por usuario (solo para el consumer)."""
         ...
 
-    async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
-        """Pone `reminded_at` si seguia nulo; `True` si lo marco."""
+    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
+        """Registra el aviso `days_before` si es mas cercano que el ultimo; `True` si lo marco."""
         ...
 
 

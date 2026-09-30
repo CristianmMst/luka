@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, replace
-from datetime import date, timedelta
+from datetime import timedelta
 from uuid import UUID
 
 from luka.modules.recurring.application.ports import (
@@ -22,7 +22,11 @@ from luka.modules.recurring.application.use_cases._common import (
     today_in_colombia,
 )
 from luka.modules.recurring.domain.enums import OccurrenceStatus
-from luka.modules.recurring.domain.matcher import TxCandidate, reminder_due
+from luka.modules.recurring.domain.matcher import (
+    REMINDER_OFFSETS,
+    TxCandidate,
+    reminder_offset_due,
+)
 from luka.modules.recurring.domain.schedule import colombia_date
 from luka.modules.recurring.events import PaymentDueSoon
 
@@ -125,13 +129,13 @@ class EnsureAllOccurrences:
 _REMINDER_NAMESPACE = uuid.UUID("0b0a6f0e-4a0e-4b6f-9d0b-6b1d2a6f5e11")
 
 
-def reminder_event_id(occurrence_id: UUID, today: date) -> UUID:
-    """Un `event_id` por ocurrencia y dia: el cron repetido no duplica el aviso."""
-    return uuid.uuid5(_REMINDER_NAMESPACE, f"{occurrence_id}:{today.isoformat()}")
+def reminder_event_id(occurrence_id: UUID, days_before: int) -> UUID:
+    """Un `event_id` por ocurrencia y aviso: el cron repetido no duplica el aviso."""
+    return uuid.uuid5(_REMINDER_NAMESPACE, f"{occurrence_id}:{days_before}")
 
 
 class PublishDueReminders:
-    """Cron diario: publica `PaymentDueSoon` de cada ocurrencia que toca avisar hoy."""
+    """Cron diario: publica `PaymentDueSoon` de cada aviso (7, 2 o 1 dias) que toca hoy."""
 
     def __init__(
         self,
@@ -146,21 +150,23 @@ class PublishDueReminders:
 
     async def execute(self) -> int:
         today = today_in_colombia(self._clock)
-        # El aviso mas temprano es 2 dias antes (spec 004 SS2.12): basta mirar hasta ahi.
-        rows = await self._occurrences.reminder_candidates(today, today + timedelta(days=2))
+        horizon = today + timedelta(days=max(REMINDER_OFFSETS))
+        rows = await self._occurrences.reminder_candidates(today, horizon)
         published = 0
         for occurrence, expense in rows:
-            if not reminder_due(occurrence, expense, today):
+            offset = reminder_offset_due(occurrence, expense, today)
+            if offset is None:
                 continue
             await self._events.publish(
                 PaymentDueSoon(
-                    event_id=reminder_event_id(occurrence.id, today),
+                    event_id=reminder_event_id(occurrence.id, offset),
                     occurred_at=self._clock.now(),
                     user_id=occurrence.user_id,
                     occurrence_id=occurrence.id,
                     name=expense.name,
                     expected_amount=expense.expected_amount,
                     due_date=occurrence.due_date.isoformat(),
+                    days_before=offset,
                 )
             )
             published += 1
@@ -177,14 +183,18 @@ class ReminderStatus:
         self._clock = clock
         self._uow = uow
 
-    async def still_due(self, occurrence_id: UUID) -> bool:
+    async def still_due(self, occurrence_id: UUID, days_before: int) -> bool:
+        """`True` si hoy sigue tocando ese aviso (no se pago, omitio ni se envio ya)."""
         pair = await self._occurrences.get_with_expense(occurrence_id)
         if pair is None:
             return False
         occurrence, expense = pair
-        return reminder_due(occurrence, expense, today_in_colombia(self._clock))
+        today = today_in_colombia(self._clock)
+        return reminder_offset_due(occurrence, expense, today) == days_before
 
-    async def mark_reminded(self, occurrence_id: UUID) -> bool:
-        marked = await self._occurrences.mark_reminded(occurrence_id, self._clock.now())
+    async def mark_reminded(self, occurrence_id: UUID, days_before: int) -> bool:
+        marked = await self._occurrences.mark_reminded(
+            occurrence_id, days_before, self._clock.now()
+        )
         await self._uow.commit()
         return marked

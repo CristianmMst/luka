@@ -111,10 +111,10 @@ void main() {
   ) async {
     await pump(tester, const RecurringPage());
 
-    final paidName = tester.widget<Text>(find.text('Spotify'));
+    final paidName = tester.widget<Text>(find.text('Spotify').first);
     expect(paidName.style?.decoration, TextDecoration.lineThrough);
     expect(find.text('Pagado el 12 oct · SPOTIFY P3A9C1'), findsOneWidget);
-    final pendingName = tester.widget<Text>(find.text('Arriendo'));
+    final pendingName = tester.widget<Text>(find.text('Arriendo').first);
     expect(pendingName.style?.decoration, isNot(TextDecoration.lineThrough));
     expect(find.text('Vence el 28 oct'), findsOneWidget);
     expect(
@@ -128,7 +128,7 @@ void main() {
   ) async {
     await pump(tester, const RecurringPage());
 
-    await tester.tap(find.text('Arriendo'));
+    await tester.tap(find.text('Arriendo').first);
     await tester.pumpAndSettle();
     expect(find.text('Omitir este mes'), findsOneWidget);
     await tester.tap(find.text('Marcar como pagado'));
@@ -142,7 +142,7 @@ void main() {
     when(() => actions.markPaid(any())).thenThrow(const RecurringOffline());
     await pump(tester, const RecurringPage());
 
-    await tester.tap(find.text('Arriendo'));
+    await tester.tap(find.text('Arriendo').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Marcar como pagado'));
     await tester.pumpAndSettle();
@@ -151,6 +151,22 @@ void main() {
       find.text('Necesitas conexión para cambiar tus gastos fijos.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('lista todos los gastos fijos configurados, también pausados', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const RecurringPage(),
+      expenses: [_spotify, _arriendo.copyWith(active: false)],
+    );
+
+    expect(find.text('TUS GASTOS FIJOS'), findsOneWidget);
+    expect(find.text(r'$16.900 · el 12 de cada mes'), findsOneWidget);
+    expect(find.text(r'$1.500.000 · el 28 de cada mes'), findsOneWidget);
+    expect(find.text('Pausado'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsNWidgets(2));
   });
 
   testWidgets('sin gastos fijos invita a crear el primero', (tester) async {

@@ -51,8 +51,8 @@ def due_reminder_message(
 ) -> PushMessage:
     """Recordatorio de un gasto fijo pendiente (spec 011 SS5).
 
-    Falta un dia: "Mañana, 22 de octubre, …"; vence hoy (aviso atrasado): "Hoy …";
-    en otro caso: "El 22 de octubre …".
+    Falta un dia: "Mañana, 22 de octubre, …"; dos: "Pasado mañana, 22 de octubre, …";
+    vence hoy (aviso atrasado): "Hoy …"; en otro caso (7 dias): "El 22 de octubre …".
     """
     money = format_cop(amount)
     days_left = (due_date - today).days
@@ -60,6 +60,8 @@ def due_reminder_message(
         when = "Hoy"
     elif days_left == 1:
         when = f"Mañana, {spanish_day(due_date)},"
+    elif days_left == 2:  # noqa: PLR2004 - aviso de 2 dias (spec 011 SS5)
+        when = f"Pasado mañana, {spanish_day(due_date)},"
     else:
         when = f"El {spanish_day(due_date)}"
     return PushMessage(

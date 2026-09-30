@@ -3694,18 +3694,6 @@ abstract class AppLocalizations {
   /// **'Cualquier cuenta'**
   String get recurringFormAnyAccount;
 
-  /// No description provided for @recurringFormRemind.
-  ///
-  /// In es, this message translates to:
-  /// **'Avisarme'**
-  String get recurringFormRemind;
-
-  /// No description provided for @recurringFormRemindDays.
-  ///
-  /// In es, this message translates to:
-  /// **'{days, plural, =1{1 día antes} other{{days} días antes}}'**
-  String recurringFormRemindDays(int days);
-
   /// No description provided for @recurringFormSave.
   ///
   /// In es, this message translates to:
@@ -3889,7 +3877,7 @@ abstract class AppLocalizations {
   /// No description provided for @pushAskBody.
   ///
   /// In es, this message translates to:
-  /// **'Te mandamos una notificación 1 o 2 días antes del vencimiento, solo si el pago todavía no aparece en luka.'**
+  /// **'Te mandamos una notificación 7 días, 2 días y 1 día antes del vencimiento, solo si el pago todavía no aparece en luka.'**
   String get pushAskBody;
 
   /// No description provided for @pushAskExampleTitle.
@@ -3945,6 +3933,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver'**
   String get pushForegroundAction;
+
+  /// No description provided for @recurringFormRemindNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Te avisamos 7 días, 2 días y 1 día antes, si el pago todavía no aparece.'**
+  String get recurringFormRemindNote;
+
+  /// No description provided for @recurringMyExpensesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus gastos fijos'**
+  String get recurringMyExpensesTitle;
+
+  /// No description provided for @recurringExpenseMeta.
+  ///
+  /// In es, this message translates to:
+  /// **'{amount} · el {day} de cada mes'**
+  String recurringExpenseMeta(String amount, int day);
+
+  /// No description provided for @recurringEditSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar {name}'**
+  String recurringEditSemantics(String name);
 }
 
 class _AppLocalizationsDelegate

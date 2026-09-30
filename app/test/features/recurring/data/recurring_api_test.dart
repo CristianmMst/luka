@@ -71,7 +71,6 @@ void main() {
       'name': 'Spotify',
       'expected_amount': '16900.00',
       'day_of_month': 22,
-      'remind_days_before': 1,
       'category_id': null,
       'account_id': null,
     });

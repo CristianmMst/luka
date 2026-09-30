@@ -2195,20 +2195,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recurringFormAnyAccount => 'Cualquier cuenta';
 
   @override
-  String get recurringFormRemind => 'Avisarme';
-
-  @override
-  String recurringFormRemindDays(int days) {
-    String _temp0 = intl.Intl.pluralLogic(
-      days,
-      locale: localeName,
-      other: '$days días antes',
-      one: '1 día antes',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get recurringFormSave => 'Guardar';
 
   @override
@@ -2316,7 +2302,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pushAskBody =>
-      'Te mandamos una notificación 1 o 2 días antes del vencimiento, solo si el pago todavía no aparece en luka.';
+      'Te mandamos una notificación 7 días, 2 días y 1 día antes del vencimiento, solo si el pago todavía no aparece en luka.';
 
   @override
   String get pushAskExampleTitle => 'Se acerca tu pago de Spotify';
@@ -2346,4 +2332,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pushForegroundAction => 'Ver';
+
+  @override
+  String get recurringFormRemindNote =>
+      'Te avisamos 7 días, 2 días y 1 día antes, si el pago todavía no aparece.';
+
+  @override
+  String get recurringMyExpensesTitle => 'Tus gastos fijos';
+
+  @override
+  String recurringExpenseMeta(String amount, int day) {
+    return '$amount · el $day de cada mes';
+  }
+
+  @override
+  String recurringEditSemantics(String name) {
+    return 'Editar $name';
+  }
 }

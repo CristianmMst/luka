@@ -13,7 +13,7 @@ final class LocalReminder {
     required this.body,
   });
 
-  /// Id del aviso en el sistema: hash estable del `occurrence_id`.
+  /// Id del aviso en el sistema: hash estable de `occurrence_id:días`.
   final int id;
   final String occurrenceId;
 
@@ -70,9 +70,12 @@ const _months = [
   'diciembre',
 ];
 
-/// Los avisos que deben quedar programados ahora (spec 011 §5.1): uno por
-/// ocurrencia pendiente de un gasto fijo activo, a las 09:00 de Colombia del
-/// día `vencimiento − días de aviso`. Los que ya pasaron no se programan.
+/// Avisos de cada gasto fijo, en días antes del vencimiento (spec 011 §5).
+const reminderOffsets = [7, 2, 1];
+
+/// Los avisos que deben quedar programados ahora (spec 011 §5.1): tres por
+/// ocurrencia pendiente de un gasto fijo activo (7, 2 y 1 días antes), a las
+/// 09:00 de Colombia. Los que ya pasaron no se programan.
 List<LocalReminder> plannedReminders({
   required List<RecurringOccurrence> occurrences,
   required List<RecurringExpense> expenses,
@@ -87,27 +90,29 @@ List<LocalReminder> plannedReminders({
     if (occurrence.status != OccurrenceStatus.pending) continue;
     if (!seen.add(occurrence.id)) continue;
     final due = occurrence.dueDate;
-    final fireDay = due.subtract(Duration(days: expense.remindDaysBefore));
-    final fireAt = DateTime.utc(
-      fireDay.year,
-      fireDay.month,
-      fireDay.day,
-      _reminderHourUtc,
-    );
-    if (!fireAt.isAfter(now)) continue;
-    reminders.add(
-      LocalReminder(
-        id: reminderIdFor(occurrence.id),
-        occurrenceId: occurrence.id,
-        fireAt: fireAt,
-        title: 'Se acerca tu pago de ${occurrence.name}',
-        body: reminderBody(
-          amount: occurrence.expectedAmount,
-          dueDate: due,
-          daysBefore: expense.remindDaysBefore,
+    for (final days in reminderOffsets) {
+      final fireDay = due.subtract(Duration(days: days));
+      final fireAt = DateTime.utc(
+        fireDay.year,
+        fireDay.month,
+        fireDay.day,
+        _reminderHourUtc,
+      );
+      if (!fireAt.isAfter(now)) continue;
+      reminders.add(
+        LocalReminder(
+          id: reminderIdFor('${occurrence.id}:$days'),
+          occurrenceId: occurrence.id,
+          fireAt: fireAt,
+          title: 'Se acerca tu pago de ${occurrence.name}',
+          body: reminderBody(
+            amount: occurrence.expectedAmount,
+            dueDate: due,
+            daysBefore: days,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
   reminders.sort((a, b) => a.fireAt.compareTo(b.fireAt));
   return reminders;
@@ -121,16 +126,18 @@ String reminderBody({
 }) {
   final day = '${dueDate.day} de ${_months[dueDate.month - 1]}';
   final money = formatCop(amount);
-  return daysBefore == 1
-      ? 'Mañana, $day, se te descontarán $money de tu cuenta.'
-      : 'El $day se te descontarán $money de tu cuenta.';
+  return switch (daysBefore) {
+    1 => 'Mañana, $day, se te descontarán $money de tu cuenta.',
+    2 => 'Pasado mañana, $day, se te descontarán $money de tu cuenta.',
+    _ => 'El $day se te descontarán $money de tu cuenta.',
+  };
 }
 
 /// Hash FNV-1a de 31 bits: estable entre ejecuciones (a diferencia de
 /// `String.hashCode`) y positivo, como exige el id de un aviso.
-int reminderIdFor(String occurrenceId) {
+int reminderIdFor(String key) {
   var hash = 0x811c9dc5;
-  for (final unit in occurrenceId.codeUnits) {
+  for (final unit in key.codeUnits) {
     hash ^= unit;
     hash = (hash * 0x01000193) & 0xffffffff;
   }

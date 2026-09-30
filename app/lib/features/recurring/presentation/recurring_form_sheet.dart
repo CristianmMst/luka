@@ -321,18 +321,10 @@ class _RecurringFormSheetState extends ConsumerState<RecurringFormSheet> {
             value: accountName,
             onTap: _busy ? null : () => unawaited(_pickAccount()),
           ),
-          Text(l10n.recurringFormRemind, style: label),
-          SegmentedButton<int>(
-            segments: [
-              for (final days in const [1, 2])
-                ButtonSegment(
-                  value: days,
-                  label: Text(l10n.recurringFormRemindDays(days)),
-                ),
-            ],
-            selected: {_draft.remindDaysBefore},
-            onSelectionChanged: (value) => setState(
-              () => _draft = _draft.copyWith(remindDaysBefore: value.first),
+          Text(
+            l10n.recurringFormRemindNote,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
           ),
           if (failure != null)

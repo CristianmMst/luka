@@ -1347,15 +1347,6 @@
   "recurringFormNoCategory": "Sin categoría",
   "recurringFormAccount": "Cuenta",
   "recurringFormAnyAccount": "Cualquier cuenta",
-  "recurringFormRemind": "Avisarme",
-  "recurringFormRemindDays": "{days, plural, =1{1 día antes} other{{days} días antes}}",
-  "@recurringFormRemindDays": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
   "recurringFormSave": "Guardar",
   "recurringFormCancel": "Cancelar",
   "recurringFormPause": "Pausar",
@@ -1420,7 +1411,7 @@
   },
   "detailCreateRecurring": "Crear gasto fijo con esto",
   "pushAskTitle": "¿Te avisamos antes de cada pago?",
-  "pushAskBody": "Te mandamos una notificación 1 o 2 días antes del vencimiento, solo si el pago todavía no aparece en luka.",
+  "pushAskBody": "Te mandamos una notificación 7 días, 2 días y 1 día antes del vencimiento, solo si el pago todavía no aparece en luka.",
   "pushAskExampleTitle": "Se acerca tu pago de Spotify",
   "pushAskExampleBody": "Mañana, 22 de octubre, se te descontarán $16.900 de tu cuenta.",
   "pushAskAllow": "Sí, avisarme",
@@ -1429,5 +1420,26 @@
   "pushOffAction": "Activar",
   "pushOffSettingsHint": "Actívalos en los ajustes del teléfono: Notificaciones → luka.",
   "pushForeground": "Tienes un pago por vencer",
-  "pushForegroundAction": "Ver"
+  "pushForegroundAction": "Ver",
+  "recurringFormRemindNote": "Te avisamos 7 días, 2 días y 1 día antes, si el pago todavía no aparece.",
+  "recurringMyExpensesTitle": "Tus gastos fijos",
+  "recurringExpenseMeta": "{amount} · el {day} de cada mes",
+  "@recurringExpenseMeta": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "recurringEditSemantics": "Editar {name}",
+  "@recurringEditSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

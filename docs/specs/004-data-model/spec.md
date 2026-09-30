@@ -238,7 +238,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | day_of_month | SMALLINT NOT NULL | `CHECK (day_of_month BETWEEN 1 AND 31)`; en meses más cortos vence el último día (spec 011 §3) |
 | category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher. La API exige que sea del sistema o del usuario (404 si no) |
 | account_id | UUID FK NULL | `→ linked_accounts ON DELETE SET NULL`; si está, el matcher exige esa cuenta |
-| remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))` |
+| remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))`. **Sin uso** desde que los avisos son siempre 7, 2 y 1 días antes (spec 011 §5); la API lo sigue aceptando para no romper builds viejos de la app |
 | active | BOOLEAN NOT NULL DEFAULT true | pausado = no genera ocurrencias ni avisa |
 | created_at / updated_at | TIMESTAMPTZ | |
 
@@ -257,14 +257,15 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | transaction_id | UUID NULL | la transacción que la pagó. Referencia entre módulos **sin FK**: con `ON DELETE SET NULL`, el consumer de `ledger.TransactionDeleted` ya no encontraría la ocurrencia para devolverla a `pending` (spec 011 §4) |
 | matched_by | TEXT NULL | `auto` / `manual` |
 | paid_at | TIMESTAMPTZ NULL | cuándo quedó pagada (el emparejamiento o la marca del usuario, no la fecha del movimiento) |
-| reminded_at | TIMESTAMPTZ NULL | cuándo se envió el recordatorio push; no nulo = no se vuelve a avisar (AC-12.7) |
+| reminded_at | TIMESTAMPTZ NULL | cuándo se envió el último recordatorio push |
+| last_reminder_days | SMALLINT NULL | el aviso más cercano ya enviado: 7, 2 o 1 (`CHECK`); nunca se envía uno igual o más lejano, así cada aviso sale a lo sumo una vez (AC-12.7, migración 0010) |
 | created_at / updated_at | TIMESTAMPTZ | |
 | UNIQUE | `(recurring_expense_id, period)` | una ocurrencia por mes; la generación usa `ON CONFLICT DO NOTHING` |
 | UNIQUE parcial | `(transaction_id) WHERE transaction_id IS NOT NULL` | una transacción paga a lo sumo una ocurrencia (spec 011 §4, regla 7) |
 | CHECK | `(status = 'paid') = (matched_by IS NOT NULL AND paid_at IS NOT NULL)` | consistencia del pago |
 | CHECK | `transaction_id IS NULL OR status = 'paid'` | solo una ocurrencia pagada tiene transacción |
 
-**Índices**: `(user_id, period)` para la lista del mes; `(due_date) WHERE status = 'pending' AND reminded_at IS NULL` para el cron de avisos; `(user_id, updated_at, id)` para el sync.
+**Índices**: `(user_id, period)` para la lista del mes; `(due_date) WHERE status = 'pending'` para el cron de avisos (migración 0010); `(user_id, updated_at, id)` para el sync.
 
 ### 2.14 `recurring_match_rejections` (recurring) — emparejamientos deshechos
 

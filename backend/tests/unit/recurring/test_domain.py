@@ -21,7 +21,7 @@ from luka.modules.recurring.domain.matcher import (
     TxCandidate,
     matches,
     pick_occurrence,
-    reminder_due,
+    reminder_offset_due,
     within_tolerance,
 )
 from luka.modules.recurring.domain.schedule import (
@@ -362,41 +362,45 @@ def test_rechazo_de_una_ocurrencia_no_bloquea_las_demas() -> None:
     assert pick_occurrence(_tx(), [(occ_a, expense_a), (occ_b, expense_b)], {occ_a.id}) == occ_b
 
 
-# --- Caso 10: recordatorio ------------------------------------------------------------------
+# --- Caso 10: recordatorios de 7, 2 y 1 dias --------------------------------------------
 
 
 @pytest.mark.parametrize(
-    ("days_before", "today", "due"),
+    ("today", "last", "expected"),
     [
-        (1, date(2026, 10, 21), True),
-        (1, date(2026, 10, 20), False),
-        (2, date(2026, 10, 20), True),
-        (2, date(2026, 10, 19), False),
-        (1, date(2026, 10, 22), True),
-        (1, date(2026, 10, 23), False),
+        (date(2026, 10, 14), None, None),  # 8 dias antes: todavia no
+        (date(2026, 10, 15), None, 7),
+        (date(2026, 10, 16), None, 7),  # el cron fallo el dia 15: sale igual
+        (date(2026, 10, 16), 7, None),  # ya salio el de 7
+        (date(2026, 10, 20), 7, 2),
+        (date(2026, 10, 20), 2, None),
+        (date(2026, 10, 21), 2, 1),
+        (date(2026, 10, 21), None, 1),  # sin avisos previos: el mas cercano
+        (date(2026, 10, 22), 2, 1),  # el dia del pago cuenta como el de 1
+        (date(2026, 10, 22), 1, None),
+        (date(2026, 10, 23), None, None),  # vencido: nunca se avisa
     ],
 )
-def test_reminder_due_desde_el_dia_del_aviso_hasta_el_vencimiento(
-    days_before: int, today: date, due: bool
+def test_reminder_offset_due_elige_el_aviso_que_toca(
+    today: date, last: int | None, expected: int | None
 ) -> None:
-    expense = _expense(remind_days_before=days_before)
-    occ = _occurrence(expense, date(2026, 10, 22))
-    assert reminder_due(occ, expense, today) is due
+    expense = _expense()
+    occ = _occurrence(expense, date(2026, 10, 22), last_reminder_days=last)
+    assert reminder_offset_due(occ, expense, today) == expected
 
 
-def test_reminder_no_se_repite_ni_avisa_pagado_omitido_o_pausado() -> None:
+def test_no_avisa_pagado_omitido_o_pausado() -> None:
     expense = _expense()
     today = date(2026, 10, 21)
     due = date(2026, 10, 22)
-    assert not reminder_due(_occurrence(expense, due, reminded_at=_NOW), expense, today)
     paid = _occurrence(
         expense, due, status=OccurrenceStatus.PAID, matched_by=MatchedBy.AUTO, paid_at=_NOW
     )
-    assert not reminder_due(paid, expense, today)
+    assert reminder_offset_due(paid, expense, today) is None
     skipped = _occurrence(expense, due, status=OccurrenceStatus.SKIPPED)
-    assert not reminder_due(skipped, expense, today)
+    assert reminder_offset_due(skipped, expense, today) is None
     paused = replace(expense, active=False)
-    assert not reminder_due(_occurrence(paused, due), paused, today)
+    assert reminder_offset_due(_occurrence(paused, due), paused, today) is None
 
 
 # --- Nombre como palabra clave (spec 011 SS4) ---------------------------------------

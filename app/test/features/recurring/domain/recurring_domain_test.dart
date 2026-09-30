@@ -137,7 +137,6 @@ void main() {
         ),
       );
       expect(draft.name, 'Arriendo');
-      expect(draft.remindDaysBefore, 2);
       expect(draft.accountId, 'a-1');
     });
   });

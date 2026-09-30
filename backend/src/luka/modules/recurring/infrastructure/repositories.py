@@ -6,7 +6,7 @@ from collections.abc import Collection
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,6 +50,7 @@ def occurrence_row_to_entity(row: RecurringOccurrenceRow) -> Occurrence:
         matched_by=MatchedBy(row.matched_by) if row.matched_by is not None else None,
         paid_at=row.paid_at,
         reminded_at=row.reminded_at,
+        last_reminder_days=row.last_reminder_days,
     )
 
 
@@ -269,7 +270,6 @@ class SqlAlchemyOccurrenceRepository:
             )
             .where(
                 RecurringOccurrenceRow.status == OccurrenceStatus.PENDING.value,
-                RecurringOccurrenceRow.reminded_at.is_(None),
                 RecurringOccurrenceRow.due_date >= due_from,
                 RecurringOccurrenceRow.due_date <= due_to,
                 RecurringExpenseRow.active.is_(True),
@@ -298,14 +298,15 @@ class SqlAlchemyOccurrenceRepository:
         occ, exp = row
         return occurrence_row_to_entity(occ), expense_row_to_entity(exp)
 
-    async def mark_reminded(self, occurrence_id: UUID, now: datetime) -> bool:
+    async def mark_reminded(self, occurrence_id: UUID, days_before: int, now: datetime) -> bool:
+        last = RecurringOccurrenceRow.last_reminder_days
         stmt = (
             update(RecurringOccurrenceRow)
             .where(
                 RecurringOccurrenceRow.id == occurrence_id,
-                RecurringOccurrenceRow.reminded_at.is_(None),
+                or_(last.is_(None), last > days_before),
             )
-            .values(reminded_at=now)
+            .values(reminded_at=now, last_reminder_days=days_before)
             .returning(RecurringOccurrenceRow.id)
         )
         return (await self._session.execute(stmt)).scalar_one_or_none() is not None

@@ -196,15 +196,19 @@ class _RecurringPageState extends ConsumerState<RecurringPage> {
                 ),
               ),
               const SizedBox(height: Space.lg),
-              for (final expense in expenses.where((e) => !e.active))
-                ListTile(
-                  title: Text(expense.name),
-                  subtitle: Text(expectedAmountText(expense.expectedAmount)),
-                  trailing: Chip(label: Text(l10n.recurringPausedBadge)),
-                  onTap: () => unawaited(
-                    RecurringFormSheet.show(context, existing: expense),
+              Semantics(
+                header: true,
+                child: Text(
+                  l10n.recurringMyExpensesTitle.toUpperCase(),
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
+              ),
+              const SizedBox(height: Space.sm),
+              _ExpensesCard(expenses: expenses),
             ],
           ],
         ),
@@ -255,6 +259,69 @@ class _EmptyState extends StatelessWidget {
                 minimumSize: const Size.fromHeight(52),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Tus gastos fijos": todos los configurados, activos y pausados. Tocar uno
+/// abre su hoja para editarlo, pausarlo o borrarlo (spec 008 §3.8).
+class _ExpensesCard extends StatelessWidget {
+  const _ExpensesCard({required this.expenses});
+
+  final List<RecurringExpense> expenses;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: context.lukaColors.card,
+        borderRadius: Radii.noticeAll,
+      ),
+      child: ClipRRect(
+        borderRadius: Radii.noticeAll,
+        child: Column(
+          children: [
+            for (final (i, expense) in expenses.indexed) ...[
+              if (i > 0) Divider(height: 1, color: scheme.surfaceContainer),
+              ListTile(
+                minTileHeight: 64,
+                title: Text(
+                  expense.name,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: expense.active ? null : scheme.onSurfaceVariant,
+                  ),
+                ),
+                subtitle: Text(
+                  l10n.recurringExpenseMeta(
+                    expectedAmountText(expense.expectedAmount),
+                    expense.dayOfMonth,
+                  ),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: Space.xs,
+                  children: [
+                    if (!expense.active)
+                      Chip(label: Text(l10n.recurringPausedBadge)),
+                    Icon(
+                      Icons.edit_outlined,
+                      color: scheme.onSurfaceVariant,
+                      semanticLabel: l10n.recurringEditSemantics(expense.name),
+                    ),
+                  ],
+                ),
+                onTap: () => unawaited(
+                  RecurringFormSheet.show(context, existing: expense),
+                ),
+              ),
+            ],
           ],
         ),
       ),

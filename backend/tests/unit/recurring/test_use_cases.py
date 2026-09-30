@@ -379,7 +379,7 @@ class _Bus:
         self.events.append(event)
 
 
-async def test_publica_el_aviso_el_dia_anterior_con_event_id_por_dia() -> None:
+async def test_avisa_a_los_7_2_y_1_dias_una_vez_cada_uno() -> None:
     from luka.modules.recurring.application.use_cases.background import (  # noqa: PLC0415
         PublishDueReminders,
         ReminderStatus,
@@ -387,25 +387,27 @@ async def test_publica_el_aviso_el_dia_anterior_con_event_id_por_dia() -> None:
     )
     from luka.modules.recurring.events import PaymentDueSoon  # noqa: PLC0415
 
-    repos = RecurringRepos(datetime(2026, 10, 21, 14, 0, tzinfo=UTC))
+    repos = RecurringRepos(datetime(2026, 10, 15, 14, 0, tzinfo=UTC))
     await _create(repos).execute(_USER, _input())
-    bus = _Bus()
-    publish = PublishDueReminders(occurrences=repos.occurrences, events=bus, clock=repos.clock)
-
-    assert await publish.execute() == 1
-    (event,) = bus.events
-    assert isinstance(event, PaymentDueSoon)
-    assert event.due_date == "2026-10-22"
-    assert event.expected_amount == Decimal("16900.00")
-    assert event.event_id == reminder_event_id(event.occurrence_id, date(2026, 10, 21))
-
     status = ReminderStatus(occurrences=repos.occurrences, clock=repos.clock, uow=repos.uow)
-    assert await status.still_due(event.occurrence_id) is True
-    assert await status.mark_reminded(event.occurrence_id) is True
-    assert await status.mark_reminded(event.occurrence_id) is False
-    assert await status.still_due(event.occurrence_id) is False
-    assert await status.still_due(uuid4()) is False
-    assert await publish.execute() == 0
+    sent: list[int] = []
+
+    for day in (15, 16, 20, 21, 22):
+        repos.clock._now = datetime(2026, 10, day, 14, 0, tzinfo=UTC)
+        bus = _Bus()
+        await PublishDueReminders(
+            occurrences=repos.occurrences, events=bus, clock=repos.clock
+        ).execute()
+        for event in bus.events:
+            assert isinstance(event, PaymentDueSoon)
+            assert event.event_id == reminder_event_id(event.occurrence_id, event.days_before)
+            assert await status.still_due(event.occurrence_id, event.days_before)
+            assert await status.mark_reminded(event.occurrence_id, event.days_before)
+            assert not await status.mark_reminded(event.occurrence_id, event.days_before)
+            sent.append(event.days_before)
+
+    assert sent == [7, 2, 1]
+    assert await status.still_due(uuid4(), 1) is False
 
 
 async def test_no_publica_antes_de_tiempo_ni_si_ya_esta_pagado() -> None:
@@ -413,7 +415,8 @@ async def test_no_publica_antes_de_tiempo_ni_si_ya_esta_pagado() -> None:
         PublishDueReminders,
     )
 
-    repos = RecurringRepos(datetime(2026, 10, 20, 14, 0, tzinfo=UTC))
+    # 14 de octubre: faltan 8 dias para Spotify (22) y 7 para Netflix (21), que ya se pago.
+    repos = RecurringRepos(datetime(2026, 10, 14, 14, 0, tzinfo=UTC))
     await _create(repos).execute(_USER, _input())
     await _create(repos).execute(
         _USER, _input(name="Netflix", merchant_keyword="netflix", day_of_month=21)

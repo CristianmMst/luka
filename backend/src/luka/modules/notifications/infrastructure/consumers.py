@@ -54,6 +54,7 @@ def make_payment_due_soon_handler(
             expected_amount=event.expected_amount,
             due_date=date.fromisoformat(event.due_date),
             today=_colombia_today(clock),
+            days_before=event.days_before,
         )
         async with session_factory() as session:
             use_case = SendDueReminder(
