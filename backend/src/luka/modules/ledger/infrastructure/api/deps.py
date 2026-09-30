@@ -128,11 +128,15 @@ def get_update_transaction_use_case(
 def get_delete_transaction_use_case(
     session: AsyncSession = Depends(get_session),
     clock: SystemClock = Depends(get_clock),
+    ids: SecretsIdGenerator = Depends(get_ids),
+    events: BusEventPublisher = Depends(get_event_publisher),
 ) -> DeleteTransaction:
     return DeleteTransaction(
         transactions=SqlAlchemyTransactionRepository(session),
         categories=SqlAlchemyCategoryRepository(session),
+        events=events,
         clock=clock,
+        ids=ids,
         uow=SqlAlchemyUnitOfWork(session),
     )
 

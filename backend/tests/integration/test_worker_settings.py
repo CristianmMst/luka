@@ -207,7 +207,7 @@ async def test_on_startup_sin_api_key_arranca_4_tareas_y_loguea_estado_deshabili
     with structlog.testing.capture_logs() as captured:
         await worker_settings_module.on_startup(ctx)
     try:
-        assert len(ctx["events_tasks"]) == 4
+        assert len(ctx["events_tasks"]) == 6
         assert all(isinstance(task, asyncio.Task) for task in ctx["events_tasks"])
         assert isinstance(ctx["gmail_client"], GoogleGmailClient)
 
@@ -233,7 +233,7 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
     redis_clean: None,
     db_clean: None,
 ) -> None:
-    """Task 9: `on_shutdown` cancela las 4 tareas supervisadas, cierra el
+    """Task 9: `on_shutdown` cancela las 6 tareas supervisadas, cierra el
     `httpx.AsyncClient` compartido y no deja tareas de fondo colgadas.
     """
     del redis_clean, db_clean
@@ -256,20 +256,22 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
     assert lingering == []
 
 
-def test_cron_jobs_tiene_los_tres_jobs_con_sus_horarios(worker_settings_module) -> None:
+def test_cron_jobs_tiene_los_cuatro_jobs_con_sus_horarios(worker_settings_module) -> None:
     """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 08:00 UTC (= 03:00 en
     Bogota, el contenedor corre en UTC) y reencolado cada 15 min
     (`minute={0,15,30,45}`). Task 5 (F3.5): renovacion de watches en el mismo
-    horario que la purga. Ninguno corre al arrancar (`run_at_startup=False`).
+    horario que la purga. F7.4: ocurrencias de gastos fijos a las 10:00 UTC (= 05:00
+    en Bogota). Ninguno corre al arrancar (`run_at_startup=False`).
     """
     cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
-    assert len(cron_jobs) == 3
+    assert len(cron_jobs) == 4
 
     by_name = {job.name: job for job in cron_jobs}
     assert set(by_name) == {
         "cron:purge_raw_message_bodies",
         "cron:requeue_pending_raw_messages",
         "cron:renew_gmail_watches",
+        "cron:ensure_recurring_occurrences",
     }
 
     purge_job = by_name["cron:purge_raw_message_bodies"]
@@ -286,10 +288,20 @@ def test_cron_jobs_tiene_los_tres_jobs_con_sus_horarios(worker_settings_module) 
     assert renew_job.minute == 0
     assert renew_job.run_at_startup is False
 
+    recurring_job = by_name["cron:ensure_recurring_occurrences"]
+    assert recurring_job.hour == 10  # UTC = 05:00 America/Bogota
+    assert recurring_job.minute == 0
+    assert recurring_job.run_at_startup is False
+
 
 @pytest.mark.parametrize(
     "job_name",
-    ["purge_raw_message_bodies", "requeue_pending_raw_messages", "renew_gmail_watches"],
+    [
+        "purge_raw_message_bodies",
+        "requeue_pending_raw_messages",
+        "renew_gmail_watches",
+        "ensure_recurring_occurrences",
+    ],
 )
 async def test_crons_con_ctx_vacio_loguean_y_no_revientan(worker_settings_module, job_name) -> None:
     """Si `on_startup` murio a mitad, `ctx` no trae las claves de eventos: los crons

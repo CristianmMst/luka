@@ -39,6 +39,7 @@ from luka.modules.ledger.domain.enums import (
 from luka.modules.ledger.domain.errors import NotManualTransaction, TransactionNotFound
 from luka.modules.ledger.domain.merchant import normalize_merchant
 from luka.modules.ledger.domain.transfers import NoMatch, find_transfer_match
+from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
 
 NOW = datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC)
 USER = uuid4()
@@ -63,7 +64,9 @@ def _delete_use_case(repos) -> DeleteTransaction:
     return DeleteTransaction(
         transactions=repos.transactions,
         categories=repos.categories,
+        events=repos.events,
         clock=FixedClock(NOW),
+        ids=repos.ids,
         uow=repos.uow,
     )
 
@@ -280,6 +283,31 @@ async def test_patch_kind_expense_en_par_restaura_ambas_y_excluye_mutuamente() -
     assert refreshed_credit.id in updated_debit.transfer_exclusions
     assert updated_debit.id in refreshed_credit.transfer_exclusions
     assert isinstance(find_transfer_match(updated_debit, [refreshed_credit]), NoMatch)
+
+
+@pytest.mark.unit
+async def test_crear_manual_publica_comercio_y_cuenta_en_transaction_captured() -> None:
+    repos = await build_ledger_repos()
+    tx = await _create_manual(repos, merchant="Spotify")
+
+    event = repos.events.events[-1]
+    assert isinstance(event, TransactionCaptured)
+    assert event.merchant == tx.merchant
+    assert event.account_id is None
+
+
+@pytest.mark.unit
+async def test_borrar_manual_publica_transaction_deleted_despues_del_commit() -> None:
+    repos = await build_ledger_repos()
+    tx = await _create_manual(repos)
+    use_case = _delete_use_case(repos)
+
+    await use_case.execute(USER, tx.id)
+
+    event = repos.events.events[-1]
+    assert isinstance(event, TransactionDeleted)
+    assert event.user_id == USER
+    assert event.transaction_id == tx.id
 
 
 @pytest.mark.unit

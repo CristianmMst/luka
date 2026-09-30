@@ -212,17 +212,17 @@ Reglas en spec 011, tablas en spec 004 §2.12–2.15. Todo es autenticado, filtr
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/recurring-expenses` | Lista completa de los gastos fijos propios (activos y pausados), ordenada por `day_of_month` y luego `name`. Sin paginación: se espera un número pequeño |
-| POST | `/recurring-expenses` | Crea. Body: `name`, `merchant_keyword`, `expected_amount`, `amount_tolerance_pct?` (10), `day_of_month`, `category_id?`, `account_id?`, `remind_days_before?` (1). Crea las ocurrencias del mes actual y del siguiente y corre el barrido retroactivo (spec 011 §3, §4) antes de responder. 201 con el recurso y sus ocurrencias |
+| POST | `/recurring-expenses` | Crea. Body: `name`, `merchant_keyword`, `expected_amount`, `amount_tolerance_pct?` (10), `day_of_month`, `category_id?`, `account_id?`, `remind_days_before?` (1). Crea las ocurrencias del mes actual y del siguiente y corre el barrido retroactivo (spec 011 §3, §4) antes de responder. 201 con el recurso; la app trae las ocurrencias con un sync |
 | PATCH | `/recurring-expenses/{id}` | Editables: todos los del POST y `active`. Cambiar el día recalcula las ocurrencias `pending`; cambiar keyword, monto, tolerancia, día o cuenta repite el barrido; `active: false` borra las ocurrencias `pending` futuras. 200 con el recurso |
 | DELETE | `/recurring-expenses/{id}` | Borra el gasto fijo y sus ocurrencias (CASCADE). Las transacciones no se tocan. 204 |
 | GET | `/recurring-occurrences?from=2026-09&to=2026-11` | Ocurrencias propias con `period` entre ambos meses (incluidos; máximo 12 meses de rango, si no 400 `field=to`), cada una con su gasto fijo embebido (`name`, `merchant_keyword`, `expected_amount`, `category_id`) y, si está pagada, `transaction` resumida (`id`, `merchant`, `amount`, `occurred_at`). Orden `(due_date, name)` |
-| POST | `/recurring-occurrences/{id}/mark-paid` | Body `{ "transaction_id": "<uuid>" \| null }`. Sin transacción: pagada a mano. Con transacción: debe ser un gasto propio (si no, 404) de `kind = expense`, y si ya paga otra ocurrencia → 409 `field=transaction_id`. Sobre una ocurrencia ya pagada reemplaza el emparejamiento. 200 |
-| POST | `/recurring-occurrences/{id}/unmark` | Vuelve a `pending`; si era `auto`, crea el rechazo (spec 004 §2.14). Sobre una `pending` → 409. 200 |
-| POST | `/recurring-occurrences/{id}/skip` | `skipped`, liberando la transacción si tenía. 200. `unmark` la devuelve a `pending` |
+| POST | `/recurring-occurrences/{id}/mark-paid` | Body `{ "transaction_id": "<uuid>" \| null }`. Sin transacción: pagada a mano. Con transacción: debe ser propia (si no, 404 `field=transaction_id`), un gasto (`expense` + `debit`; si no, 400 `field=transaction_id`) y no pagar ya otra ocurrencia (si no, 409 `field=transaction_id`). Sobre una ocurrencia ya pagada reemplaza el emparejamiento. 200 con la ocurrencia |
+| POST | `/recurring-occurrences/{id}/unmark` | Vuelve a `pending`; si era `auto`, crea el rechazo (spec 004 §2.14). Sobre una `pending` → 409. 200 con la ocurrencia |
+| POST | `/recurring-occurrences/{id}/skip` | `skipped`, liberando la transacción si tenía. 200 con la ocurrencia. `unmark` la devuelve a `pending` |
 | PUT | `/devices/push-token` | Body `{ "token", "platform": "android" \| "ios" }`. Upsert por `token`: lo asigna al usuario del JWT (aunque antes fuera de otro) y actualiza `last_seen_at`. `token` de 1 a 4096 caracteres. 204 |
 | DELETE | `/devices/push-token` | Body `{ "token" }`. Borra ese token si es del usuario; si no existe, igual responde 204 (idempotente) |
 
-Validaciones (400 `validation_error` con `field`): `name` de 1 a 60 caracteres; `merchant_keyword` de 2 a 40 y con al menos 2 letras o dígitos después de normalizar; `expected_amount` > 0 como string decimal (§1); `amount_tolerance_pct` de 0 a 50; `day_of_month` de 1 a 31; `remind_days_before` 1 o 2. Un `category_id` o `account_id` ajeno responde 404, como en `/transactions`.
+Validaciones (400 `validation_error` con `field`): `name` de 1 a 60 caracteres (se colapsan los espacios); `merchant_keyword` de 2 a 40 y con al menos 2 letras o dígitos después de normalizar; `expected_amount` > 0 como string decimal (§1); `amount_tolerance_pct` de 0 a 50; `day_of_month` de 1 a 31; `remind_days_before` 1 o 2. En un `PATCH`, esos campos no aceptan `null` (400); `category_id` y `account_id` sí (lo quita). Un `category_id` o `account_id` que no es del sistema ni del usuario responde 404 con ese `field`. `from`/`to` que no son `AAAA-MM` responden 400 con su `field`.
 
 Ejemplo de una ocurrencia:
 

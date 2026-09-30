@@ -40,7 +40,7 @@ Lógica pura en `recurring/domain/calendar.py` (P3, TDD).
 - **Generación:** el cron `ensure_recurring_occurrences` (arq, diario a las **10:00 UTC = 05:00 Colombia**) crea, por cada gasto fijo `active`, la ocurrencia del mes actual y la del siguiente. Es idempotente por `UNIQUE (recurring_expense_id, period)` (`INSERT … ON CONFLICT DO NOTHING`).
 - **Al crear un gasto fijo**, el caso de uso crea en la misma transacción de BD la ocurrencia del mes actual y la del siguiente, sin esperar al cron. Si el `due_date` del mes actual ya pasó hace más de 5 días, la ocurrencia de ese mes no se crea: el gasto empieza a contar el mes siguiente. El cron respeta la misma regla: para un mes en curso, solo crea la ocurrencia de un gasto fijo creado antes de `due_date + 5 d`.
 - **Editar el día** recalcula `due_date` de las ocurrencias `pending` desde el mes actual; las `paid` y `skipped` no cambian.
-- **Pausar** (`active = false`) borra las ocurrencias `pending` futuras (`period` > mes actual) y deja de generar nuevas. La del mes actual se conserva. **Borrar** un gasto fijo borra sus ocurrencias (CASCADE); las transacciones no se tocan.
+- **Pausar** (`active = false`) borra las ocurrencias `pending` futuras (`period` > mes actual) y deja de generar nuevas. La del mes actual se conserva. **Reanudar** crea la del mes actual y la del siguiente con la misma regla de "creado hoy" y repite el barrido. **Borrar** un gasto fijo borra sus ocurrencias (CASCADE); las transacciones no se tocan.
 - El historial conserva las ocurrencias pasadas para mostrar "pagado / sin detectar" por mes.
 
 ## 4. Matcher de pagos
@@ -76,14 +76,14 @@ Reglas:
 - `ledger.TransactionCaptured`, el evento de toda transacción nueva, capturada o manual (spec 003 §2.3). Se amplía con `merchant` (el comercio ya normalizado de la transacción) y `account_id`, que el matcher necesita. `recurring` no lee tablas de `ledger`: usa el evento y, para el barrido retroactivo, `ledger.public`.
 - **Crear o editar un gasto fijo** (keyword, monto, tolerancia, día o cuenta) dispara un barrido retroactivo: se piden a `ledger.public.expenses_in_window(user_id, desde, hasta)` las transacciones de la ventana de cada ocurrencia `pending` y se les aplica el mismo matcher. Así, si el usuario registra Spotify el 23 y el pago del 22 ya estaba capturado, la ocurrencia nace tachada.
 - **Editar una transacción** (comercio, `kind`) no vuelve a correr el matcher en v1. Si un emparejamiento automático queda mal, el usuario lo deshace (§4.1).
-- `ledger.TransactionDeleted` (evento nuevo, publicado por `DELETE /transactions/{id}`, que solo aplica a transacciones manuales): la ocurrencia que esa transacción pagaba vuelve a `pending` y se limpian `transaction_id`, `paid_at` y `matched_by`. La FK `ON DELETE SET NULL` es la red de seguridad; el cron de §3 también devuelve a `pending` cualquier `paid` con `matched_by = auto` y `transaction_id` nulo.
+- `ledger.TransactionDeleted` (evento nuevo, publicado por `DELETE /transactions/{id}` después del commit; solo aplica a transacciones manuales): la ocurrencia que esa transacción pagaba vuelve a `pending` y se limpian `transaction_id`, `paid_at` y `matched_by`. Por eso `transaction_id` no lleva FK (spec 004 §2.13): el consumer la busca por ese id después del borrado. Si el evento se pierde (el bus no respondió), la ocurrencia queda pagada con un id que ya no existe y la app la muestra "Pagado" sin movimiento; el usuario la corrige con "Deshacer".
 
 ### 4.1 Acciones del usuario
 
 | Acción | Efecto |
 |---|---|
 | Marcar como pagado | `paid`, `matched_by = manual`, `paid_at = now()`, sin transacción (p. ej. pagó en efectivo o por un canal que luka no captura) |
-| Elegir movimiento | `paid`, `matched_by = manual`, con esa `transaction_id`. Debe ser un gasto propio que no pague ya otra ocurrencia (si no, 409) |
+| Elegir movimiento | `paid`, `matched_by = manual`, con esa `transaction_id`. Debe ser propia (si no, 404), un gasto (`expense` + `debit`; si no, 400) y no pagar ya otra ocurrencia (si no, 409) |
 | Deshacer | Vuelve a `pending` y limpia la transacción. Si era `auto`, registra el rechazo del par para que no se reempareje solo |
 | Omitir este mes | `skipped` (p. ej. no se cobró o se pausó el servicio). No se avisa ni se empareja. Deshacer lo devuelve a `pending` |
 

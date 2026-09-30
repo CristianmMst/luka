@@ -7,12 +7,14 @@ puede importar eventos de cualquier modulo.
 
 from luka.modules.identity.events import UserDeleted
 from luka.modules.ingestion.events import RawMessageReceived
-from luka.modules.ledger.events import TransactionCaptured
+from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
 from luka.modules.parsing.events import ParseFailed, TransactionParsed
 from luka.shared.events.codec import EventRegistry
 from luka.shared.events.redis_streams import RedisStreamsEventBus
 
-# Grupo de consumidores por evento (D10, F2.2): un evento -> un unico grupo hoy.
+# Grupo de consumidores por evento (D10, F2.2). Un evento puede tener varios grupos
+# (`ledger.TransactionCaptured` lo leen el observador y recurring, spec 011 SS4):
+# cada grupo recibe su propia copia de cada entrada del stream.
 # Se crean (idempotente) tanto al arrancar la API (`app.py`) como el worker
 # (`StreamConsumer.run`, via `ensure_group`), para que un evento publicado antes
 # del primer arranque del worker no se pierda.
@@ -21,6 +23,8 @@ CONSUMER_GROUPS: tuple[tuple[str, str], ...] = (
     ("parsing.TransactionParsed", "ledger"),
     ("parsing.ParseFailed", "ledger-review"),
     ("ledger.TransactionCaptured", "ledger-observer"),
+    ("ledger.TransactionCaptured", "recurring"),
+    ("ledger.TransactionDeleted", "recurring"),
 )
 
 
@@ -28,6 +32,7 @@ def build_registry() -> EventRegistry:
     """`EventRegistry` con todos los eventos de dominio publicados hoy (F1.8/F2.2)."""
     registry = EventRegistry()
     registry.register(TransactionCaptured)
+    registry.register(TransactionDeleted)
     registry.register(UserDeleted)
     registry.register(RawMessageReceived)
     registry.register(TransactionParsed)

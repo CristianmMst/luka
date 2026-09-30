@@ -114,6 +114,8 @@ class ConvertReviewItem:
                 category_id=tx.category_id,
                 transaction_occurred_at=tx.occurred_at,
                 created=True,
+                merchant=tx.merchant,
+                account_id=tx.account_id,
             )
         )
 

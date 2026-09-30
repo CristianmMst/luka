@@ -236,7 +236,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | expected_amount | NUMERIC(14,2) NOT NULL | `CHECK (expected_amount > 0)` |
 | amount_tolerance_pct | SMALLINT NOT NULL DEFAULT 10 | `CHECK (amount_tolerance_pct BETWEEN 0 AND 50)` |
 | day_of_month | SMALLINT NOT NULL | `CHECK (day_of_month BETWEEN 1 AND 31)`; en meses más cortos vence el último día (spec 011 §3) |
-| category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher |
+| category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher. La API exige que sea del sistema o del usuario (404 si no) |
 | account_id | UUID FK NULL | `→ linked_accounts ON DELETE SET NULL`; si está, el matcher exige esa cuenta |
 | remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))` |
 | active | BOOLEAN NOT NULL DEFAULT true | pausado = no genera ocurrencias ni avisa |
@@ -254,7 +254,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | period | DATE NOT NULL | primer día del mes (`2026-10-01`) |
 | due_date | DATE NOT NULL | vencimiento en fecha local de Colombia (spec 011 §3) |
 | status | TEXT NOT NULL DEFAULT 'pending' | `pending` / `paid` / `skipped` |
-| transaction_id | UUID FK NULL | `→ transactions ON DELETE SET NULL`; la transacción que la pagó |
+| transaction_id | UUID NULL | la transacción que la pagó. Referencia entre módulos **sin FK**: con `ON DELETE SET NULL`, el consumer de `ledger.TransactionDeleted` ya no encontraría la ocurrencia para devolverla a `pending` (spec 011 §4) |
 | matched_by | TEXT NULL | `auto` / `manual` |
 | paid_at | TIMESTAMPTZ NULL | cuándo quedó pagada (el emparejamiento o la marca del usuario, no la fecha del movimiento) |
 | reminded_at | TIMESTAMPTZ NULL | cuándo se envió el recordatorio push; no nulo = no se vuelve a avisar (AC-12.7) |
@@ -271,7 +271,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | Columna | Tipo | Notas |
 |---|---|---|
 | occurrence_id | UUID FK | `→ recurring_occurrences ON DELETE CASCADE` |
-| transaction_id | UUID FK | `→ transactions ON DELETE CASCADE` |
+| transaction_id | UUID | sin FK (como en §2.13); la fila se va con su ocurrencia |
 | created_at | TIMESTAMPTZ | |
 | PK | `(occurrence_id, transaction_id)` | el matcher no vuelve a proponer este par (AC-12.4) |
 

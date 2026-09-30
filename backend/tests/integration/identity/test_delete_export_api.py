@@ -28,6 +28,8 @@ _USER_TABLES = (
     "transactions WHERE user_id = :u",
     "merchant_rules WHERE user_id = :u",
     "review_queue WHERE user_id = :u",
+    "recurring_expenses WHERE user_id = :u",
+    "recurring_occurrences WHERE user_id = :u",
 )
 
 
@@ -58,6 +60,17 @@ async def _seed(client: AsyncClient, user: AuthedUser) -> None:
         headers=user.headers,
     )
     assert tx.status_code == 201, tx.text
+    recurring = await client.post(
+        "/v1/recurring-expenses",
+        json={
+            "name": "Veterinaria mensual",
+            "merchant_keyword": "Veterinaria",
+            "expected_amount": "45900",
+            "day_of_month": 26,
+        },
+        headers=user.headers,
+    )
+    assert recurring.status_code == 201, recurring.text
 
 
 async def test_exportar_trae_solo_los_datos_del_usuario(
@@ -83,6 +96,11 @@ async def test_exportar_trae_solo_los_datos_del_usuario(
     assert tx["category"] == "Mascotas"
     assert tx["sources"] == [{"channel": "manual", "received_at": tx["sources"][0]["received_at"]}]
     assert body["gmail"] == {"status": "none"}
+    assert [r["name"] for r in body["recurring_expenses"]] == ["Veterinaria mensual"]
+    assert all(
+        o["recurring_expense_id"] == body["recurring_expenses"][0]["id"]
+        for o in body["recurring_occurrences"]
+    )
 
 
 async def test_exportar_sin_token_da_401(client: AsyncClient) -> None:

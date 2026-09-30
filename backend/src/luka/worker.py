@@ -54,6 +54,7 @@ from luka.modules.ledger.infrastructure.consumers import (
     make_transaction_parsed_handler,
 )
 from luka.modules.parsing import public as parsing_public
+from luka.modules.recurring import public as recurring_public
 from luka.shared.clock import SystemClock
 from luka.shared.db.engine import create_engine, create_session_factory
 from luka.shared.events.consumer import StreamConsumer
@@ -148,6 +149,23 @@ async def purge_raw_message_bodies(ctx: dict[str, Any]) -> None:
     async with session_factory() as session:
         count = await ingestion_public.purge_expired_bodies(session, clock.now())
     _logger.info("raw_message_bodies_purged", count=count)
+
+
+async def ensure_recurring_occurrences(ctx: dict[str, Any]) -> None:
+    """Cron diario 10:00 UTC = 05:00 Bogota: crea (idempotente) la ocurrencia del mes
+    actual y la del siguiente de cada gasto fijo activo (spec 011 SS3).
+
+    Solo loguea conteos, nunca nombres ni montos de los gastos fijos (P1).
+    """
+    session_factory = ctx.get("events_session_factory")
+    if session_factory is None:
+        _logger.warning("cron_sin_contexto", job="ensure_recurring_occurrences")
+        return
+    async with session_factory() as session:
+        summary = await recurring_public.ensure_occurrences(session, SystemClock())
+    _logger.info(
+        "recurring_occurrences_ensured", expenses=summary.expenses, created=summary.created
+    )
 
 
 async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
@@ -348,11 +366,22 @@ async def on_startup(ctx: dict[str, Any]) -> None:
     )
     ledger_review_handler = make_parse_failed_handler(session_factory=session_factory, clock=clock)
 
-    handlers_by_event_type: dict[str, EventHandler] = {
-        "ingestion.RawMessageReceived": parsing_handler,
-        "parsing.TransactionParsed": ledger_transaction_handler,
-        "parsing.ParseFailed": ledger_review_handler,
-        _LEDGER_OBSERVER_EVENT_TYPE: log_transaction_captured,
+    # Indexado por `(event_type, group)`: un mismo evento puede tener varios grupos
+    # (`ledger.TransactionCaptured` -> observador y recurring, spec 011 SS4).
+    handlers: dict[tuple[str, str], EventHandler] = {
+        ("ingestion.RawMessageReceived", "parsing"): parsing_handler,
+        ("parsing.TransactionParsed", "ledger"): ledger_transaction_handler,
+        ("parsing.ParseFailed", "ledger-review"): ledger_review_handler,
+        (_LEDGER_OBSERVER_EVENT_TYPE, "ledger-observer"): log_transaction_captured,
+        (
+            _LEDGER_OBSERVER_EVENT_TYPE,
+            "recurring",
+        ): recurring_public.make_transaction_captured_handler(
+            session_factory=session_factory, clock=clock
+        ),
+        ("ledger.TransactionDeleted", "recurring"): (
+            recurring_public.make_transaction_deleted_handler(session_factory=session_factory)
+        ),
     }
 
     # `_TEST_CONSUMER_BLOCK_MS_CTX_KEY` (fix round 1, Task 9): un test que llama a
@@ -377,7 +406,7 @@ async def on_startup(ctx: dict[str, Any]) -> None:
             registry,
             group=group,
             event_type=event_type,
-            handler=handlers_by_event_type[event_type],
+            handler=handlers[(event_type, group)],
             **consumer_kwargs,
         )
         tasks.append(
@@ -455,6 +484,8 @@ class WorkerSettings:
         cron(requeue_pending_raw_messages, minute={0, 15, 30, 45}, run_at_startup=False),
         # F3.5: mismo horario que la purga (08:00 UTC = 03:00 Bogota, ver arriba).
         cron(renew_gmail_watches, hour=8, minute=0, run_at_startup=False),
+        # F7.4: 10:00 UTC = 05:00 Bogota, antes de que el usuario abra la app.
+        cron(ensure_recurring_occurrences, hour=10, minute=0, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))
     on_startup = on_startup

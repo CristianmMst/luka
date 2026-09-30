@@ -26,8 +26,24 @@ class TransactionCaptured:
     category_id: UUID
     transaction_occurred_at: datetime
     created: bool
+    # Para el matcher de gastos fijos (spec 011 SS4): comercio ya normalizado y
+    # cuenta vinculada. Con default para decodificar eventos viejos del stream.
+    merchant: str | None = None
+    account_id: UUID | None = None
 
     event_type: ClassVar[str] = "ledger.TransactionCaptured"
 
 
-__all__ = ["TransactionCaptured"]
+@dataclass(frozen=True, slots=True)
+class TransactionDeleted:
+    """Se borro una transaccion manual (spec 005 SS6); recurring libera su ocurrencia."""
+
+    event_id: UUID
+    occurred_at: datetime
+    user_id: UUID
+    transaction_id: UUID
+
+    event_type: ClassVar[str] = "ledger.TransactionDeleted"
+
+
+__all__ = ["TransactionCaptured", "TransactionDeleted"]

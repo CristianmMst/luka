@@ -32,6 +32,8 @@ from luka.modules.ledger.domain.review import ReviewReason, ReviewResolution
 from luka.modules.ledger.infrastructure import orm as ledger_orm
 from luka.modules.parsing.domain.enums import Channel as ParsingChannel
 from luka.modules.parsing.domain.enums import ParseFailureReason
+from luka.modules.recurring.domain.enums import MatchedBy, OccurrenceStatus
+from luka.modules.recurring.infrastructure import orm as recurring_orm
 
 pytestmark = pytest.mark.unit
 
@@ -55,6 +57,7 @@ _M0002 = _load_migration("0002_ledger_core.py")
 _M0003 = _load_migration("0003_raw_messages_review.py")
 _M0005 = _load_migration("0005_gmail_connections.py")
 _M0007 = _load_migration("0007_review_resolution_reparsed.py")
+_M0008 = _load_migration("0008_recurring_expenses.py")
 
 
 def _values(sql_list: str) -> tuple[str, ...]:
@@ -121,3 +124,17 @@ def test_estados_de_gmail_connection_coinciden_con_orm_y_migracion() -> None:
 
     assert _values(ingestion_orm._GMAIL_CONNECTION_STATUS_VALUES) == esperado
     assert _values(_M0005._STATUS_VALUES) == esperado
+
+
+def test_estados_de_ocurrencia_coinciden_con_orm_y_migracion() -> None:
+    esperado = tuple(s.value for s in OccurrenceStatus)
+
+    assert _values(recurring_orm._STATUS_VALUES) == esperado
+    assert _values(_M0008._STATUS_VALUES) == esperado
+
+
+def test_matched_by_coincide_con_orm_y_migracion() -> None:
+    esperado = tuple(m.value for m in MatchedBy)
+
+    assert _values(recurring_orm._MATCHED_BY_VALUES) == esperado
+    assert _values(_M0008._MATCHED_BY_VALUES) == esperado

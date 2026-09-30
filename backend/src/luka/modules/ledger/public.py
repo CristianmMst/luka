@@ -20,7 +20,8 @@ from luka.modules.ledger.application.use_cases.mark_self_transfers import (
 from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
-from luka.modules.ledger.events import TransactionCaptured
+from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
+from luka.modules.ledger.infrastructure import snapshots as _snapshots
 from luka.modules.ledger.infrastructure.data_export import export_ledger_data
 from luka.modules.ledger.infrastructure.event_publisher import BusEventPublisher
 from luka.modules.ledger.infrastructure.id_generator import SecretsIdGenerator
@@ -33,10 +34,12 @@ from luka.modules.ledger.infrastructure.repositories import (
     SqlAlchemyTransactionRepository,
     SqlAlchemyTransactionSourceRepository,
 )
+from luka.modules.ledger.infrastructure.snapshots import TransactionSnapshot
 from luka.modules.ledger.infrastructure.uow import SqlAlchemyUnitOfWork
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Collection, Sequence
+    from datetime import datetime
     from uuid import UUID
 
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,9 +53,16 @@ __all__ = [
     "Recorded",
     "SourceInput",
     "TransactionCaptured",
+    "TransactionDeleted",
+    "TransactionSnapshot",
+    "account_owned",
+    "category_visible",
+    "expenses_in_window",
     "export_user_data",
+    "get_transaction_snapshot",
     "mark_self_transfers",
     "record_captured_transaction",
+    "transaction_snapshots",
 ]
 
 
@@ -107,3 +117,37 @@ async def mark_self_transfers(
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(person_parsed_by=person_parsed_by, user_id=user_id)
+
+
+# --- Lecturas para recurring (spec 011 SS4) -----------------------------------------
+
+
+async def get_transaction_snapshot(
+    session: AsyncSession, user_id: UUID, id: UUID
+) -> TransactionSnapshot | None:
+    """Transaccion propia de `user_id`, o `None` si no existe o es ajena."""
+    return await _snapshots.get_snapshot(session, user_id, id)
+
+
+async def transaction_snapshots(
+    session: AsyncSession, user_id: UUID, ids: Sequence[UUID]
+) -> list[TransactionSnapshot]:
+    """Transacciones propias con esos ids (las ajenas o borradas se omiten)."""
+    return await _snapshots.snapshots(session, user_id, ids)
+
+
+async def expenses_in_window(
+    session: AsyncSession, user_id: UUID, start: datetime, end: datetime
+) -> list[TransactionSnapshot]:
+    """Gastos propios (`expense` + `debit`) con `start <= occurred_at < end`."""
+    return await _snapshots.expenses_in_window(session, user_id, start, end)
+
+
+async def category_visible(session: AsyncSession, user_id: UUID, id: UUID) -> bool:
+    """`True` si la categoria es del sistema o del usuario."""
+    return await _snapshots.category_visible(session, user_id, id)
+
+
+async def account_owned(session: AsyncSession, user_id: UUID, id: UUID) -> bool:
+    """`True` si la cuenta vinculada es del usuario."""
+    return await _snapshots.account_owned(session, user_id, id)

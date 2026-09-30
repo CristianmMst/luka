@@ -125,13 +125,15 @@ name = "R3b - capas hexagonales por modulo"
 type = "layers"
 layers = ["infrastructure", "application", "domain"]
 containers = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
-  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights"]
+  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights",
+  "luka.modules.recurring"]
 
 [[tool.importlinter.contracts]]  # R4
 name = "R4 - modulos independientes salvo public.py y events.py"
 type = "independence"
 modules = ["luka.modules.identity","luka.modules.ingestion","luka.modules.parsing",
-  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights"]
+  "luka.modules.ledger","luka.modules.fiscal","luka.modules.insights",
+  "luka.modules.recurring"]
 # Pares explicitos que existen hoy: cada cruce entre modulos pasa por la fachada
 # publica del modulo destino (`<modulo>.public`) o por sus eventos de dominio
 # (`<modulo>.events`), nunca por internals (domain/application/infrastructure
@@ -148,6 +150,10 @@ ignore_imports = ["luka.modules.ledger.infrastructure.api.deps -> luka.modules.i
   "luka.modules.ledger.infrastructure.raw_messages_gateway -> luka.modules.ingestion.public",
   "luka.modules.ledger.infrastructure.owner_name_gateway -> luka.modules.identity.public",
   "luka.modules.identity.infrastructure.data_export -> luka.modules.ledger.public",
+  "luka.modules.identity.infrastructure.data_export -> luka.modules.recurring.public",
+  "luka.modules.recurring.infrastructure.api.deps -> luka.modules.identity.public",
+  "luka.modules.recurring.infrastructure.ledger_gateway -> luka.modules.ledger.public",
+  "luka.modules.recurring.infrastructure.consumers -> luka.modules.ledger.events",
   "luka.modules.identity.infrastructure.data_export -> luka.modules.ingestion.public"]
 
 [[tool.importlinter.contracts]]  # Kernel

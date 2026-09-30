@@ -5,6 +5,8 @@ from uuid import UUID
 from luka.modules.ledger.application.ports import (
     CategoryRepositoryPort,
     ClockPort,
+    EventPublisherPort,
+    IdGeneratorPort,
     TransactionRepositoryPort,
     UnitOfWorkPort,
 )
@@ -15,22 +17,31 @@ from luka.modules.ledger.domain.errors import (
     TransactionNotFound,
 )
 from luka.modules.ledger.domain.transfers import unpair
+from luka.modules.ledger.events import TransactionDeleted
 
 
 class DeleteTransaction:
-    """Borra una transaccion manual propia; si estaba emparejada, restaura la pareja."""
+    """Borra una transaccion manual propia; si estaba emparejada, restaura la pareja.
 
-    def __init__(
+    Tras el commit publica `TransactionDeleted` para que recurring libere la
+    ocurrencia que esa transaccion pagaba (spec 011 SS4).
+    """
+
+    def __init__(  # noqa: PLR0913 - puertos del caso de uso por nombre
         self,
         *,
         transactions: TransactionRepositoryPort,
         categories: CategoryRepositoryPort,
+        events: EventPublisherPort,
         clock: ClockPort,
+        ids: IdGeneratorPort,
         uow: UnitOfWorkPort,
     ) -> None:
         self._transactions = transactions
         self._categories = categories
+        self._events = events
         self._clock = clock
+        self._ids = ids
         self._uow = uow
 
     async def execute(self, user_id: UUID, id: UUID) -> None:
@@ -52,6 +63,14 @@ class DeleteTransaction:
 
         await self._transactions.delete(user_id, id)
         await self._uow.commit()
+        await self._events.publish(
+            TransactionDeleted(
+                event_id=self._ids.new_id(),
+                occurred_at=self._clock.now(),
+                user_id=user_id,
+                transaction_id=id,
+            )
+        )
 
     async def _category_fiscal_tag(self, user_id: UUID, category_id: UUID) -> FiscalTag:
         category = await self._categories.get_visible(user_id, category_id)

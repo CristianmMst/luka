@@ -48,6 +48,8 @@ from luka.modules.ledger.infrastructure.api.router_review import (
 from luka.modules.ledger.infrastructure.api.router_transactions import (
     router as ledger_transactions_router,
 )
+from luka.modules.recurring.infrastructure.api.errors import RECURRING_EXCEPTION_MAP
+from luka.modules.recurring.infrastructure.api.router import router as recurring_router
 from luka.shared.db.engine import create_engine, create_session_factory
 from luka.shared.events.redis_streams import RedisStreamsEventBus
 from luka.shared.http.body_limit import BodyLimitMiddleware
@@ -215,7 +217,13 @@ def create_app(
     _add_middlewares(app, resolved_settings)
 
     install_error_handlers(
-        app, [IDENTITY_EXCEPTION_MAP, LEDGER_EXCEPTION_MAP, INGESTION_EXCEPTION_MAP]
+        app,
+        [
+            IDENTITY_EXCEPTION_MAP,
+            LEDGER_EXCEPTION_MAP,
+            INGESTION_EXCEPTION_MAP,
+            RECURRING_EXCEPTION_MAP,
+        ],
     )
 
     app.include_router(health_router)
@@ -228,4 +236,5 @@ def create_app(
     app.include_router(ingestion_config_router, prefix="/v1")
     app.include_router(ingestion_gmail_router, prefix="/v1")
     app.include_router(ingestion_webhooks_router, prefix="/v1")
+    app.include_router(recurring_router, prefix="/v1")
     return app
