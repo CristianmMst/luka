@@ -1,0 +1,3 @@
+# Falsos positivos revisados a mano (huella de gitleaks: commit:archivo:regla:linea).
+# test_gmail_client.py: "id-secreto-123" es un id falso de un test de logs.
+a976944d040c0e6fab80537d14f58ddbeabc5e53:backend/tests/unit/ingestion/test_gmail_client.py:generic-api-key:602
