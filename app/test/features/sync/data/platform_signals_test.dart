@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:finanzia/features/sync/data/platform_signals.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/sync/data/platform_signals.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Connectivity extends Mock implements Connectivity {}

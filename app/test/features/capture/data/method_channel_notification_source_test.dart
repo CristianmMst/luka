@@ -1,11 +1,11 @@
-import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/data/method_channel_notification_source.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const channel = MethodChannel('co.finanzia/capture');
+  const channel = MethodChannel('co.luka/capture');
   final calls = <MethodCall>[];
   late Object? Function(MethodCall) reply;
   final source = MethodChannelNotificationSource();

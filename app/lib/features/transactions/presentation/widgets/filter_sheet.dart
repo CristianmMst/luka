@@ -1,16 +1,16 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/presentation/linked_account_row.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Hoja "Filtros" (diseño "Filtros"): periodo, tipo, banco, fuente y
 /// categoría sobre un borrador; "Ver N movimientos" lo aplica y "Limpiar"
@@ -24,7 +24,7 @@ class FilterSheet extends ConsumerStatefulWidget {
   static Future<TransactionFilter?> show(
     BuildContext context,
     TransactionFilter initial,
-  ) => showFinanziaSheet<TransactionFilter>(
+  ) => showLukaSheet<TransactionFilter>(
     context,
     builder: (_) => FilterSheet(initial: initial),
   );

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:finanzia/features/auth/data/dtos/session_dto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:luka/features/auth/data/dtos/session_dto.dart';
 
 /// Sesión persistida: tokens, vencimiento del access y el último perfil
 /// conocido (para abrir la app sin red, P4).
@@ -47,7 +47,7 @@ class TokenStore {
 
   final FlutterSecureStorage _storage;
 
-  static const _key = 'finanzia.session.v1';
+  static const _key = 'luka.session.v1';
 
   Future<StoredSession?> read() async {
     final raw = await _storage.read(key: _key);

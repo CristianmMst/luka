@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:finanzia/features/capture/domain/capture_rules.dart';
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/domain/capture_rules.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
 
 void main() {
   final postedAt = DateTime.utc(2026, 9, 25, 19, 30, 12);

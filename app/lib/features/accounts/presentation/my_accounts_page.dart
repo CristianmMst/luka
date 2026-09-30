@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/accounts/presentation/account_form_sheet.dart';
-import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/accounts/presentation/account_form_sheet.dart';
+import 'package:luka/features/accounts/presentation/linked_account_row.dart';
 
 /// Ajustes → "Mis cuentas" (spec 008 §3.7, F4.4): las cuentas vinculadas,
 /// con agregar, editar y borrar.
@@ -90,7 +90,7 @@ class LinkedAccountsCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.finanziaColors.card,
+        color: context.lukaColors.card,
         borderRadius: Radii.noticeAll,
       ),
       child: Column(
@@ -171,7 +171,7 @@ class AccountDeleteDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Dialog(
-      backgroundColor: context.finanziaColors.card,
+      backgroundColor: context.lukaColors.card,
       shape: const RoundedRectangleBorder(borderRadius: Radii.cardAll),
       insetPadding: const EdgeInsets.symmetric(horizontal: 32),
       child: ConstrainedBox(

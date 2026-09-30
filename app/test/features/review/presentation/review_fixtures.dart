@@ -1,7 +1,7 @@
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 /// Datos y dobles compartidos por los tests de la pantalla de Revisión.
 

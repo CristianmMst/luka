@@ -1,8 +1,8 @@
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/color_tokens.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/color_tokens.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
 
 /// Temas claro y oscuro de la app (Material 3, spec 008 §7).
 ///
@@ -75,11 +75,11 @@ abstract final class AppTheme {
     inversePrimary: DarkTokens.inversePrimary,
   );
 
-  static ThemeData get light => _build(lightScheme, FinanziaColors.light);
+  static ThemeData get light => _build(lightScheme, LukaColors.light);
 
-  static ThemeData get dark => _build(darkScheme, FinanziaColors.dark);
+  static ThemeData get dark => _build(darkScheme, LukaColors.dark);
 
-  static ThemeData _build(ColorScheme scheme, FinanziaColors brand) {
+  static ThemeData _build(ColorScheme scheme, LukaColors brand) {
     final textTheme = buildTextTheme(scheme.onSurface);
     const pillShape = StadiumBorder();
     const buttonSize = Size(64, minTouchTarget);

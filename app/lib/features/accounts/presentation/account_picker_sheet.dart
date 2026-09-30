@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/accounts/presentation/account_form_sheet.dart';
-import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/accounts/presentation/account_form_sheet.dart';
+import 'package:luka/features/accounts/presentation/linked_account_row.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Lo que eligió el usuario en [AccountPickerSheet]: una cuenta o "Sin
 /// cuenta" (`id == null`).
@@ -26,7 +26,7 @@ class AccountPickerSheet extends ConsumerWidget {
   static Future<AccountPick?> show(
     BuildContext context, {
     String? selectedId,
-  }) => showFinanziaSheet<AccountPick>(
+  }) => showLukaSheet<AccountPick>(
     context,
     builder: (_) => AccountPickerSheet(selectedId: selectedId),
   );
@@ -133,7 +133,7 @@ class _Option extends StatelessWidget {
       button: true,
       selected: selected,
       child: Material(
-        color: selected ? scheme.primaryContainer : context.finanziaColors.tile,
+        color: selected ? scheme.primaryContainer : context.lukaColors.tile,
         borderRadius: Radii.rowAll,
         clipBehavior: Clip.antiAlias,
         child: InkWell(

@@ -1,26 +1,26 @@
 import 'dart:async';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/review/application/review_actions.dart';
-import 'package:finanzia/features/review/application/review_providers.dart';
-import 'package:finanzia/features/review/domain/review_draft.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_card.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_form_card.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/review/application/review_actions.dart';
+import 'package:luka/features/review/application/review_providers.dart';
+import 'package:luka/features/review/domain/review_draft.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/presentation/widgets/review_card.dart';
+import 'package:luka/features/review/presentation/widgets/review_format.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_form_card.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Detalle de un mensaje en revisión (spec 008 §3.5, AC-8.1): el texto
 /// completo con los montos resaltados y el formulario prellenado para
@@ -452,7 +452,7 @@ class _MessageCardState extends State<_MessageCard> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.finanziaColors.card,
+        color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
       ),
       child: Padding(

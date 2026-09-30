@@ -1,6 +1,6 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// "Sin conexión · ves tus datos guardados" (diseño "Estados"); el Inicio
 /// pasa su propio [message].

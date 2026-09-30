@@ -1,6 +1,6 @@
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
 
 void main() {
   group('GmailConnectionInfo', () {

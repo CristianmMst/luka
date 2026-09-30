@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:finanzia/features/nfc/data/ndef_uri.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/nfc/data/ndef_uri.dart';
 import 'package:ndef_record/ndef_record.dart';
 
 void main() {
   final uri = Uri.parse(
-    'finanzia://quick-add?tag=3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b',
+    'luka://quick-add?tag=3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b',
   );
 
   test('el registro URI va sin prefijo abreviado', () {
@@ -28,11 +28,11 @@ void main() {
       typeNameFormat: TypeNameFormat.wellKnown,
       type: Uint8List.fromList([0x55]),
       identifier: Uint8List(0),
-      payload: Uint8List.fromList([0x04, ...utf8.encode('finanzia.co')]),
+      payload: Uint8List.fromList([0x04, ...utf8.encode('luka.co')]),
     );
     expect(
       firstUri(NdefMessage(records: [https])),
-      Uri.parse('https://finanzia.co'),
+      Uri.parse('https://luka.co'),
     );
 
     final absolute = NdefRecord(

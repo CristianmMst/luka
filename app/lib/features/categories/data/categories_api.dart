@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/sync/data/dtos/catalog_dtos.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/sync/data/dtos/catalog_dtos.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// [CategoriesRemote] sobre dio, contra `/v1/categories` (spec 005 §7).
 /// Falla con [CategoryFailure], nunca con `DioException`.

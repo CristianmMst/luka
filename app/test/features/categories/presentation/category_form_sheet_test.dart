@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:finanzia/features/categories/application/category_actions.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/categories/presentation/category_form_sheet.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/categories/application/category_actions.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/categories/presentation/category_form_sheet.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -148,7 +148,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Ya existe una categoría con ese nombre (tuya o de finanzia).'),
+      find.text('Ya existe una categoría con ese nombre (tuya o de luka).'),
       findsOneWidget,
     );
     expect(find.text('Nueva categoría'), findsOneWidget);

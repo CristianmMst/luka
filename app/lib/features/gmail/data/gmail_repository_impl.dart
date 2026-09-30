@@ -1,9 +1,9 @@
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/gmail/data/gmail_api.dart';
-import 'package:finanzia/features/gmail/data/gmail_authorizer.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/gmail/data/gmail_api.dart';
+import 'package:luka/features/gmail/data/gmail_authorizer.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/domain/gmail_repository.dart';
 
 class GmailRepositoryImpl implements GmailRepository {
   GmailRepositoryImpl({

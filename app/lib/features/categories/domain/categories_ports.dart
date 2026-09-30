@@ -1,6 +1,6 @@
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 part 'categories_ports.freezed.dart';
 

@@ -1,4 +1,4 @@
-package co.finanzia.finanzia.capture
+package co.luka.luka.capture
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

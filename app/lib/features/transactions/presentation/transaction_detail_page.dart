@@ -1,24 +1,24 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/application/transaction_detail_controller.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_icon.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/change_category.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/rejected_banner.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sources_section.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/application/transaction_detail_controller.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
+import 'package:luka/features/transactions/presentation/widgets/change_category.dart';
+import 'package:luka/features/transactions/presentation/widgets/rejected_banner.dart';
+import 'package:luka/features/transactions/presentation/widgets/sources_section.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Detalle de un movimiento (diseño A "Monto protagonista", spec 008
 /// §3.3): monto grande con decimales, campos, fuentes del servidor, par de
@@ -247,7 +247,7 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final muted = scheme.onSurfaceVariant;
     final isTransfer = tx.kind == TxKind.transfer;
@@ -388,7 +388,7 @@ class _FieldsCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.finanziaColors.card,
+        color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
       ),
       child: Column(
@@ -533,7 +533,7 @@ class _PairCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final pair = ref.watch(transactionByIdProvider(pairId)).value;
     final value = pair == null
@@ -728,7 +728,7 @@ class _NotesFieldState extends ConsumerState<_NotesField> {
               color: scheme.onSurfaceVariant,
             ),
             filled: true,
-            fillColor: context.finanziaColors.card,
+            fillColor: context.lukaColors.card,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: Space.sm,

@@ -1,6 +1,6 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/review/domain/amount_highlight.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/review/domain/amount_highlight.dart';
 
 /// Los trozos de [text] que [highlightAmounts] resalta.
 List<String> highlighted(String text) => [

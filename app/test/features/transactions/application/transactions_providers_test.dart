@@ -1,12 +1,12 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repository extends Mock implements TransactionsRepository {}

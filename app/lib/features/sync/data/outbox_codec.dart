@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// Codificación persistida de una [OutboxOperation] (spec 005 §9): `targetId`
 /// y `relatedId` van en columnas propias (el `SyncStore` las indexa); el

@@ -1,11 +1,11 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/domain/quick_add_link.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/domain/manual_draft.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/domain/quick_add_link.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/domain/manual_draft.dart';
 import 'package:uuid/uuid.dart';
 
 /// Puertos de NFC; se sobrescriben en `lib/app/composition.dart`.

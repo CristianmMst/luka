@@ -1,15 +1,15 @@
 import AppIntents
 import Foundation
 
-/// Acción "Registrar pago en finanzia" de Atajos (F4.3b, spec 006 §3.3). La
+/// Acción "Registrar pago en luka" de Atajos (F4.3b, spec 006 §3.3). La
 /// automatización "Transacción" (iOS 17+) la corre al pagar con Wallet y le
 /// pasa tarjeta, comercio y monto; aquí solo se encola, sin abrir la app.
 /// El texto que parsea el backend lo arma Dart al enviar.
 @available(iOS 16.0, *)
 struct RegistrarPagoWallet: AppIntent {
-  static var title: LocalizedStringResource = "Registrar pago en finanzia"
+  static var title: LocalizedStringResource = "Registrar pago en luka"
   static var description = IntentDescription(
-    "Guarda un pago con Apple Pay; finanzia lo envía cuando abres la app.")
+    "Guarda un pago con Apple Pay; luka lo envía cuando abres la app.")
   static var openAppWhenRun = false
 
   @Parameter(title: "Tarjeta")
@@ -40,7 +40,7 @@ enum WalletIntentError: Error, CustomLocalizedStringResourceConvertible {
 
   var localizedStringResource: LocalizedStringResource {
     switch self {
-    case .signedOut: return "Abre finanzia e inicia sesión para registrar tus pagos."
+    case .signedOut: return "Abre luka e inicia sesión para registrar tus pagos."
     }
   }
 }

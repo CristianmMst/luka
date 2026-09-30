@@ -22,7 +22,7 @@ abstract final class Routes {
   static const settingsApplePay = '/ajustes/apple-pay';
 
   /// Registro rápido de un tag NFC (F4.5b): `/rapido?tag=<uuid>`, sobre el
-  /// Inicio. Llega por el enlace `finanzia://quick-add?tag=<uuid>`.
+  /// Inicio. Llega por el enlace `luka://quick-add?tag=<uuid>`.
   static const quickAdd = '/rapido';
 
   /// Pasos del onboarding tras el login (F3.6, F4.4), fuera del shell.

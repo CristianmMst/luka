@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/capture/application/notification_access_controller.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/capture/application/notification_access_controller.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
+import 'package:luka/features/onboarding/domain/onboarding_store.dart';
 
 /// Puerto de la marca "onboarding terminado"; se sobrescribe en
 /// `lib/app/composition.dart`.

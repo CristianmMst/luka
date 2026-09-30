@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
 
 /// Estado de la acción "Continuar con Google" en la pantalla de login.
 ///

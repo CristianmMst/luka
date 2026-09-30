@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
-import 'package:finanzia/features/auth/data/auth_api.dart';
-import 'package:finanzia/features/auth/data/dtos/session_dto.dart';
-import 'package:finanzia/features/auth/data/token_store.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/core/network/session_bridge.dart';
+import 'package:luka/features/auth/data/auth_api.dart';
+import 'package:luka/features/auth/data/dtos/session_dto.dart';
+import 'package:luka/features/auth/data/token_store.dart';
 
 /// Dueño único de los tokens: los guarda, los renueva y avisa cuando la
 /// sesión termina. Implementa el puerto que usa el interceptor de red.

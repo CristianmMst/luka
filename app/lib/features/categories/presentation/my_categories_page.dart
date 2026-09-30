@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/categories/application/category_actions.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/presentation/category_form_sheet.dart';
-import 'package:finanzia/features/categories/presentation/category_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/categories/application/category_actions.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/presentation/category_form_sheet.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
 
 /// Ajustes → "Mis categorías" (spec 008 §3.7, F4.8a): las categorías
 /// propias del usuario, que solo ve él, con crear, editar y borrar.
@@ -65,7 +65,7 @@ class MyCategoriesPage extends ConsumerWidget {
             else
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: context.finanziaColors.card,
+                  color: context.lukaColors.card,
                   borderRadius: Radii.noticeAll,
                 ),
                 child: Column(
@@ -99,7 +99,7 @@ class MyCategoriesPage extends ConsumerWidget {
             const SizedBox(height: Space.sm),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: context.finanziaColors.card,
+                color: context.lukaColors.card,
                 borderRadius: Radii.noticeAll,
               ),
               child: Padding(
@@ -241,7 +241,7 @@ class CategoryDeleteDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Dialog(
-      backgroundColor: context.finanziaColors.card,
+      backgroundColor: context.lukaColors.card,
       shape: const RoundedRectangleBorder(borderRadius: Radii.cardAll),
       insetPadding: const EdgeInsets.symmetric(horizontal: 32),
       child: ConstrainedBox(

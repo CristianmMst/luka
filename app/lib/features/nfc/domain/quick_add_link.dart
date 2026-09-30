@@ -1,7 +1,7 @@
 /// Enlace que va escrito en un tag NFC (spec 006 §5): lleva solo el id de
-/// la plantilla, `finanzia://quick-add?tag=<uuid>`. Categoría, cuenta y
+/// la plantilla, `luka://quick-add?tag=<uuid>`. Categoría, cuenta y
 /// nota viven en el teléfono que configuró el tag.
-const quickAddScheme = 'finanzia';
+const quickAddScheme = 'luka';
 const quickAddHost = 'quick-add';
 
 final _uuid = RegExp(

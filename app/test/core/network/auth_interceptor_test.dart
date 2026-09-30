@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/auth_interceptor.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/network/auth_interceptor.dart';
+import 'package:luka/core/network/session_bridge.dart';
 
 import '../../helpers/stub_backend.dart';
 

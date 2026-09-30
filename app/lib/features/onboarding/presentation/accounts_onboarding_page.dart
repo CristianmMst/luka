@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/presentation/account_form_sheet.dart';
-import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
-import 'package:finanzia/features/accounts/presentation/my_accounts_page.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
-import 'package:finanzia/features/onboarding/presentation/onboarding_navigation.dart';
-import 'package:finanzia/features/onboarding/presentation/widgets/onboarding_parts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/presentation/account_form_sheet.dart';
+import 'package:luka/features/accounts/presentation/linked_account_row.dart';
+import 'package:luka/features/accounts/presentation/my_accounts_page.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
+import 'package:luka/features/onboarding/presentation/onboarding_navigation.dart';
+import 'package:luka/features/onboarding/presentation/widgets/onboarding_parts.dart';
 
 /// Paso "¿Qué cuentas tienes?" (spec 008 §3.1, F4.4, diseño B "Lista +
 /// hoja"): explica para qué sirven (detectar transferencias propias), lista
@@ -123,7 +123,7 @@ class _TransferExample extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 

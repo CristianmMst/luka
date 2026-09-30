@@ -1,4 +1,4 @@
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
 
 /// Método, ruta (con prefijo `/v1`, como `AuthApi`) y cuerpo HTTP para
 /// enviar una [OutboxOperation] (spec 005 §6-7). Las claves opcionales

@@ -1,24 +1,24 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/capture/presentation/widgets/capture_stopped_strip.dart';
-import 'package:finanzia/features/dashboard/application/dashboard_controller.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_hero.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_states.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/top_categories_card.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
-import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/capture/presentation/widgets/capture_stopped_strip.dart';
+import 'package:luka/features/dashboard/application/dashboard_controller.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_hero.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_states.dart';
+import 'package:luka/features/dashboard/presentation/widgets/top_categories_card.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/presentation/sync_refresh.dart';
+import 'package:luka/features/transactions/application/transactions_list_controller.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
 
 /// Inicio (F4.6, diseño A "Balance protagonista", spec 008 §3.2): balance
 /// del mes, gastos e ingresos contra el mes anterior y "En qué se fue".

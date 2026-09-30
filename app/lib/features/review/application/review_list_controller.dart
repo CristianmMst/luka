@@ -1,7 +1,7 @@
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/review/application/review_providers.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/review/application/review_providers.dart';
+import 'package:luka/features/review/domain/review_item.dart';
 
 /// Lista de mensajes en revisión (spec 008 §3.5), en vivo sobre la base
 /// local: convertir o descartar quita la fila al instante (optimista) y

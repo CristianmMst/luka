@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/dashboard/domain/insights_repository.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 
 /// [InsightsRepository] sobre la base local Drift (F4.6).
 ///

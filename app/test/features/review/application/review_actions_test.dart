@@ -1,12 +1,12 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/review/application/review_actions.dart';
-import 'package:finanzia/features/review/domain/review_draft.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/review/application/review_actions.dart';
+import 'package:luka/features/review/domain/review_draft.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Coordinator extends Mock implements SyncCoordinator {}

@@ -1,5 +1,5 @@
-import 'package:finanzia/features/categories/domain/category_catalog.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/features/categories/domain/category_catalog.dart';
 
 part 'category_draft.freezed.dart';
 

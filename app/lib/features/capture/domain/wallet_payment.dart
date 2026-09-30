@@ -1,4 +1,4 @@
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
 
 /// Paquete sintético de los pagos con Apple Pay (spec 006 §3.3): el backend
 /// lo acepta sin banco y lo busca en el nombre de la tarjeta.

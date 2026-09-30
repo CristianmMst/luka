@@ -1,4 +1,4 @@
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
 
 /// Máximo de ítems por lote que acepta el backend (spec 005 §5).
 const ingestBatchLimit = 50;

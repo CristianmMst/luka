@@ -1,6 +1,6 @@
-import 'package:finanzia/features/categories/domain/category_catalog.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/categories/domain/category_catalog.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
 
 void main() {
   group('CategoryDraft', () {

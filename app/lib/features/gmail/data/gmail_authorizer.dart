@@ -1,7 +1,7 @@
-import 'package:finanzia/core/google/google_sign_in_setup.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:luka/core/google/google_sign_in_setup.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
 
 /// Pide al usuario permiso de lectura de Gmail y devuelve el
 /// `serverAuthCode` que el backend canjea por el refresh token. Falla con

@@ -1,5 +1,5 @@
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/onboarding/domain/onboarding_store.dart';
 
 /// "Onboarding terminado" en la tabla `sync_state`, con la clave
 /// `onboarding_done:<userId>`.

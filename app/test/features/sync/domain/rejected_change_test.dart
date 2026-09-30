@@ -1,5 +1,5 @@
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
 
 void main() {
   test('agrupa los códigos de rechazo', () {

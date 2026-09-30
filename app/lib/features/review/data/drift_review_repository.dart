@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/domain/review_repository.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/domain/review_repository.dart';
 
 /// [ReviewRepository] sobre `local_review` en Drift. La tabla la llena el
 /// pull (`DriftSyncStore.replaceReview`) y convertir o descartar borran la

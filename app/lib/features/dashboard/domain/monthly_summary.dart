@@ -1,6 +1,6 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/time/colombia_month.dart';
 
 part 'monthly_summary.freezed.dart';
 

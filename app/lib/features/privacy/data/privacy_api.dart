@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
 
 /// [PrivacyRemote] sobre dio (spec 005 §2). Falla con [PrivacyFailure],
 /// nunca con `DioException`.

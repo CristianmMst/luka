@@ -1,16 +1,16 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/review/application/review_list_controller.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_card.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/list_states.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/review/application/review_list_controller.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/presentation/widgets/review_card.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/presentation/sync_refresh.dart';
+import 'package:luka/features/transactions/presentation/widgets/list_states.dart';
+import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
 
 /// "Revisión" (spec 008 §3.5, AC-8.1): los mensajes que no se pudieron
 /// convertir en movimiento, los más recientes primero. Cada tarjeta abre

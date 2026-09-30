@@ -1,10 +1,10 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/presentation/widgets/review_format.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Tarjeta de un mensaje en revisión: canal, banco, fecha de recepción,
 /// motivo y un extracto con los montos resaltados. Toda la tarjeta abre el
@@ -35,7 +35,7 @@ class ReviewCard extends StatelessWidget {
       ].join('. '),
       onTap: onOpen,
       child: Material(
-        color: context.finanziaColors.card,
+        color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -87,7 +87,7 @@ class ReviewHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
 
     return Row(

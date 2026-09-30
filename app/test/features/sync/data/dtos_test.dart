@@ -1,9 +1,9 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/data/dtos/catalog_dtos.dart';
-import 'package:finanzia/features/sync/data/dtos/review_dto.dart';
-import 'package:finanzia/features/sync/data/dtos/transaction_dto.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/data/dtos/catalog_dtos.dart';
+import 'package:luka/features/sync/data/dtos/review_dto.dart';
+import 'package:luka/features/sync/data/dtos/transaction_dto.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 import '../../../helpers/stub_backend.dart';
 

@@ -1,6 +1,6 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 part 'transaction_dto.g.dart';
 

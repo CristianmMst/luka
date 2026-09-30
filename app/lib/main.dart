@@ -1,14 +1,14 @@
-import 'package:finanzia/app/app.dart';
-import 'package:finanzia/app/composition.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/app/app.dart';
+import 'package:luka/app/composition.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(_fontLicenses);
-  runApp(ProviderScope(overrides: appOverrides, child: const FinanziaApp()));
+  runApp(ProviderScope(overrides: appOverrides, child: const LukaApp()));
 }
 
 /// Licencias OFL de las fuentes empaquetadas (pantalla de licencias).

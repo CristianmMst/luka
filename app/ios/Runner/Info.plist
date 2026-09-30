@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>NFCReaderUsageDescription</key>
-	<string>finanzia lee tus tags NFC para abrir el registro rápido.</string>
+	<string>luka lee tus tags NFC para abrir el registro rápido.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>co.finanzia.quickadd</string>
+			<string>co.luka.quickadd</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>finanzia</string>
+				<string>luka</string>
 			</array>
 		</dict>
 		<dict>
 			<!-- Vuelta del inicio de sesión con Google (Flutter/GoogleSignIn.xcconfig). -->
 			<key>CFBundleURLName</key>
-			<string>co.finanzia.google</string>
+			<string>co.luka.google</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>$(GOOGLE_IOS_REVERSED_CLIENT_ID)</string>
@@ -31,7 +31,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>finanzia</string>
+	<string>luka</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- Permite http solo hacia la red local (backend de desarrollo). -->
@@ -45,7 +45,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>finanzia</string>
+	<string>luka</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

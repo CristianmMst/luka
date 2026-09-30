@@ -1,5 +1,5 @@
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 
 /// Puerto de lectura del Inicio. Las cifras se calculan en local sobre
 /// Drift (F4.6): funciona sin red y reemite cuando cambian los movimientos o

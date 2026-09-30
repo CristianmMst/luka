@@ -1,10 +1,10 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/merchant_rule_dialog.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/merchant_rule_dialog.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Cambio de categoría de la lista y del detalle: abre la hoja y, si hay
 /// comercio, pregunta "¿Aplicar siempre a {comercio}?" (AC-7.2). Cerrar la

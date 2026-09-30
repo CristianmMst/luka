@@ -1,12 +1,12 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 /// Presentación compartida de la lista, las hojas y los estados: nombres,
 /// montos, horas y el resumen del filtro.
@@ -74,7 +74,7 @@ AmountSign amountSign(TxKind kind) => switch (kind) {
   TxKind.transfer => AmountSign.none,
 };
 
-Color amountColor(FinanziaColors colors, TxKind kind) => switch (kind) {
+Color amountColor(LukaColors colors, TxKind kind) => switch (kind) {
   TxKind.expense => colors.expense,
   TxKind.income => colors.income,
   TxKind.transfer => colors.transfer,

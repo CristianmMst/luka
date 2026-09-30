@@ -1,7 +1,7 @@
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
-import 'package:finanzia/features/capture/domain/wallet_payment.dart';
 import 'package:flutter/services.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/capture/domain/wallet_payment.dart';
 
 /// Listener de Android (`android/app/src/main/kotlin/.../capture/`) visto
 /// por su `MethodChannel`. El filtrado ocurre en nativo, antes de guardar
@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 class MethodChannelNotificationSource implements NotificationSource {
   MethodChannelNotificationSource();
 
-  static const _channel = MethodChannel('co.finanzia/capture');
+  static const _channel = MethodChannel('co.luka/capture');
 
   @override
   bool get isSupported => true;
@@ -81,7 +81,7 @@ class MethodChannelNotificationSource implements NotificationSource {
 class IosWalletNotificationSource implements NotificationSource {
   IosWalletNotificationSource();
 
-  static const _channel = MethodChannel('co.finanzia/capture');
+  static const _channel = MethodChannel('co.luka/capture');
 
   @override
   bool get isSupported => true;

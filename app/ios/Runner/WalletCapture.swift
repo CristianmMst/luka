@@ -118,12 +118,12 @@ final class WalletQueue {
   }
 }
 
-/// `MethodChannel("co.finanzia/capture")` de iOS: el mismo nombre que el
+/// `MethodChannel("co.luka/capture")` de iOS: el mismo nombre que el
 /// listener de Android, con los métodos que usa `IosWalletNotificationSource`.
 enum WalletCaptureChannel {
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "co.finanzia/capture", binaryMessenger: registrar.messenger())
+      name: "co.luka/capture", binaryMessenger: registrar.messenger())
     channel.setMethodCallHandler { call, result in
       let args = call.arguments as? [String: Any] ?? [:]
       let queue = WalletQueue.shared

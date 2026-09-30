@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:finanzia/core/db/tables.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/db/tables.dart';
 
 part 'app_database.g.dart';
 
@@ -19,7 +19,7 @@ part 'app_database.g.dart';
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-    : super(executor ?? driftDatabase(name: 'finanzia'));
+    : super(executor ?? driftDatabase(name: 'luka'));
 
   @override
   int get schemaVersion => 4;

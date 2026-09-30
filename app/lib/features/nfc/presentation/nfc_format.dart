@@ -1,13 +1,13 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/accounts/presentation/linked_account_row.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/domain/quick_add_link.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/accounts/presentation/linked_account_row.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/domain/quick_add_link.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
 
 /// La ruta del registro rápido si [uri] es el enlace de un tag
-/// (`finanzia://quick-add?tag=…`); `null` para cualquier otra ruta.
+/// (`luka://quick-add?tag=…`); `null` para cualquier otra ruta.
 String? quickAddLocation(Uri uri) {
   final tagId = tagIdFromQuickAddUri(uri);
   if (tagId == null) return null;

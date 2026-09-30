@@ -1,6 +1,6 @@
-import 'package:finanzia/core/config/app_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:luka/core/config/app_config.dart';
 
 /// Única inicialización de `GoogleSignIn.instance` en la app.
 ///

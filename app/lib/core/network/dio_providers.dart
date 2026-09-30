@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/config/app_config.dart';
-import 'package:finanzia/core/network/auth_interceptor.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/config/app_config.dart';
+import 'package:luka/core/network/auth_interceptor.dart';
+import 'package:luka/core/network/session_bridge.dart';
 
 Dio buildDio(String baseUrl) {
   final dio = Dio(

@@ -1,13 +1,13 @@
-import 'package:finanzia/app/router.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/app_theme.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/app/router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/app_theme.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
-class FinanziaApp extends ConsumerWidget {
-  const FinanziaApp({super.key});
+class LukaApp extends ConsumerWidget {
+  const LukaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

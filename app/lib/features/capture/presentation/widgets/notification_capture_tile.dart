@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/capture/application/notification_access_controller.dart';
-import 'package:finanzia/features/capture/presentation/widgets/notification_disclosure_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/capture/application/notification_access_controller.dart';
+import 'package:luka/features/capture/presentation/widgets/notification_disclosure_sheet.dart';
 
 /// Fila "Notificaciones del banco" de Ajustes (spec 008 §3.7): acceso activo
 /// o inactivo y el enlace al ajuste del sistema. Solo en Android.
@@ -58,7 +58,7 @@ class NotificationCaptureTile extends ConsumerWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.finanziaColors.card,
+        color: context.lukaColors.card,
         borderRadius: Radii.rowAll,
       ),
       child: Padding(

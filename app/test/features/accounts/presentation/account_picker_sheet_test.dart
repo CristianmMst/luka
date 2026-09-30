@@ -1,8 +1,8 @@
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/accounts/presentation/account_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/accounts/presentation/account_picker_sheet.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

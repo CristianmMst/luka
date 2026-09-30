@@ -1,21 +1,21 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/app_theme.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
-import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/app_theme.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/data/method_channel_notification_source.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/domain/gmail_repository.dart';
+import 'package:luka/features/gmail/presentation/gmail_onboarding_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

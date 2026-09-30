@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/auth/data/dtos/session_dto.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/auth/data/dtos/session_dto.dart';
 
 /// Endpoints `/v1/auth/*` (spec 005 §2). Usa el cliente sin interceptor de
 /// auth para que un refresh nunca dispare otro refresh.

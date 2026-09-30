@@ -9,7 +9,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appName => 'finanzia';
+  String get appName => 'luka';
 
   @override
   String get splashRestoring => 'Restaurando tu sesión';
@@ -19,7 +19,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loginBody =>
-      'finanzia lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.';
+      'luka lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.';
 
   @override
   String get loginContinueWithGoogle => 'Continuar con Google';
@@ -749,7 +749,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gmailHeroSemantics =>
-      'finanzia solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.';
+      'luka solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.';
 
   @override
   String get gmailOnboardingTitle => 'Conecta tu Gmail';
@@ -901,7 +901,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationDisclosureBody =>
-      'Con el acceso a notificaciones, finanzia registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.';
+      'Con el acceso a notificaciones, luka registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.';
 
   @override
   String get notificationDisclosureReads =>
@@ -1120,7 +1120,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get categoryErrorDuplicate =>
-      'Ya existe una categoría con ese nombre (tuya o de finanzia).';
+      'Ya existe una categoría con ese nombre (tuya o de luka).';
 
   @override
   String get categoryErrorOffline =>
@@ -1325,11 +1325,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myCategoriesNew => 'Nueva categoría';
 
   @override
-  String get myCategoriesSystemSection => 'De finanzia';
+  String get myCategoriesSystemSection => 'De luka';
 
   @override
   String get myCategoriesSystemNote =>
-      'Las categorías de finanzia se pueden usar, pero no editar ni borrar.';
+      'Las categorías de luka se pueden usar, pero no editar ni borrar.';
 
   @override
   String myCategoriesMeta(String tag, int count) {
@@ -1567,7 +1567,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationsOnboardingBody =>
-      'Con el acceso a notificaciones, finanzia registra cada compra apenas tu banco te avisa.';
+      'Con el acceso a notificaciones, luka registra cada compra apenas tu banco te avisa.';
 
   @override
   String get notificationsOnboardingReads =>
@@ -1868,7 +1868,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nfcTagsIntro =>
-      'Pega un tag donde gastas seguido. Al acercar el teléfono, finanzia abre el registro con la categoría lista.';
+      'Pega un tag donde gastas seguido. Al acercar el teléfono, luka abre el registro con la categoría lista.';
 
   @override
   String get nfcTagsEmpty =>
@@ -1978,14 +1978,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get registerReadNfc => 'Leer tag NFC';
 
   @override
-  String get registerReadNfcUnknown => 'Ese tag no es de finanzia.';
+  String get registerReadNfcUnknown => 'Ese tag no es de luka.';
 
   @override
   String get applePayTitle => 'Registra tus pagos con Apple Pay';
 
   @override
   String get applePayBody =>
-      'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet finanzia recibe el comercio y el monto.';
+      'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet luka recibe el comercio y el monto.';
 
   @override
   String get applePayStep1 => 'Abre Atajos → Automatización → + → Transacción.';
@@ -1996,7 +1996,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get applePayStep3 =>
-      'Agrega la acción «Registrar pago en finanzia» y pasa Comerciante, Monto y Tarjeta.';
+      'Agrega la acción «Registrar pago en luka» y pasa Comerciante, Monto y Tarjeta.';
 
   @override
   String applePayStepSemantics(int number, String text) {
@@ -2009,7 +2009,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get applePayQueueNote =>
-      'Los pagos quedan guardados en el teléfono y se envían al abrir finanzia.';
+      'Los pagos quedan guardados en el teléfono y se envían al abrir luka.';
 
   @override
   String get applePayOpenShortcuts => 'Abrir Atajos';

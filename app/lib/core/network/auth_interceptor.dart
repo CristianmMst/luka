@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/core/network/session_bridge.dart';
 
 /// Añade `Authorization: Bearer <access>` y, cuando el backend responde
 /// `401 token_expired`, renueva la sesión una sola vez y reintenta.
@@ -15,7 +15,7 @@ class AuthInterceptor extends Interceptor {
   final Dio _dio;
   final SessionBridge _session;
 
-  static const _retriedKey = 'finanzia.auth.retried';
+  static const _retriedKey = 'luka.auth.retried';
 
   @override
   Future<void> onRequest(

@@ -1,31 +1,31 @@
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/features/accounts/presentation/my_accounts_page.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/presentation/login_page.dart';
-import 'package:finanzia/features/auth/presentation/splash_page.dart';
-import 'package:finanzia/features/categories/presentation/my_categories_page.dart';
-import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
-import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_format.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_tags_page.dart';
-import 'package:finanzia/features/nfc/presentation/quick_add_page.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/presentation/accounts_onboarding_page.dart';
-import 'package:finanzia/features/onboarding/presentation/apple_pay_onboarding_page.dart';
-import 'package:finanzia/features/onboarding/presentation/notifications_onboarding_page.dart';
-import 'package:finanzia/features/onboarding/presentation/onboarding_navigation.dart';
-import 'package:finanzia/features/review/presentation/review_detail_page.dart';
-import 'package:finanzia/features/review/presentation/review_page.dart';
-import 'package:finanzia/features/shell/presentation/ajustes_page.dart';
-import 'package:finanzia/features/shell/presentation/home_shell.dart';
-import 'package:finanzia/features/transactions/presentation/registrar_page.dart';
-import 'package:finanzia/features/transactions/presentation/transaction_detail_page.dart';
-import 'package:finanzia/features/transactions/presentation/transactions_page.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/features/accounts/presentation/my_accounts_page.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/presentation/login_page.dart';
+import 'package:luka/features/auth/presentation/splash_page.dart';
+import 'package:luka/features/categories/presentation/my_categories_page.dart';
+import 'package:luka/features/dashboard/presentation/dashboard_page.dart';
+import 'package:luka/features/gmail/presentation/gmail_onboarding_page.dart';
+import 'package:luka/features/nfc/presentation/nfc_format.dart';
+import 'package:luka/features/nfc/presentation/nfc_tags_page.dart';
+import 'package:luka/features/nfc/presentation/quick_add_page.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.dart';
+import 'package:luka/features/onboarding/presentation/apple_pay_onboarding_page.dart';
+import 'package:luka/features/onboarding/presentation/notifications_onboarding_page.dart';
+import 'package:luka/features/onboarding/presentation/onboarding_navigation.dart';
+import 'package:luka/features/review/presentation/review_detail_page.dart';
+import 'package:luka/features/review/presentation/review_page.dart';
+import 'package:luka/features/shell/presentation/ajustes_page.dart';
+import 'package:luka/features/shell/presentation/home_shell.dart';
+import 'package:luka/features/transactions/presentation/registrar_page.dart';
+import 'package:luka/features/transactions/presentation/transaction_detail_page.dart';
+import 'package:luka/features/transactions/presentation/transactions_page.dart';
 
-export 'package:finanzia/core/routing/routes.dart';
+export 'package:luka/core/routing/routes.dart';
 
 /// Session gate (spec 008 §2): decide a dónde ir según el estado de la
 /// sesión y, al salir del splash o del login, según [onboarding]. Función
@@ -84,7 +84,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
       final onboarding = ref.read(onboardingGateProvider);
-      // Enlace externo `finanzia://quick-add?tag=…` (tag NFC, spec 006 §5).
+      // Enlace externo `luka://quick-add?tag=…` (tag NFC, spec 006 §5).
       final deepLink = quickAddLocation(state.uri);
       if (deepLink != null) {
         final ready =

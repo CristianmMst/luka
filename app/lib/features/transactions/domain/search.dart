@@ -1,4 +1,4 @@
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 /// Mapa de vocales acentuadas y demás diacríticos frecuentes en español a su
 /// equivalente sin tilde, para buscar sin depender de un paquete externo.

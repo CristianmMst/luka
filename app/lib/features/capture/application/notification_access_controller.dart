@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 enum NotificationAccess {
   /// Sin listener de notificaciones (iOS): la UI no muestra la sección.

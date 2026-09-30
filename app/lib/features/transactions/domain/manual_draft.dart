@@ -1,7 +1,7 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 part 'manual_draft.freezed.dart';
 

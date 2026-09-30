@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/review/application/review_list_controller.dart';
-import 'package:finanzia/features/review/application/review_providers.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/domain/review_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/review/application/review_list_controller.dart';
+import 'package:luka/features/review/application/review_providers.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/domain/review_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repository extends Mock implements ReviewRepository {}

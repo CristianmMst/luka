@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/sync/data/dtos/catalog_dtos.dart';
-import 'package:finanzia/features/sync/data/dtos/review_dto.dart';
-import 'package:finanzia/features/sync/data/dtos/transaction_dto.dart';
-import 'package:finanzia/features/sync/data/outbox_requests.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/sync/data/dtos/catalog_dtos.dart';
+import 'package:luka/features/sync/data/dtos/review_dto.dart';
+import 'package:luka/features/sync/data/dtos/transaction_dto.dart';
+import 'package:luka/features/sync/data/outbox_requests.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// `SyncRemote` sobre dio, contra `/v1/*` (spec 005 §6-7). Falla con
 /// [RemoteFailure], nunca con `DioException`/`ApiException`.

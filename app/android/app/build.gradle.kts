@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "co.finanzia.finanzia"
+    namespace = "co.luka.luka"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "co.finanzia.finanzia"
+        applicationId = "co.luka.luka"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // flutter_secure_storage 10 exige API 23.

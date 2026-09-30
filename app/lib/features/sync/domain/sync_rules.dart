@@ -1,5 +1,5 @@
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 typedef LocalVersion = ({DateTime updatedAt, bool pendingPush});
 

@@ -1,6 +1,6 @@
-package co.finanzia.finanzia
+package co.luka.luka
 
-import co.finanzia.finanzia.capture.CaptureChannel
+import co.luka.luka.capture.CaptureChannel
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 

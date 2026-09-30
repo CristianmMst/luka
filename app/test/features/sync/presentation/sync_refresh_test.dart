@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/application/sync_engine.dart';
-import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/application/sync_engine.dart';
+import 'package:luka/features/sync/presentation/sync_refresh.dart';
 
 import '../../../helpers/pump_app.dart';
 

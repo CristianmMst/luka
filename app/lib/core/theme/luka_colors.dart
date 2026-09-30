@@ -1,11 +1,11 @@
-import 'package:finanzia/core/theme/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/theme/tokens/color_tokens.dart';
 
 /// Colores semánticos que Material 3 no modela: montos, avisos y el bloque
 /// hero de la marca.
 @immutable
-class FinanziaColors extends ThemeExtension<FinanziaColors> {
-  const FinanziaColors({
+class LukaColors extends ThemeExtension<LukaColors> {
+  const LukaColors({
     required this.expense,
     required this.onExpense,
     required this.income,
@@ -24,7 +24,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     required this.gem,
   });
 
-  static const light = FinanziaColors(
+  static const light = LukaColors(
     expense: LightTokens.expense,
     onExpense: LightTokens.onExpense,
     income: LightTokens.income,
@@ -43,7 +43,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     gem: LightTokens.gem,
   );
 
-  static const dark = FinanziaColors(
+  static const dark = LukaColors(
     expense: DarkTokens.expense,
     onExpense: DarkTokens.onExpense,
     income: DarkTokens.income,
@@ -89,7 +89,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   final Color gem;
 
   @override
-  FinanziaColors copyWith({
+  LukaColors copyWith({
     Color? expense,
     Color? onExpense,
     Color? income,
@@ -107,7 +107,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
     Color? tile,
     Color? gem,
   }) {
-    return FinanziaColors(
+    return LukaColors(
       expense: expense ?? this.expense,
       onExpense: onExpense ?? this.onExpense,
       income: income ?? this.income,
@@ -128,9 +128,9 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   }
 
   @override
-  FinanziaColors lerp(FinanziaColors? other, double t) {
+  LukaColors lerp(LukaColors? other, double t) {
     if (other == null) return this;
-    return FinanziaColors(
+    return LukaColors(
       expense: Color.lerp(expense, other.expense, t)!,
       onExpense: Color.lerp(onExpense, other.onExpense, t)!,
       income: Color.lerp(income, other.income, t)!,
@@ -159,7 +159,7 @@ class FinanziaColors extends ThemeExtension<FinanziaColors> {
   }
 }
 
-extension FinanziaThemeX on BuildContext {
-  FinanziaColors get finanziaColors =>
-      Theme.of(this).extension<FinanziaColors>() ?? FinanziaColors.light;
+extension LukaThemeX on BuildContext {
+  LukaColors get lukaColors =>
+      Theme.of(this).extension<LukaColors>() ?? LukaColors.light;
 }

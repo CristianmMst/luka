@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/sync/application/sync_engine.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/sync/application/sync_engine.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
 import 'package:uuid/uuid.dart';
 
 part 'sync_coordinator.freezed.dart';

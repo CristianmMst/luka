@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:finanzia/core/google/google_sign_in_setup.dart';
-import 'package:finanzia/core/network/dio_providers.dart';
-import 'package:finanzia/core/storage/secure_storage_provider.dart';
-import 'package:finanzia/features/auth/data/auth_api.dart';
-import 'package:finanzia/features/auth/data/auth_repository_impl.dart';
-import 'package:finanzia/features/auth/data/id_token_provider.dart';
-import 'package:finanzia/features/auth/data/session_manager.dart';
-import 'package:finanzia/features/auth/data/token_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/google/google_sign_in_setup.dart';
+import 'package:luka/core/network/dio_providers.dart';
+import 'package:luka/core/storage/secure_storage_provider.dart';
+import 'package:luka/features/auth/data/auth_api.dart';
+import 'package:luka/features/auth/data/auth_repository_impl.dart';
+import 'package:luka/features/auth/data/id_token_provider.dart';
+import 'package:luka/features/auth/data/session_manager.dart';
+import 'package:luka/features/auth/data/token_store.dart';
 
 /// `device_info` para las sesiones del backend (máx. 200 caracteres).
 final deviceInfoProvider = Provider<String?>((ref) {

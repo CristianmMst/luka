@@ -1,6 +1,6 @@
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 enum NoticeTone { error, warning, info }
 
@@ -23,7 +23,7 @@ class InlineNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final (background, foreground, toneIcon) = switch (tone) {
       NoticeTone.error => (
         scheme.errorContainer,

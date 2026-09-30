@@ -1,6 +1,6 @@
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
-import 'package:finanzia/features/capture/domain/wallet_payment.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/capture/domain/wallet_payment.dart';
 
 void main() {
   // 14:05 en Bogotá (UTC-5).

@@ -1,7 +1,7 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// Divulgación prominente del acceso a notificaciones (spec 010 §2, política
 /// de Google Play): qué se lee y qué se ignora, antes de abrir el ajuste del
@@ -14,7 +14,7 @@ class NotificationDisclosureSheet extends StatelessWidget {
         context: context,
         isScrollControlled: true,
         showDragHandle: true,
-        backgroundColor: context.finanziaColors.card,
+        backgroundColor: context.lukaColors.card,
         builder: (_) => const NotificationDisclosureSheet(),
       ) ??
       false;

@@ -1,27 +1,27 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/presentation/sync_refresh.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/application/transactions_list_controller.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/day_group.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/change_category.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/day_card.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/filter_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/list_states.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/rejected_banner.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/presentation/sync_refresh.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/application/transactions_list_controller.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/day_group.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/change_category.dart';
+import 'package:luka/features/transactions/presentation/widgets/day_card.dart';
+import 'package:luka/features/transactions/presentation/widgets/filter_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/list_states.dart';
+import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
+import 'package:luka/features/transactions/presentation/widgets/rejected_banner.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// "Movimientos" (diseño B "Tarjetas por día", spec 008 §3.3): buscador,
 /// filtros, tarjetas por día con paginación infinita y los estados vacío,
@@ -220,7 +220,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final muted = textTheme.labelMedium?.copyWith(
       fontWeight: FontWeight.w400,

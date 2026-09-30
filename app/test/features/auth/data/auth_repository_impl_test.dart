@@ -1,13 +1,13 @@
-import 'package:finanzia/features/auth/data/auth_api.dart';
-import 'package:finanzia/features/auth/data/auth_repository_impl.dart';
-import 'package:finanzia/features/auth/data/dtos/session_dto.dart';
-import 'package:finanzia/features/auth/data/id_token_provider.dart';
-import 'package:finanzia/features/auth/data/session_manager.dart';
-import 'package:finanzia/features/auth/data/token_store.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/auth/data/auth_api.dart';
+import 'package:luka/features/auth/data/auth_repository_impl.dart';
+import 'package:luka/features/auth/data/dtos/session_dto.dart';
+import 'package:luka/features/auth/data/id_token_provider.dart';
+import 'package:luka/features/auth/data/session_manager.dart';
+import 'package:luka/features/auth/data/token_store.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/stub_backend.dart';

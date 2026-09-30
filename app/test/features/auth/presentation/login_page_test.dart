@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/domain/auth_repository.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/auth/presentation/login_page.dart';
-import 'package:finanzia/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/domain/auth_repository.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/auth/presentation/login_page.dart';
+import 'package:luka/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

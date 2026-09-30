@@ -1,4 +1,4 @@
-import 'package:finanzia/core/format/money.dart';
+import 'package:luka/core/format/money.dart';
 
 /// Posición de un monto dentro del texto: `[start, end)` en unidades de
 /// código, como `String.substring`.

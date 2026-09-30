@@ -1,5 +1,5 @@
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/capture/domain/capture_grant_store.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/capture/domain/capture_grant_store.dart';
 
 /// "Acceso concedido alguna vez" en la tabla `sync_state`, con la clave
 /// `capture_was_granted:<userId>`. Cerrar sesión vacía `sync_state` y la

@@ -1,25 +1,25 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/presentation/accounts_settings_tile.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/capture/application/notification_access_controller.dart';
-import 'package:finanzia/features/capture/presentation/widgets/apple_pay_settings_tile.dart';
-import 'package:finanzia/features/capture/presentation/widgets/notification_capture_tile.dart';
-import 'package:finanzia/features/categories/presentation/categories_settings_tile.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
-import 'package:finanzia/features/gmail/presentation/widgets/gmail_settings_tile.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_tags_settings_tile.dart';
-import 'package:finanzia/features/privacy/presentation/privacy_sheet.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/presentation/sync_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/presentation/accounts_settings_tile.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/capture/application/notification_access_controller.dart';
+import 'package:luka/features/capture/presentation/widgets/apple_pay_settings_tile.dart';
+import 'package:luka/features/capture/presentation/widgets/notification_capture_tile.dart';
+import 'package:luka/features/categories/presentation/categories_settings_tile.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/gmail/presentation/widgets/gmail_settings_tile.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/presentation/nfc_tags_settings_tile.dart';
+import 'package:luka/features/privacy/presentation/privacy_sheet.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/presentation/sync_sheet.dart';
 
 /// "Ajustes" (diseño B "Perfil arriba + lista plana", F4.8b, spec 008 §3.7):
 /// hero esmeralda con el perfil y la línea de sync (abre la hoja de
@@ -109,7 +109,7 @@ class _Hero extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final sync = ref.watch(syncCoordinatorProvider);
@@ -244,7 +244,7 @@ class _PrivacyTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: context.finanziaColors.card,
+      color: context.lukaColors.card,
       borderRadius: Radii.rowAll,
       clipBehavior: Clip.antiAlias,
       child: InkWell(

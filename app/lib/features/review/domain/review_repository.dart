@@ -1,4 +1,4 @@
-import 'package:finanzia/features/review/domain/review_item.dart';
+import 'package:luka/features/review/domain/review_item.dart';
 
 /// Puerto de lectura de la lista de revisión (los datos viven en Drift y
 /// se refrescan en cada pull, spec 008 §5).

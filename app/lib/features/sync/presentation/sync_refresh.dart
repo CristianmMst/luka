@@ -1,6 +1,6 @@
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 /// Deslizar hacia abajo sincroniza (spec 008 §5): push del outbox y pull,
 /// el mismo ciclo que corre al abrir la app. El indicador se queda hasta que

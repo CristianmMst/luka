@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/application/notification_access_controller.dart';
-import 'package:finanzia/features/capture/domain/capture_grant_store.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/application/notification_access_controller.dart';
+import 'package:luka/features/capture/domain/capture_grant_store.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 /// Puerto de la marca "acceso concedido alguna vez"; se sobrescribe en
 /// `lib/app/composition.dart`.

@@ -1,10 +1,10 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:intl/intl.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Textos del Inicio: meses, deltas, porcentajes y la línea de sync.
 

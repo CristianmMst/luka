@@ -1,11 +1,11 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/review/presentation/widgets/review_format.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Tarjeta del formulario de un movimiento: monto, gasto o ingreso, fecha y
 /// hora, comercio, categoría, la cuenta si hay [onPickAccount] y, si hay
@@ -61,7 +61,7 @@ class TransactionFormCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final label = textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
     final muted = textTheme.labelMedium?.copyWith(
@@ -264,7 +264,7 @@ class _PickerTile extends StatelessWidget {
       label: l10n.reviewChangeSemantics(label, value),
       onTap: onTap,
       child: Material(
-        color: context.finanziaColors.tile,
+        color: context.lukaColors.tile,
         shape: RoundedRectangleBorder(
           borderRadius: Radii.noticeAll,
           side: BorderSide(color: scheme.outline),

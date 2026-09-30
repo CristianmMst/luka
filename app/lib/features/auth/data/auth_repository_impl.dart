@@ -1,11 +1,11 @@
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
-import 'package:finanzia/features/auth/data/auth_api.dart';
-import 'package:finanzia/features/auth/data/id_token_provider.dart';
-import 'package:finanzia/features/auth/data/session_manager.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/domain/auth_repository.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/core/network/session_bridge.dart';
+import 'package:luka/features/auth/data/auth_api.dart';
+import 'package:luka/features/auth/data/id_token_provider.dart';
+import 'package:luka/features/auth/data/session_manager.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/domain/auth_repository.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({

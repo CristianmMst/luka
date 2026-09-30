@@ -1,14 +1,14 @@
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// Abre una hoja inferior con el marco de los diseños "Filtros" y
 /// "Categoria": fondo de tarjeta, radio 24 arriba y el asa de 36×4.
-Future<T?> showFinanziaSheet<T>(
+Future<T?> showLukaSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
 }) {
-  final brand = context.finanziaColors;
+  final brand = context.lukaColors;
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,

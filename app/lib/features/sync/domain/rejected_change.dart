@@ -1,5 +1,5 @@
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
 
 part 'rejected_change.freezed.dart';
 

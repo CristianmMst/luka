@@ -1,5 +1,5 @@
-import 'package:finanzia/core/format/money.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/core/format/money.dart';
 
 part 'synced_models.freezed.dart';
 

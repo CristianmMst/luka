@@ -1,5 +1,5 @@
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 void main() {
   group('TxChannel <-> wire', () {

@@ -1,8 +1,8 @@
-import 'package:finanzia/features/review/domain/review_draft.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/review/domain/review_draft.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
 
 /// Convertir o descartar un mensaje en revisión (AC-8.1). Las dos son
 /// optimistas: el mensaje sale de la lista en local y la operación se

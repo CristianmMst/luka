@@ -1,8 +1,8 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/widgets/brand_mark.dart';
 
 /// Session gate: se muestra mientras se restaura la sesión guardada.
 class SplashPage extends StatelessWidget {
@@ -10,7 +10,7 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final label = AppLocalizations.of(context).splashRestoring;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

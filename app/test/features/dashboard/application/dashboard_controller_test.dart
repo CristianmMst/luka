@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/dashboard/application/dashboard_controller.dart';
-import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
-import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/dashboard/application/dashboard_controller.dart';
+import 'package:luka/features/dashboard/application/dashboard_providers.dart';
+import 'package:luka/features/dashboard/domain/insights_repository.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repository extends Mock implements InsightsRepository {}

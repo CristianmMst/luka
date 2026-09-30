@@ -1,5 +1,5 @@
-import 'package:finanzia/features/nfc/domain/quick_add_link.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/nfc/domain/quick_add_link.dart';
 
 const _id = '3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b';
 
@@ -7,7 +7,7 @@ void main() {
   test('el enlace lleva solo el id de la plantilla', () {
     expect(
       quickAddUri(_id).toString(),
-      'finanzia://quick-add?tag=$_id',
+      'luka://quick-add?tag=$_id',
     );
   });
 
@@ -18,7 +18,7 @@ void main() {
   test('acepta mayúsculas y espacios en el id', () {
     expect(
       tagIdFromQuickAddUri(
-        Uri.parse('FINANZIA://Quick-Add?tag=${_id.toUpperCase()}'),
+        Uri.parse('LUKA://Quick-Add?tag=${_id.toUpperCase()}'),
       ),
       _id,
     );
@@ -27,10 +27,10 @@ void main() {
   test('rechaza otros enlaces', () {
     for (final raw in [
       'https://quick-add?tag=$_id',
-      'finanzia://otra-cosa?tag=$_id',
-      'finanzia://quick-add',
-      'finanzia://quick-add?tag=no-es-un-uuid',
-      'finanzia://quick-add?tag=',
+      'luka://otra-cosa?tag=$_id',
+      'luka://quick-add',
+      'luka://quick-add?tag=no-es-un-uuid',
+      'luka://quick-add?tag=',
     ]) {
       expect(tagIdFromQuickAddUri(Uri.parse(raw)), isNull, reason: raw);
     }

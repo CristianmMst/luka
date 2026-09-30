@@ -1,11 +1,11 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/transactions/application/transaction_detail_controller.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/transactions/application/transaction_detail_controller.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// "Fuentes" del detalle (diseño "DetalleA"): una tarjeta por fuente con
 /// su canal y la hora de recepción y, con dos o más, el sello dorado
@@ -115,7 +115,7 @@ class _SourceCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: context.finanziaColors.card,
+          color: context.lukaColors.card,
           borderRadius: Radii.noticeAll,
         ),
         child: Row(
@@ -171,7 +171,7 @@ class _SingleRecordSeal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
 
     return Semantics(

@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/privacy/application/privacy_actions.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/privacy/application/privacy_actions.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Hoja "Privacidad y datos" (diseño B, F4.8b, spec 008 §3.7, RF-11):
 /// exportar mis datos y borrar mi cuenta, que lista lo que se borra y pide
@@ -16,7 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class PrivacySheet extends ConsumerStatefulWidget {
   const PrivacySheet({super.key});
 
-  static Future<void> show(BuildContext context) => showFinanziaSheet<void>(
+  static Future<void> show(BuildContext context) => showLukaSheet<void>(
     context,
     builder: (_) => const PrivacySheet(),
   );
@@ -102,7 +102,7 @@ class _PrivacySheetState extends ConsumerState<PrivacySheet> {
             ),
           ),
           Material(
-            color: context.finanziaColors.tile,
+            color: context.lukaColors.tile,
             borderRadius: Radii.rowAll,
             clipBehavior: Clip.antiAlias,
             child: InkWell(

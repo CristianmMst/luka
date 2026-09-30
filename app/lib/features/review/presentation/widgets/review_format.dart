@@ -1,12 +1,12 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/review/domain/amount_highlight.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/review/domain/amount_highlight.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Presentación compartida de la lista y el detalle de Revisión: motivo,
 /// canal, origen, montos resaltados y el campo de monto.

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/network/api_exception.dart';
 
 import '../../helpers/stub_backend.dart';
 

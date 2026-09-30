@@ -1,4 +1,4 @@
-package co.finanzia.finanzia.capture
+package co.luka.luka.capture
 
 const val CHANNEL_NOTIFICATION = "notification"
 const val CHANNEL_SMS = "sms_notification"

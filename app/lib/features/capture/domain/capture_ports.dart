@@ -1,4 +1,4 @@
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
 
 /// Captura nativa de pagos y su cola local. En Android es el listener de
 /// notificaciones; en iOS, que no deja leer notificaciones de otras apps,

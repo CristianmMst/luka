@@ -1,12 +1,12 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/application/sync_engine.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
-import 'package:finanzia/features/sync/presentation/sync_format.dart';
-import 'package:finanzia/features/sync/presentation/sync_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/application/sync_engine.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
+import 'package:luka/features/sync/presentation/sync_format.dart';
+import 'package:luka/features/sync/presentation/sync_sheet.dart';
 
 import '../../../helpers/pump_app.dart';
 

@@ -1,5 +1,5 @@
-import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/dashboard/domain/insights_repository.dart';
 
 /// Puerto del resumen mensual; se sobrescribe en `lib/app/composition.dart`.
 final insightsRepositoryProvider = Provider<InsightsRepository>(

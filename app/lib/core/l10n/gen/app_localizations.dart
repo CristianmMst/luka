@@ -97,7 +97,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In es, this message translates to:
-  /// **'finanzia'**
+  /// **'luka'**
   String get appName;
 
   /// No description provided for @splashRestoring.
@@ -115,7 +115,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginBody.
   ///
   /// In es, this message translates to:
-  /// **'finanzia lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.'**
+  /// **'luka lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.'**
   String get loginBody;
 
   /// No description provided for @loginContinueWithGoogle.
@@ -1225,7 +1225,7 @@ abstract class AppLocalizations {
   /// No description provided for @gmailHeroSemantics.
   ///
   /// In es, this message translates to:
-  /// **'finanzia solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.'**
+  /// **'luka solo lee los correos de alerta de bancos como Bancolombia, Nequi, Davivienda y BBVA.'**
   String get gmailHeroSemantics;
 
   /// No description provided for @gmailOnboardingTitle.
@@ -1483,7 +1483,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationDisclosureBody.
   ///
   /// In es, this message translates to:
-  /// **'Con el acceso a notificaciones, finanzia registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.'**
+  /// **'Con el acceso a notificaciones, luka registra cada compra o transferencia apenas tu banco te avisa, sin que escribas nada.'**
   String get notificationDisclosureBody;
 
   /// No description provided for @notificationDisclosureReads.
@@ -1867,7 +1867,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryErrorDuplicate.
   ///
   /// In es, this message translates to:
-  /// **'Ya existe una categoría con ese nombre (tuya o de finanzia).'**
+  /// **'Ya existe una categoría con ese nombre (tuya o de luka).'**
   String get categoryErrorDuplicate;
 
   /// No description provided for @categoryErrorOffline.
@@ -2257,13 +2257,13 @@ abstract class AppLocalizations {
   /// No description provided for @myCategoriesSystemSection.
   ///
   /// In es, this message translates to:
-  /// **'De finanzia'**
+  /// **'De luka'**
   String get myCategoriesSystemSection;
 
   /// No description provided for @myCategoriesSystemNote.
   ///
   /// In es, this message translates to:
-  /// **'Las categorías de finanzia se pueden usar, pero no editar ni borrar.'**
+  /// **'Las categorías de luka se pueden usar, pero no editar ni borrar.'**
   String get myCategoriesSystemNote;
 
   /// No description provided for @myCategoriesMeta.
@@ -2629,7 +2629,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsOnboardingBody.
   ///
   /// In es, this message translates to:
-  /// **'Con el acceso a notificaciones, finanzia registra cada compra apenas tu banco te avisa.'**
+  /// **'Con el acceso a notificaciones, luka registra cada compra apenas tu banco te avisa.'**
   String get notificationsOnboardingBody;
 
   /// No description provided for @notificationsOnboardingReads.
@@ -3139,7 +3139,7 @@ abstract class AppLocalizations {
   /// No description provided for @nfcTagsIntro.
   ///
   /// In es, this message translates to:
-  /// **'Pega un tag donde gastas seguido. Al acercar el teléfono, finanzia abre el registro con la categoría lista.'**
+  /// **'Pega un tag donde gastas seguido. Al acercar el teléfono, luka abre el registro con la categoría lista.'**
   String get nfcTagsIntro;
 
   /// No description provided for @nfcTagsEmpty.
@@ -3337,7 +3337,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerReadNfcUnknown.
   ///
   /// In es, this message translates to:
-  /// **'Ese tag no es de finanzia.'**
+  /// **'Ese tag no es de luka.'**
   String get registerReadNfcUnknown;
 
   /// No description provided for @applePayTitle.
@@ -3349,7 +3349,7 @@ abstract class AppLocalizations {
   /// No description provided for @applePayBody.
   ///
   /// In es, this message translates to:
-  /// **'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet finanzia recibe el comercio y el monto.'**
+  /// **'iPhone no deja leer notificaciones. Con un Atajo, cada vez que pagas con Wallet luka recibe el comercio y el monto.'**
   String get applePayBody;
 
   /// No description provided for @applePayStep1.
@@ -3367,7 +3367,7 @@ abstract class AppLocalizations {
   /// No description provided for @applePayStep3.
   ///
   /// In es, this message translates to:
-  /// **'Agrega la acción «Registrar pago en finanzia» y pasa Comerciante, Monto y Tarjeta.'**
+  /// **'Agrega la acción «Registrar pago en luka» y pasa Comerciante, Monto y Tarjeta.'**
   String get applePayStep3;
 
   /// No description provided for @applePayStepSemantics.
@@ -3385,7 +3385,7 @@ abstract class AppLocalizations {
   /// No description provided for @applePayQueueNote.
   ///
   /// In es, this message translates to:
-  /// **'Los pagos quedan guardados en el teléfono y se envían al abrir finanzia.'**
+  /// **'Los pagos quedan guardados en el teléfono y se envían al abrir luka.'**
   String get applePayQueueNote;
 
   /// No description provided for @applePayOpenShortcuts.

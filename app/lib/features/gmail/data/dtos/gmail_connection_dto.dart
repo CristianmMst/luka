@@ -1,5 +1,5 @@
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
 
 part 'gmail_connection_dto.g.dart';
 

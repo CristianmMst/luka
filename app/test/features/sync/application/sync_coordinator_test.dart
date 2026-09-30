@@ -1,17 +1,17 @@
 import 'dart:async';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_repository.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/application/sync_engine.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/auth_repository.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/application/sync_engine.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRepository extends Mock implements AuthRepository {}
@@ -107,7 +107,7 @@ void main() {
 
   SyncStatus status() => container.read(syncCoordinatorProvider);
 
-  /// Monta el coordinador (como `FinanziaApp`) y deja resolver la sesión.
+  /// Monta el coordinador (como `LukaApp`) y deja resolver la sesión.
   Future<void> start({User? user}) async {
     when(() => repository.restoreSession()).thenAnswer((_) async => user);
     container.listen(syncCoordinatorProvider, (_, _) {});

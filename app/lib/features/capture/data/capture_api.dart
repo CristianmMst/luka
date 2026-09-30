@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/capture/data/dtos/capture_dtos.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/capture/data/dtos/capture_dtos.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
 
 /// `CaptureRemote` sobre dio (spec 005 §5). Falla con [RemoteFailure].
 ///

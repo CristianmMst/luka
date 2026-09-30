@@ -1,4 +1,4 @@
-package co.finanzia.finanzia.capture
+package co.luka.luka.capture
 
 import android.content.ComponentName
 import android.content.Context
@@ -12,7 +12,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 
 /**
- * `MethodChannel("co.finanzia/capture")`, contraparte de
+ * `MethodChannel("co.luka/capture")`, contraparte de
  * `lib/features/capture/data/method_channel_notification_source.dart`. La base
  * se toca en un hilo aparte y la respuesta vuelve al hilo principal.
  */
@@ -67,7 +67,7 @@ class CaptureChannel(private val context: Context) : MethodChannel.MethodCallHan
     private fun isPermissionGranted(): Boolean {
         val enabled = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
             ?: return false
-        val mine = ComponentName(context, FinanziaNotificationListener::class.java)
+        val mine = ComponentName(context, LukaNotificationListener::class.java)
         return enabled.split(':').any { ComponentName.unflattenFromString(it) == mine }
     }
 
@@ -84,6 +84,6 @@ class CaptureChannel(private val context: Context) : MethodChannel.MethodCallHan
     }
 
     private companion object {
-        const val NAME = "co.finanzia/capture"
+        const val NAME = "co.luka/capture"
     }
 }

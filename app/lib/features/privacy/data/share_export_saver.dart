@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -14,7 +14,7 @@ import 'package:share_plus/share_plus.dart';
 class ShareExportSaver implements ExportSaver {
   const ShareExportSaver();
 
-  static final _exportName = RegExp(r'^finanzia-\d{4}-\d{2}-\d{2}\.json$');
+  static final _exportName = RegExp(r'^luka-\d{4}-\d{2}-\d{2}\.json$');
 
   @override
   Future<void> save(String json, {required String fileName}) async {

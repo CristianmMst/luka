@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:finanzia/features/categories/data/categories_api.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/categories/data/categories_api.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
 
 import '../../../helpers/stub_backend.dart';
 

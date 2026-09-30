@@ -1,8 +1,8 @@
-import 'package:finanzia/features/privacy/application/privacy_actions.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
-import 'package:finanzia/features/privacy/presentation/privacy_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/privacy/application/privacy_actions.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
+import 'package:luka/features/privacy/presentation/privacy_sheet.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

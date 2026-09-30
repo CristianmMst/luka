@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/presentation/account_picker_sheet.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_format.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_write_screen.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/presentation/account_picker_sheet.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/presentation/nfc_format.dart';
+import 'package:luka/features/nfc/presentation/nfc_write_screen.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Hoja "Nuevo tag" / "Editar tag" (F4.5b): nombre, categoría, cuenta y
 /// nota de la plantilla, con "Guardar y escribir en un tag".
@@ -23,7 +23,7 @@ class NfcTagFormSheet extends ConsumerStatefulWidget {
   final NfcTagTemplate? existing;
 
   static Future<void> show(BuildContext context, {NfcTagTemplate? existing}) =>
-      showFinanziaSheet<void>(
+      showLukaSheet<void>(
         context,
         builder: (_) => NfcTagFormSheet(existing: existing),
       );
@@ -119,7 +119,7 @@ class _NfcTagFormSheetState extends ConsumerState<NfcTagFormSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final label = textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
     final canWrite = ref.watch(nfcWriteSupportedProvider);

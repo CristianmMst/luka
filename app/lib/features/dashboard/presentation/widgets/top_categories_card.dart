@@ -1,12 +1,12 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
 
 /// "En qué se fue": top 5 del gasto con barras relativas a la mayor, el %
 /// del gasto total y "Otras categorías". Tocar una fila llama a [onOpen]
@@ -25,7 +25,7 @@ class TopCategoriesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final total = summary.totals.expenses;

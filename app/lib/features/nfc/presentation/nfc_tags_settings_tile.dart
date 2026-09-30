@@ -1,9 +1,9 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// Fila "Tags NFC" de Ajustes (F4.5b, solo Android): abre las plantillas.
 class NfcTagsSettingsTile extends StatelessWidget {
@@ -16,7 +16,7 @@ class NfcTagsSettingsTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: context.finanziaColors.card,
+      color: context.lukaColors.card,
       borderRadius: Radii.rowAll,
       clipBehavior: Clip.antiAlias,
       child: InkWell(

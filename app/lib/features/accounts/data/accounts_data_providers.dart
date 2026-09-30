@@ -1,8 +1,8 @@
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/core/network/dio_providers.dart';
-import 'package:finanzia/features/accounts/data/accounts_api.dart';
-import 'package:finanzia/features/accounts/data/drift_accounts_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/core/network/dio_providers.dart';
+import 'package:luka/features/accounts/data/accounts_api.dart';
+import 'package:luka/features/accounts/data/drift_accounts_store.dart';
 
 final accountsApiProvider = Provider<AccountsApi>(
   (ref) => AccountsApi(ref.watch(apiDioProvider)),

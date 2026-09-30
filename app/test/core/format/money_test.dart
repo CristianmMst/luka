@@ -1,5 +1,5 @@
-import 'package:finanzia/core/format/money.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
 
 void main() {
   group('Cop.parse', () {

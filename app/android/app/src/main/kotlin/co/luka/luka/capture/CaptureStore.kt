@@ -1,4 +1,4 @@
-package co.finanzia.finanzia.capture
+package co.luka.luka.capture
 
 import android.content.ContentValues
 import android.content.Context
@@ -23,9 +23,9 @@ data class PendingNotification(
  * guarda lo que ya pasó el filtro (P6).
  */
 class CaptureStore private constructor(context: Context) :
-    SQLiteOpenHelper(context, "finanzia_capture.db", null, 1) {
+    SQLiteOpenHelper(context, "luka_capture.db", null, 1) {
 
-    private val prefs = context.getSharedPreferences("finanzia_capture", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("luka_capture", Context.MODE_PRIVATE)
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(

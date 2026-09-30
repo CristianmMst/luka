@@ -1,6 +1,6 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
 
 /// "hace 3 min", "hace 2 h", "hace 1 día" desde [then] hasta [now].
 String syncAgo(AppLocalizations l10n, DateTime then, DateTime now) {

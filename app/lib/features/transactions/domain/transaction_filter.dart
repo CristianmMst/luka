@@ -1,7 +1,7 @@
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 part 'transaction_filter.freezed.dart';
 

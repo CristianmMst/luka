@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/presentation/widgets/gmail_disconnect_dialog.dart';
-import 'package:finanzia/features/gmail/presentation/widgets/gmail_failure_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/presentation/widgets/gmail_disconnect_dialog.dart';
+import 'package:luka/features/gmail/presentation/widgets/gmail_failure_notice.dart';
 
 /// Fila "Gmail" de Ajustes (spec 008 §3.7, AC-1.3): estado de la conexión y
 /// su acción (conectar, reconectar o desconectar con confirmación).
@@ -81,7 +81,7 @@ class GmailSettingsTile extends ConsumerWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: context.finanziaColors.card,
+            color: context.lukaColors.card,
             borderRadius: Radii.rowAll,
           ),
           child: Padding(

@@ -1,9 +1,9 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/domain/manual_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/domain/manual_draft.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Store extends Mock implements NfcTagStore {}
@@ -70,7 +70,7 @@ void main() {
     await actions.writeTag(const NfcTagTemplate(id: 't-1', name: 'Café'));
 
     final uri = verify(() => service.write(captureAny())).captured.single;
-    expect(uri.toString(), 'finanzia://quick-add?tag=t-1');
+    expect(uri.toString(), 'luka://quick-add?tag=t-1');
   });
 
   test('el registro rápido crea el gasto con el tag, ahora', () async {

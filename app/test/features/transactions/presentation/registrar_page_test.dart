@@ -1,20 +1,20 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/app_theme.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/manual_draft.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
-import 'package:finanzia/features/transactions/presentation/registrar_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/app_theme.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/manual_draft.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
+import 'package:luka/features/transactions/presentation/registrar_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Actions extends Mock implements TransactionActions {}

@@ -1,8 +1,8 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
 
 /// Aviso para un [GmailFailure] (onboarding y Ajustes). Cancelar el
 /// consentimiento no es un error: no muestra nada.

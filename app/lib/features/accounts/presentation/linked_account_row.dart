@@ -1,8 +1,8 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Nombre de la cuenta en listas y diálogos: su alias o, sin alias, el banco.
 String linkedAccountTitle(AppLocalizations l10n, LinkedAccount account) =>

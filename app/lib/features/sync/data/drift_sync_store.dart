@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/sync/data/outbox_codec.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/sync/data/outbox_codec.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:uuid/uuid.dart';
 
 /// [SyncStore] sobre la base local Drift (spec 004 §5, 005 §9, 003 §3).

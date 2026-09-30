@@ -1,18 +1,18 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/account_draft.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/account_draft.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Hoja "Nueva cuenta" / "Editar cuenta" (diseño B "Lista + hoja", F4.4):
 /// banco, tipo, últimos 4 y alias. La usan Mis cuentas y el paso Cuentas
@@ -27,7 +27,7 @@ class AccountFormSheet extends ConsumerStatefulWidget {
   static Future<SyncedAccount?> show(
     BuildContext context, {
     LinkedAccount? existing,
-  }) => showFinanziaSheet<SyncedAccount>(
+  }) => showLukaSheet<SyncedAccount>(
     context,
     builder: (_) => AccountFormSheet(existing: existing),
   );
@@ -101,7 +101,7 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final label = textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
     final failureMessage = switch (_failure) {

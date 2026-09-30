@@ -1,8 +1,8 @@
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
 
-/// Gema de talla esmeralda + wordmark "finanzia".
+/// Gema de talla esmeralda + wordmark "luka".
 class BrandMark extends StatelessWidget {
   const BrandMark({
     required this.gemColor,
@@ -33,7 +33,7 @@ class BrandMark extends StatelessWidget {
     if (!showWordmark) return gem;
 
     final wordmark = Text(
-      'finanzia',
+      'luka',
       style: TextStyle(
         fontFamily: FontFamilies.display,
         fontWeight: FontWeight.w700,
@@ -44,7 +44,7 @@ class BrandMark extends StatelessWidget {
       ),
     );
     return Semantics(
-      label: 'finanzia',
+      label: 'luka',
       excludeSemantics: true,
       child: Flex(
         direction: direction,

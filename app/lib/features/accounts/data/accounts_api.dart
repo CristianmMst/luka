@@ -1,11 +1,11 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/accounts/domain/account_draft.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/sync/data/dtos/catalog_dtos.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/accounts/domain/account_draft.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/sync/data/dtos/catalog_dtos.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// [AccountsRemote] sobre dio, contra `/v1/accounts` (spec 005 §7).
 /// Falla con [AccountFailure], nunca con `DioException`.

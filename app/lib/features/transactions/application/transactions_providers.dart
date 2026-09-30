@@ -1,9 +1,9 @@
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
 
 /// Puerto de lectura de movimientos; se sobrescribe en
 /// `lib/app/composition.dart`.

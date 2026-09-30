@@ -1,9 +1,9 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 
 /// Shell de la app autenticada: un `IndexedStack` de 5 ramas con una barra
 /// de navegación inferior fija (diseño "ListaB", spec 008 §7).
@@ -121,7 +121,7 @@ class _Destination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final iconColor = selected
         ? scheme.onPrimaryContainer

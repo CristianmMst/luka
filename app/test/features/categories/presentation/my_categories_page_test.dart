@@ -1,8 +1,8 @@
-import 'package:finanzia/features/categories/application/category_actions.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/presentation/my_categories_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/categories/application/category_actions.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/presentation/my_categories_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

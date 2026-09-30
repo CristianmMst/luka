@@ -1,4 +1,4 @@
-import 'package:finanzia/features/auth/domain/entities/user.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 
 /// Puerto de autenticación. Las operaciones fallan con `AuthFailure`.
 abstract interface class AuthRepository {

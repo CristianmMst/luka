@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/categories/application/category_actions.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_catalog.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/categories/presentation/category_visuals.dart';
-import 'package:finanzia/features/categories/presentation/fiscal_tag_sheet.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/categories/application/category_actions.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_catalog.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
+import 'package:luka/features/categories/presentation/fiscal_tag_sheet.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Hoja "Nueva categoría" / "Editar categoría" (diseño A "Hoja completa",
 /// F4.8a): nombre, ícono, color y "¿Para qué la usas?". Pide conexión.
@@ -27,7 +27,7 @@ class CategoryFormSheet extends ConsumerStatefulWidget {
   static Future<SyncedCategory?> show(
     BuildContext context, {
     OwnCategory? existing,
-  }) => showFinanziaSheet<SyncedCategory>(
+  }) => showLukaSheet<SyncedCategory>(
     context,
     builder: (_) => CategoryFormSheet(existing: existing),
   );
@@ -108,7 +108,7 @@ class _CategoryFormSheetState extends ConsumerState<CategoryFormSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final label = textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700);
     final failureMessage = switch (_failure) {
@@ -326,7 +326,7 @@ class _IconChoice extends StatelessWidget {
       label: semantics,
       excludeSemantics: true,
       child: Material(
-        color: selected ? scheme.primaryContainer : context.finanziaColors.tile,
+        color: selected ? scheme.primaryContainer : context.lukaColors.tile,
         shape: RoundedRectangleBorder(
           borderRadius: Radii.rowAll,
           side: selected

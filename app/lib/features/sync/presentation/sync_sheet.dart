@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
-import 'package:finanzia/features/sync/presentation/sync_format.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
+import 'package:luka/features/sync/presentation/sync_format.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Hoja "Sincronización" de Ajustes (diseño B "Hoja compacta", F4.8b,
 /// spec 008 §5): cuándo fue la última, "Sincronizar ahora" y los cambios que
@@ -21,7 +21,7 @@ class SyncSheet extends ConsumerWidget {
   /// Reloj para "hace …"; en tests se fija.
   final DateTime Function()? now;
 
-  static Future<void> show(BuildContext context) => showFinanziaSheet<void>(
+  static Future<void> show(BuildContext context) => showLukaSheet<void>(
     context,
     builder: (_) => const SyncSheet(),
   );
@@ -96,7 +96,7 @@ class SyncSheet extends ConsumerWidget {
                 l10n.syncSheetRejectedHeader(rejected.length),
                 style: textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: context.finanziaColors.expense,
+                  color: context.lukaColors.expense,
                 ),
               ),
             ),
@@ -129,7 +129,7 @@ class _RejectedRow extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final coordinator = ref.read(syncCoordinatorProvider.notifier);
     final title = rejectedOpLabel(l10n, change.op);
     final amount = change.amountCents;

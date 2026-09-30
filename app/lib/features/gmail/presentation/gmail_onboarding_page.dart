@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/brand_mark.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/presentation/widgets/gmail_failure_notice.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
-import 'package:finanzia/features/onboarding/presentation/onboarding_navigation.dart';
-import 'package:finanzia/features/onboarding/presentation/widgets/onboarding_parts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/brand_mark.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/presentation/widgets/gmail_failure_notice.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
+import 'package:luka/features/onboarding/presentation/onboarding_navigation.dart';
+import 'package:luka/features/onboarding/presentation/widgets/onboarding_parts.dart';
 
 /// Paso "Conecta tu Gmail" tras el login (spec 008 §3.1, AC-1.2/AC-1.3), con
 /// el lenguaje del login "Veta esmeralda": hero esmeralda y titular
@@ -27,7 +27,7 @@ class GmailOnboardingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final controller = ref.read(gmailControllerProvider.notifier);
@@ -184,7 +184,7 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -211,7 +211,7 @@ class _Hero extends StatelessWidget {
               Row(
                 children: [
                   BrandMark(
-                    gemColor: context.finanziaColors.gem,
+                    gemColor: context.lukaColors.gem,
                     textColor: onColor,
                   ),
                   const Spacer(),

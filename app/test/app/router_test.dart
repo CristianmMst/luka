@@ -1,10 +1,10 @@
-import 'package:finanzia/app/router.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/app/router.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
 
 void main() {
   const user = User(id: 'u', email: 'a@b.co', status: UserStatus.active);

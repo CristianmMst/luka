@@ -1,7 +1,7 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// "¿Desconectar Gmail?": `true` confirma; cancelar o cerrar devuelve
 /// `false`/`null`.
@@ -22,7 +22,7 @@ class GmailDisconnectDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Dialog(
-      backgroundColor: context.finanziaColors.card,
+      backgroundColor: context.lukaColors.card,
       shape: const RoundedRectangleBorder(borderRadius: Radii.cardAll),
       insetPadding: const EdgeInsets.symmetric(horizontal: 32),
       child: ConstrainedBox(

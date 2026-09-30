@@ -1,7 +1,7 @@
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
 
 /// Botón "Continuar con Google" según la guía de marca de Google: variantes
 /// clara y oscura, Roboto Medium y la "G" a color sobre su fondo.

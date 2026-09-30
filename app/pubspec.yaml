@@ -1,5 +1,5 @@
-name: finanzia
-description: "finanzia: gastos capturados automáticamente y reporte fiscal (formulario 210)."
+name: luka
+description: "luka: gastos capturados automáticamente y reporte fiscal (formulario 210)."
 publish_to: 'none'
 version: 0.1.0
 

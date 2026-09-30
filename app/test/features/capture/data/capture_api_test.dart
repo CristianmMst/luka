@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:finanzia/features/capture/data/capture_api.dart';
-import 'package:finanzia/features/capture/data/dtos/capture_dtos.dart';
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/data/capture_api.dart';
+import 'package:luka/features/capture/data/dtos/capture_dtos.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
 
 import '../../../helpers/stub_backend.dart';
 

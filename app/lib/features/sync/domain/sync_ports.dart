@@ -1,8 +1,8 @@
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/rejected_change.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/rejected_change.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 part 'sync_ports.freezed.dart';
 

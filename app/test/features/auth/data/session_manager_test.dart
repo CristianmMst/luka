@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/auth_interceptor.dart';
-import 'package:finanzia/core/network/session_bridge.dart';
-import 'package:finanzia/features/auth/data/auth_api.dart';
-import 'package:finanzia/features/auth/data/dtos/session_dto.dart';
-import 'package:finanzia/features/auth/data/session_manager.dart';
-import 'package:finanzia/features/auth/data/token_store.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/network/auth_interceptor.dart';
+import 'package:luka/core/network/session_bridge.dart';
+import 'package:luka/features/auth/data/auth_api.dart';
+import 'package:luka/features/auth/data/dtos/session_dto.dart';
+import 'package:luka/features/auth/data/session_manager.dart';
+import 'package:luka/features/auth/data/token_store.dart';
 
 import '../../../helpers/stub_backend.dart';
 
@@ -91,7 +91,7 @@ void main() {
   });
 
   test('TokenStore descarta un blob corrupto', () async {
-    FlutterSecureStorage.setMockInitialValues({'finanzia.session.v1': '{mal'});
+    FlutterSecureStorage.setMockInitialValues({'luka.session.v1': '{mal'});
     expect(await TokenStore(const FlutterSecureStorage()).read(), isNull);
   });
 

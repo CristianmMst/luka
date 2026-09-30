@@ -1,8 +1,8 @@
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 
 void main() {
   group('User.greetingName', () {

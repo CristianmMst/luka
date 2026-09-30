@@ -1,9 +1,9 @@
-import 'package:finanzia/core/google/google_sign_in_setup.dart';
-import 'package:finanzia/features/auth/data/id_token_provider.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:luka/core/google/google_sign_in_setup.dart';
+import 'package:luka/features/auth/data/id_token_provider.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockGoogleSignIn extends Mock implements GoogleSignIn {}

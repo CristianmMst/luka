@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// [AccountsStore] sobre la base local Drift (spec 004 §5). El pull de cada
 /// sync sigue siendo la verdad: `replaceAccounts` reemplaza todo.

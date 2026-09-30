@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_format.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_tag_form_sheet.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/presentation/nfc_format.dart';
+import 'package:luka/features/nfc/presentation/nfc_tag_form_sheet.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
 
 /// Ajustes → "Tags NFC" (F4.5b, spec 008 §3.7): las plantillas de este
 /// teléfono, con crear, editar, escribir y borrar.
@@ -47,7 +47,7 @@ class NfcTagsPage extends ConsumerWidget {
             else
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: context.finanziaColors.card,
+                  color: context.lukaColors.card,
                   borderRadius: Radii.noticeAll,
                 ),
                 child: Column(

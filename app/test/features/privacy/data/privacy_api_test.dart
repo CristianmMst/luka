@@ -1,6 +1,6 @@
-import 'package:finanzia/features/privacy/data/privacy_api.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/privacy/data/privacy_api.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
 
 import '../../../helpers/stub_backend.dart';
 

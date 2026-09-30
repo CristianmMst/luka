@@ -1,9 +1,9 @@
-import 'package:finanzia/features/categories/application/category_actions.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/categories/application/category_actions.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRemote extends Mock implements CategoriesRemote {}

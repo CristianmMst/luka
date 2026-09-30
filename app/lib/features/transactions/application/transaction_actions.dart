@@ -1,9 +1,9 @@
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/domain/manual_draft.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/domain/manual_draft.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 /// Registro manual y ediciones del detalle de un movimiento. Todas son
 /// optimistas: se aplican en local y se encolan en el outbox (spec 005 §9).

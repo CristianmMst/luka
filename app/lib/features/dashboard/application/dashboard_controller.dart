@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/dashboard/application/dashboard_providers.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 
 part 'dashboard_controller.freezed.dart';
 

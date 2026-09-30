@@ -1,12 +1,12 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_icon.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Fila de un movimiento dentro de su `DayCard` (diseño "ListaB"): ícono
 /// de categoría, comercio, chip de categoría editable, monto con signo,
@@ -30,7 +30,7 @@ class TransactionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final muted = scheme.onSurfaceVariant;
     final isTransfer = tx.kind == TxKind.transfer;
@@ -238,7 +238,7 @@ class SyncMarkLabel extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final rejected = mark == SyncMark.rejected;
     final color = rejected
-        ? context.finanziaColors.expense
+        ? context.lukaColors.expense
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Row(

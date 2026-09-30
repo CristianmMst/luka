@@ -1,6 +1,6 @@
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
 
 enum SyncRunResult { synced, offline, sessionEnded, skipped }
 

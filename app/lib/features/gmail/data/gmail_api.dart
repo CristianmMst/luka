@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:finanzia/core/network/api_exception.dart';
-import 'package:finanzia/features/gmail/data/dtos/gmail_connection_dto.dart';
+import 'package:luka/core/network/api_exception.dart';
+import 'package:luka/features/gmail/data/dtos/gmail_connection_dto.dart';
 
 /// Endpoints `/v1/gmail/*` (spec 005 §3). Usa el cliente autenticado.
 ///

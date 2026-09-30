@@ -1,4 +1,4 @@
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
 
 /// Puerto de la conexión de Gmail. Las operaciones fallan con
 /// `GmailFailure`.

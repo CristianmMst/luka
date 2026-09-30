@@ -1,13 +1,13 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
-import 'package:finanzia/features/dashboard/presentation/widgets/dashboard_format.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Banda esmeralda del Inicio (diseño A "Balance protagonista"): saludo,
 /// línea de sync, selector de mes y, si hay [summary], el balance con las
@@ -39,7 +39,7 @@ class DashboardHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final top = MediaQuery.paddingOf(context).top;
 
     return Container(
@@ -61,7 +61,7 @@ class DashboardHero extends StatelessWidget {
   }
 
   Widget _content(BuildContext context) {
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final soft = brand.onHero.withValues(alpha: 0.85);
 
@@ -151,7 +151,7 @@ class _MonthSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final style = IconButton.styleFrom(
       fixedSize: const Size.square(minTouchTarget),
@@ -202,7 +202,7 @@ class _Balance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final balance = summary.balance;
     final (sign, spoken) = switch (balance.cents) {
@@ -259,7 +259,7 @@ class _TotalTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final muted = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);

@@ -1,4 +1,4 @@
-package co.finanzia.finanzia.capture
+package co.luka.luka.capture
 
 import android.app.Notification
 import android.service.notification.NotificationListenerService
@@ -13,7 +13,7 @@ import java.util.TimeZone
  *
  * Nunca registra en logs título, texto ni paquete (P1).
  */
-class FinanziaNotificationListener : NotificationListenerService() {
+class LukaNotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         try {
             capture(sbn)
@@ -52,6 +52,6 @@ class FinanziaNotificationListener : NotificationListenerService() {
     }
 
     private companion object {
-        const val TAG = "finanzia.capture"
+        const val TAG = "luka.capture"
     }
 }

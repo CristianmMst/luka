@@ -1,5 +1,5 @@
-import 'package:finanzia/features/capture/domain/captured_notification.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:luka/features/capture/domain/captured_notification.dart';
 
 part 'capture_dtos.g.dart';
 

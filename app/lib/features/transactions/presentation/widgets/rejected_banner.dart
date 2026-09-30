@@ -1,6 +1,6 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// Aviso de un cambio que el servidor rechazó (diseño "Estados"): el
 /// usuario lo reintenta o lo deja como lo tiene el servidor.

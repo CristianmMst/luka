@@ -1,6 +1,6 @@
-import 'package:finanzia/features/privacy/application/privacy_actions.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/privacy/application/privacy_actions.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Remote extends Mock implements PrivacyRemote {}
@@ -29,7 +29,7 @@ void main() {
   });
 
   test('el nombre del archivo lleva la fecha', () {
-    expect(exportFileName(DateTime(2026, 1, 5)), 'finanzia-2026-01-05.json');
+    expect(exportFileName(DateTime(2026, 1, 5)), 'luka-2026-01-05.json');
   });
 
   test('exportar guarda el JSON del servidor tal cual', () async {
@@ -38,7 +38,7 @@ void main() {
     await actions.exportData();
 
     verify(
-      () => saver.save('{"a":1}', fileName: 'finanzia-2026-09-29.json'),
+      () => saver.save('{"a":1}', fileName: 'luka-2026-09-29.json'),
     ).called(1);
   });
 

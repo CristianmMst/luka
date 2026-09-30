@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_tags_page.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_write_screen.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/presentation/nfc_tags_page.dart';
+import 'package:luka/features/nfc/presentation/nfc_write_screen.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -114,7 +114,7 @@ void main() {
     expect(find.byType(NfcWriteScreen), findsOneWidget);
     expect(find.text('Acerca el tag al teléfono'), findsOneWidget);
     final uri = verify(() => service.write(captureAny())).captured.single;
-    expect(uri.toString(), 'finanzia://quick-add?tag=${saved.id}');
+    expect(uri.toString(), 'luka://quick-add?tag=${saved.id}');
 
     write.complete();
     await tester.pumpAndSettle();

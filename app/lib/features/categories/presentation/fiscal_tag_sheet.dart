@@ -1,9 +1,9 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/categories/domain/category_catalog.dart';
-import 'package:finanzia/features/categories/presentation/category_visuals.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/categories/domain/category_catalog.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// "¿Para qué la usas?": las 12 etiquetas fiscales que puede elegir el
 /// usuario, en lenguaje claro y agrupadas (diseño F4.8a). Devuelve la
@@ -16,7 +16,7 @@ class FiscalTagSheet extends StatelessWidget {
   static Future<String?> show(
     BuildContext context, {
     required String selected,
-  }) => showFinanziaSheet<String>(
+  }) => showLukaSheet<String>(
     context,
     builder: (_) => FiscalTagSheet(selected: selected),
   );

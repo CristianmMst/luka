@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/data/sync_api.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/sync/domain/sync_rules.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/data/sync_api.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/sync/domain/sync_rules.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 import '../../../helpers/stub_backend.dart';
 

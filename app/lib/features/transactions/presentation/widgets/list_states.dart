@@ -1,8 +1,8 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/brand_mark.dart';
 
 /// Estados de la lista sin filas (diseño "Estados").
 
@@ -16,7 +16,7 @@ class EmptyTransactions extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    final gem = context.finanziaColors.gem;
+    final gem = context.lukaColors.gem;
 
     return _CenteredState(
       // La gema de marca, como en el login y el splash.

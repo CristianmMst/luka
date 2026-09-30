@@ -1,14 +1,14 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/theme/tokens/type_tokens.dart';
-import 'package:finanzia/features/transactions/domain/day_group.dart';
-import 'package:finanzia/features/transactions/domain/transaction_view.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_row.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/transactions/domain/day_group.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_row.dart';
 
 /// Tarjeta de un día (diseño "ListaB"): número del día en display, "Hoy",
 /// "Ayer" o el día de la semana, el total de gastos y sus movimientos.
@@ -28,7 +28,7 @@ class DayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     // `day` ya trae los campos de calendario de Colombia (00:00 UTC).
     final day = group.day;

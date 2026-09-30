@@ -1,9 +1,9 @@
-import 'package:finanzia/core/google/google_sign_in_setup.dart';
-import 'package:finanzia/core/network/dio_providers.dart';
-import 'package:finanzia/features/gmail/data/gmail_api.dart';
-import 'package:finanzia/features/gmail/data/gmail_authorizer.dart';
-import 'package:finanzia/features/gmail/data/gmail_repository_impl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/google/google_sign_in_setup.dart';
+import 'package:luka/core/network/dio_providers.dart';
+import 'package:luka/features/gmail/data/gmail_api.dart';
+import 'package:luka/features/gmail/data/gmail_authorizer.dart';
+import 'package:luka/features/gmail/data/gmail_repository_impl.dart';
 
 final gmailApiProvider = Provider<GmailApi>(
   (ref) => GmailApi(ref.watch(apiDioProvider)),

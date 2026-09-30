@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.NFC"/>
     <uses-feature android:name="android.hardware.nfc" android:required="false"/>
     <application
-        android:label="finanzia"
+        android:label="luka"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -29,19 +29,19 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Tag NFC escrito por finanzia: abre el registro rápido aunque
+            <!-- Tag NFC escrito por luka: abre el registro rápido aunque
                  la app esté cerrada (AC-4.1). -->
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="finanzia" android:host="quick-add"/>
+                <data android:scheme="luka" android:host="quick-add"/>
             </intent-filter>
             <!-- El mismo enlace desde cualquier otra fuente. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="finanzia" android:host="quick-add"/>
+                <data android:scheme="luka" android:host="quick-add"/>
             </intent-filter>
             <!-- go_router recibe el enlace como ruta (deep link de Flutter). -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="true"/>
@@ -50,9 +50,9 @@
              sistema puede enlazarlo, y solo tras el permiso del usuario en
              Ajustes > Acceso a notificaciones. -->
         <service
-            android:name=".capture.FinanziaNotificationListener"
+            android:name=".capture.LukaNotificationListener"
             android:exported="false"
-            android:label="finanzia"
+            android:label="luka"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService"/>

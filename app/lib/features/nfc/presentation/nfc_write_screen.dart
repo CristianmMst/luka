@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/presentation/nfc_format.dart';
 
 /// "Acerca el tag al teléfono" (diseño B "Escribir a pantalla completa",
 /// F4.5b, AC-4.3): pantalla esmeralda que espera un tag y le escribe el
@@ -70,7 +70,7 @@ class _NfcWriteScreenState extends ConsumerState<NfcWriteScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final failure = _failure;
     final name = widget.template.name;
@@ -179,7 +179,7 @@ class _Rings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
 
     Widget ring(double size, double alpha, Widget child) => Container(

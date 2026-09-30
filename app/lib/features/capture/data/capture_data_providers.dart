@@ -1,11 +1,11 @@
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/core/network/dio_providers.dart';
-import 'package:finanzia/features/capture/data/capture_api.dart';
-import 'package:finanzia/features/capture/data/drift_capture_grant_store.dart';
-import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/core/network/dio_providers.dart';
+import 'package:luka/features/capture/data/capture_api.dart';
+import 'package:luka/features/capture/data/drift_capture_grant_store.dart';
+import 'package:luka/features/capture/data/method_channel_notification_source.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
 
 final captureApiProvider = Provider<CaptureApi>(
   (ref) => CaptureApi(ref.watch(apiDioProvider)),

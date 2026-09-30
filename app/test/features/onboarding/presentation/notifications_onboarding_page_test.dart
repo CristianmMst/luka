@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/onboarding/presentation/notifications_onboarding_page.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/onboarding/presentation/notifications_onboarding_page.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'onboarding_harness.dart';

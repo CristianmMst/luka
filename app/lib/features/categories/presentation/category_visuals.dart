@@ -1,6 +1,6 @@
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/features/categories/domain/category_catalog.dart';
 import 'package:flutter/material.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/features/categories/domain/category_catalog.dart';
 
 /// Ícono Material de cada clave de `categoryIconKeys`.
 const _icons = <String, IconData>{

@@ -4,7 +4,7 @@
 # instalarlo y hay que refrescarlo cada 7 días.
 #
 # Se corre a mano desde codemagic.io (sin disparadores). Variables, en el
-# grupo `finanzia` de la app en Codemagic:
+# grupo `luka` de la app en Codemagic:
 #   API_BASE_URL  obligatoria: URL pública del backend, en producción
 #                 https://luka.a360soft.tech. El default de desarrollo, localhost, no
 #                 llega desde el iPhone.
@@ -17,7 +17,7 @@ workflows:
     max_build_duration: 45
     environment:
       groups:
-        - finanzia
+        - luka
       flutter: 3.35.7
       xcode: latest
       cocoapods: default
@@ -25,7 +25,7 @@ workflows:
       - name: Revisar configuración
         script: |
           if [ -z "$API_BASE_URL" ]; then
-            echo "Falta API_BASE_URL en el grupo 'finanzia' de Codemagic."
+            echo "Falta API_BASE_URL en el grupo 'luka' de Codemagic."
             exit 1
           fi
           if ! grep -Eq '^GOOGLE_IOS_CLIENT_ID = .+' app/ios/Flutter/GoogleSignIn.xcconfig; then
@@ -44,9 +44,9 @@ workflows:
       - name: Empaquetar .ipa
         script: |
           cd app/build/ios/iphoneos
-          rm -rf Payload finanzia.ipa
+          rm -rf Payload luka.ipa
           mkdir Payload
           cp -R Runner.app Payload/
-          zip -qry finanzia.ipa Payload
+          zip -qry luka.ipa Payload
     artifacts:
-      - app/build/ios/iphoneos/finanzia.ipa
+      - app/build/ios/iphoneos/luka.ipa

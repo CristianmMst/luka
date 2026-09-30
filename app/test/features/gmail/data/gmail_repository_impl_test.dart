@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:finanzia/features/gmail/data/gmail_api.dart';
-import 'package:finanzia/features/gmail/data/gmail_authorizer.dart';
-import 'package:finanzia/features/gmail/data/gmail_repository_impl.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/gmail/data/gmail_api.dart';
+import 'package:luka/features/gmail/data/gmail_authorizer.dart';
+import 'package:luka/features/gmail/data/gmail_repository_impl.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/stub_backend.dart';

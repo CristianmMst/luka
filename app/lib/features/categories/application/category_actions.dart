@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/categories/domain/category_draft.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/categories/domain/category_draft.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 /// Puertos de categorías; se sobrescriben en `lib/app/composition.dart`.
 final categoriesRemoteProvider = Provider<CategoriesRemote>(

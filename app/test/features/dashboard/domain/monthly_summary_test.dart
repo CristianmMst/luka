@@ -1,7 +1,7 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 
 final _month = ColombiaMonth(2026, 9);
 

@@ -1,5 +1,5 @@
-import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 
 part 'session_dto.g.dart';
 

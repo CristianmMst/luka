@@ -1,6 +1,6 @@
 # app
 
-App Flutter de finanzia (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2), la de revisión (F4.7), la captura de notificaciones en Android (F4.3), Registrar manual (F4.5a) y las categorías propias (F4.8a); Ajustes tiene Gmail, notificaciones, Mis categorías y cierre de sesión.
+App Flutter de luka (Android e iOS): feature-first + Clean Architecture con Riverpod 3 (spec 003 §3, spec 008). Por ahora tiene el scaffold (F0.6), el login con Google (F1.9), el paso de onboarding de Gmail (F3.6), la base local con sync offline (F4.1), el Inicio con el resumen del mes (F4.6), la pantalla de movimientos (F4.2), la de revisión (F4.7), la captura de notificaciones en Android (F4.3), Registrar manual (F4.5a) y las categorías propias (F4.8a); Ajustes tiene Gmail, notificaciones, Mis categorías y cierre de sesión.
 
 ## Requisitos
 
@@ -39,12 +39,12 @@ Los `dart-define` se aplican al compilar: después de cambiarlos hay que relanza
 
 El proyecto de Google Cloud es `finanzia-509500` (Google Auth Platform, público externo en modo de prueba). Tiene dos clientes OAuth:
 
-- **Web** (`30065910946-hatnf…apps.googleusercontent.com`): es la audiencia del `id_token`. La app lo usa como `serverClientId` y el backend lo exige como `FINANZIA_GOOGLE_CLIENT_ID`.
-- **Android**: paquete `co.finanzia.finanzia` con el SHA-1 del keystore de debug de la máquina de desarrollo. Si otra máquina u otro keystore firma el APK, hay que agregar su SHA-1 (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
+- **Web** (`30065910946-hatnf…apps.googleusercontent.com`): es la audiencia del `id_token`. La app lo usa como `serverClientId` y el backend lo exige como `LUKA_GOOGLE_CLIENT_ID`.
+- **Android**: paquete `co.luka.luka` con el SHA-1 del keystore de debug de la máquina de desarrollo. Si otra máquina u otro keystore firma el APK, hay que agregar su SHA-1 (`keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
 
 Mientras la app esté en modo de prueba, solo los usuarios de prueba de la consola pueden iniciar sesión. Con el backend corriendo, `just app-run` abre el túnel adb y lanza la app. No hay modo de login simulado: la app y el backend solo aceptan Google real.
 
-- **iOS**: cliente de tipo iOS con el bundle `co.finanzia.finanzia`. Su client ID y el invertido (`com.googleusercontent.apps.…`) van en `ios/Flutter/GoogleSignIn.xcconfig`; `Info.plist` los toma de ahí para `GIDClientID` y el esquema de URL de vuelta. Sin ellos el build de Codemagic se detiene.
+- **iOS**: cliente de tipo iOS con el bundle `co.luka.luka`. Su client ID y el invertido (`com.googleusercontent.apps.…`) van en `ios/Flutter/GoogleSignIn.xcconfig`; `Info.plist` los toma de ahí para `GIDClientID` y el esquema de URL de vuelta. Sin ellos el build de Codemagic se detiene.
 
 ### Gmail (F3.6)
 
@@ -91,20 +91,20 @@ Paleta "Esmeralda andina", tipografía y tokens en `lib/core/theme/`. El detalle
 
 ### Base de datos local y sincronización (F4.1)
 
-La app trae una base SQLite local con Drift (`AppDatabase`, base `finanzia`, `schemaVersion` 3 — `lib/core/db/tables.dart`) para funcionar sin conexión (spec 004 §5): `local_transactions` (con la bandera `pending_push` y, desde F4.2, la columna `channels`), `local_categories`, `local_accounts`, `local_review` y `outbox` (operaciones offline en orden FIFO, con `target_id`/`related_id` para canjear ids locales), más `sync_state` (cursor de transacciones, última sincronización y usuario dueño). El `SyncCoordinator` (`lib/features/sync/`, contrato en spec 005 §9, disparadores en spec 008 §5) drena primero el outbox y luego hace el pull.
+La app trae una base SQLite local con Drift (`AppDatabase`, base `luka`, `schemaVersion` 3 — `lib/core/db/tables.dart`) para funcionar sin conexión (spec 004 §5): `local_transactions` (con la bandera `pending_push` y, desde F4.2, la columna `channels`), `local_categories`, `local_accounts`, `local_review` y `outbox` (operaciones offline en orden FIFO, con `target_id`/`related_id` para canjear ids locales), más `sync_state` (cursor de transacciones, última sincronización y usuario dueño). El `SyncCoordinator` (`lib/features/sync/`, contrato en spec 005 §9, disparadores en spec 008 §5) drena primero el outbox y luego hace el pull.
 
 La migración a `schemaVersion` 3 (F4.2, `lib/core/db/app_database.dart`) agrega `channels` y, en el mismo paso, borra el cursor de `sync_state`: eso fuerza un pull completo en el próximo sync para rellenar los canales de las transacciones que ya estaban en la base antes de la migración.
 
 Se borra por completo, incluido lo que no alcanzó a enviarse, solo cuando el usuario cierra sesión voluntariamente en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. También se borra si inicia sesión un usuario distinto al que la dejó (`claimFor`). Antes de borrar o de reclamar la base para otro usuario, el coordinador espera a que termine cualquier sync en curso, para que no se crucen escrituras tardías entre usuarios (P6).
 
-Para inspeccionarla en un Android físico o emulador (`applicationId` `co.finanzia.finanzia`, `android/app/build.gradle.kts`):
+Para inspeccionarla en un Android físico o emulador (`applicationId` `co.luka.luka`, `android/app/build.gradle.kts`):
 
 ```sh
-adb shell run-as co.finanzia.finanzia ls databases
-adb shell run-as co.finanzia.finanzia ls app_flutter
+adb shell run-as co.luka.luka ls databases
+adb shell run-as co.luka.luka ls app_flutter
 ```
 
-El archivo (`finanzia.sqlite`) suele vivir en `app_flutter` (carpeta de documentos de la app), no en `databases`; con la ruta se puede copiar (`adb shell run-as ... cat ...` o `run-as ... cp`) y abrir con `sqlite3`, o inspeccionarla directo con el Database Inspector de Android Studio.
+El archivo (`luka.sqlite`) suele vivir en `app_flutter` (carpeta de documentos de la app), no en `databases`; con la ruta se puede copiar (`adb shell run-as ... cat ...` o `run-as ... cp`) y abrir con `sqlite3`, o inspeccionarla directo con el Database Inspector de Android Studio.
 
 ### Movimientos (F4.2)
 
@@ -137,28 +137,28 @@ Shell autenticado (`lib/features/shell/`, `HomeShell` sobre `StatefulShellRoute.
 
 ### Captura de notificaciones (F4.3, solo Android)
 
-El listener es nativo (`android/app/src/main/kotlin/co/finanzia/finanzia/capture/`, spec 006 §3.2 y spec 008 §4.1):
+El listener es nativo (`android/app/src/main/kotlin/co/luka/luka/capture/`, spec 006 §3.2 y spec 008 §4.1):
 
-- **`FinanziaNotificationListener`** recibe cada notificación, aunque la app esté cerrada. **`CaptureFilter`** decide con la config de `GET /v1/config/capture`: app bancaria o SMS de remitente bancario, y con monto. Lo que pasa va a **`CaptureStore`**, una cola SQLite propia (`finanzia_capture.db`). Lo demás no se guarda ni se loguea.
-- **`CaptureChannel`** (`MethodChannel("co.finanzia/capture")`) expone la cola y el permiso a Dart. En Dart, `lib/features/capture/` la ve como el puerto `NotificationSource` (en iOS es la cola de Apple Pay, abajo).
+- **`LukaNotificationListener`** recibe cada notificación, aunque la app esté cerrada. **`CaptureFilter`** decide con la config de `GET /v1/config/capture`: app bancaria o SMS de remitente bancario, y con monto. Lo que pasa va a **`CaptureStore`**, una cola SQLite propia (`luka_capture.db`). Lo demás no se guarda ni se loguea.
+- **`CaptureChannel`** (`MethodChannel("co.luka/capture")`) expone la cola y el permiso a Dart. En Dart, `lib/features/capture/` la ve como el puerto `NotificationSource` (en iOS es la cola de Apple Pay, abajo).
 - **`CaptureFlusher`** vacía la cola en lotes de 50 a `POST /v1/ingest/notifications` al entrar, al volver a primer plano, cada 15 min y al recuperar la red. Lo capturado con la app cerrada se envía al abrirla (sin envío en segundo plano todavía). Al cerrar sesión se borran la cola y la config.
 - **Ajustes → "Notificaciones del banco"** muestra si hay acceso. "Activar" muestra la divulgación y abre el ajuste del sistema.
 
-Para probarla en un teléfono, con `just up`, `just dev`, `just worker` y `just app-run`: activar el acceso desde Ajustes y hacer un movimiento real con Bancolombia o Nequi. La cola se puede mirar con `adb shell run-as co.finanzia.finanzia ls databases` (`finanzia_capture.db`). Para un SMS, el título de la notificación de Mensajes tiene que coincidir con un patrón de `sms_sender_patterns` (`backend/.../parsing/config/capture.yaml`): si el SMS llega desde un número corto y no desde un nombre, el filtro lo ignora.
+Para probarla en un teléfono, con `just up`, `just dev`, `just worker` y `just app-run`: activar el acceso desde Ajustes y hacer un movimiento real con Bancolombia o Nequi. La cola se puede mirar con `adb shell run-as co.luka.luka ls databases` (`luka_capture.db`). Para un SMS, el título de la notificación de Mensajes tiene que coincidir con un patrón de `sms_sender_patterns` (`backend/.../parsing/config/capture.yaml`): si el SMS llega desde un número corto y no desde un nombre, el filtro lo ignora.
 
 ### Pagos con Apple Pay en iPhone (F4.3b)
 
-iOS no deja leer notificaciones. La captura automática es una automatización personal "Transacción" de Atajos (iOS 17+) que, al pagar con Wallet, corre la acción **"Registrar pago en finanzia"** (spec 006 §3.3):
+iOS no deja leer notificaciones. La captura automática es una automatización personal "Transacción" de Atajos (iOS 17+) que, al pagar con Wallet, corre la acción **"Registrar pago en luka"** (spec 006 §3.3):
 
 - **`RegistrarPagoWallet`** (`ios/Runner/RegistrarPagoWallet.swift`) es la App Intent: recibe tarjeta, comercio y monto y los encola sin abrir la app.
-- **`WalletQueue`** (`ios/Runner/WalletCapture.swift`) es la cola (JSON en Application Support) y **`WalletCaptureChannel`** la expone por el mismo `MethodChannel("co.finanzia/capture")`.
+- **`WalletQueue`** (`ios/Runner/WalletCapture.swift`) es la cola (JSON en Application Support) y **`WalletCaptureChannel`** la expone por el mismo `MethodChannel("co.luka/capture")`.
 - En Dart, **`IosWalletNotificationSource`** arma el texto que parsea la plantilla `apple_wallet` del backend y el mismo `CaptureFlusher` lo envía al abrir la app.
 - El onboarding y Ajustes → "Pagos con Apple Pay" guían la creación del Atajo. Para que el pago se una con el correo del banco, la tarjeta tiene que llevar el banco y sus últimos 4 dígitos.
 
 **Compilar e instalar.** Este equipo es Windows, así que el `.ipa` sale de Codemagic (`codemagic.yaml` en la raíz, workflow `ios-unsigned`, corrida manual):
 
-1. En codemagic.io, crear la app desde el repo y un grupo de variables `finanzia` con `API_BASE_URL=https://luka.a360soft.tech` (el backend de producción, backend/deploy/README.md).
-2. Correr `ios-unsigned` y descargar `finanzia.ipa` de los artefactos.
+1. En codemagic.io, crear la app desde el repo y un grupo de variables `luka` con `API_BASE_URL=https://luka.a360soft.tech` (el backend de producción, backend/deploy/README.md).
+2. Correr `ios-unsigned` y descargar `luka.ipa` de los artefactos.
 3. Instalarlo con SideStore, que lo firma con el Apple ID; con un Apple ID gratuito hay que refrescarlo cada 7 días.
 
 Riesgos conocidos: el Swift solo se compila en Codemagic, así que los errores se corrigen con sus logs. Con un Apple ID gratuito el entitlement de lectura NFC puede no estar disponible; si SideStore lo quita, la lectura de tags en iOS no funciona, pero el resto sí.

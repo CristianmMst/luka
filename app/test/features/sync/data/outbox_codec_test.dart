@@ -1,8 +1,8 @@
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/features/sync/data/outbox_codec.dart';
-import 'package:finanzia/features/sync/domain/outbox_operation.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/features/sync/data/outbox_codec.dart';
+import 'package:luka/features/sync/domain/outbox_operation.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 
 void main() {
   test('ida y vuelta de cada operación sin ids en el payload', () {

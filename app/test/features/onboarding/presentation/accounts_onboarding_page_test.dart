@@ -1,14 +1,14 @@
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
-import 'package:finanzia/features/onboarding/presentation/accounts_onboarding_page.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/data/method_channel_notification_source.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/domain/onboarding_store.dart';
+import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'onboarding_harness.dart';

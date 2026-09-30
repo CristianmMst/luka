@@ -1,14 +1,14 @@
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/application/capture_health.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/capture/presentation/widgets/capture_stopped_strip.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/application/capture_health.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/capture/presentation/widgets/capture_stopped_strip.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/capture_health.dart';

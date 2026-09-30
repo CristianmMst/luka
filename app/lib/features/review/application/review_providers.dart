@@ -1,7 +1,7 @@
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/domain/review_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/domain/review_repository.dart';
 
 /// Puerto de lectura de la revisión; se sobrescribe en
 /// `lib/app/composition.dart`.

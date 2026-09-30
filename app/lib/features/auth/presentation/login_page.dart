@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/brand_mark.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/application/sign_in_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/presentation/widgets/capture_ticker.dart';
-import 'package:finanzia/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/brand_mark.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/application/sign_in_controller.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/presentation/widgets/capture_ticker.dart';
+import 'package:luka/features/auth/presentation/widgets/google_sign_in_button.dart';
 
 /// Login "Veta esmeralda": bloque hero con el ticker de captura, titular y
 /// botón de Google (canvas de diseño, spec 008 §7.1).
@@ -59,7 +59,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final l10n = AppLocalizations.of(context);
     final signIn = ref.watch(signInControllerProvider);
     final auth = ref.watch(authControllerProvider);
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -229,7 +229,7 @@ class _Hero extends StatelessWidget {
             spacing: Space.xl - 4,
             children: [
               BrandMark(
-                gemColor: context.finanziaColors.gem,
+                gemColor: context.lukaColors.gem,
                 textColor: onColor,
               ),
               const CaptureTicker(),

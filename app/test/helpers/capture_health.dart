@@ -1,5 +1,5 @@
-import 'package:finanzia/features/capture/application/capture_health.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:luka/features/capture/application/capture_health.dart';
 
 /// [CaptureHealthController] con un valor fijo, sin escuchar Gmail, el
 /// acceso a notificaciones ni el primer plano.

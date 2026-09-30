@@ -1,9 +1,9 @@
-import 'package:finanzia/core/routing/routes.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/routing/routes.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
 
 /// Ruta de cada paso del onboarding.
 String onboardingRoute(OnboardingStep step) => switch (step) {

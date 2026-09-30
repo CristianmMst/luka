@@ -1,7 +1,7 @@
-import 'package:finanzia/core/google/google_sign_in_setup.dart';
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:luka/core/google/google_sign_in_setup.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
 
 /// Obtiene el `id_token` de Google que el backend canjea por una sesión.
 /// Falla con `AuthFailure`.

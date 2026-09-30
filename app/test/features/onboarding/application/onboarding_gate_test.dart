@@ -1,22 +1,22 @@
 import 'dart:async';
 
 import 'package:fake_async/fake_async.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/auth_repository.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/application/notification_access_controller.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/auth_repository.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/application/notification_access_controller.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/domain/gmail_repository.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
+import 'package:luka/features/onboarding/domain/onboarding_store.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockGmail extends Mock implements GmailRepository {}

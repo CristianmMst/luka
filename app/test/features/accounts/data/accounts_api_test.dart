@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:finanzia/features/accounts/data/accounts_api.dart';
-import 'package:finanzia/features/accounts/domain/account_draft.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/accounts/data/accounts_api.dart';
+import 'package:luka/features/accounts/domain/account_draft.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
 
 import '../../../helpers/stub_backend.dart';
 

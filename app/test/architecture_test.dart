@@ -93,8 +93,8 @@ void main() {
     final found = violations(
       'core',
       (path, import) =>
-          import.contains('package:finanzia/features/') ||
-          import.contains('package:finanzia/app/'),
+          import.contains('package:luka/features/') ||
+          import.contains('package:luka/app/'),
     );
     expect(found, isEmpty);
   });

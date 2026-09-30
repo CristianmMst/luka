@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:finanzia/features/nfc/data/ndef_uri.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
 import 'package:flutter/foundation.dart';
+import 'package:luka/features/nfc/data/ndef_uri.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
 import 'package:ndef_record/ndef_record.dart';
 import 'package:nfc_manager/nfc_manager.dart' as nfc;
 import 'package:nfc_manager/nfc_manager_android.dart';

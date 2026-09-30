@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:finanzia/features/auth/domain/auth_failure.dart';
-import 'package:finanzia/features/auth/domain/auth_repository.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/domain/auth_failure.dart';
+import 'package:luka/features/auth/domain/auth_repository.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
 
 /// Puerto de auth para la capa de aplicación; la implementación se cablea en
 /// `lib/app/composition.dart`.

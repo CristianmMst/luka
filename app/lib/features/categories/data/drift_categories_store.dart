@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/categories/domain/categories_ports.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/domain/search.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/categories/domain/categories_ports.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/domain/search.dart';
 
 /// [CategoriesStore] sobre la base local Drift (spec 004 §5). El pull de
 /// cada sync sigue siendo la verdad: `replaceCategories` reemplaza todo.

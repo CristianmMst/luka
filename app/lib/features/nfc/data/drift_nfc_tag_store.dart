@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:finanzia/core/db/app_database.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/transactions/domain/search.dart';
+import 'package:luka/core/db/app_database.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/transactions/domain/search.dart';
 
 /// [NfcTagStore] sobre la base local Drift. Se vacía al cerrar sesión con el
 /// resto de la base (`DriftSyncStore.clearAll`, P6).

@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/finanzia_colors.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/features/categories/presentation/category_form_sheet.dart';
-import 'package:finanzia/features/categories/presentation/category_visuals.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/category_option.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_icon.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/sheet_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/categories/presentation/category_form_sheet.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
+import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
 
 /// Lo que se eligió en la hoja; `id` en `null` es "Todas" (solo en el
 /// filtro).
@@ -39,7 +39,7 @@ class CategorySheet extends ConsumerWidget {
     required String? selectedId,
     String? subtitle,
     bool allowAll = false,
-  }) => showFinanziaSheet<CategoryChoice>(
+  }) => showLukaSheet<CategoryChoice>(
     context,
     builder: (_) => CategorySheet(
       selectedId: selectedId,
@@ -155,7 +155,7 @@ class _CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.finanziaColors;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final foreground = selected ? scheme.onPrimaryContainer : scheme.onSurface;
 

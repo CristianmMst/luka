@@ -1,25 +1,25 @@
 import 'dart:async';
 
-import 'package:finanzia/core/l10n/gen/app_localizations.dart';
-import 'package:finanzia/core/theme/tokens/spacing.dart';
-import 'package:finanzia/core/widgets/inline_notice.dart';
-import 'package:finanzia/features/accounts/presentation/account_picker_sheet.dart';
-import 'package:finanzia/features/nfc/application/nfc_actions.dart';
-import 'package:finanzia/features/nfc/domain/nfc_ports.dart';
-import 'package:finanzia/features/nfc/presentation/nfc_format.dart';
-import 'package:finanzia/features/review/presentation/widgets/review_format.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/synced_models.dart';
-import 'package:finanzia/features/transactions/application/transaction_actions.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/manual_draft.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/offline_banner.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_form_card.dart';
-import 'package:finanzia/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/accounts/presentation/account_picker_sheet.dart';
+import 'package:luka/features/nfc/application/nfc_actions.dart';
+import 'package:luka/features/nfc/domain/nfc_ports.dart';
+import 'package:luka/features/nfc/presentation/nfc_format.dart';
+import 'package:luka/features/review/presentation/widgets/review_format.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transaction_actions.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/manual_draft.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
+import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_form_card.dart';
+import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// "Registrar" (spec 008 §3.4, AC-4.4; diseño A "Formulario en tarjeta",
 /// F4.5a): un gasto o ingreso a mano. Va por el outbox, así que funciona

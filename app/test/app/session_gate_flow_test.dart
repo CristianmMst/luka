@@ -1,45 +1,46 @@
 import 'dart:async';
 
-import 'package:finanzia/app/app.dart';
-import 'package:finanzia/app/router.dart';
-import 'package:finanzia/core/format/money.dart';
-import 'package:finanzia/core/time/colombia_month.dart';
-import 'package:finanzia/features/accounts/application/account_actions.dart';
-import 'package:finanzia/features/accounts/domain/accounts_ports.dart';
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/auth/domain/entities/user.dart';
-import 'package:finanzia/features/auth/presentation/login_page.dart';
-import 'package:finanzia/features/auth/presentation/splash_page.dart';
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/data/method_channel_notification_source.dart';
-import 'package:finanzia/features/dashboard/application/dashboard_providers.dart';
-import 'package:finanzia/features/dashboard/domain/insights_repository.dart';
-import 'package:finanzia/features/dashboard/domain/monthly_summary.dart';
-import 'package:finanzia/features/dashboard/presentation/dashboard_page.dart';
-import 'package:finanzia/features/gmail/application/gmail_controller.dart';
-import 'package:finanzia/features/gmail/domain/gmail_connection.dart';
-import 'package:finanzia/features/gmail/domain/gmail_failure.dart';
-import 'package:finanzia/features/gmail/domain/gmail_repository.dart';
-import 'package:finanzia/features/gmail/presentation/gmail_onboarding_page.dart';
-import 'package:finanzia/features/onboarding/application/onboarding_gate.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_step.dart';
-import 'package:finanzia/features/onboarding/domain/onboarding_store.dart';
-import 'package:finanzia/features/onboarding/presentation/accounts_onboarding_page.dart';
-import 'package:finanzia/features/review/application/review_providers.dart';
-import 'package:finanzia/features/review/domain/review_item.dart';
-import 'package:finanzia/features/review/domain/review_repository.dart';
-import 'package:finanzia/features/review/presentation/review_detail_page.dart';
-import 'package:finanzia/features/review/presentation/review_page.dart';
-import 'package:finanzia/features/shell/presentation/home_shell.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
-import 'package:finanzia/features/sync/domain/sync_ports.dart';
-import 'package:finanzia/features/transactions/application/transactions_providers.dart';
-import 'package:finanzia/features/transactions/domain/transaction_filter.dart';
-import 'package:finanzia/features/transactions/domain/transactions_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/app/app.dart';
+import 'package:luka/app/router.dart';
+import 'package:luka/core/format/money.dart';
+import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/auth/domain/entities/user.dart';
+import 'package:luka/features/auth/presentation/login_page.dart';
+import 'package:luka/features/auth/presentation/splash_page.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/data/method_channel_notification_source.dart';
+import 'package:luka/features/dashboard/application/dashboard_providers.dart';
+import 'package:luka/features/dashboard/domain/insights_repository.dart';
+import 'package:luka/features/dashboard/domain/monthly_summary.dart';
+import 'package:luka/features/dashboard/presentation/dashboard_page.dart';
+import 'package:luka/features/gmail/application/gmail_controller.dart';
+import 'package:luka/features/gmail/domain/gmail_connection.dart';
+import 'package:luka/features/gmail/domain/gmail_failure.dart';
+import 'package:luka/features/gmail/domain/gmail_repository.dart';
+import 'package:luka/features/gmail/presentation/gmail_onboarding_page.dart';
+import 'package:luka/features/onboarding/application/onboarding_gate.dart';
+import 'package:luka/features/onboarding/domain/onboarding_step.dart';
+import 'package:luka/features/onboarding/domain/onboarding_store.dart';
+import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.dart';
+import 'package:luka/features/review/application/review_providers.dart';
+import 'package:luka/features/review/domain/review_item.dart';
+import 'package:luka/features/review/domain/review_repository.dart';
+import 'package:luka/features/review/presentation/review_detail_page.dart';
+import 'package:luka/features/review/presentation/review_page.dart';
+import 'package:luka/features/shell/presentation/home_shell.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
+import 'package:luka/features/sync/domain/sync_ports.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/transaction_filter.dart';
+import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:mocktail/mocktail.dart';
+
 import '../helpers/capture_health.dart';
 
 class _MockSyncStore extends Mock implements SyncStore {}
@@ -172,7 +173,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const FinanziaApp(),
+        child: const LukaApp(),
       ),
     );
     return container;

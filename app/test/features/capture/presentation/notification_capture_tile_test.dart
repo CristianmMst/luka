@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:finanzia/features/capture/application/capture_flusher.dart';
-import 'package:finanzia/features/capture/domain/capture_ports.dart';
-import 'package:finanzia/features/capture/presentation/widgets/notification_capture_tile.dart';
-import 'package:finanzia/features/sync/application/sync_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luka/features/capture/application/capture_flusher.dart';
+import 'package:luka/features/capture/domain/capture_ports.dart';
+import 'package:luka/features/capture/presentation/widgets/notification_capture_tile.dart';
+import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';

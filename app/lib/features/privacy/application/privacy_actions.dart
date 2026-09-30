@@ -1,6 +1,6 @@
-import 'package:finanzia/features/auth/application/auth_controller.dart';
-import 'package:finanzia/features/privacy/domain/privacy_ports.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/privacy/domain/privacy_ports.dart';
 
 /// Puertos de privacidad; se sobrescriben en `lib/app/composition.dart`.
 final privacyRemoteProvider = Provider<PrivacyRemote>(
@@ -14,10 +14,10 @@ final exportSaverProvider = Provider<ExportSaver>(
   ),
 );
 
-/// Nombre del archivo exportado: `finanzia-AAAA-MM-DD.json`.
+/// Nombre del archivo exportado: `luka-AAAA-MM-DD.json`.
 String exportFileName(DateTime now) {
   String two(int n) => n.toString().padLeft(2, '0');
-  return 'finanzia-${now.year}-${two(now.month)}-${two(now.day)}.json';
+  return 'luka-${now.year}-${two(now.month)}-${two(now.day)}.json';
 }
 
 /// Exportar mis datos y borrar mi cuenta (RF-11.2/11.3, spec 008 §3.7).
