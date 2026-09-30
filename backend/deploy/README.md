@@ -111,6 +111,7 @@ docker compose run --rm migrate                     # migraciones a mano
 docker compose run --rm api python -m luka.tools.reparse --since 2026-09-01
 docker compose run --rm api python -m luka.tools.mark_self_transfers
 docker compose restart worker
+docker compose up -d --force-recreate --wait api worker   # tras editar .env: sin esto siguen con los valores viejos
 tail -f ~/apps/nginx/logs/luka-api-error.log    # errores del proxy
 ```
 
