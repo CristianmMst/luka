@@ -15,6 +15,11 @@ erDiagram
     transactions ||--o{ transaction_sources : evidenciada
     transactions |o--o| transactions : transfer_pair
     raw_messages ||--o| transaction_sources : origina
+    users ||--o{ recurring_expenses : programa
+    recurring_expenses ||--o{ recurring_occurrences : "se repite en"
+    recurring_occurrences |o--o| transactions : "pagada por"
+    recurring_occurrences ||--o{ recurring_match_rejections : rechaza
+    users ||--o{ device_tokens : "recibe push en"
 ```
 
 ## 2. Tablas
@@ -31,7 +36,7 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 | display_name | TEXT | |
 | photo_url | TEXT | |
 | status | TEXT | `active` / `deletion_pending` |
-| consents | JSONB | privacidad, gmail, notificaciones: `{tipo: timestamp}` |
+| consents | JSONB | privacidad, gmail, notificaciones, push (recordatorios de gastos fijos, spec 011 §6): `{tipo: timestamp}` |
 | created_at / updated_at | TIMESTAMPTZ | |
 
 ### 2.2 `refresh_tokens` (identity)
@@ -220,6 +225,69 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | payload | JSONB | cifras por cédula/renglón |
 | generated_at | TIMESTAMPTZ | |
 
+### 2.12 `recurring_expenses` (recurring) — gastos fijos (RF-12)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID FK | |
+| name | TEXT NOT NULL | nombre visible (1–60), p. ej. "Spotify" |
+| merchant_keyword | TEXT NOT NULL | palabra clave (2–40) que debe aparecer en el comercio normalizado (spec 011 §4); se guarda como la escribió el usuario y se normaliza al comparar |
+| expected_amount | NUMERIC(14,2) NOT NULL | `CHECK (expected_amount > 0)` |
+| amount_tolerance_pct | SMALLINT NOT NULL DEFAULT 10 | `CHECK (amount_tolerance_pct BETWEEN 0 AND 50)` |
+| day_of_month | SMALLINT NOT NULL | `CHECK (day_of_month BETWEEN 1 AND 31)`; en meses más cortos vence el último día (spec 011 §3) |
+| category_id | UUID FK NULL | `→ categories ON DELETE SET NULL`; solo para mostrar el ícono y prellenar; no filtra el matcher |
+| account_id | UUID FK NULL | `→ linked_accounts ON DELETE SET NULL`; si está, el matcher exige esa cuenta |
+| remind_days_before | SMALLINT NOT NULL DEFAULT 1 | `CHECK (remind_days_before IN (1, 2))` |
+| active | BOOLEAN NOT NULL DEFAULT true | pausado = no genera ocurrencias ni avisa |
+| created_at / updated_at | TIMESTAMPTZ | |
+
+**Índices**: `(user_id, active)`. Sin unicidad por nombre: dos gastos fijos pueden llamarse igual (dos planes de Spotify en la familia).
+
+### 2.13 `recurring_occurrences` (recurring) — un gasto fijo en un mes
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID FK | denormalizado para filtrar por usuario sin join (spec 009 §4) |
+| recurring_expense_id | UUID FK NOT NULL | `ON DELETE CASCADE` |
+| period | DATE NOT NULL | primer día del mes (`2026-10-01`) |
+| due_date | DATE NOT NULL | vencimiento en fecha local de Colombia (spec 011 §3) |
+| status | TEXT NOT NULL DEFAULT 'pending' | `pending` / `paid` / `skipped` |
+| transaction_id | UUID FK NULL | `→ transactions ON DELETE SET NULL`; la transacción que la pagó |
+| matched_by | TEXT NULL | `auto` / `manual` |
+| paid_at | TIMESTAMPTZ NULL | cuándo quedó pagada (el emparejamiento o la marca del usuario, no la fecha del movimiento) |
+| reminded_at | TIMESTAMPTZ NULL | cuándo se envió el recordatorio push; no nulo = no se vuelve a avisar (AC-12.7) |
+| created_at / updated_at | TIMESTAMPTZ | |
+| UNIQUE | `(recurring_expense_id, period)` | una ocurrencia por mes; la generación usa `ON CONFLICT DO NOTHING` |
+| UNIQUE parcial | `(transaction_id) WHERE transaction_id IS NOT NULL` | una transacción paga a lo sumo una ocurrencia (spec 011 §4, regla 7) |
+| CHECK | `(status = 'paid') = (matched_by IS NOT NULL AND paid_at IS NOT NULL)` | consistencia del pago |
+| CHECK | `transaction_id IS NULL OR status = 'paid'` | solo una ocurrencia pagada tiene transacción |
+
+**Índices**: `(user_id, period)` para la lista del mes; `(due_date) WHERE status = 'pending' AND reminded_at IS NULL` para el cron de avisos; `(user_id, updated_at, id)` para el sync.
+
+### 2.14 `recurring_match_rejections` (recurring) — emparejamientos deshechos
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| occurrence_id | UUID FK | `→ recurring_occurrences ON DELETE CASCADE` |
+| transaction_id | UUID FK | `→ transactions ON DELETE CASCADE` |
+| created_at | TIMESTAMPTZ | |
+| PK | `(occurrence_id, transaction_id)` | el matcher no vuelve a proponer este par (AC-12.4) |
+
+### 2.15 `device_tokens` (notifications) — destinos de push
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID FK | |
+| token | TEXT NOT NULL UNIQUE | token de registro de FCM; registrarlo con otra cuenta reasigna la fila (spec 011 §6) |
+| platform | TEXT NOT NULL | `android` / `ios` |
+| created_at | TIMESTAMPTZ | |
+| last_seen_at | TIMESTAMPTZ NOT NULL | lo actualiza cada registro de la app; sirve para la purga (§6) |
+
+**Índices**: `(user_id)`. El token es un identificador del dispositivo: no se loguea (spec 009 §5).
+
 ## 3. Huella de dedupe (`dedupe_key`)
 
 Definición canónica (implementada en `ledger/domain`, testeada sin DB):
@@ -263,6 +331,8 @@ Espejo simplificado para offline-first; el servidor es la fuente de verdad.
 | `local_accounts` | linked_accounts | snapshot completo en cada sync |
 | `local_review` | cola de revisión | snapshot completo en cada sync; los ítems con una conversión o descarte aún pendiente en el outbox quedan fuera del reemplazo |
 | `outbox` | operaciones offline: crear transacción, patch (categoría, tipo, notas, comercio), emparejar y desemparejar transferencia, borrar, convertir y descartar una revisión; guarda los ids en `target_id`/`related_id` (con índice), así que canjear un id local por el que asigna el servidor es reescribir esas columnas; `attempts` cuenta envíos y se marca antes de enviar | push FIFO con reintentos, releyendo la cola tras cada operación; estado `pending` o `rejected` (fallo no reintentable: se conserva para resolución manual, no cuenta como pendiente ni bloquea el pull de sus filas, y el `pending_push` de `local_transactions` solo refleja operaciones `pending`) |
+| `local_recurring_expenses` | gastos fijos propios (§2.12) | snapshot completo en cada sync (`GET /recurring-expenses`) |
+| `local_recurring_occurrences` | ocurrencias del mes anterior, el actual y el siguiente (§2.13) | snapshot completo en cada sync (`GET /recurring-occurrences?from=…&to=…`, spec 005 §10); tachar un pago detectado en el servidor llega en el siguiente sync |
 | `sync_state` | cursor de transacciones (`transactions_cursor`), `last_synced_at` y `owner_user_id` (usuario dueño de la copia local) | — |
 
 Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usuario, que siempre ganan sobre cambios automáticos del servidor (spec 003 §3).
@@ -275,6 +345,8 @@ Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usua
 | Transacciones y agregados | indefinida (dato del usuario) | borrado solo con la cuenta |
 | Cuenta borrada | purga total ≤ 72 h | hoy es inmediata: `DELETE /me` borra el usuario, el CASCADE se lleva todo y se publica `UserDeleted` (F4.8b). El job de verificación ≤ 72 h llega en F6.4 |
 | Backups | 30 días | rotación de backups cifrados |
+| Gastos fijos y ocurrencias | indefinida (dato del usuario) | borrado con el gasto fijo (CASCADE) o con la cuenta |
+| `device_tokens` | hasta cerrar sesión, hasta que FCM lo declare inválido o 270 días sin `last_seen_at` | la app lo borra al cerrar sesión; el consumer de `notifications` borra los `UNREGISTERED`; el job diario de purga borra los viejos (spec 011 §6) |
 
 El job de purga (`purge_raw_message_bodies`, cron arq diario a las **08:00 UTC =
 03:00 en Colombia**, F3.7 adelantado en F2 — Task 10) anula `raw_messages.body` (`UPDATE ... SET body =

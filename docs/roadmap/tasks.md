@@ -92,10 +92,24 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 | F6.7 | Gate de 80 conexiones Gmail + proceso de verificación OAuth + agendar CASA | 010 §1 | F6.5 |
 | F6.8 | Pruebas E2E de aceptación (lista de spec 002 §Verificación) en dispositivo real | todos | F5.4, F4.* |
 
+## Fase 7 — Gastos fijos y recordatorios push (RF-12)
+
+| ID | Tarea | Specs | Deps | Estado |
+|---|---|---|---|---|
+| F7.1 | Consola: agregar Firebase al proyecto GCP `luka-510204`, registrar las apps Android e iOS (`co.luka.luka`), subir la llave APNs, crear la cuenta de servicio con rol `Firebase Cloud Messaging API Admin` y cargar `LUKA_FCM_CREDENTIALS_JSON` en el env del servidor | 011 §6, 009 §3 | — | |
+| F7.2 | Migraciones `recurring_expenses`, `recurring_occurrences`, `recurring_match_rejections`, `device_tokens`; módulo `recurring` con dominio puro (calendario `due_date` + matcher) y los casos de prueba obligatorios; contratos de import-linter para `recurring` y `notifications` | 004 §2.12–2.15, 011 §3, §4, §7 | F1.6 | |
+| F7.3 | API de gastos fijos y ocurrencias (CRUD, `mark-paid`, `unmark`, `skip`) con barrido retroactivo vía `ledger.public`; tests de authz (ajeno → 404) | 005 §10, 011 §4.1, AC-12.1, 12.3, 12.4 | F7.2, F1.7 | |
+| F7.4 | Consumer `recurring` de `ledger.TransactionCaptured` (evento ampliado con `merchant` y `account_id`) y de `ledger.TransactionDeleted` (nuevo); cron `ensure_recurring_occurrences`; tests de idempotencia y carrera | 003 §2.3, 011 §3, §4, AC-12.2, 12.7 | F7.2, F2.5 | |
+| F7.5 | Módulo `notifications`: `PUT/DELETE /devices/push-token`, `PushSenderPort` + adapter FCM HTTP v1 (probado con `httpx.MockTransport`), consumer de `recurring.PaymentDueSoon`, cron `send_recurring_reminders`, borrado de tokens inválidos y purga de 270 días; test de higiene de logs | 005 §10, 011 §5, §6, 009 §5, AC-12.5, 12.7 | F7.1, F7.4 | |
+| F7.6 | App feature `recurring`: tablas Drift + sync, tarjeta "Próximos pagos" en Inicio, pantalla `/gastos-fijos` con tachado y acciones, hoja de edición, atajo desde el detalle del movimiento y fila en Ajustes; goldens claro y oscuro | 008 §3.2, §3.8, §5, 004 §5, AC-12.1, 12.4, 12.8 | F7.3, F4.1 | |
+| F7.7 | App feature `push`: `firebase_messaging` (versiones compatibles con Flutter 3.35), hoja y permiso en contexto, registro y borrado del token, canal Android, apertura desde el aviso; iOS en Codemagic | 008 §4.3, §6, 011 §6, 010 §2, AC-12.6 | F7.1, F7.5, F7.6 | |
+| F7.8 | Prueba E2E en dispositivo real: gasto fijo de prueba, pago capturado por Gmail que aparece tachado, recordatorio que llega con la app cerrada y que no llega si ya se pagó | 002 RF-12, 008 AC-APP-5 | F7.7 | |
+
 ## Orden crítico
 
 ```
 F0 → F1 → F2 → F3 → F5 (backend)
         └→ F4 (app, en paralelo con F3 desde F4.1)
 F6 al final, con F6.5–F6.7 arrancando en paralelo desde Fase 4.
+F7 (gastos fijos) arranca cuando F4.1 y F2.5 están hechos, en paralelo con F5 y F6; F7.1 (consola de Firebase) puede ir desde ya.
 ```

@@ -23,6 +23,7 @@ Este proyecto sigue **Spec-Driven Development (SDD)**: primero se escribe la esp
 | [`docs/specs/008-app-flutter`](docs/specs/008-app-flutter/spec.md) | App Flutter: features, pantallas, offline-first |
 | [`docs/specs/009-security`](docs/specs/009-security/spec.md) | Seguridad: modelo de amenazas, auth, cifrado |
 | [`docs/specs/010-compliance`](docs/specs/010-compliance/spec.md) | Compliance: Google CASA, Play Store, Ley 1581 |
+| [`docs/specs/011-recurring-expenses`](docs/specs/011-recurring-expenses/spec.md) | Gastos fijos: detección del pago (tachado) y recordatorios push con Firebase |
 | [`docs/roadmap/tasks.md`](docs/roadmap/tasks.md) | Plan de implementación por fases (a ejecutar tras aprobación) |
 
 ## Stack (decidido)

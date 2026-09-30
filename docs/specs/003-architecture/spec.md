@@ -30,11 +30,14 @@ flowchart TB
     end
 
     DS["DeepSeek V4 Flash API"]
+    FCM["Firebase Cloud Messaging<br/>(APNs en iOS)"]
 
     APP -->|"REST + JWT (HTTPS)"| CADDY
     PUBSUB -->|"push OIDC"| CADDY
     WK -->|fallback parsing| DS
     API -->|"OAuth / history.list"| GMAIL
+    WK -->|"recordatorios push (HTTP v1)"| FCM
+    FCM -->|push| APP
 ```
 
 Decisión central: **monolito modular con arquitectura hexagonal** en el backend y **feature-first + Clean Architecture** en la app. Racional en los ADRs (§6).
@@ -53,6 +56,8 @@ backend/
 │   │   ├── parsing/        # plantillas por banco + adapter LLM; corre en workers
 │   │   ├── ledger/         # transacciones, dedupe, transferencias, categorías, cuentas vinculadas, revisión
 │   │   ├── fiscal/         # reglas 210, tablas UVT, generación de reportes
+│   │   ├── recurring/      # gastos fijos, ocurrencias mensuales, matcher de pagos (spec 011)
+│   │   ├── notifications/  # tokens de dispositivo + envío push por FCM (spec 011 §6)
 │   │   └── insights/       # resúmenes mensuales (vacío: el dashboard se calcula en la app, 008 §3.2)
 │   ├── app.py              # FastAPI factory (composition root del API)
 │   ├── main.py             # entrypoint ASGI
@@ -87,7 +92,9 @@ Bus interno sobre **Redis Streams** (consumer groups → reintentos y at-least-o
 |---|---|---|---|
 | `RawMessageReceived` | ingestion | parsing | encola parseo del mensaje crudo |
 | `TransactionParsed` | parsing | ledger | intenta insertar con dedupe |
-| `TransactionCaptured` | ledger | insights, fiscal | actualiza agregados |
+| `TransactionCaptured` | ledger | insights, fiscal, recurring | actualiza agregados; `recurring` intenta emparejar el pago con un gasto fijo (spec 011 §4). Lleva `merchant` y `account_id` para el matcher |
+| `TransactionDeleted` | ledger | recurring | la ocurrencia que pagaba vuelve a `pending` (spec 011 §4) |
+| `PaymentDueSoon` | recurring | notifications | envía el recordatorio push de un gasto fijo (spec 011 §5) |
 | `ParseFailed` | parsing | ledger | mueve a cola de revisión |
 | `UserDeleted` | identity | todos | purga de datos del usuario |
 
@@ -101,6 +108,9 @@ Grupo de consumidores por evento (F2.2):
 | `TransactionParsed` | `ledger` |
 | `ParseFailed` | `ledger-review` |
 | `TransactionCaptured` | `ledger-observer` |
+| `TransactionCaptured` | `recurring` |
+| `TransactionDeleted` | `recurring` |
+| `PaymentDueSoon` | `notifications` |
 
 Los grupos se crean (idempotente) tanto al arrancar la API como el worker, para que un evento publicado antes del primer arranque del worker no se pierda (`XGROUP CREATE ... $ MKSTREAM` ignora entradas previas si el grupo no existía aún). `event_id` es determinista por `raw_message_id` + resultado (D8): así la reentrega de un evento de parsing —incluida la de un reproceso tras un fallo de commit— es absorbida por el `IdempotentHandler`, aunque llegue en una entrada de stream distinta.
 
@@ -109,8 +119,8 @@ La implementación del bus vive en `shared/events/`: un codec de eventos (serial
 ### 2.4 Request path vs workers
 
 - **API (request path)**: solo validar, persistir, encolar y responder. Nada de LLM ni parsing inline.
-- **Workers (arq)**: parsing, llamadas a DeepSeek, generación de reportes Excel, purgas programadas, renovación de watches. Misma imagen Docker, proceso distinto → se escalan por separado.
-- **Composition root** (`worker.py`, F2.2/F2.5/F2.9): el `on_startup` del worker arq ensambla y posee su propio engine SQLAlchemy (`session_factory`), su propio cliente `httpx.AsyncClient` (usado por el adapter DeepSeek) y su propio cliente Redis; nada de esto se comparte con el proceso API. Sobre esa base arranca 4 consumers de streams como tareas de fondo, cada uno bajo un supervisor que lo reinicia ante cualquier excepción inesperada (`_supervise`, delay fijo entre reinicios): `ingestion.RawMessageReceived` (grupo `parsing`) → `parsing.TransactionParsed` (grupo `ledger`) → `parsing.ParseFailed` (grupo `ledger-review`) → `ledger.TransactionCaptured` (grupo `ledger-observer`, F1.8, solo observa). Además registra 2 cron jobs arq: `purge_raw_message_bodies` (diario 03:00, spec 004 §6) y `requeue_pending_raw_messages` (cada 15 min, §2.3 arriba / spec 006 §4.4, riesgo 4). `on_shutdown` cierra engine/httpx/redis y espera las 4 tareas de consumer con una cota dura (fail-soft: loguea y continúa si alguna no responde a tiempo).
+- **Workers (arq)**: parsing, llamadas a DeepSeek, generación de reportes Excel, purgas programadas, renovación de watches, generación de ocurrencias de gastos fijos y envío de recordatorios push (spec 011 §3 y §5). Misma imagen Docker, proceso distinto → se escalan por separado.
+- **Composition root** (`worker.py`, F2.2/F2.5/F2.9): el `on_startup` del worker arq ensambla y posee su propio engine SQLAlchemy (`session_factory`), su propio cliente `httpx.AsyncClient` (usado por el adapter DeepSeek) y su propio cliente Redis; nada de esto se comparte con el proceso API. Sobre esa base arranca 4 consumers de streams como tareas de fondo, cada uno bajo un supervisor que lo reinicia ante cualquier excepción inesperada (`_supervise`, delay fijo entre reinicios): `ingestion.RawMessageReceived` (grupo `parsing`) → `parsing.TransactionParsed` (grupo `ledger`) → `parsing.ParseFailed` (grupo `ledger-review`) → `ledger.TransactionCaptured` (grupo `ledger-observer`, F1.8, solo observa). Además registra 2 cron jobs arq: `purge_raw_message_bodies` (diario 03:00, spec 004 §6) y `requeue_pending_raw_messages` (cada 15 min, §2.3 arriba / spec 006 §4.4, riesgo 4). Con F7 suma los consumers `recurring` (de `TransactionCaptured` y `TransactionDeleted`) y `notifications` (de `PaymentDueSoon`, solo si `LUKA_FCM_CREDENTIALS_JSON` está definida), y los crons `ensure_recurring_occurrences` (diario 05:00) y `send_recurring_reminders` (diario 09:00), ambos en hora de Colombia (spec 011). `on_shutdown` cierra engine/httpx/redis y espera las 4 tareas de consumer con una cota dura (fail-soft: loguea y continúa si alguna no responde a tiempo).
 
 ### 2.5 Escalabilidad — camino de crecimiento
 
@@ -135,6 +145,8 @@ app/lib/
     ├── capture/             # listener notificaciones, NFC, registro manual
     ├── review/
     ├── fiscal_report/
+    ├── recurring/           # gastos fijos: lista del mes, tachado, hoja de edición (spec 008 §3.8)
+    ├── push/                # firebase_messaging: permiso, token, apertura desde el aviso
     └── settings/
         └── <cada feature>/
             ├── domain/        # entidades + contratos de repositorio (Dart puro)
@@ -185,12 +197,13 @@ sequenceDiagram
 
 | Capa | Tecnología | Nota |
 |---|---|---|
-| App | Flutter estable (≥3.35), Riverpod 3, Drift, dio, go_router, google_sign_in, nfc_manager, notification_listener_service | |
+| App | Flutter estable (≥3.35), Riverpod 3, Drift, dio, go_router, google_sign_in, nfc_manager, notification_listener_service, firebase_core + firebase_messaging | versiones de Firebase compatibles con Flutter 3.35 |
 | API | Python 3.12+, FastAPI, Pydantic v2, SQLAlchemy 2 + Alembic | uv como gestor |
 | Workers | arq (async, nativo Redis) | misma imagen |
 | Datos | PostgreSQL 16, Redis 7 | |
 | LLM | DeepSeek V4 Flash (API OpenAI-compatible, JSON mode) | detrás de `LlmParserPort` |
-| Infra | Docker Compose en un VPS compartido (Hostinger), detrás del nginx del servidor con certbot (red `proxy`) | GCP solo Pub/Sub+OAuth; `backend/deploy/` |
+| Infra | Docker Compose en un VPS compartido (Hostinger), detrás del nginx del servidor con certbot (red `proxy`) | GCP solo Pub/Sub+OAuth+FCM; `backend/deploy/` |
+| Push | Firebase Cloud Messaging (API HTTP v1; APNs en iOS) | proyecto GCP `luka-510204`; spec 011 §6 |
 | CI/CD | GitHub Actions solo despliega el backend: pip-audit + gitleaks, imagen en GHCR con SBOM y procedencia, despliegue por SSH fijado por digest. Lint y tests (ruff, pyright, pytest, import-linter, flutter analyze/test) en local; iOS en Codemagic | |
 
 ## 6. ADRs (decisiones registradas)
@@ -205,3 +218,4 @@ sequenceDiagram
 | ADR-6 | Offline-first con Drift como única fuente de la UI | UI contra API con caché ad-hoc | P4; UX instantánea y soporte real sin red |
 | ADR-7 | Dedupe garantizado por índice único en Postgres | Dedupe solo en aplicación | P2; condición de carrera entre workers la resuelve la DB |
 | ADR-8 | Google Sign-In como único método de auth en MVP | Email+password adicional | El producto requiere Gmail de todos modos; reduce superficie de ataque (sin contraseñas propias) |
+| ADR-9 | Recordatorios de gastos fijos por push desde el servidor con Firebase Cloud Messaging | Notificaciones locales programadas en el teléfono (`flutter_local_notifications`); OneSignal u otro proveedor push | Decisión del usuario. El pago se detecta casi siempre en el servidor (Gmail), así que solo el servidor sabe a tiempo si ya se pagó y el aviso sobra, aunque la app lleve días cerrada. FCM es gratis, es el transporte nativo de Android, entrega a iOS por APNs y vive en el mismo proyecto GCP. Costo aceptado: un tercero más que recibe el nombre y el monto del aviso (spec 010 §4) |

@@ -39,6 +39,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 - Deduplicación multi-fuente y detección de transferencias entre cuentas propias.
 - Categorías (personalizables) con etiqueta fiscal; corrección manual reentrenable (reglas por comercio).
 - Dashboard mensual, historial, cola de revisión.
+- Gastos fijos mensuales: se tachan solos cuando la captura detecta el pago y avisan por notificación push (Firebase Cloud Messaging) 1 o 2 días antes del vencimiento (spec 011).
 - Reporte anual estilo formulario 210 (JSON + Excel) y simulación básica de si está obligado a declarar (topes UVT).
 - iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + NFC en foreground + pagos con Apple Pay por una automatización de Atajos, iOS 17+, spec 006 §3.3).
 
@@ -72,3 +73,6 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 | **UVT** | Unidad de Valor Tributario; las reglas fiscales se expresan en UVT y se resuelven con la tabla del año gravable |
 | **Año gravable** | Año calendario que cubre el reporte de renta |
 | **Watch** | Suscripción de Gmail API que publica en Pub/Sub cuando llega correo; expira cada 7 días y se renueva a diario |
+| **Gasto fijo** | Pago que el usuario declara que se repite cada mes (comercio, monto aproximado y día); luka espera la transacción que lo paga, no la crea (spec 011) |
+| **Ocurrencia** | La instancia de un gasto fijo en un mes concreto, con su fecha de vencimiento y estado: pendiente, pagada (tachada) u omitida |
+| **Recordatorio push** | Notificación que el backend envía por Firebase Cloud Messaging 1 o 2 días antes del vencimiento de un gasto fijo aún no pagado |

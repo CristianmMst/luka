@@ -3,7 +3,7 @@
 App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente (notificaciones, Gmail, NFC, manual) y arma el reporte de renta colombiano (formulario 210 de la DIAN). Usuarios y moneda: Colombia, COP, español.
 
 - Principios P1–P8: [`docs/constitution.md`](docs/constitution.md). Seguridad primero, dedupe sagrado, dominio puro, offline-first, exactitud fiscal, habeas data, escalar sin reescribir y spec-driven.
-- Specs: [`docs/specs/`](docs/specs/). 003 arquitectura, 005 API, 008 app, 009 seguridad.
+- Specs: [`docs/specs/`](docs/specs/). 003 arquitectura, 005 API, 008 app, 009 seguridad, 011 gastos fijos y push.
 - Roadmap y estado de tareas: [`docs/roadmap/tasks.md`](docs/roadmap/tasks.md).
 - Guías: [`backend/README.md`](backend/README.md) y [`app/README.md`](app/README.md).
 

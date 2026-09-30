@@ -45,6 +45,7 @@ Si CASA se retrasa: modo degradado sin Gmail (captura solo por notificaciones + 
 | SMS/Call Log | Prohibido `READ_SMS`/`RECEIVE_SMS` salvo default handler | **No usamos esos permisos**: SMS capturados vía notificación de la app de Mensajes (ADR-4) |
 | Acceso a notificaciones | Permiso sensible: requiere ser funcionalidad núcleo, divulgación prominente y consentimiento | Onboarding con pantalla de divulgación explícita antes del ajuste del sistema; declaración en Play Console (Data Safety + formulario de permisos); la funcionalidad ES núcleo (captura de transacciones) |
 | Data Safety | Declarar datos recolectados, uso y compartición | Formulario: info financiera (transacciones) — recolectada, no compartida ni vendida; contenido de notificaciones — procesado, retención 90 días |
+| Notificaciones (`POST_NOTIFICATIONS`, Android 13+) | Permiso en tiempo de ejecución; pedirlo en contexto | Se pide al guardar el primer gasto fijo, tras explicar para qué sirve (spec 008 §3.8); Data Safety declara "identificadores del dispositivo" (token de FCM) usados solo para la funcionalidad, no compartidos ni para publicidad |
 | Finanzas personales | Categoría con políticas propias (no somos préstamos) | Declararse como herramienta de finanzas personales; sin funciones de crédito |
 | Cuenta borrable | Play exige borrado de cuenta in-app y por web | RF-11.3 + página web de solicitud de borrado |
 
@@ -64,6 +65,7 @@ Si CASA se retrasa: modo degradado sin Gmail (captura solo por notificaciones + 
 |---|---|---|
 | Google (OAuth/Gmail/Pub/Sub) | Identidad, metadatos de correo | Consentimiento del usuario; términos de Google API Services (incluye Limited Use Policy: los datos de Gmail solo para la funcionalidad visible al usuario, nunca para ads ni entrenamiento) |
 | DeepSeek (LLM) | Cuerpo de mensajes bancarios (sin identidad del usuario) | Necesario para el servicio; documentar términos de retención del proveedor y ofrecer en la política de privacidad; revisar opción zero-retention/opt-out de entrenamiento antes del lanzamiento |
+| Google Firebase Cloud Messaging (y Apple APNs en iOS) | Token del dispositivo y el texto del recordatorio: nombre y monto esperado del gasto fijo, y su fecha (spec 011 §5); nunca email ni transacciones | Necesario para la funcionalidad de recordatorios, que el usuario activa al conceder el permiso; términos de Firebase y del Apple Developer Program; se declara en la política de privacidad |
 | Proveedor VPS | Hospedaje de todos los datos | Contrato/términos; disco cifrado |
 
 **Limited Use Policy de Google (crítico)**: los datos obtenidos vía Gmail API no pueden usarse para publicidad, ni transferirse salvo para proveer la funcionalidad, ni ser leídos por humanos salvo soporte con consentimiento. El envío del cuerpo de correos a DeepSeek para parsing está permitido como "procesamiento necesario para la funcionalidad visible al usuario", pero debe declararse en la política de privacidad y en la verificación OAuth.
@@ -81,5 +83,5 @@ Si CASA se retrasa: modo degradado sin Gmail (captura solo por notificaciones + 
 - [ ] Declaraciones de Play Console (Data Safety + permisos) aprobadas.
 - [ ] Política de privacidad y T&C publicados y enlazados en app/stores.
 - [ ] Registro RNBD evaluado/realizado según entidad legal.
-- [ ] DPA/términos de DeepSeek y VPS archivados.
+- [ ] DPA/términos de DeepSeek, Firebase y VPS archivados.
 - [ ] Gate de 80 conexiones Gmail activo con alerta.

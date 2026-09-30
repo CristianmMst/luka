@@ -194,7 +194,7 @@ Logs: solo `gmail_push_received` con `jobs_enqueued`; nunca el `emailAddress` ni
 
 Cada ciclo va **push antes que pull**, para que el pull traiga ya el estado que el servidor confirmó en el push.
 
-1. **Pull**: `GET /transactions?updated_since=<cursor>` es incremental — filtra `updated_at >= cursor`, por lo que es idempotente ante reintentos — y el cursor avanza al mayor `updated_at` recibido (primer pull: época `1970-01-01`). La app pide `updated_since = cursor − 5 min` (sin bajar de la época): una fila que commitea tarde con un `updated_at` anterior al cursor no se pierde, y repetir filas es inocuo por el `>=` y el upsert idempotente. Categorías, cuentas y revisión no tienen cursor: cada sync trae la lista completa (`GET /categories`, `/accounts`, `/review`) y reemplaza la copia local entera. Adjuntar una fuente nueva a una transacción ya existente (misma captura vista por otro canal, AC-5.1) actualiza su `updated_at` (solo esa columna, para no pisar un cambio concurrente de la fila), así que el pull incremental la vuelve a traer — con su `channels[]` ya actualizado — sin que la app tenga que pedir el detalle.
+1. **Pull**: `GET /transactions?updated_since=<cursor>` es incremental — filtra `updated_at >= cursor`, por lo que es idempotente ante reintentos — y el cursor avanza al mayor `updated_at` recibido (primer pull: época `1970-01-01`). La app pide `updated_since = cursor − 5 min` (sin bajar de la época): una fila que commitea tarde con un `updated_at` anterior al cursor no se pierde, y repetir filas es inocuo por el `>=` y el upsert idempotente. Categorías, cuentas, revisión y gastos fijos no tienen cursor: cada sync trae la lista completa (`GET /categories`, `/accounts`, `/review`, `/recurring-expenses` y `/recurring-occurrences` del mes anterior al siguiente, §10) y reemplaza la copia local entera. Adjuntar una fuente nueva a una transacción ya existente (misma captura vista por otro canal, AC-5.1) actualiza su `updated_at` (solo esa columna, para no pisar un cambio concurrente de la fila), así que el pull incremental la vuelve a traer — con su `channels[]` ya actualizado — sin que la app tenga que pedir el detalle.
 2. **Push**: la app drena su `outbox` FIFO contra los endpoints normales. Solo los `POST` (creaciones) llevan `Idempotency-Key`, y un reintento repite el mismo cuerpo. El outbox se relee antes de cada operación, así que las siguientes ya llevan el id del servidor que dejó el canje de una creación y no se envía lo que el usuario canceló durante el ciclo. Cada envío se cuenta (`attempts`) **antes** de salir: borrar una creación la cancela en local solo si nunca se envió; si ya se envió (aunque siga en vuelo o la app muriera durante el request), el servidor pudo haberla guardado y el borrado se encola detrás. Según la respuesta:
    - Red caída, `5xx`, `429` o `409` con `Retry-After` (spec 005 §1) → se reintenta más tarde; el drenado se detiene ahí, sin saltar al siguiente ítem.
    - `401` → termina el ciclo (sesión cerrada).
@@ -204,3 +204,38 @@ Cada ciclo va **push antes que pull**, para que el pull traiga ya el estado que 
 3. El servidor nunca asume que la app está al día: toda respuesta de mutación devuelve el recurso completo actualizado (excepto los `204` sin cuerpo, como `DELETE /accounts/{id}` o `logout`, donde no aplica).
 4. **Deuda conocida**: los borrados hechos desde otro dispositivo u otro cliente no se propagan al pull — Postgres borra en duro y no hay tombstones —, así que una copia local que no vio ese borrado directo puede seguir mostrando la fila hasta que la toque ella misma.
 5. **Deuda conocida**: la `Idempotency-Key` dura 24 h en Redis (§1). Una creación que llegó al servidor pero cuya respuesta se perdió, y que se reintenta después de más de 24 h (p. ej. el teléfono quedó sin red), crea un duplicado en el servidor. A futuro, el servidor debería deduplicar por el id que genera el cliente (el UUID local de la creación) en vez de depender solo del TTL.
+
+## 10. Gastos fijos y push (recurring, notifications)
+
+Reglas en spec 011, tablas en spec 004 §2.12–2.15. Todo es autenticado, filtra por el `user_id` del token (un recurso ajeno responde 404) y va directo a la API, sin outbox (spec 008 §3.8). Los `POST` aceptan `Idempotency-Key` (§1).
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/recurring-expenses` | Lista completa de los gastos fijos propios (activos y pausados), ordenada por `day_of_month` y luego `name`. Sin paginación: se espera un número pequeño |
+| POST | `/recurring-expenses` | Crea. Body: `name`, `merchant_keyword`, `expected_amount`, `amount_tolerance_pct?` (10), `day_of_month`, `category_id?`, `account_id?`, `remind_days_before?` (1). Crea las ocurrencias del mes actual y del siguiente y corre el barrido retroactivo (spec 011 §3, §4) antes de responder. 201 con el recurso y sus ocurrencias |
+| PATCH | `/recurring-expenses/{id}` | Editables: todos los del POST y `active`. Cambiar el día recalcula las ocurrencias `pending`; cambiar keyword, monto, tolerancia, día o cuenta repite el barrido; `active: false` borra las ocurrencias `pending` futuras. 200 con el recurso |
+| DELETE | `/recurring-expenses/{id}` | Borra el gasto fijo y sus ocurrencias (CASCADE). Las transacciones no se tocan. 204 |
+| GET | `/recurring-occurrences?from=2026-09&to=2026-11` | Ocurrencias propias con `period` entre ambos meses (incluidos; máximo 12 meses de rango, si no 400 `field=to`), cada una con su gasto fijo embebido (`name`, `merchant_keyword`, `expected_amount`, `category_id`) y, si está pagada, `transaction` resumida (`id`, `merchant`, `amount`, `occurred_at`). Orden `(due_date, name)` |
+| POST | `/recurring-occurrences/{id}/mark-paid` | Body `{ "transaction_id": "<uuid>" \| null }`. Sin transacción: pagada a mano. Con transacción: debe ser un gasto propio (si no, 404) de `kind = expense`, y si ya paga otra ocurrencia → 409 `field=transaction_id`. Sobre una ocurrencia ya pagada reemplaza el emparejamiento. 200 |
+| POST | `/recurring-occurrences/{id}/unmark` | Vuelve a `pending`; si era `auto`, crea el rechazo (spec 004 §2.14). Sobre una `pending` → 409. 200 |
+| POST | `/recurring-occurrences/{id}/skip` | `skipped`, liberando la transacción si tenía. 200. `unmark` la devuelve a `pending` |
+| PUT | `/devices/push-token` | Body `{ "token", "platform": "android" \| "ios" }`. Upsert por `token`: lo asigna al usuario del JWT (aunque antes fuera de otro) y actualiza `last_seen_at`. `token` de 1 a 4096 caracteres. 204 |
+| DELETE | `/devices/push-token` | Body `{ "token" }`. Borra ese token si es del usuario; si no existe, igual responde 204 (idempotente) |
+
+Validaciones (400 `validation_error` con `field`): `name` de 1 a 60 caracteres; `merchant_keyword` de 2 a 40 y con al menos 2 letras o dígitos después de normalizar; `expected_amount` > 0 como string decimal (§1); `amount_tolerance_pct` de 0 a 50; `day_of_month` de 1 a 31; `remind_days_before` 1 o 2. Un `category_id` o `account_id` ajeno responde 404, como en `/transactions`.
+
+Ejemplo de una ocurrencia:
+
+```json
+{
+  "id": "0b7c…",
+  "recurring_expense": { "id": "5e2a…", "name": "Spotify", "merchant_keyword": "SPOTIFY", "expected_amount": "16900.00", "category_id": "…", "active": true },
+  "period": "2026-10",
+  "due_date": "2026-10-22",
+  "status": "paid",
+  "matched_by": "auto",
+  "paid_at": "2026-10-22T07:14:03-05:00",
+  "reminded_at": "2026-10-21T09:00:12-05:00",
+  "transaction": { "id": "9f1d…", "merchant": "SPOTIFY P3A9C1", "amount": "16900.00", "occurred_at": "2026-10-22T07:12:00-05:00" }
+}
+```

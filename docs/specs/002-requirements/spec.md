@@ -93,6 +93,19 @@ Formato: historias de usuario con criterios de aceptación **Given/When/Then**. 
 - **AC-11.3** El usuario puede borrar su cuenta: eliminación total (transacciones, mensajes crudos, tokens) en ≤ 72 h, irreversible.
 - **AC-11.4** El contenido crudo de correos/notificaciones se elimina automáticamente a los 90 días de procesado.
 
+### RF-12 · Gastos fijos y recordatorios
+
+*Como usuario, quiero registrar mis pagos fijos de cada mes (Spotify el 22, el arriendo el 5) para ver cuáles ya se pagaron y recibir un aviso antes de que me descuenten la plata.*
+
+- **AC-12.1** Given un usuario con sesión, When registra un gasto fijo con nombre, palabra clave del comercio, monto esperado, tolerancia (±10 % por defecto) y día del mes (1–31), Then aparece en la lista del mes con su fecha de vencimiento; un día que el mes no tiene (31 en abril) vence el último día del mes (spec 011 §3).
+- **AC-12.2** Given un gasto fijo pendiente, When la captura registra un gasto cuyo comercio contiene la palabra clave, con el monto dentro de la tolerancia y la fecha entre 5 días antes y 5 días después del vencimiento, Then la ocurrencia del mes queda pagada con esa transacción y la app la muestra tachada, sin importar el canal (Gmail, notificación, SMS, Apple Pay, manual o NFC).
+- **AC-12.3** Given un gasto fijo creado después de que el pago del mes ya se capturó, Then la ocurrencia nace pagada (barrido retroactivo, spec 011 §4).
+- **AC-12.4** Given una ocurrencia, Then el usuario puede marcarla como pagada sin movimiento, elegir el movimiento que la pagó, omitirla este mes o deshacer. Si deshace un emparejamiento automático, ese movimiento no se vuelve a emparejar solo con esa ocurrencia.
+- **AC-12.5** Given una ocurrencia pendiente y el permiso de notificaciones concedido, When faltan 1 o 2 días para el vencimiento (lo elige el usuario), Then llega al celular una notificación push a las 09:00 hora de Colombia: "Se acerca tu pago de Spotify. El 22 de octubre se te descontarán $16.900 de tu cuenta." Si el pago ya se detectó o la ocurrencia se omitió, no llega.
+- **AC-12.6** Given el permiso de notificaciones negado o revocado, Then los gastos fijos se siguen registrando y tachando; solo se pierde el aviso, y la pantalla explica cómo activarlo.
+- **AC-12.7** Given el mismo evento de captura procesado varias veces, o el cron de avisos corriendo dos veces, Then hay a lo sumo un emparejamiento por transacción y a lo sumo un aviso por ocurrencia (P2).
+- **AC-12.8** Given un gasto fijo, Then no crea transacciones ni suma en el dashboard ni en el reporte fiscal: el dinero lo cuenta solo la transacción capturada.
+
 ## B. Requisitos no funcionales
 
 ### RNF-1 · Seguridad
@@ -145,4 +158,5 @@ Detalle en spec 010: verificación OAuth + CASA antes de superar 100 usuarios de
 | RF-9 | 005, 008 | F4 |
 | RF-10 | 007 | F5 |
 | RF-11 | 005, 009, 010 | F1, F6 |
+| RF-12 | 004, 005, 008, 009, 010, 011 | F7 |
 | RNF-1..7 | 003, 009, 010 | transversal |

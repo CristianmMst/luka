@@ -2,7 +2,7 @@
 
 ## 1. Estructura y stack
 
-Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `crypto` (`client_hash`), `intl` (formato COP); el listener de notificaciones es código nativo, sin plugin (§4.1).
+Arquitectura feature-first + Clean Architecture con Riverpod 3 (detalle y reglas de capas en spec 003 §3). Paquetes: `flutter_riverpod` (sin codegen, ver spec 003 §3), `freezed`/`json_serializable`, `flutter_secure_storage`, `flutter_svg`, `drift`, `dio`, `go_router`, `google_sign_in`, `nfc_manager`, `crypto` (`client_hash`), `intl` (formato COP), `firebase_core` + `firebase_messaging` (recordatorios de gastos fijos, §4.3); el listener de notificaciones es código nativo, sin plugin (§4.1).
 
 ## 2. Mapa de navegación
 
@@ -22,6 +22,9 @@ flowchart TD
     HOME --> ST[Ajustes]
 
     TX --> TXD[Detalle transacción]
+    D --> RE[Gastos fijos<br/>lista del mes, tachado]
+    ST --> RE
+    PUSH[Aviso push de pago] -.->|toque| RE
     ADD --> QA[Formulario rápido<br/>también vía NFC deep link]
     ST --> FR[Reporte de renta]
     ST --> NFCW[Escribir tag NFC]
@@ -62,6 +65,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - **Captura detenida (AC-3.4, F4.4, diseño B "Franja dentro del hero").** Si la captura automática se detuvo, el hero termina con una franja ámbar tocable de 48 dp: "Captura detenida · Reactivar ›" cuando se perdió el acceso a notificaciones que estaba concedido, o "Gmail se desconectó · Reconectar ›" cuando Gmail quedó `revoked`; si pasan las dos, se muestra Gmail. Tocarla hace la acción: "Reactivar" pasa por la divulgación y abre el ajuste del sistema; "Reconectar" abre el consentimiento de Google (si falla: "No pudimos reconectar Gmail. Inténtalo desde Ajustes."). No se descarta: desaparece sola cuando se arregla. `error` de Gmail no avisa porque el backend lo reintenta solo (spec 005 §3). "Estaba concedido" es una marca local (`capture_was_granted:<userId>` en `sync_state`), así que a quien nunca activó el acceso no se le dice que "se detuvo". Mientras el Inicio está vivo, el estado de Gmail se relee al volver a primer plano, como mucho cada 15 min; el acceso a notificaciones se relee en cada vuelta.
 - **"En qué se fue".** Muestra las 5 categorías con más gasto, cada una con su ícono, una barra relativa a la mayor y el % del gasto total. Los empates se ordenan por nombre. El resto se agrupa en la línea "Otras categorías $X · N %", y las 5 más "Otras" suman exactamente el gasto total. Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes; el buscador de Movimientos se limpia porque el filtro se reemplaza. "Sin categoría" también se abre: el filtro por la fila `sin_categoria` incluye los movimientos con `category_id` nulo (el mismo reparto de las cifras) y Movimientos la nombra "Sin categoría" aunque no esté en la hoja de categorías.
 - **Transferencias.** Las `kind = transfer` no suman en ninguna cifra (AC-6.2).
+- **"Próximos pagos" (RF-12, F7.6).** Debajo de "En qué se fue", una tarjeta con las ocurrencias del mes elegido (`local_recurring_occurrences`), ordenadas por vencimiento, con los estados de spec 011 §2: las pagadas van **tachadas** (nombre y monto con `TextDecoration.lineThrough` en `onSurfaceVariant`, que conserva el contraste AA) con un check y "Pagado el 22 oct"; las pendientes muestran "Vence el 22" o el aviso ámbar. Encabezado "Próximos pagos · 2 de 5 pagados". Muestra hasta 5 y "Ver todos" abre `/gastos-fijos`. Sin gastos fijos, la tarjeta es una invitación: "¿Pagas algo cada mes? Regístralo y te avisamos antes." con "Agregar gasto fijo". No suma en el balance (AC-12.8).
 - **Estados:**
   - mes sin movimientos, con "Volver a {mes actual}" si no se está en el mes actual;
   - primera sincronización;
@@ -93,6 +97,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - Selector de año gravable; verificación de topes (semáforo por criterio con valores UVT); cifras por cédula expandibles → lista de transacciones que las soportan (AC-10.4); advertencias (p. ej. intereses de vivienda); datos manuales (dependientes, patrimonio) editables aquí; botón exportar Excel (descarga/share). Disclaimer fijo (spec 007 §1).
 
 ### 3.7 Ajustes
+- Fila "Gastos fijos" (F7.6) → `/gastos-fijos` (§3.8), con el conteo "N activos".
 - Diseño B "Perfil arriba + lista plana" (F4.8b, canvas https://claude.ai/artifact/WzR2MPpbs6czQaGfz2kpMM): hero esmeralda con el perfil de Google (iniciales, nombre y correo) y la línea de sync tocable, que abre la hoja de sincronización. Debajo, una lista: conexiones (Gmail, notificaciones), Mis categorías, Mis cuentas, "Privacidad y datos" y cerrar sesión.
 - Estado de conexiones (Gmail: activo/error/desconectar; notificaciones Android: activo/inactivo → deep link al ajuste).
   - Fila "Notificaciones del banco" (F4.3, solo Android): "Activo" ofrece "Administrar", que abre el ajuste del sistema; "Inactivo" ofrece "Activar", que primero muestra una hoja de divulgación prominente (spec 010 §2: qué se lee, qué se ignora y cómo quitar el permiso) y solo con "Ir a los ajustes" abre el ajuste del sistema. El estado se vuelve a leer al volver a primer plano (AC-3.4). En iOS la fila no existe.
@@ -113,6 +118,19 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
   - **Borrar mi cuenta** (RF-11.3) lista lo que se borra: movimientos y fuentes, correos y notificaciones guardados, cuentas, categorías y reglas, y la conexión con Gmail. Ofrece "Exportar mis datos antes" y exige escribir BORRAR para habilitar "Borrar para siempre" (doble confirmación). Tras el 204 de `DELETE /me` se cierra la sesión, lo que borra la base local (P6). Sin red o con error se avisa y no se toca nada local.
   - La política de privacidad se enlaza cuando exista su URL (F6.5).
 
+### 3.8 Gastos fijos (RF-12)
+Feature `recurring` (spec 011). Ruta `/gastos-fijos`, a pantalla completa sobre el navegador raíz, desde la tarjeta del Inicio, desde Ajustes o desde el aviso push.
+
+- **Lista del mes.** Selector de mes con flechas de 48 dp (del mes anterior al siguiente, lo que trae el sync). Arriba, el resumen "Este mes: $X pagados de $Y" (suma de `expected_amount` de las ocurrencias, sin las omitidas). Una fila por ocurrencia, en orden de vencimiento: ícono de la categoría (o uno genérico), nombre, monto esperado y la línea de estado de spec 011 §2. **Pagado** tacha nombre y monto, muestra el check y "Pagado el 22 oct · {comercio del movimiento}" y, al tocarlo, abre el detalle del movimiento (§3.3) si lo tiene. Las filas miden 48 dp o más.
+- **Acciones por fila** (menú de 48 dp): Próximo o Pendiente ofrece "Marcar como pagado", "Elegir movimiento" y "Omitir este mes"; Pagado ofrece "Deshacer" y "Ver movimiento"; Omitido ofrece "Deshacer". "Elegir movimiento" abre una hoja con los gastos locales de la ventana ±5 días, primero los de monto más cercano. Cada acción va a su endpoint (spec 005 §10), avisa con un snackbar y actualiza la copia local con la respuesta.
+- **Hoja "Nuevo gasto fijo" / "Editar gasto fijo".** Campos: nombre (obligatorio, ≤ 60), "¿Cómo aparece en tu banco?" (palabra clave, obligatoria, 2–40, con la pista "Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio"), monto (teclado COP, > $0), "Día de pago" (selector 1–31, con la nota "Si el mes es más corto, usamos el último día" para 29–31), "Margen de monto" (0 %, 5 %, 10 % por defecto, 20 %, 50 %), categoría (la hoja de categorías) y cuenta (la hoja "¿De qué cuenta?" de Registrar, opcional), y "Avisarme" (1 día antes por defecto, o 2 días antes). Editar suma "Pausar" o "Reanudar" y "Borrar gasto fijo", que confirma: "¿Borrar «Spotify»? Se quita de tus gastos fijos; tus movimientos no cambian."
+- **Atajo desde un movimiento.** En el detalle de un gasto (§3.3), "Crear gasto fijo con esto" abre la hoja prellenada con nombre y palabra clave (el comercio), monto, día (el de la fecha) y categoría.
+- **En línea.** Crear, editar, borrar y las acciones van directo a la API, sin outbox (como Mis categorías, §3.7). Sin conexión se avisa "Necesitas conexión para cambiar tus gastos fijos"; la lista se sigue viendo desde Drift (P4). Tras un éxito la copia local se actualiza al instante; un pago detectado por el servidor se tacha en el siguiente sync (§5).
+- **Permiso de notificaciones (P6).** Al guardar el primer gasto fijo, si el permiso no se ha pedido, se muestra la hoja "¿Te avisamos antes de cada pago?" con un ejemplo del aviso ("Se acerca tu pago de Spotify…"), "Sí, avisarme" (pide el permiso del sistema) y "Ahora no". Si está negado, la pantalla muestra arriba la franja "Los avisos están apagados · Activar ›", que abre el ajuste del sistema; se relee al volver a primer plano (AC-12.6).
+- **Desde el aviso.** `/gastos-fijos?ocurrencia=<id>` abre el mes de esa ocurrencia y la resalta. Si la sesión no está lista, el destino se guarda y se abre después del splash, como el deep link NFC (§3.4).
+- **Estados:** sin gastos fijos ("Aún no tienes gastos fijos", con "Agregar gasto fijo"), primera sincronización (esqueleto) y error de la base local (reintentar).
+- Textos en `app_es.arb`; montos con `formatCop`.
+
 ## 4. Servicios de plataforma (feature `capture`)
 
 ### 4.1 NotificationCaptureService (Android)
@@ -126,10 +144,16 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 - Android: la lectura con la app cerrada no pasa por el plugin: el intent-filter entrega el enlace como deep link a go_router (`flutter_deeplinking_enabled`). Escritura con `NdefAndroid` (o `NdefFormatableAndroid` si el tag viene sin formato).
 - iOS: lectura en primer plano con una sesión Core NFC que inicia el usuario (`NdefIos`); entitlement `com.apple.developer.nfc.readersession.formats` (NDEF, TAG) y `NFCReaderUsageDescription`. No escribe.
 
+### 4.3 PushService (feature `push`, F7.7)
+- Puerto `PushService` (`permissionStatus`, `requestPermission`, `token`, `onTokenRefresh`, `onOpened`, `deleteToken`) en `features/push/domain`, con el adaptador `FirebasePushService` sobre `firebase_messaging`. `Firebase.initializeApp` corre en `main()` antes de `runApp`.
+- Registro: con sesión autenticada y el permiso concedido, `PUT /devices/push-token` al arrancar y en cada `onTokenRefresh`. Al cerrar sesión, `DELETE /devices/push-token` y `deleteToken` antes de borrar la base local (spec 011 §6). Un fallo de red se reintenta en el siguiente arranque; no bloquea el login ni el logout.
+- Apertura: `getInitialMessage` (app cerrada) y `onMessageOpenedApp` (en segundo plano) leen `data.type == "recurring_due"` y navegan a `/gastos-fijos?ocurrencia=<id>`. Con la app en primer plano el sistema no muestra el aviso: la app lo presenta como snackbar con "Ver".
+- Android: canal `recordatorios_pagos` creado al arrancar; ícono monocromo de la marca en `res/drawable`. iOS: capability Push Notifications y Background Modes → Remote notifications; la compilación de iOS sigue en Codemagic.
+
 ## 5. Sincronización offline (P4, contrato en spec 005 §9)
 
 - `SyncCoordinator` (provider, single-flight: un ciclo a la vez; si llega otra petición mientras uno corre, encadena otro al terminar) dispara sync al autenticarse, al reconectar (connectivity_plus), al encolar una operación, al volver a primer plano, cada 15 min mientras la app sigue en primer plano y al deslizar hacia abajo en Inicio, Movimientos y Revisión (pull-to-refresh: el indicador espera a que termine el ciclo; también funciona sobre los estados vacíos o de error). Así un correo o una notificación que el backend procesó mientras la app estaba abierta se ve sin reiniciarla.
-- Cada ciclo va **push antes que pull**: primero drena el outbox FIFO (creaciones con `Idempotency-Key`; reglas de reintento/rechazo en spec 005 §9) para que el pull traiga el estado ya confirmado por el servidor. Pull: incremental por `updated_since` en transacciones (con 5 min de solape sobre el cursor, spec 005 §9); categorías, cuentas y revisión se traen completas cada vez → upsert en Drift.
+- Cada ciclo va **push antes que pull**: primero drena el outbox FIFO (creaciones con `Idempotency-Key`; reglas de reintento/rechazo en spec 005 §9) para que el pull traiga el estado ya confirmado por el servidor. Pull: incremental por `updated_since` en transacciones (con 5 min de solape sobre el cursor, spec 005 §9); categorías, cuentas, revisión y gastos fijos con sus ocurrencias (del mes anterior al siguiente) se traen completas cada vez → upsert en Drift.
 - Ids locales: una creación offline nace con un UUID local; al confirmarse en el servidor, ese id se canjea en `local_transactions` y en `target_id`/`related_id` del outbox (spec 004 §5).
 - Conflictos: gana `updated_at` más reciente, salvo que la fila tenga una edición local aún sin enviar (outbox pendiente), que siempre prevalece sobre el pull (spec 003 §3).
 - Privacidad: la base local se borra por completo (incluido el outbox sin enviar, P6) solo cuando la sesión pasa de autenticada a cerrada por el propio usuario en caliente (transición `Authenticated → Unauthenticated(sessionExpired: false)`); una sesión que expira, o un arranque en frío sin sesión, la conserva. `claimFor` también la borra si el usuario que inicia sesión es distinto al que la dejó. Antes de borrar o de reclamar la base para un usuario nuevo, el coordinador espera a que termine cualquier ciclo de sync en curso, para que no se crucen escrituras tardías entre usuarios.
@@ -147,7 +171,7 @@ Diseño A "Balance protagonista" del canvas F4.6 (https://claude.ai/artifact/2st
 | Acceso a notificaciones | Android | onboarding paso 3 / Ajustes | captura por Gmail + manual |
 | Automatización de Atajos (Apple Pay) | iOS 17+ | onboarding (guía) / Ajustes | captura por Gmail + manual |
 | NFC | ambas | al usar la función (permiso de manifiesto en Android, `uses-feature` no obligatorio; en iOS la hoja del sistema al leer) | registro manual normal |
-| Notificaciones push propias (avisos de la app) | ambas | post-onboarding | sin recordatorios |
+| Notificaciones push propias (recordatorios de gastos fijos, Android 13+ `POST_NOTIFICATIONS`, iOS) | ambas | al guardar el primer gasto fijo, tras la hoja explicativa (§3.8) | los gastos fijos se tachan igual; sin recordatorios (AC-12.6) |
 
 ## 7. UX/UI
 
@@ -191,3 +215,4 @@ Canvas F4.2 (lista "Tarjetas por día", detalle "Monto protagonista", filtros, h
 - **AC-APP-2** Matar la app en Android no detiene la captura de notificaciones (el listener del sistema persiste).
 - **AC-APP-3** Cambio de categoría refleja en dashboard y reporte fiscal local sin esperar al servidor (optimistic update + reconciliación).
 - **AC-APP-4** `flutter analyze` sin warnings; `flutter test` verde (`just app-ci`, antes de subir) para dominio y controllers de cada feature.
+- **AC-APP-5** Un pago de un gasto fijo detectado por Gmail con la app cerrada llega tachado en el primer sync al abrirla, y el recordatorio push llega aunque la app lleve días sin abrirse (F7.8).
