@@ -14,6 +14,7 @@ import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.da
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_hero.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_states.dart';
 import 'package:luka/features/dashboard/presentation/widgets/top_categories_card.dart';
+import 'package:luka/features/recurring/presentation/upcoming_payments_card.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/presentation/sync_refresh.dart';
 import 'package:luka/features/transactions/application/transactions_list_controller.dart';
@@ -73,6 +74,11 @@ class DashboardPage extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(Space.md),
                   child: _body(context, ref, state, sync, shown),
+                ),
+                // Gastos fijos del mes elegido (spec 008 §3.2, F7.6).
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Space.md),
+                  child: UpcomingPaymentsCard(month: state.month),
                 ),
               ],
             ),

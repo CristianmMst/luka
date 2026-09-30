@@ -50,6 +50,15 @@ abstract interface class SyncRemote {
   Future<List<SyncedReviewItem>> openReview();
 }
 
+/// Copia completa de un catálogo de otra feature (p. ej. gastos fijos,
+/// spec 008 §3.8) que se reemplaza al final de cada pull. Falla con
+/// [RemoteFailure], igual que [SyncRemote]. Es una interfaz (no un typedef)
+/// para que la feature la implemente con sus dependencias.
+// ignore: one_member_abstracts
+abstract interface class SyncSnapshot {
+  Future<void> refresh();
+}
+
 /// Base local (Drift). Cada método es atómico.
 abstract interface class SyncStore {
   /// Borra todo si los datos guardados son de otro usuario.

@@ -40,10 +40,15 @@ final foregroundTicksProvider = Provider<Stream<void>>(
   ),
 );
 
+/// Catálogos de otras features que se reemplazan en cada pull (gastos
+/// fijos); se sobrescribe en `lib/app/composition.dart`.
+final syncSnapshotsProvider = Provider<List<SyncSnapshot>>((ref) => const []);
+
 final syncEngineProvider = Provider<SyncEngine>(
   (ref) => SyncEngine(
     store: ref.watch(syncStoreProvider),
     remote: ref.watch(syncRemoteProvider),
+    snapshots: ref.watch(syncSnapshotsProvider),
   ),
 );
 

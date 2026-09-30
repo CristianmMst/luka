@@ -59,6 +59,8 @@ class DriftSyncStore implements SyncStore {
     await _db.delete(_db.syncState).go();
     // Plantillas de tags NFC: locales, pero del usuario (P6).
     await _db.delete(_db.localNfcTags).go();
+    await _db.delete(_db.localRecurringOccurrences).go();
+    await _db.delete(_db.localRecurringExpenses).go();
   }
 
   // --------------------------------------------------------------- outbox

@@ -10,9 +10,11 @@ class SyncEngine {
   SyncEngine({
     required SyncStore store,
     required SyncRemote remote,
+    List<SyncSnapshot> snapshots = const [],
     DateTime Function()? now,
   }) : _store = store,
        _remote = remote,
+       _snapshots = snapshots,
        _now = now ?? DateTime.now;
 
   static final _epoch = DateTime.utc(1970);
@@ -24,6 +26,7 @@ class SyncEngine {
 
   final SyncStore _store;
   final SyncRemote _remote;
+  final List<SyncSnapshot> _snapshots;
   final DateTime Function() _now;
 
   Future<SyncRunResult> run() async {
@@ -118,6 +121,9 @@ class SyncEngine {
     await _store.replaceCategories(await _remote.categories());
     await _store.replaceAccounts(await _remote.accounts());
     await _store.replaceReview(await _remote.openReview());
+    for (final snapshot in _snapshots) {
+      await snapshot.refresh();
+    }
   }
 }
 

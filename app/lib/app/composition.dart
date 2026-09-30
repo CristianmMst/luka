@@ -19,6 +19,8 @@ import 'package:luka/features/onboarding/application/onboarding_gate.dart';
 import 'package:luka/features/onboarding/data/onboarding_data_providers.dart';
 import 'package:luka/features/privacy/application/privacy_actions.dart';
 import 'package:luka/features/privacy/data/privacy_data_providers.dart';
+import 'package:luka/features/recurring/application/recurring_actions.dart';
+import 'package:luka/features/recurring/data/recurring_data_providers.dart';
 import 'package:luka/features/review/application/review_providers.dart';
 import 'package:luka/features/review/data/review_data_providers.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
@@ -44,6 +46,15 @@ List<Override> get appOverrides => [
   ),
   syncStoreProvider.overrideWith((ref) => ref.watch(driftSyncStoreProvider)),
   syncRemoteProvider.overrideWith((ref) => ref.watch(syncApiProvider)),
+  syncSnapshotsProvider.overrideWith(
+    (ref) => [ref.watch(recurringSnapshotProvider)],
+  ),
+  recurringRemoteProvider.overrideWith(
+    (ref) => ref.watch(recurringApiProvider),
+  ),
+  recurringStoreProvider.overrideWith(
+    (ref) => ref.watch(driftRecurringStoreProvider),
+  ),
   connectivityProvider.overrideWith(
     (ref) => ref.watch(connectivityStreamProvider),
   ),

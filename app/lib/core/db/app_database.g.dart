@@ -3773,6 +3773,1364 @@ class LocalNfcTagsCompanion extends UpdateCompanion<LocalNfcTagRow> {
   }
 }
 
+class $LocalRecurringExpensesTable extends LocalRecurringExpenses
+    with TableInfo<$LocalRecurringExpensesTable, LocalRecurringExpenseRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalRecurringExpensesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _merchantKeywordMeta = const VerificationMeta(
+    'merchantKeyword',
+  );
+  @override
+  late final GeneratedColumn<String> merchantKeyword = GeneratedColumn<String>(
+    'merchant_keyword',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expectedAmountCentsMeta =
+      const VerificationMeta('expectedAmountCents');
+  @override
+  late final GeneratedColumn<int> expectedAmountCents = GeneratedColumn<int>(
+    'expected_amount_cents',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tolerancePctMeta = const VerificationMeta(
+    'tolerancePct',
+  );
+  @override
+  late final GeneratedColumn<int> tolerancePct = GeneratedColumn<int>(
+    'tolerance_pct',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dayOfMonthMeta = const VerificationMeta(
+    'dayOfMonth',
+  );
+  @override
+  late final GeneratedColumn<int> dayOfMonth = GeneratedColumn<int>(
+    'day_of_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remindDaysBeforeMeta = const VerificationMeta(
+    'remindDaysBefore',
+  );
+  @override
+  late final GeneratedColumn<int> remindDaysBefore = GeneratedColumn<int>(
+    'remind_days_before',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    merchantKeyword,
+    expectedAmountCents,
+    tolerancePct,
+    dayOfMonth,
+    remindDaysBefore,
+    active,
+    categoryId,
+    accountId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_recurring_expenses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalRecurringExpenseRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('merchant_keyword')) {
+      context.handle(
+        _merchantKeywordMeta,
+        merchantKeyword.isAcceptableOrUnknown(
+          data['merchant_keyword']!,
+          _merchantKeywordMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_merchantKeywordMeta);
+    }
+    if (data.containsKey('expected_amount_cents')) {
+      context.handle(
+        _expectedAmountCentsMeta,
+        expectedAmountCents.isAcceptableOrUnknown(
+          data['expected_amount_cents']!,
+          _expectedAmountCentsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expectedAmountCentsMeta);
+    }
+    if (data.containsKey('tolerance_pct')) {
+      context.handle(
+        _tolerancePctMeta,
+        tolerancePct.isAcceptableOrUnknown(
+          data['tolerance_pct']!,
+          _tolerancePctMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tolerancePctMeta);
+    }
+    if (data.containsKey('day_of_month')) {
+      context.handle(
+        _dayOfMonthMeta,
+        dayOfMonth.isAcceptableOrUnknown(
+          data['day_of_month']!,
+          _dayOfMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dayOfMonthMeta);
+    }
+    if (data.containsKey('remind_days_before')) {
+      context.handle(
+        _remindDaysBeforeMeta,
+        remindDaysBefore.isAcceptableOrUnknown(
+          data['remind_days_before']!,
+          _remindDaysBeforeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remindDaysBeforeMeta);
+    }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_activeMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalRecurringExpenseRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalRecurringExpenseRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      merchantKeyword: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merchant_keyword'],
+      )!,
+      expectedAmountCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}expected_amount_cents'],
+      )!,
+      tolerancePct: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tolerance_pct'],
+      )!,
+      dayOfMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day_of_month'],
+      )!,
+      remindDaysBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}remind_days_before'],
+      )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+    );
+  }
+
+  @override
+  $LocalRecurringExpensesTable createAlias(String alias) {
+    return $LocalRecurringExpensesTable(attachedDatabase, alias);
+  }
+}
+
+class LocalRecurringExpenseRow extends DataClass
+    implements Insertable<LocalRecurringExpenseRow> {
+  final String id;
+  final String name;
+  final String merchantKeyword;
+  final int expectedAmountCents;
+  final int tolerancePct;
+  final int dayOfMonth;
+  final int remindDaysBefore;
+  final bool active;
+  final String? categoryId;
+  final String? accountId;
+  const LocalRecurringExpenseRow({
+    required this.id,
+    required this.name,
+    required this.merchantKeyword,
+    required this.expectedAmountCents,
+    required this.tolerancePct,
+    required this.dayOfMonth,
+    required this.remindDaysBefore,
+    required this.active,
+    this.categoryId,
+    this.accountId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['merchant_keyword'] = Variable<String>(merchantKeyword);
+    map['expected_amount_cents'] = Variable<int>(expectedAmountCents);
+    map['tolerance_pct'] = Variable<int>(tolerancePct);
+    map['day_of_month'] = Variable<int>(dayOfMonth);
+    map['remind_days_before'] = Variable<int>(remindDaysBefore);
+    map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    return map;
+  }
+
+  LocalRecurringExpensesCompanion toCompanion(bool nullToAbsent) {
+    return LocalRecurringExpensesCompanion(
+      id: Value(id),
+      name: Value(name),
+      merchantKeyword: Value(merchantKeyword),
+      expectedAmountCents: Value(expectedAmountCents),
+      tolerancePct: Value(tolerancePct),
+      dayOfMonth: Value(dayOfMonth),
+      remindDaysBefore: Value(remindDaysBefore),
+      active: Value(active),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+    );
+  }
+
+  factory LocalRecurringExpenseRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalRecurringExpenseRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      merchantKeyword: serializer.fromJson<String>(json['merchantKeyword']),
+      expectedAmountCents: serializer.fromJson<int>(
+        json['expectedAmountCents'],
+      ),
+      tolerancePct: serializer.fromJson<int>(json['tolerancePct']),
+      dayOfMonth: serializer.fromJson<int>(json['dayOfMonth']),
+      remindDaysBefore: serializer.fromJson<int>(json['remindDaysBefore']),
+      active: serializer.fromJson<bool>(json['active']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'merchantKeyword': serializer.toJson<String>(merchantKeyword),
+      'expectedAmountCents': serializer.toJson<int>(expectedAmountCents),
+      'tolerancePct': serializer.toJson<int>(tolerancePct),
+      'dayOfMonth': serializer.toJson<int>(dayOfMonth),
+      'remindDaysBefore': serializer.toJson<int>(remindDaysBefore),
+      'active': serializer.toJson<bool>(active),
+      'categoryId': serializer.toJson<String?>(categoryId),
+      'accountId': serializer.toJson<String?>(accountId),
+    };
+  }
+
+  LocalRecurringExpenseRow copyWith({
+    String? id,
+    String? name,
+    String? merchantKeyword,
+    int? expectedAmountCents,
+    int? tolerancePct,
+    int? dayOfMonth,
+    int? remindDaysBefore,
+    bool? active,
+    Value<String?> categoryId = const Value.absent(),
+    Value<String?> accountId = const Value.absent(),
+  }) => LocalRecurringExpenseRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    merchantKeyword: merchantKeyword ?? this.merchantKeyword,
+    expectedAmountCents: expectedAmountCents ?? this.expectedAmountCents,
+    tolerancePct: tolerancePct ?? this.tolerancePct,
+    dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+    remindDaysBefore: remindDaysBefore ?? this.remindDaysBefore,
+    active: active ?? this.active,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    accountId: accountId.present ? accountId.value : this.accountId,
+  );
+  LocalRecurringExpenseRow copyWithCompanion(
+    LocalRecurringExpensesCompanion data,
+  ) {
+    return LocalRecurringExpenseRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      merchantKeyword: data.merchantKeyword.present
+          ? data.merchantKeyword.value
+          : this.merchantKeyword,
+      expectedAmountCents: data.expectedAmountCents.present
+          ? data.expectedAmountCents.value
+          : this.expectedAmountCents,
+      tolerancePct: data.tolerancePct.present
+          ? data.tolerancePct.value
+          : this.tolerancePct,
+      dayOfMonth: data.dayOfMonth.present
+          ? data.dayOfMonth.value
+          : this.dayOfMonth,
+      remindDaysBefore: data.remindDaysBefore.present
+          ? data.remindDaysBefore.value
+          : this.remindDaysBefore,
+      active: data.active.present ? data.active.value : this.active,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalRecurringExpenseRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('merchantKeyword: $merchantKeyword, ')
+          ..write('expectedAmountCents: $expectedAmountCents, ')
+          ..write('tolerancePct: $tolerancePct, ')
+          ..write('dayOfMonth: $dayOfMonth, ')
+          ..write('remindDaysBefore: $remindDaysBefore, ')
+          ..write('active: $active, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('accountId: $accountId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    merchantKeyword,
+    expectedAmountCents,
+    tolerancePct,
+    dayOfMonth,
+    remindDaysBefore,
+    active,
+    categoryId,
+    accountId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalRecurringExpenseRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.merchantKeyword == this.merchantKeyword &&
+          other.expectedAmountCents == this.expectedAmountCents &&
+          other.tolerancePct == this.tolerancePct &&
+          other.dayOfMonth == this.dayOfMonth &&
+          other.remindDaysBefore == this.remindDaysBefore &&
+          other.active == this.active &&
+          other.categoryId == this.categoryId &&
+          other.accountId == this.accountId);
+}
+
+class LocalRecurringExpensesCompanion
+    extends UpdateCompanion<LocalRecurringExpenseRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> merchantKeyword;
+  final Value<int> expectedAmountCents;
+  final Value<int> tolerancePct;
+  final Value<int> dayOfMonth;
+  final Value<int> remindDaysBefore;
+  final Value<bool> active;
+  final Value<String?> categoryId;
+  final Value<String?> accountId;
+  final Value<int> rowid;
+  const LocalRecurringExpensesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.merchantKeyword = const Value.absent(),
+    this.expectedAmountCents = const Value.absent(),
+    this.tolerancePct = const Value.absent(),
+    this.dayOfMonth = const Value.absent(),
+    this.remindDaysBefore = const Value.absent(),
+    this.active = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalRecurringExpensesCompanion.insert({
+    required String id,
+    required String name,
+    required String merchantKeyword,
+    required int expectedAmountCents,
+    required int tolerancePct,
+    required int dayOfMonth,
+    required int remindDaysBefore,
+    required bool active,
+    this.categoryId = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       merchantKeyword = Value(merchantKeyword),
+       expectedAmountCents = Value(expectedAmountCents),
+       tolerancePct = Value(tolerancePct),
+       dayOfMonth = Value(dayOfMonth),
+       remindDaysBefore = Value(remindDaysBefore),
+       active = Value(active);
+  static Insertable<LocalRecurringExpenseRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? merchantKeyword,
+    Expression<int>? expectedAmountCents,
+    Expression<int>? tolerancePct,
+    Expression<int>? dayOfMonth,
+    Expression<int>? remindDaysBefore,
+    Expression<bool>? active,
+    Expression<String>? categoryId,
+    Expression<String>? accountId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (merchantKeyword != null) 'merchant_keyword': merchantKeyword,
+      if (expectedAmountCents != null)
+        'expected_amount_cents': expectedAmountCents,
+      if (tolerancePct != null) 'tolerance_pct': tolerancePct,
+      if (dayOfMonth != null) 'day_of_month': dayOfMonth,
+      if (remindDaysBefore != null) 'remind_days_before': remindDaysBefore,
+      if (active != null) 'active': active,
+      if (categoryId != null) 'category_id': categoryId,
+      if (accountId != null) 'account_id': accountId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalRecurringExpensesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? merchantKeyword,
+    Value<int>? expectedAmountCents,
+    Value<int>? tolerancePct,
+    Value<int>? dayOfMonth,
+    Value<int>? remindDaysBefore,
+    Value<bool>? active,
+    Value<String?>? categoryId,
+    Value<String?>? accountId,
+    Value<int>? rowid,
+  }) {
+    return LocalRecurringExpensesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      merchantKeyword: merchantKeyword ?? this.merchantKeyword,
+      expectedAmountCents: expectedAmountCents ?? this.expectedAmountCents,
+      tolerancePct: tolerancePct ?? this.tolerancePct,
+      dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+      remindDaysBefore: remindDaysBefore ?? this.remindDaysBefore,
+      active: active ?? this.active,
+      categoryId: categoryId ?? this.categoryId,
+      accountId: accountId ?? this.accountId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (merchantKeyword.present) {
+      map['merchant_keyword'] = Variable<String>(merchantKeyword.value);
+    }
+    if (expectedAmountCents.present) {
+      map['expected_amount_cents'] = Variable<int>(expectedAmountCents.value);
+    }
+    if (tolerancePct.present) {
+      map['tolerance_pct'] = Variable<int>(tolerancePct.value);
+    }
+    if (dayOfMonth.present) {
+      map['day_of_month'] = Variable<int>(dayOfMonth.value);
+    }
+    if (remindDaysBefore.present) {
+      map['remind_days_before'] = Variable<int>(remindDaysBefore.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalRecurringExpensesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('merchantKeyword: $merchantKeyword, ')
+          ..write('expectedAmountCents: $expectedAmountCents, ')
+          ..write('tolerancePct: $tolerancePct, ')
+          ..write('dayOfMonth: $dayOfMonth, ')
+          ..write('remindDaysBefore: $remindDaysBefore, ')
+          ..write('active: $active, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('accountId: $accountId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalRecurringOccurrencesTable extends LocalRecurringOccurrences
+    with
+        TableInfo<
+          $LocalRecurringOccurrencesTable,
+          LocalRecurringOccurrenceRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalRecurringOccurrencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expenseIdMeta = const VerificationMeta(
+    'expenseId',
+  );
+  @override
+  late final GeneratedColumn<String> expenseId = GeneratedColumn<String>(
+    'expense_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _periodMeta = const VerificationMeta('period');
+  @override
+  late final GeneratedColumn<String> period = GeneratedColumn<String>(
+    'period',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dueDateMeta = const VerificationMeta(
+    'dueDate',
+  );
+  @override
+  late final GeneratedColumn<String> dueDate = GeneratedColumn<String>(
+    'due_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _matchedByMeta = const VerificationMeta(
+    'matchedBy',
+  );
+  @override
+  late final GeneratedColumn<String> matchedBy = GeneratedColumn<String>(
+    'matched_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _paidAtMeta = const VerificationMeta('paidAt');
+  @override
+  late final GeneratedColumn<DateTime> paidAt = GeneratedColumn<DateTime>(
+    'paid_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<String> transactionId = GeneratedColumn<String>(
+    'transaction_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _transactionMerchantMeta =
+      const VerificationMeta('transactionMerchant');
+  @override
+  late final GeneratedColumn<String> transactionMerchant =
+      GeneratedColumn<String>(
+        'transaction_merchant',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _transactionAmountCentsMeta =
+      const VerificationMeta('transactionAmountCents');
+  @override
+  late final GeneratedColumn<int> transactionAmountCents = GeneratedColumn<int>(
+    'transaction_amount_cents',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _transactionOccurredAtMeta =
+      const VerificationMeta('transactionOccurredAt');
+  @override
+  late final GeneratedColumn<DateTime> transactionOccurredAt =
+      GeneratedColumn<DateTime>(
+        'transaction_occurred_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    expenseId,
+    period,
+    dueDate,
+    status,
+    matchedBy,
+    paidAt,
+    transactionId,
+    transactionMerchant,
+    transactionAmountCents,
+    transactionOccurredAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_recurring_occurrences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalRecurringOccurrenceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('expense_id')) {
+      context.handle(
+        _expenseIdMeta,
+        expenseId.isAcceptableOrUnknown(data['expense_id']!, _expenseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_expenseIdMeta);
+    }
+    if (data.containsKey('period')) {
+      context.handle(
+        _periodMeta,
+        period.isAcceptableOrUnknown(data['period']!, _periodMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_periodMeta);
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(
+        _dueDateMeta,
+        dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dueDateMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('matched_by')) {
+      context.handle(
+        _matchedByMeta,
+        matchedBy.isAcceptableOrUnknown(data['matched_by']!, _matchedByMeta),
+      );
+    }
+    if (data.containsKey('paid_at')) {
+      context.handle(
+        _paidAtMeta,
+        paidAt.isAcceptableOrUnknown(data['paid_at']!, _paidAtMeta),
+      );
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('transaction_merchant')) {
+      context.handle(
+        _transactionMerchantMeta,
+        transactionMerchant.isAcceptableOrUnknown(
+          data['transaction_merchant']!,
+          _transactionMerchantMeta,
+        ),
+      );
+    }
+    if (data.containsKey('transaction_amount_cents')) {
+      context.handle(
+        _transactionAmountCentsMeta,
+        transactionAmountCents.isAcceptableOrUnknown(
+          data['transaction_amount_cents']!,
+          _transactionAmountCentsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('transaction_occurred_at')) {
+      context.handle(
+        _transactionOccurredAtMeta,
+        transactionOccurredAt.isAcceptableOrUnknown(
+          data['transaction_occurred_at']!,
+          _transactionOccurredAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalRecurringOccurrenceRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalRecurringOccurrenceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      expenseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expense_id'],
+      )!,
+      period: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}period'],
+      )!,
+      dueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}due_date'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      matchedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}matched_by'],
+      ),
+      paidAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}paid_at'],
+      ),
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_id'],
+      ),
+      transactionMerchant: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transaction_merchant'],
+      ),
+      transactionAmountCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}transaction_amount_cents'],
+      ),
+      transactionOccurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}transaction_occurred_at'],
+      ),
+    );
+  }
+
+  @override
+  $LocalRecurringOccurrencesTable createAlias(String alias) {
+    return $LocalRecurringOccurrencesTable(attachedDatabase, alias);
+  }
+}
+
+class LocalRecurringOccurrenceRow extends DataClass
+    implements Insertable<LocalRecurringOccurrenceRow> {
+  final String id;
+  final String expenseId;
+  final String period;
+  final String dueDate;
+  final String status;
+  final String? matchedBy;
+  final DateTime? paidAt;
+  final String? transactionId;
+  final String? transactionMerchant;
+  final int? transactionAmountCents;
+  final DateTime? transactionOccurredAt;
+  const LocalRecurringOccurrenceRow({
+    required this.id,
+    required this.expenseId,
+    required this.period,
+    required this.dueDate,
+    required this.status,
+    this.matchedBy,
+    this.paidAt,
+    this.transactionId,
+    this.transactionMerchant,
+    this.transactionAmountCents,
+    this.transactionOccurredAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['expense_id'] = Variable<String>(expenseId);
+    map['period'] = Variable<String>(period);
+    map['due_date'] = Variable<String>(dueDate);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || matchedBy != null) {
+      map['matched_by'] = Variable<String>(matchedBy);
+    }
+    if (!nullToAbsent || paidAt != null) {
+      map['paid_at'] = Variable<DateTime>(paidAt);
+    }
+    if (!nullToAbsent || transactionId != null) {
+      map['transaction_id'] = Variable<String>(transactionId);
+    }
+    if (!nullToAbsent || transactionMerchant != null) {
+      map['transaction_merchant'] = Variable<String>(transactionMerchant);
+    }
+    if (!nullToAbsent || transactionAmountCents != null) {
+      map['transaction_amount_cents'] = Variable<int>(transactionAmountCents);
+    }
+    if (!nullToAbsent || transactionOccurredAt != null) {
+      map['transaction_occurred_at'] = Variable<DateTime>(
+        transactionOccurredAt,
+      );
+    }
+    return map;
+  }
+
+  LocalRecurringOccurrencesCompanion toCompanion(bool nullToAbsent) {
+    return LocalRecurringOccurrencesCompanion(
+      id: Value(id),
+      expenseId: Value(expenseId),
+      period: Value(period),
+      dueDate: Value(dueDate),
+      status: Value(status),
+      matchedBy: matchedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(matchedBy),
+      paidAt: paidAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paidAt),
+      transactionId: transactionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionId),
+      transactionMerchant: transactionMerchant == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionMerchant),
+      transactionAmountCents: transactionAmountCents == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionAmountCents),
+      transactionOccurredAt: transactionOccurredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionOccurredAt),
+    );
+  }
+
+  factory LocalRecurringOccurrenceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalRecurringOccurrenceRow(
+      id: serializer.fromJson<String>(json['id']),
+      expenseId: serializer.fromJson<String>(json['expenseId']),
+      period: serializer.fromJson<String>(json['period']),
+      dueDate: serializer.fromJson<String>(json['dueDate']),
+      status: serializer.fromJson<String>(json['status']),
+      matchedBy: serializer.fromJson<String?>(json['matchedBy']),
+      paidAt: serializer.fromJson<DateTime?>(json['paidAt']),
+      transactionId: serializer.fromJson<String?>(json['transactionId']),
+      transactionMerchant: serializer.fromJson<String?>(
+        json['transactionMerchant'],
+      ),
+      transactionAmountCents: serializer.fromJson<int?>(
+        json['transactionAmountCents'],
+      ),
+      transactionOccurredAt: serializer.fromJson<DateTime?>(
+        json['transactionOccurredAt'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'expenseId': serializer.toJson<String>(expenseId),
+      'period': serializer.toJson<String>(period),
+      'dueDate': serializer.toJson<String>(dueDate),
+      'status': serializer.toJson<String>(status),
+      'matchedBy': serializer.toJson<String?>(matchedBy),
+      'paidAt': serializer.toJson<DateTime?>(paidAt),
+      'transactionId': serializer.toJson<String?>(transactionId),
+      'transactionMerchant': serializer.toJson<String?>(transactionMerchant),
+      'transactionAmountCents': serializer.toJson<int?>(transactionAmountCents),
+      'transactionOccurredAt': serializer.toJson<DateTime?>(
+        transactionOccurredAt,
+      ),
+    };
+  }
+
+  LocalRecurringOccurrenceRow copyWith({
+    String? id,
+    String? expenseId,
+    String? period,
+    String? dueDate,
+    String? status,
+    Value<String?> matchedBy = const Value.absent(),
+    Value<DateTime?> paidAt = const Value.absent(),
+    Value<String?> transactionId = const Value.absent(),
+    Value<String?> transactionMerchant = const Value.absent(),
+    Value<int?> transactionAmountCents = const Value.absent(),
+    Value<DateTime?> transactionOccurredAt = const Value.absent(),
+  }) => LocalRecurringOccurrenceRow(
+    id: id ?? this.id,
+    expenseId: expenseId ?? this.expenseId,
+    period: period ?? this.period,
+    dueDate: dueDate ?? this.dueDate,
+    status: status ?? this.status,
+    matchedBy: matchedBy.present ? matchedBy.value : this.matchedBy,
+    paidAt: paidAt.present ? paidAt.value : this.paidAt,
+    transactionId: transactionId.present
+        ? transactionId.value
+        : this.transactionId,
+    transactionMerchant: transactionMerchant.present
+        ? transactionMerchant.value
+        : this.transactionMerchant,
+    transactionAmountCents: transactionAmountCents.present
+        ? transactionAmountCents.value
+        : this.transactionAmountCents,
+    transactionOccurredAt: transactionOccurredAt.present
+        ? transactionOccurredAt.value
+        : this.transactionOccurredAt,
+  );
+  LocalRecurringOccurrenceRow copyWithCompanion(
+    LocalRecurringOccurrencesCompanion data,
+  ) {
+    return LocalRecurringOccurrenceRow(
+      id: data.id.present ? data.id.value : this.id,
+      expenseId: data.expenseId.present ? data.expenseId.value : this.expenseId,
+      period: data.period.present ? data.period.value : this.period,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      status: data.status.present ? data.status.value : this.status,
+      matchedBy: data.matchedBy.present ? data.matchedBy.value : this.matchedBy,
+      paidAt: data.paidAt.present ? data.paidAt.value : this.paidAt,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      transactionMerchant: data.transactionMerchant.present
+          ? data.transactionMerchant.value
+          : this.transactionMerchant,
+      transactionAmountCents: data.transactionAmountCents.present
+          ? data.transactionAmountCents.value
+          : this.transactionAmountCents,
+      transactionOccurredAt: data.transactionOccurredAt.present
+          ? data.transactionOccurredAt.value
+          : this.transactionOccurredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalRecurringOccurrenceRow(')
+          ..write('id: $id, ')
+          ..write('expenseId: $expenseId, ')
+          ..write('period: $period, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('status: $status, ')
+          ..write('matchedBy: $matchedBy, ')
+          ..write('paidAt: $paidAt, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('transactionMerchant: $transactionMerchant, ')
+          ..write('transactionAmountCents: $transactionAmountCents, ')
+          ..write('transactionOccurredAt: $transactionOccurredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    expenseId,
+    period,
+    dueDate,
+    status,
+    matchedBy,
+    paidAt,
+    transactionId,
+    transactionMerchant,
+    transactionAmountCents,
+    transactionOccurredAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalRecurringOccurrenceRow &&
+          other.id == this.id &&
+          other.expenseId == this.expenseId &&
+          other.period == this.period &&
+          other.dueDate == this.dueDate &&
+          other.status == this.status &&
+          other.matchedBy == this.matchedBy &&
+          other.paidAt == this.paidAt &&
+          other.transactionId == this.transactionId &&
+          other.transactionMerchant == this.transactionMerchant &&
+          other.transactionAmountCents == this.transactionAmountCents &&
+          other.transactionOccurredAt == this.transactionOccurredAt);
+}
+
+class LocalRecurringOccurrencesCompanion
+    extends UpdateCompanion<LocalRecurringOccurrenceRow> {
+  final Value<String> id;
+  final Value<String> expenseId;
+  final Value<String> period;
+  final Value<String> dueDate;
+  final Value<String> status;
+  final Value<String?> matchedBy;
+  final Value<DateTime?> paidAt;
+  final Value<String?> transactionId;
+  final Value<String?> transactionMerchant;
+  final Value<int?> transactionAmountCents;
+  final Value<DateTime?> transactionOccurredAt;
+  final Value<int> rowid;
+  const LocalRecurringOccurrencesCompanion({
+    this.id = const Value.absent(),
+    this.expenseId = const Value.absent(),
+    this.period = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.matchedBy = const Value.absent(),
+    this.paidAt = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.transactionMerchant = const Value.absent(),
+    this.transactionAmountCents = const Value.absent(),
+    this.transactionOccurredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalRecurringOccurrencesCompanion.insert({
+    required String id,
+    required String expenseId,
+    required String period,
+    required String dueDate,
+    required String status,
+    this.matchedBy = const Value.absent(),
+    this.paidAt = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.transactionMerchant = const Value.absent(),
+    this.transactionAmountCents = const Value.absent(),
+    this.transactionOccurredAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       expenseId = Value(expenseId),
+       period = Value(period),
+       dueDate = Value(dueDate),
+       status = Value(status);
+  static Insertable<LocalRecurringOccurrenceRow> custom({
+    Expression<String>? id,
+    Expression<String>? expenseId,
+    Expression<String>? period,
+    Expression<String>? dueDate,
+    Expression<String>? status,
+    Expression<String>? matchedBy,
+    Expression<DateTime>? paidAt,
+    Expression<String>? transactionId,
+    Expression<String>? transactionMerchant,
+    Expression<int>? transactionAmountCents,
+    Expression<DateTime>? transactionOccurredAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (expenseId != null) 'expense_id': expenseId,
+      if (period != null) 'period': period,
+      if (dueDate != null) 'due_date': dueDate,
+      if (status != null) 'status': status,
+      if (matchedBy != null) 'matched_by': matchedBy,
+      if (paidAt != null) 'paid_at': paidAt,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (transactionMerchant != null)
+        'transaction_merchant': transactionMerchant,
+      if (transactionAmountCents != null)
+        'transaction_amount_cents': transactionAmountCents,
+      if (transactionOccurredAt != null)
+        'transaction_occurred_at': transactionOccurredAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalRecurringOccurrencesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? expenseId,
+    Value<String>? period,
+    Value<String>? dueDate,
+    Value<String>? status,
+    Value<String?>? matchedBy,
+    Value<DateTime?>? paidAt,
+    Value<String?>? transactionId,
+    Value<String?>? transactionMerchant,
+    Value<int?>? transactionAmountCents,
+    Value<DateTime?>? transactionOccurredAt,
+    Value<int>? rowid,
+  }) {
+    return LocalRecurringOccurrencesCompanion(
+      id: id ?? this.id,
+      expenseId: expenseId ?? this.expenseId,
+      period: period ?? this.period,
+      dueDate: dueDate ?? this.dueDate,
+      status: status ?? this.status,
+      matchedBy: matchedBy ?? this.matchedBy,
+      paidAt: paidAt ?? this.paidAt,
+      transactionId: transactionId ?? this.transactionId,
+      transactionMerchant: transactionMerchant ?? this.transactionMerchant,
+      transactionAmountCents:
+          transactionAmountCents ?? this.transactionAmountCents,
+      transactionOccurredAt:
+          transactionOccurredAt ?? this.transactionOccurredAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (expenseId.present) {
+      map['expense_id'] = Variable<String>(expenseId.value);
+    }
+    if (period.present) {
+      map['period'] = Variable<String>(period.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<String>(dueDate.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (matchedBy.present) {
+      map['matched_by'] = Variable<String>(matchedBy.value);
+    }
+    if (paidAt.present) {
+      map['paid_at'] = Variable<DateTime>(paidAt.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<String>(transactionId.value);
+    }
+    if (transactionMerchant.present) {
+      map['transaction_merchant'] = Variable<String>(transactionMerchant.value);
+    }
+    if (transactionAmountCents.present) {
+      map['transaction_amount_cents'] = Variable<int>(
+        transactionAmountCents.value,
+      );
+    }
+    if (transactionOccurredAt.present) {
+      map['transaction_occurred_at'] = Variable<DateTime>(
+        transactionOccurredAt.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalRecurringOccurrencesCompanion(')
+          ..write('id: $id, ')
+          ..write('expenseId: $expenseId, ')
+          ..write('period: $period, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('status: $status, ')
+          ..write('matchedBy: $matchedBy, ')
+          ..write('paidAt: $paidAt, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('transactionMerchant: $transactionMerchant, ')
+          ..write('transactionAmountCents: $transactionAmountCents, ')
+          ..write('transactionOccurredAt: $transactionOccurredAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3786,6 +5144,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $OutboxTable outbox = $OutboxTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
   late final $LocalNfcTagsTable localNfcTags = $LocalNfcTagsTable(this);
+  late final $LocalRecurringExpensesTable localRecurringExpenses =
+      $LocalRecurringExpensesTable(this);
+  late final $LocalRecurringOccurrencesTable localRecurringOccurrences =
+      $LocalRecurringOccurrencesTable(this);
   late final Index outboxTargetId = Index(
     'outbox_target_id',
     'CREATE INDEX outbox_target_id ON outbox (target_id)',
@@ -3806,6 +5168,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     outbox,
     syncState,
     localNfcTags,
+    localRecurringExpenses,
+    localRecurringOccurrences,
     outboxTargetId,
     outboxRelatedId,
   ];
@@ -5716,6 +7080,673 @@ typedef $$LocalNfcTagsTableProcessedTableManager =
       LocalNfcTagRow,
       PrefetchHooks Function()
     >;
+typedef $$LocalRecurringExpensesTableCreateCompanionBuilder =
+    LocalRecurringExpensesCompanion Function({
+      required String id,
+      required String name,
+      required String merchantKeyword,
+      required int expectedAmountCents,
+      required int tolerancePct,
+      required int dayOfMonth,
+      required int remindDaysBefore,
+      required bool active,
+      Value<String?> categoryId,
+      Value<String?> accountId,
+      Value<int> rowid,
+    });
+typedef $$LocalRecurringExpensesTableUpdateCompanionBuilder =
+    LocalRecurringExpensesCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> merchantKeyword,
+      Value<int> expectedAmountCents,
+      Value<int> tolerancePct,
+      Value<int> dayOfMonth,
+      Value<int> remindDaysBefore,
+      Value<bool> active,
+      Value<String?> categoryId,
+      Value<String?> accountId,
+      Value<int> rowid,
+    });
+
+class $$LocalRecurringExpensesTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalRecurringExpensesTable> {
+  $$LocalRecurringExpensesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get merchantKeyword => $composableBuilder(
+    column: $table.merchantKeyword,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get expectedAmountCents => $composableBuilder(
+    column: $table.expectedAmountCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tolerancePct => $composableBuilder(
+    column: $table.tolerancePct,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dayOfMonth => $composableBuilder(
+    column: $table.dayOfMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remindDaysBefore => $composableBuilder(
+    column: $table.remindDaysBefore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalRecurringExpensesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalRecurringExpensesTable> {
+  $$LocalRecurringExpensesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get merchantKeyword => $composableBuilder(
+    column: $table.merchantKeyword,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get expectedAmountCents => $composableBuilder(
+    column: $table.expectedAmountCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tolerancePct => $composableBuilder(
+    column: $table.tolerancePct,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dayOfMonth => $composableBuilder(
+    column: $table.dayOfMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remindDaysBefore => $composableBuilder(
+    column: $table.remindDaysBefore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalRecurringExpensesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalRecurringExpensesTable> {
+  $$LocalRecurringExpensesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get merchantKeyword => $composableBuilder(
+    column: $table.merchantKeyword,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get expectedAmountCents => $composableBuilder(
+    column: $table.expectedAmountCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tolerancePct => $composableBuilder(
+    column: $table.tolerancePct,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dayOfMonth => $composableBuilder(
+    column: $table.dayOfMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get remindDaysBefore => $composableBuilder(
+    column: $table.remindDaysBefore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+}
+
+class $$LocalRecurringExpensesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalRecurringExpensesTable,
+          LocalRecurringExpenseRow,
+          $$LocalRecurringExpensesTableFilterComposer,
+          $$LocalRecurringExpensesTableOrderingComposer,
+          $$LocalRecurringExpensesTableAnnotationComposer,
+          $$LocalRecurringExpensesTableCreateCompanionBuilder,
+          $$LocalRecurringExpensesTableUpdateCompanionBuilder,
+          (
+            LocalRecurringExpenseRow,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalRecurringExpensesTable,
+              LocalRecurringExpenseRow
+            >,
+          ),
+          LocalRecurringExpenseRow,
+          PrefetchHooks Function()
+        > {
+  $$LocalRecurringExpensesTableTableManager(
+    _$AppDatabase db,
+    $LocalRecurringExpensesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalRecurringExpensesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LocalRecurringExpensesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalRecurringExpensesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> merchantKeyword = const Value.absent(),
+                Value<int> expectedAmountCents = const Value.absent(),
+                Value<int> tolerancePct = const Value.absent(),
+                Value<int> dayOfMonth = const Value.absent(),
+                Value<int> remindDaysBefore = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalRecurringExpensesCompanion(
+                id: id,
+                name: name,
+                merchantKeyword: merchantKeyword,
+                expectedAmountCents: expectedAmountCents,
+                tolerancePct: tolerancePct,
+                dayOfMonth: dayOfMonth,
+                remindDaysBefore: remindDaysBefore,
+                active: active,
+                categoryId: categoryId,
+                accountId: accountId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String merchantKeyword,
+                required int expectedAmountCents,
+                required int tolerancePct,
+                required int dayOfMonth,
+                required int remindDaysBefore,
+                required bool active,
+                Value<String?> categoryId = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalRecurringExpensesCompanion.insert(
+                id: id,
+                name: name,
+                merchantKeyword: merchantKeyword,
+                expectedAmountCents: expectedAmountCents,
+                tolerancePct: tolerancePct,
+                dayOfMonth: dayOfMonth,
+                remindDaysBefore: remindDaysBefore,
+                active: active,
+                categoryId: categoryId,
+                accountId: accountId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalRecurringExpensesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalRecurringExpensesTable,
+      LocalRecurringExpenseRow,
+      $$LocalRecurringExpensesTableFilterComposer,
+      $$LocalRecurringExpensesTableOrderingComposer,
+      $$LocalRecurringExpensesTableAnnotationComposer,
+      $$LocalRecurringExpensesTableCreateCompanionBuilder,
+      $$LocalRecurringExpensesTableUpdateCompanionBuilder,
+      (
+        LocalRecurringExpenseRow,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalRecurringExpensesTable,
+          LocalRecurringExpenseRow
+        >,
+      ),
+      LocalRecurringExpenseRow,
+      PrefetchHooks Function()
+    >;
+typedef $$LocalRecurringOccurrencesTableCreateCompanionBuilder =
+    LocalRecurringOccurrencesCompanion Function({
+      required String id,
+      required String expenseId,
+      required String period,
+      required String dueDate,
+      required String status,
+      Value<String?> matchedBy,
+      Value<DateTime?> paidAt,
+      Value<String?> transactionId,
+      Value<String?> transactionMerchant,
+      Value<int?> transactionAmountCents,
+      Value<DateTime?> transactionOccurredAt,
+      Value<int> rowid,
+    });
+typedef $$LocalRecurringOccurrencesTableUpdateCompanionBuilder =
+    LocalRecurringOccurrencesCompanion Function({
+      Value<String> id,
+      Value<String> expenseId,
+      Value<String> period,
+      Value<String> dueDate,
+      Value<String> status,
+      Value<String?> matchedBy,
+      Value<DateTime?> paidAt,
+      Value<String?> transactionId,
+      Value<String?> transactionMerchant,
+      Value<int?> transactionAmountCents,
+      Value<DateTime?> transactionOccurredAt,
+      Value<int> rowid,
+    });
+
+class $$LocalRecurringOccurrencesTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalRecurringOccurrencesTable> {
+  $$LocalRecurringOccurrencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expenseId => $composableBuilder(
+    column: $table.expenseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get period => $composableBuilder(
+    column: $table.period,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get matchedBy => $composableBuilder(
+    column: $table.matchedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get paidAt => $composableBuilder(
+    column: $table.paidAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transactionMerchant => $composableBuilder(
+    column: $table.transactionMerchant,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get transactionAmountCents => $composableBuilder(
+    column: $table.transactionAmountCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get transactionOccurredAt => $composableBuilder(
+    column: $table.transactionOccurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalRecurringOccurrencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalRecurringOccurrencesTable> {
+  $$LocalRecurringOccurrencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expenseId => $composableBuilder(
+    column: $table.expenseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get period => $composableBuilder(
+    column: $table.period,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get matchedBy => $composableBuilder(
+    column: $table.matchedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get paidAt => $composableBuilder(
+    column: $table.paidAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transactionMerchant => $composableBuilder(
+    column: $table.transactionMerchant,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get transactionAmountCents => $composableBuilder(
+    column: $table.transactionAmountCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get transactionOccurredAt => $composableBuilder(
+    column: $table.transactionOccurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalRecurringOccurrencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalRecurringOccurrencesTable> {
+  $$LocalRecurringOccurrencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get expenseId =>
+      $composableBuilder(column: $table.expenseId, builder: (column) => column);
+
+  GeneratedColumn<String> get period =>
+      $composableBuilder(column: $table.period, builder: (column) => column);
+
+  GeneratedColumn<String> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get matchedBy =>
+      $composableBuilder(column: $table.matchedBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get paidAt =>
+      $composableBuilder(column: $table.paidAt, builder: (column) => column);
+
+  GeneratedColumn<String> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transactionMerchant => $composableBuilder(
+    column: $table.transactionMerchant,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get transactionAmountCents => $composableBuilder(
+    column: $table.transactionAmountCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get transactionOccurredAt => $composableBuilder(
+    column: $table.transactionOccurredAt,
+    builder: (column) => column,
+  );
+}
+
+class $$LocalRecurringOccurrencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalRecurringOccurrencesTable,
+          LocalRecurringOccurrenceRow,
+          $$LocalRecurringOccurrencesTableFilterComposer,
+          $$LocalRecurringOccurrencesTableOrderingComposer,
+          $$LocalRecurringOccurrencesTableAnnotationComposer,
+          $$LocalRecurringOccurrencesTableCreateCompanionBuilder,
+          $$LocalRecurringOccurrencesTableUpdateCompanionBuilder,
+          (
+            LocalRecurringOccurrenceRow,
+            BaseReferences<
+              _$AppDatabase,
+              $LocalRecurringOccurrencesTable,
+              LocalRecurringOccurrenceRow
+            >,
+          ),
+          LocalRecurringOccurrenceRow,
+          PrefetchHooks Function()
+        > {
+  $$LocalRecurringOccurrencesTableTableManager(
+    _$AppDatabase db,
+    $LocalRecurringOccurrencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalRecurringOccurrencesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$LocalRecurringOccurrencesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LocalRecurringOccurrencesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> expenseId = const Value.absent(),
+                Value<String> period = const Value.absent(),
+                Value<String> dueDate = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> matchedBy = const Value.absent(),
+                Value<DateTime?> paidAt = const Value.absent(),
+                Value<String?> transactionId = const Value.absent(),
+                Value<String?> transactionMerchant = const Value.absent(),
+                Value<int?> transactionAmountCents = const Value.absent(),
+                Value<DateTime?> transactionOccurredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalRecurringOccurrencesCompanion(
+                id: id,
+                expenseId: expenseId,
+                period: period,
+                dueDate: dueDate,
+                status: status,
+                matchedBy: matchedBy,
+                paidAt: paidAt,
+                transactionId: transactionId,
+                transactionMerchant: transactionMerchant,
+                transactionAmountCents: transactionAmountCents,
+                transactionOccurredAt: transactionOccurredAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String expenseId,
+                required String period,
+                required String dueDate,
+                required String status,
+                Value<String?> matchedBy = const Value.absent(),
+                Value<DateTime?> paidAt = const Value.absent(),
+                Value<String?> transactionId = const Value.absent(),
+                Value<String?> transactionMerchant = const Value.absent(),
+                Value<int?> transactionAmountCents = const Value.absent(),
+                Value<DateTime?> transactionOccurredAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalRecurringOccurrencesCompanion.insert(
+                id: id,
+                expenseId: expenseId,
+                period: period,
+                dueDate: dueDate,
+                status: status,
+                matchedBy: matchedBy,
+                paidAt: paidAt,
+                transactionId: transactionId,
+                transactionMerchant: transactionMerchant,
+                transactionAmountCents: transactionAmountCents,
+                transactionOccurredAt: transactionOccurredAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalRecurringOccurrencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalRecurringOccurrencesTable,
+      LocalRecurringOccurrenceRow,
+      $$LocalRecurringOccurrencesTableFilterComposer,
+      $$LocalRecurringOccurrencesTableOrderingComposer,
+      $$LocalRecurringOccurrencesTableAnnotationComposer,
+      $$LocalRecurringOccurrencesTableCreateCompanionBuilder,
+      $$LocalRecurringOccurrencesTableUpdateCompanionBuilder,
+      (
+        LocalRecurringOccurrenceRow,
+        BaseReferences<
+          _$AppDatabase,
+          $LocalRecurringOccurrencesTable,
+          LocalRecurringOccurrenceRow
+        >,
+      ),
+      LocalRecurringOccurrenceRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5734,4 +7765,14 @@ class $AppDatabaseManager {
       $$SyncStateTableTableManager(_db, _db.syncState);
   $$LocalNfcTagsTableTableManager get localNfcTags =>
       $$LocalNfcTagsTableTableManager(_db, _db.localNfcTags);
+  $$LocalRecurringExpensesTableTableManager get localRecurringExpenses =>
+      $$LocalRecurringExpensesTableTableManager(
+        _db,
+        _db.localRecurringExpenses,
+      );
+  $$LocalRecurringOccurrencesTableTableManager get localRecurringOccurrences =>
+      $$LocalRecurringOccurrencesTableTableManager(
+        _db,
+        _db.localRecurringOccurrences,
+      );
 }

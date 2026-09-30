@@ -1218,5 +1218,218 @@
         "type": "String"
       }
     }
-  }
+  },
+  "recurringTitle": "Gastos fijos",
+  "recurringMonthSummary": "Este mes: {paid} pagados de {total}",
+  "@recurringMonthSummary": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringNew": "Nuevo gasto fijo",
+  "recurringEmptyTitle": "Aún no tienes gastos fijos",
+  "recurringEmptyBody": "Registra lo que pagas cada mes (Spotify, arriendo, servicios) y te avisamos antes de que te lo descuenten.",
+  "recurringMonthEmpty": "No hay gastos fijos en {month}.",
+  "@recurringMonthEmpty": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringLoadError": "No pudimos leer tus gastos fijos.",
+  "recurringRetry": "Reintentar",
+  "recurringPrevMonth": "Mes anterior",
+  "recurringNextMonth": "Mes siguiente",
+  "recurringStateUpcoming": "Vence el {day}",
+  "@recurringStateUpcoming": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringStateLate": "Venció el {day} · aún no vemos el pago",
+  "@recurringStateLate": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringStateUndetected": "Sin detectar · venció el {day}",
+  "@recurringStateUndetected": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringStatePaid": "Pagado el {date}",
+  "@recurringStatePaid": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringStatePaidWith": "Pagado el {date} · {merchant}",
+  "@recurringStatePaidWith": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "merchant": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringStateSkipped": "Omitido este mes",
+  "recurringPausedBadge": "Pausado",
+  "recurringRowSemantics": "{name}, {amount}, {state}",
+  "@recurringRowSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringActionsSemantics": "Acciones de {name}",
+  "@recurringActionsSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringActionMarkPaid": "Marcar como pagado",
+  "recurringActionPick": "Elegir movimiento",
+  "recurringActionSkip": "Omitir este mes",
+  "recurringActionUndo": "Deshacer",
+  "recurringActionEdit": "Editar gasto fijo",
+  "recurringActionViewTransaction": "Ver movimiento",
+  "recurringMarkedPaid": "Marcado como pagado",
+  "recurringUndone": "Volvió a quedar pendiente",
+  "recurringSkippedDone": "Omitido este mes",
+  "recurringErrorOffline": "Necesitas conexión para cambiar tus gastos fijos.",
+  "recurringErrorGone": "Ese gasto fijo ya no existe.",
+  "recurringErrorConflict": "Ese movimiento ya paga otro gasto fijo.",
+  "recurringErrorUnexpected": "No se pudo guardar. Inténtalo de nuevo.",
+  "recurringFormNewTitle": "Nuevo gasto fijo",
+  "recurringFormEditTitle": "Editar gasto fijo",
+  "recurringFormName": "Nombre",
+  "recurringFormNameHint": "Spotify",
+  "recurringFormKeyword": "¿Cómo aparece en tu banco?",
+  "recurringFormKeywordHint": "SPOTIFY",
+  "recurringFormKeywordHelp": "Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.",
+  "recurringFormAmount": "¿Cuánto pagas?",
+  "recurringFormDay": "Día de pago",
+  "recurringFormDayValue": "El {day} de cada mes",
+  "@recurringFormDayValue": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "recurringFormDayShortMonth": "Si el mes es más corto, usamos el último día.",
+  "recurringFormDaySheetTitle": "¿Qué día pagas?",
+  "recurringFormTolerance": "Margen de monto",
+  "recurringFormToleranceHelp": "Aceptamos pagos un poco distintos, por si cambia el precio.",
+  "recurringFormToleranceValue": "±{pct} %",
+  "@recurringFormToleranceValue": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
+  "recurringFormCategory": "Categoría",
+  "recurringFormNoCategory": "Sin categoría",
+  "recurringFormAccount": "Cuenta",
+  "recurringFormAnyAccount": "Cualquier cuenta",
+  "recurringFormRemind": "Avisarme",
+  "recurringFormRemindDays": "{days, plural, =1{1 día antes} other{{days} días antes}}",
+  "@recurringFormRemindDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "recurringFormSave": "Guardar",
+  "recurringFormCancel": "Cancelar",
+  "recurringFormPause": "Pausar",
+  "recurringFormResume": "Reanudar",
+  "recurringFormDelete": "Borrar gasto fijo",
+  "recurringNameRequired": "Escribe un nombre.",
+  "recurringNameTooLong": "Máximo 60 caracteres.",
+  "recurringKeywordInvalid": "Escribe entre 2 y 40 letras o números.",
+  "recurringAmountRequired": "Escribe cuánto pagas.",
+  "recurringDayInvalid": "Elige el día de pago.",
+  "recurringCreated": "Gasto fijo guardado",
+  "recurringSaved": "Cambios guardados",
+  "recurringDeleted": "Gasto fijo borrado",
+  "recurringPaused": "Gasto fijo pausado",
+  "recurringResumed": "Gasto fijo reanudado",
+  "recurringDeleteTitle": "¿Borrar «{name}»?",
+  "@recurringDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringDeleteBody": "Se quita de tus gastos fijos; tus movimientos no cambian.",
+  "recurringDeleteConfirm": "Borrar",
+  "recurringDeleteCancel": "Cancelar",
+  "recurringPickTitle": "¿Con qué movimiento lo pagaste?",
+  "recurringPickEmpty": "No hay gastos entre el {from} y el {to}.",
+  "@recurringPickEmpty": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringUpcomingTitle": "Próximos pagos",
+  "recurringUpcomingCount": "{paid} de {total} pagados",
+  "@recurringUpcomingCount": {
+    "placeholders": {
+      "paid": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "recurringUpcomingSeeAll": "Ver todos",
+  "recurringUpcomingInviteTitle": "¿Pagas algo cada mes?",
+  "recurringUpcomingInviteBody": "Regístralo y te avisamos antes.",
+  "recurringUpcomingInviteAction": "Agregar gasto fijo",
+  "settingsRecurringTitle": "Gastos fijos",
+  "settingsRecurringSubtitle": "{count, plural, =0{Spotify, arriendo, servicios…} =1{1 activo} other{{count} activos}}",
+  "@settingsRecurringSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailCreateRecurring": "Crear gasto fijo con esto"
 }

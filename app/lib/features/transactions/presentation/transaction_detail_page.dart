@@ -8,6 +8,7 @@ import 'package:luka/core/routing/routes.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/core/theme/tokens/type_tokens.dart';
+import 'package:luka/features/recurring/presentation/recurring_form_sheet.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:luka/features/transactions/application/transaction_actions.dart';
@@ -184,6 +185,20 @@ class _DetailBody extends ConsumerWidget {
                     : l10n.detailMarkTransfer,
               ),
             ),
+            if (tx.kind == TxKind.expense)
+              OutlinedButton.icon(
+                onPressed: () => unawaited(
+                  RecurringFormSheet.show(
+                    context,
+                    initial: recurringDraftFrom(tx),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                ),
+                icon: const Icon(Icons.event_repeat_rounded, size: 18),
+                label: Text(l10n.detailCreateRecurring),
+              ),
             _NotesField(key: ValueKey('notes-${tx.id}'), tx: tx),
             // Solo los manuales: el backend rechaza borrar lo capturado.
             if (tx.parsedBy == 'manual')

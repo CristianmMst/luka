@@ -3417,6 +3417,504 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{message} (código: {code})'**
   String gmailErrorWithCode(String message, String code);
+
+  /// No description provided for @recurringTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos fijos'**
+  String get recurringTitle;
+
+  /// No description provided for @recurringMonthSummary.
+  ///
+  /// In es, this message translates to:
+  /// **'Este mes: {paid} pagados de {total}'**
+  String recurringMonthSummary(String paid, String total);
+
+  /// No description provided for @recurringNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo gasto fijo'**
+  String get recurringNew;
+
+  /// No description provided for @recurringEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes gastos fijos'**
+  String get recurringEmptyTitle;
+
+  /// No description provided for @recurringEmptyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra lo que pagas cada mes (Spotify, arriendo, servicios) y te avisamos antes de que te lo descuenten.'**
+  String get recurringEmptyBody;
+
+  /// No description provided for @recurringMonthEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos fijos en {month}.'**
+  String recurringMonthEmpty(String month);
+
+  /// No description provided for @recurringLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos leer tus gastos fijos.'**
+  String get recurringLoadError;
+
+  /// No description provided for @recurringRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get recurringRetry;
+
+  /// No description provided for @recurringPrevMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes anterior'**
+  String get recurringPrevMonth;
+
+  /// No description provided for @recurringNextMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes siguiente'**
+  String get recurringNextMonth;
+
+  /// No description provided for @recurringStateUpcoming.
+  ///
+  /// In es, this message translates to:
+  /// **'Vence el {day}'**
+  String recurringStateUpcoming(String day);
+
+  /// No description provided for @recurringStateLate.
+  ///
+  /// In es, this message translates to:
+  /// **'Venció el {day} · aún no vemos el pago'**
+  String recurringStateLate(String day);
+
+  /// No description provided for @recurringStateUndetected.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin detectar · venció el {day}'**
+  String recurringStateUndetected(String day);
+
+  /// No description provided for @recurringStatePaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado el {date}'**
+  String recurringStatePaid(String date);
+
+  /// No description provided for @recurringStatePaidWith.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado el {date} · {merchant}'**
+  String recurringStatePaidWith(String date, String merchant);
+
+  /// No description provided for @recurringStateSkipped.
+  ///
+  /// In es, this message translates to:
+  /// **'Omitido este mes'**
+  String get recurringStateSkipped;
+
+  /// No description provided for @recurringPausedBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Pausado'**
+  String get recurringPausedBadge;
+
+  /// No description provided for @recurringRowSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'{name}, {amount}, {state}'**
+  String recurringRowSemantics(String name, String amount, String state);
+
+  /// No description provided for @recurringActionsSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Acciones de {name}'**
+  String recurringActionsSemantics(String name);
+
+  /// No description provided for @recurringActionMarkPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como pagado'**
+  String get recurringActionMarkPaid;
+
+  /// No description provided for @recurringActionPick.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir movimiento'**
+  String get recurringActionPick;
+
+  /// No description provided for @recurringActionSkip.
+  ///
+  /// In es, this message translates to:
+  /// **'Omitir este mes'**
+  String get recurringActionSkip;
+
+  /// No description provided for @recurringActionUndo.
+  ///
+  /// In es, this message translates to:
+  /// **'Deshacer'**
+  String get recurringActionUndo;
+
+  /// No description provided for @recurringActionEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar gasto fijo'**
+  String get recurringActionEdit;
+
+  /// No description provided for @recurringActionViewTransaction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver movimiento'**
+  String get recurringActionViewTransaction;
+
+  /// No description provided for @recurringMarkedPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcado como pagado'**
+  String get recurringMarkedPaid;
+
+  /// No description provided for @recurringUndone.
+  ///
+  /// In es, this message translates to:
+  /// **'Volvió a quedar pendiente'**
+  String get recurringUndone;
+
+  /// No description provided for @recurringSkippedDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Omitido este mes'**
+  String get recurringSkippedDone;
+
+  /// No description provided for @recurringErrorOffline.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas conexión para cambiar tus gastos fijos.'**
+  String get recurringErrorOffline;
+
+  /// No description provided for @recurringErrorGone.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese gasto fijo ya no existe.'**
+  String get recurringErrorGone;
+
+  /// No description provided for @recurringErrorConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese movimiento ya paga otro gasto fijo.'**
+  String get recurringErrorConflict;
+
+  /// No description provided for @recurringErrorUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar. Inténtalo de nuevo.'**
+  String get recurringErrorUnexpected;
+
+  /// No description provided for @recurringFormNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo gasto fijo'**
+  String get recurringFormNewTitle;
+
+  /// No description provided for @recurringFormEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar gasto fijo'**
+  String get recurringFormEditTitle;
+
+  /// No description provided for @recurringFormName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get recurringFormName;
+
+  /// No description provided for @recurringFormNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Spotify'**
+  String get recurringFormNameHint;
+
+  /// No description provided for @recurringFormKeyword.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo aparece en tu banco?'**
+  String get recurringFormKeyword;
+
+  /// No description provided for @recurringFormKeywordHint.
+  ///
+  /// In es, this message translates to:
+  /// **'SPOTIFY'**
+  String get recurringFormKeywordHint;
+
+  /// No description provided for @recurringFormKeywordHelp.
+  ///
+  /// In es, this message translates to:
+  /// **'Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.'**
+  String get recurringFormKeywordHelp;
+
+  /// No description provided for @recurringFormAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto pagas?'**
+  String get recurringFormAmount;
+
+  /// No description provided for @recurringFormDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día de pago'**
+  String get recurringFormDay;
+
+  /// No description provided for @recurringFormDayValue.
+  ///
+  /// In es, this message translates to:
+  /// **'El {day} de cada mes'**
+  String recurringFormDayValue(int day);
+
+  /// No description provided for @recurringFormDayShortMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Si el mes es más corto, usamos el último día.'**
+  String get recurringFormDayShortMonth;
+
+  /// No description provided for @recurringFormDaySheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué día pagas?'**
+  String get recurringFormDaySheetTitle;
+
+  /// No description provided for @recurringFormTolerance.
+  ///
+  /// In es, this message translates to:
+  /// **'Margen de monto'**
+  String get recurringFormTolerance;
+
+  /// No description provided for @recurringFormToleranceHelp.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptamos pagos un poco distintos, por si cambia el precio.'**
+  String get recurringFormToleranceHelp;
+
+  /// No description provided for @recurringFormToleranceValue.
+  ///
+  /// In es, this message translates to:
+  /// **'±{pct} %'**
+  String recurringFormToleranceValue(int pct);
+
+  /// No description provided for @recurringFormCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get recurringFormCategory;
+
+  /// No description provided for @recurringFormNoCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin categoría'**
+  String get recurringFormNoCategory;
+
+  /// No description provided for @recurringFormAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get recurringFormAccount;
+
+  /// No description provided for @recurringFormAnyAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquier cuenta'**
+  String get recurringFormAnyAccount;
+
+  /// No description provided for @recurringFormRemind.
+  ///
+  /// In es, this message translates to:
+  /// **'Avisarme'**
+  String get recurringFormRemind;
+
+  /// No description provided for @recurringFormRemindDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, =1{1 día antes} other{{days} días antes}}'**
+  String recurringFormRemindDays(int days);
+
+  /// No description provided for @recurringFormSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get recurringFormSave;
+
+  /// No description provided for @recurringFormCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get recurringFormCancel;
+
+  /// No description provided for @recurringFormPause.
+  ///
+  /// In es, this message translates to:
+  /// **'Pausar'**
+  String get recurringFormPause;
+
+  /// No description provided for @recurringFormResume.
+  ///
+  /// In es, this message translates to:
+  /// **'Reanudar'**
+  String get recurringFormResume;
+
+  /// No description provided for @recurringFormDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar gasto fijo'**
+  String get recurringFormDelete;
+
+  /// No description provided for @recurringNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un nombre.'**
+  String get recurringNameRequired;
+
+  /// No description provided for @recurringNameTooLong.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 60 caracteres.'**
+  String get recurringNameTooLong;
+
+  /// No description provided for @recurringKeywordInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe entre 2 y 40 letras o números.'**
+  String get recurringKeywordInvalid;
+
+  /// No description provided for @recurringAmountRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe cuánto pagas.'**
+  String get recurringAmountRequired;
+
+  /// No description provided for @recurringDayInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige el día de pago.'**
+  String get recurringDayInvalid;
+
+  /// No description provided for @recurringCreated.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto fijo guardado'**
+  String get recurringCreated;
+
+  /// No description provided for @recurringSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios guardados'**
+  String get recurringSaved;
+
+  /// No description provided for @recurringDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto fijo borrado'**
+  String get recurringDeleted;
+
+  /// No description provided for @recurringPaused.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto fijo pausado'**
+  String get recurringPaused;
+
+  /// No description provided for @recurringResumed.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto fijo reanudado'**
+  String get recurringResumed;
+
+  /// No description provided for @recurringDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Borrar «{name}»?'**
+  String recurringDeleteTitle(String name);
+
+  /// No description provided for @recurringDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quita de tus gastos fijos; tus movimientos no cambian.'**
+  String get recurringDeleteBody;
+
+  /// No description provided for @recurringDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar'**
+  String get recurringDeleteConfirm;
+
+  /// No description provided for @recurringDeleteCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get recurringDeleteCancel;
+
+  /// No description provided for @recurringPickTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Con qué movimiento lo pagaste?'**
+  String get recurringPickTitle;
+
+  /// No description provided for @recurringPickEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos entre el {from} y el {to}.'**
+  String recurringPickEmpty(String from, String to);
+
+  /// No description provided for @recurringUpcomingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximos pagos'**
+  String get recurringUpcomingTitle;
+
+  /// No description provided for @recurringUpcomingCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{paid} de {total} pagados'**
+  String recurringUpcomingCount(int paid, int total);
+
+  /// No description provided for @recurringUpcomingSeeAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get recurringUpcomingSeeAll;
+
+  /// No description provided for @recurringUpcomingInviteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Pagas algo cada mes?'**
+  String get recurringUpcomingInviteTitle;
+
+  /// No description provided for @recurringUpcomingInviteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Regístralo y te avisamos antes.'**
+  String get recurringUpcomingInviteBody;
+
+  /// No description provided for @recurringUpcomingInviteAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar gasto fijo'**
+  String get recurringUpcomingInviteAction;
+
+  /// No description provided for @settingsRecurringTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos fijos'**
+  String get settingsRecurringTitle;
+
+  /// No description provided for @settingsRecurringSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Spotify, arriendo, servicios…} =1{1 activo} other{{count} activos}}'**
+  String settingsRecurringSubtitle(int count);
+
+  /// No description provided for @detailCreateRecurring.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear gasto fijo con esto'**
+  String get detailCreateRecurring;
 }
 
 class _AppLocalizationsDelegate

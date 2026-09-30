@@ -128,3 +128,43 @@ class LocalNfcTags extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// Gastos fijos del usuario (spec 004 §5, F7.6): snapshot completo en cada
+/// sync.
+@DataClassName('LocalRecurringExpenseRow')
+class LocalRecurringExpenses extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get merchantKeyword => text()();
+  IntColumn get expectedAmountCents => integer()();
+  IntColumn get tolerancePct => integer()();
+  IntColumn get dayOfMonth => integer()();
+  IntColumn get remindDaysBefore => integer()();
+  BoolColumn get active => boolean()();
+  TextColumn get categoryId => text().nullable()();
+  TextColumn get accountId => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Ocurrencias del mes anterior al siguiente (spec 004 §5, F7.6). El nombre
+/// y el monto esperado se leen del gasto fijo; `period` es `AAAA-MM` y
+/// `due_date` `AAAA-MM-DD`, como los manda la API.
+@DataClassName('LocalRecurringOccurrenceRow')
+class LocalRecurringOccurrences extends Table {
+  TextColumn get id => text()();
+  TextColumn get expenseId => text()();
+  TextColumn get period => text()();
+  TextColumn get dueDate => text()();
+  TextColumn get status => text()();
+  TextColumn get matchedBy => text().nullable()();
+  DateTimeColumn get paidAt => dateTime().nullable()();
+  TextColumn get transactionId => text().nullable()();
+  TextColumn get transactionMerchant => text().nullable()();
+  IntColumn get transactionAmountCents => integer().nullable()();
+  DateTimeColumn get transactionOccurredAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

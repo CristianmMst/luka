@@ -2029,4 +2029,307 @@ class AppLocalizationsEs extends AppLocalizations {
   String gmailErrorWithCode(String message, String code) {
     return '$message (código: $code)';
   }
+
+  @override
+  String get recurringTitle => 'Gastos fijos';
+
+  @override
+  String recurringMonthSummary(String paid, String total) {
+    return 'Este mes: $paid pagados de $total';
+  }
+
+  @override
+  String get recurringNew => 'Nuevo gasto fijo';
+
+  @override
+  String get recurringEmptyTitle => 'Aún no tienes gastos fijos';
+
+  @override
+  String get recurringEmptyBody =>
+      'Registra lo que pagas cada mes (Spotify, arriendo, servicios) y te avisamos antes de que te lo descuenten.';
+
+  @override
+  String recurringMonthEmpty(String month) {
+    return 'No hay gastos fijos en $month.';
+  }
+
+  @override
+  String get recurringLoadError => 'No pudimos leer tus gastos fijos.';
+
+  @override
+  String get recurringRetry => 'Reintentar';
+
+  @override
+  String get recurringPrevMonth => 'Mes anterior';
+
+  @override
+  String get recurringNextMonth => 'Mes siguiente';
+
+  @override
+  String recurringStateUpcoming(String day) {
+    return 'Vence el $day';
+  }
+
+  @override
+  String recurringStateLate(String day) {
+    return 'Venció el $day · aún no vemos el pago';
+  }
+
+  @override
+  String recurringStateUndetected(String day) {
+    return 'Sin detectar · venció el $day';
+  }
+
+  @override
+  String recurringStatePaid(String date) {
+    return 'Pagado el $date';
+  }
+
+  @override
+  String recurringStatePaidWith(String date, String merchant) {
+    return 'Pagado el $date · $merchant';
+  }
+
+  @override
+  String get recurringStateSkipped => 'Omitido este mes';
+
+  @override
+  String get recurringPausedBadge => 'Pausado';
+
+  @override
+  String recurringRowSemantics(String name, String amount, String state) {
+    return '$name, $amount, $state';
+  }
+
+  @override
+  String recurringActionsSemantics(String name) {
+    return 'Acciones de $name';
+  }
+
+  @override
+  String get recurringActionMarkPaid => 'Marcar como pagado';
+
+  @override
+  String get recurringActionPick => 'Elegir movimiento';
+
+  @override
+  String get recurringActionSkip => 'Omitir este mes';
+
+  @override
+  String get recurringActionUndo => 'Deshacer';
+
+  @override
+  String get recurringActionEdit => 'Editar gasto fijo';
+
+  @override
+  String get recurringActionViewTransaction => 'Ver movimiento';
+
+  @override
+  String get recurringMarkedPaid => 'Marcado como pagado';
+
+  @override
+  String get recurringUndone => 'Volvió a quedar pendiente';
+
+  @override
+  String get recurringSkippedDone => 'Omitido este mes';
+
+  @override
+  String get recurringErrorOffline =>
+      'Necesitas conexión para cambiar tus gastos fijos.';
+
+  @override
+  String get recurringErrorGone => 'Ese gasto fijo ya no existe.';
+
+  @override
+  String get recurringErrorConflict =>
+      'Ese movimiento ya paga otro gasto fijo.';
+
+  @override
+  String get recurringErrorUnexpected =>
+      'No se pudo guardar. Inténtalo de nuevo.';
+
+  @override
+  String get recurringFormNewTitle => 'Nuevo gasto fijo';
+
+  @override
+  String get recurringFormEditTitle => 'Editar gasto fijo';
+
+  @override
+  String get recurringFormName => 'Nombre';
+
+  @override
+  String get recurringFormNameHint => 'Spotify';
+
+  @override
+  String get recurringFormKeyword => '¿Cómo aparece en tu banco?';
+
+  @override
+  String get recurringFormKeywordHint => 'SPOTIFY';
+
+  @override
+  String get recurringFormKeywordHelp =>
+      'Por ejemplo SPOTIFY o NETFLIX; la buscamos en el nombre del comercio.';
+
+  @override
+  String get recurringFormAmount => '¿Cuánto pagas?';
+
+  @override
+  String get recurringFormDay => 'Día de pago';
+
+  @override
+  String recurringFormDayValue(int day) {
+    return 'El $day de cada mes';
+  }
+
+  @override
+  String get recurringFormDayShortMonth =>
+      'Si el mes es más corto, usamos el último día.';
+
+  @override
+  String get recurringFormDaySheetTitle => '¿Qué día pagas?';
+
+  @override
+  String get recurringFormTolerance => 'Margen de monto';
+
+  @override
+  String get recurringFormToleranceHelp =>
+      'Aceptamos pagos un poco distintos, por si cambia el precio.';
+
+  @override
+  String recurringFormToleranceValue(int pct) {
+    return '±$pct %';
+  }
+
+  @override
+  String get recurringFormCategory => 'Categoría';
+
+  @override
+  String get recurringFormNoCategory => 'Sin categoría';
+
+  @override
+  String get recurringFormAccount => 'Cuenta';
+
+  @override
+  String get recurringFormAnyAccount => 'Cualquier cuenta';
+
+  @override
+  String get recurringFormRemind => 'Avisarme';
+
+  @override
+  String recurringFormRemindDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días antes',
+      one: '1 día antes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringFormSave => 'Guardar';
+
+  @override
+  String get recurringFormCancel => 'Cancelar';
+
+  @override
+  String get recurringFormPause => 'Pausar';
+
+  @override
+  String get recurringFormResume => 'Reanudar';
+
+  @override
+  String get recurringFormDelete => 'Borrar gasto fijo';
+
+  @override
+  String get recurringNameRequired => 'Escribe un nombre.';
+
+  @override
+  String get recurringNameTooLong => 'Máximo 60 caracteres.';
+
+  @override
+  String get recurringKeywordInvalid =>
+      'Escribe entre 2 y 40 letras o números.';
+
+  @override
+  String get recurringAmountRequired => 'Escribe cuánto pagas.';
+
+  @override
+  String get recurringDayInvalid => 'Elige el día de pago.';
+
+  @override
+  String get recurringCreated => 'Gasto fijo guardado';
+
+  @override
+  String get recurringSaved => 'Cambios guardados';
+
+  @override
+  String get recurringDeleted => 'Gasto fijo borrado';
+
+  @override
+  String get recurringPaused => 'Gasto fijo pausado';
+
+  @override
+  String get recurringResumed => 'Gasto fijo reanudado';
+
+  @override
+  String recurringDeleteTitle(String name) {
+    return '¿Borrar «$name»?';
+  }
+
+  @override
+  String get recurringDeleteBody =>
+      'Se quita de tus gastos fijos; tus movimientos no cambian.';
+
+  @override
+  String get recurringDeleteConfirm => 'Borrar';
+
+  @override
+  String get recurringDeleteCancel => 'Cancelar';
+
+  @override
+  String get recurringPickTitle => '¿Con qué movimiento lo pagaste?';
+
+  @override
+  String recurringPickEmpty(String from, String to) {
+    return 'No hay gastos entre el $from y el $to.';
+  }
+
+  @override
+  String get recurringUpcomingTitle => 'Próximos pagos';
+
+  @override
+  String recurringUpcomingCount(int paid, int total) {
+    return '$paid de $total pagados';
+  }
+
+  @override
+  String get recurringUpcomingSeeAll => 'Ver todos';
+
+  @override
+  String get recurringUpcomingInviteTitle => '¿Pagas algo cada mes?';
+
+  @override
+  String get recurringUpcomingInviteBody => 'Regístralo y te avisamos antes.';
+
+  @override
+  String get recurringUpcomingInviteAction => 'Agregar gasto fijo';
+
+  @override
+  String get settingsRecurringTitle => 'Gastos fijos';
+
+  @override
+  String settingsRecurringSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count activos',
+      one: '1 activo',
+      zero: 'Spotify, arriendo, servicios…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get detailCreateRecurring => 'Crear gasto fijo con esto';
 }

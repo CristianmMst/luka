@@ -17,6 +17,7 @@ import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.d
 import 'package:luka/features/onboarding/presentation/apple_pay_onboarding_page.dart';
 import 'package:luka/features/onboarding/presentation/notifications_onboarding_page.dart';
 import 'package:luka/features/onboarding/presentation/onboarding_navigation.dart';
+import 'package:luka/features/recurring/presentation/recurring_page.dart';
 import 'package:luka/features/review/presentation/review_detail_page.dart';
 import 'package:luka/features/review/presentation/review_page.dart';
 import 'package:luka/features/shell/presentation/ajustes_page.dart';
@@ -114,6 +115,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.login,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: Routes.recurring,
+        builder: (context, state) => RecurringPage(
+          highlightId: state.uri.queryParameters['ocurrencia'],
+        ),
       ),
       GoRoute(
         path: Routes.onboardingGmail,

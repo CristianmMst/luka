@@ -11,6 +11,8 @@ class _Store extends Mock implements SyncStore {}
 
 class _Remote extends Mock implements SyncRemote {}
 
+class _Snapshot extends Mock implements SyncSnapshot {}
+
 void main() {
   late _Store store;
   late _Remote remote;
@@ -252,6 +254,36 @@ void main() {
 
     expect(result, SyncRunResult.synced);
     verify(() => store.complete(e1, null)).called(1);
+  });
+
+  test('el pull termina refrescando los snapshots de otras features', () async {
+    final snapshot = _Snapshot();
+    when(snapshot.refresh).thenAnswer((_) async {});
+    final withSnapshots = SyncEngine(
+      store: store,
+      remote: remote,
+      snapshots: [snapshot],
+      now: () => now,
+    );
+
+    final result = await withSnapshots.run();
+
+    expect(result, SyncRunResult.synced);
+    verify(snapshot.refresh).called(1);
+  });
+
+  test('un snapshot sin red deja el ciclo sin conexión', () async {
+    final snapshot = _Snapshot();
+    when(snapshot.refresh).thenThrow(const RemoteFailure.network());
+    final withSnapshots = SyncEngine(
+      store: store,
+      remote: remote,
+      snapshots: [snapshot],
+      now: () => now,
+    );
+
+    expect(await withSnapshots.run(), SyncRunResult.offline);
+    verifyNever(() => store.markSynced(any()));
   });
 
   test('401 corta el ciclo sin pull', () async {
