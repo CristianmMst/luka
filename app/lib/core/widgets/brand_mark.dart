@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:vector_graphics/vector_graphics.dart';
 
 /// Logo de luka: círculo con la flecha que sube + wordmark "luka".
 ///
@@ -35,19 +36,23 @@ class BrandMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unit = size * _unit;
-    final mark = SvgPicture.asset(
-      onDark
-          ? 'assets/brand/logo_mark_on_dark.svg'
-          : 'assets/brand/logo_mark.svg',
+    final mark = SvgPicture(
+      AssetBytesLoader(
+        onDark
+            ? 'assets/brand/logo_mark_on_dark.svg'
+            : 'assets/brand/logo_mark.svg',
+      ),
       height: 100 * unit,
       excludeFromSemantics: true,
     );
     if (!showWordmark) return mark;
 
-    final wordmark = SvgPicture.asset(
-      'assets/brand/wordmark.svg',
+    // Compilado, el `currentColor` del wordmark queda fijo: se tiñe con un
+    // filtro (es de un solo color).
+    final wordmark = SvgPicture(
+      const AssetBytesLoader('assets/brand/wordmark.svg'),
       height: 56 * unit,
-      theme: SvgTheme(currentColor: textColor),
+      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
       excludeFromSemantics: true,
     );
     return Semantics(

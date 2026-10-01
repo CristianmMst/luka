@@ -24,7 +24,8 @@ App Flutter (Android/iOS) + backend FastAPI que captura gastos automáticamente 
 | `just worker`: worker arq | `just app-lint`: format + `flutter analyze --fatal-infos` |
 | `just lint`: ruff, pyright, import-linter | `just app-test`: tests + cobertura domain/application ≥ 90 % |
 | `just test`, `just coverage-domain` (≥ 90 %) | `just app-goldens`: regenerar goldens del login |
-| `just migrate`, `just revision <nombre>` | `just app-ci` = lint + test |
+| `just migrate`, `just revision <nombre>` | `just app-icons`: PNG de los íconos desde `app/tool/brand/*.svg` |
+| | `just app-ci` = lint + test |
 
 GitHub Actions solo despliega: `.github/workflows/deploy-backend.yml` corre, en cada push a `main` que toca `backend/`, el gate (pip-audit + gitleaks), publica la imagen en GHCR y la levanta en el VPS con Docker Compose (`backend/deploy/README.md`). No hay CI de lint ni tests: `just lint`, `just test` y `just app-ci` se corren en local.
 

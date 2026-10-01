@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Icono monocromo de los avisos push: la flecha del logo (la barra de
-     estado lo tiñe). -->
+     estado lo tiñe), dentro del área útil de 20 dp con 2 dp de margen. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <group
-        android:translateX="0.25"
-        android:translateY="-0.5"
-        android:scaleX="0.24"
-        android:scaleY="0.24">
+        android:translateX="1.37"
+        android:translateY="0.72"
+        android:scaleX="0.217"
+        android:scaleY="0.217">
         <path
             android:strokeColor="#FFFFFFFF"
             android:strokeWidth="14"

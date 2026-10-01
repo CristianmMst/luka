@@ -19,6 +19,7 @@ Desde la raíz del repo:
 | `just app-lint` | `dart format` + `flutter analyze --fatal-infos` |
 | `just app-test` | Tests (sin goldens) + gate de cobertura de `domain`+`application` ≥ 90 % |
 | `just app-goldens` | Regenera los goldens visuales del login (claro y oscuro) |
+| `just app-icons` | Regenera los PNG de los íconos desde `tool/brand/*.svg` (requiere uv) |
 | `just app-ci` | Lint + tests + cobertura: correrlo antes de subir (GitHub no corre CI de la app) |
 | `just app-android-test` | Tests JUnit del listener nativo (`CaptureFilter`); necesita JDK 17–21 y el `gradlew` que genera `flutter build apk` |
 
@@ -91,7 +92,7 @@ lib/
 
 ### Sistema de diseño
 
-Paleta "Rojo tomate", tipografía y tokens en `lib/core/theme/`; el logo en `assets/brand/` (lo dibuja `BrandMark`). El detalle está en spec 008 §7.1. Las fuentes van empaquetadas en `assets/fonts` con sus licencias OFL.
+Paleta "Rojo tomate", tipografía y tokens en `lib/core/theme/`; el logo en `assets/brand/` (lo dibuja `BrandMark`) y los maestros del ícono en `tool/brand/` (`just app-icons`). El detalle está en spec 008 §7.1. Las fuentes van empaquetadas en `assets/fonts` con sus licencias OFL.
 
 ### Base de datos local y sincronización (F4.1)
 

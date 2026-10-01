@@ -96,6 +96,10 @@ app-lint:
 app-goldens:
 	cd app && flutter test --tags golden --update-goldens
 
+# Regenera los PNG de los iconos (iOS, Android legacy, Play Store) desde app/tool/brand/*.svg.
+app-icons:
+	cd app && uv run --script tool/brand/render_icons.py
+
 # Pipeline de CI de la app.
 app-ci: app-lint app-test
 

@@ -33,6 +33,7 @@ dependencies:
   share_plus: ^12.0.2
   timezone: ^0.10.1
   uuid: ^4.6.0
+  vector_graphics: ^1.2.0
 
 dev_dependencies:
   build_runner: ">=2.5.0 <2.8.0"
@@ -44,6 +45,7 @@ dev_dependencies:
   http_mock_adapter: ^0.6.1
   json_serializable: ">=6.9.0 <6.11.0"
   mocktail: ^1.0.5
+  vector_graphics_compiler: ^1.2.0
   very_good_analysis: ^10.0.0
 
 flutter:
@@ -51,7 +53,11 @@ flutter:
   generate: true
 
   assets:
-    - assets/brand/
+    # Los SVG se compilan a vector_graphics al empaquetar: no se parsean en
+    # cada arranque. Se dibujan con SvgPicture(AssetBytesLoader(...)).
+    - path: assets/brand/
+      transformers:
+        - package: vector_graphics_compiler
     - assets/fonts/licenses/
 
   fonts:

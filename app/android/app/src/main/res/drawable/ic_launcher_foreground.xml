@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Primer plano del ícono adaptativo: luka-app-icon.svg llevado a 108 dp
-     (el área visible de 72 dp equivale a su cuadro de 100). -->
+<!-- Primer plano del ícono adaptativo: app/tool/brand/app_icon.svg llevado
+     a 108 dp (el área visible de 72 dp equivale a su cuadro de 100). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
