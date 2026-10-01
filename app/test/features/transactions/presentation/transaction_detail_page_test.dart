@@ -13,6 +13,7 @@ import 'package:luka/features/transactions/domain/category_option.dart';
 import 'package:luka/features/transactions/domain/transaction_view.dart';
 import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:luka/features/transactions/presentation/transaction_detail_page.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -47,6 +48,17 @@ const _categories = [
     isSystem: true,
     slug: 'restaurantes',
   ),
+];
+
+/// Más categorías de las que caben: la hoja tiene recorrido de scroll.
+final List<CategoryOption> _manyCategories = [
+  for (var i = 1; i <= 20; i++)
+    CategoryOption(
+      id: 'c-$i',
+      name: 'Categoría $i',
+      isSystem: false,
+      slug: 'c-$i',
+    ),
 ];
 
 final _exito = TransactionView(
@@ -356,6 +368,34 @@ void main() {
     verify(
       () => actions.changeCategory(_exito, 'restaurantes', always: false),
     ).called(1);
+  });
+
+  testWidgets('deslizar hacia abajo cierra la hoja de categorías', (
+    tester,
+  ) async {
+    when(
+      () => repository.watchCategories(),
+    ).thenAnswer((_) => Stream.value(_manyCategories));
+    await pumpDetail(tester);
+
+    await tester.tap(find.bySemanticsLabel('Cambiar categoría: Mercado'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CategorySheet), findsOneWidget);
+
+    await tester.fling(
+      find.descendant(
+        of: find.byType(CategorySheet),
+        matching: find.text('Categoría'),
+      ),
+      const Offset(0, 600),
+      1500,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CategorySheet), findsNothing);
+    verifyNever(
+      () => actions.changeCategory(any(), any(), always: any(named: 'always')),
+    );
   });
 
   group('notas', () {

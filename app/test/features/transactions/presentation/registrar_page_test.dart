@@ -15,6 +15,7 @@ import 'package:luka/features/transactions/domain/category_option.dart';
 import 'package:luka/features/transactions/domain/manual_draft.dart';
 import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:luka/features/transactions/presentation/registrar_page.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -36,6 +37,17 @@ class _Coordinator extends SyncCoordinator {
 
 /// 3:42 p. m. en Bogotá.
 final _now = DateTime.utc(2026, 9, 25, 20, 42);
+
+/// Más categorías de las que caben: la hoja tiene recorrido de scroll.
+final List<CategoryOption> _manyCategories = [
+  for (var i = 1; i <= 20; i++)
+    CategoryOption(
+      id: 'c-$i',
+      name: 'Categoría $i',
+      isSystem: false,
+      slug: 'c-$i',
+    ),
+];
 
 void main() {
   late _Actions actions;
@@ -169,6 +181,32 @@ void main() {
     await tester.enterText(search, 'xyz');
     await tester.pump();
     expect(find.text('Ninguna categoría con «xyz».'), findsOneWidget);
+  });
+
+  testWidgets('deslizar hacia abajo cierra la hoja de categorías', (
+    tester,
+  ) async {
+    when(
+      () => transactions.watchCategories(),
+    ).thenAnswer((_) => Stream.value(_manyCategories));
+    await pumpRegistrar(tester);
+
+    await tester.tap(find.text('Sin categoría'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CategorySheet), findsOneWidget);
+
+    await tester.fling(
+      find.descendant(
+        of: find.byType(CategorySheet),
+        matching: find.text('Categoría'),
+      ),
+      const Offset(0, 600),
+      1500,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CategorySheet), findsNothing);
+    expect(find.text('Sin categoría'), findsOneWidget);
   });
 
   testWidgets('pasar a ingreso suelta una categoría de gasto', (tester) async {
