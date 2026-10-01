@@ -4,6 +4,9 @@ import 'package:luka/core/theme/tokens/spacing.dart';
 
 /// Abre una hoja inferior con el marco de los diseños "Filtros" y
 /// "Categoria": fondo de tarjeta, radio 24 arriba y el asa de 36×4.
+///
+/// Va en el navegador raíz: desde una pestaña del shell la hoja quedaría
+/// debajo de la barra de navegación, que taparía sus últimas filas.
 Future<T?> showLukaSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
@@ -11,6 +14,7 @@ Future<T?> showLukaSheet<T>(
   final brand = context.lukaColors;
   return showModalBottomSheet<T>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: brand.card,
