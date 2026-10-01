@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:luka/core/db/app_database.dart';
+import 'package:luka/core/db/device_state.dart';
 import 'package:luka/features/sync/data/outbox_codec.dart';
 import 'package:luka/features/sync/domain/outbox_operation.dart';
 import 'package:luka/features/sync/domain/rejected_change.dart';
@@ -56,7 +57,10 @@ class DriftSyncStore implements SyncStore {
     await _db.delete(_db.localAccounts).go();
     await _db.delete(_db.localReview).go();
     await _db.delete(_db.outbox).go();
-    await _db.delete(_db.syncState).go();
+    // Lo del teléfono (`device:…`, p. ej. el onboarding terminado) se queda.
+    await (_db.delete(
+      _db.syncState,
+    )..where((s) => s.key.like('$deviceStatePrefix%').not())).go();
     // Plantillas de tags NFC: locales, pero del usuario (P6).
     await _db.delete(_db.localNfcTags).go();
     await _db.delete(_db.localRecurringOccurrences).go();

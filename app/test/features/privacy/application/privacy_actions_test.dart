@@ -11,19 +11,25 @@ void main() {
   late _Remote remote;
   late _Saver saver;
   late int signOuts;
+  late List<String> calls;
   late PrivacyActions actions;
 
   setUp(() {
     remote = _Remote();
     saver = _Saver();
     signOuts = 0;
+    calls = [];
     when(
       () => saver.save(any(), fileName: any(named: 'fileName')),
     ).thenAnswer((_) async {});
     actions = PrivacyActions(
       remote: remote,
       saver: saver,
-      signOut: () async => signOuts++,
+      signOut: () async {
+        signOuts++;
+        calls.add('signOut');
+      },
+      forgetDevice: () async => calls.add('forgetDevice'),
       now: () => DateTime(2026, 9, 29, 10),
     );
   });
@@ -58,6 +64,17 @@ void main() {
     expect(signOuts, 1);
   });
 
+  test(
+    'borrar la cuenta olvida lo del teléfono antes de cerrar sesión',
+    () async {
+      when(() => remote.deleteAccount()).thenAnswer((_) async {});
+
+      await actions.deleteAccount();
+
+      expect(calls, ['forgetDevice', 'signOut']);
+    },
+  );
+
   test('si el servidor no borra, la sesión y la base local siguen', () async {
     when(() => remote.deleteAccount()).thenThrow(const PrivacyUnexpected());
 
@@ -66,5 +83,6 @@ void main() {
       throwsA(isA<PrivacyUnexpected>()),
     );
     expect(signOuts, 0);
+    expect(calls, isEmpty);
   });
 }
