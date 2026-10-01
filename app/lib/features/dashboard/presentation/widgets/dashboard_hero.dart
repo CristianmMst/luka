@@ -3,16 +3,19 @@ import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/core/widgets/brand_mark.dart';
 import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
+import 'package:luka/features/dashboard/presentation/widgets/month_switcher.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
-/// Banda café del Inicio (diseño A "Balance protagonista"): saludo,
-/// línea de sync, selector de mes y, si hay [summary], el balance con las
-/// tarjetas de gastos e ingresos. Al final, [alert] (la franja de captura
-/// detenida), que pone su propio espacio arriba cuando se ve.
+/// Banda tomate del Inicio (diseño Q, spec 008 §3.2): saludo, línea de
+/// sync, selector de mes y, si hay [summary], el balance. Al final, [alert]
+/// (la franja de captura detenida), que pone su propio espacio arriba.
+///
+/// [overlap] es el alto extra de la banda bajo el que se monta la tarjeta
+/// de gastos e ingresos (`DashboardTotalsCard`).
 class DashboardHero extends StatelessWidget {
   const DashboardHero({
     required this.greeting,
@@ -23,6 +26,7 @@ class DashboardHero extends StatelessWidget {
     required this.onNext,
     this.summary,
     this.alert,
+    this.overlap = 0,
     super.key,
   });
 
@@ -34,6 +38,7 @@ class DashboardHero extends StatelessWidget {
   final VoidCallback onNext;
   final MonthlySummary? summary;
   final Widget? alert;
+  final double overlap;
 
   static const _radius = 28.0;
 
@@ -43,9 +48,14 @@ class DashboardHero extends StatelessWidget {
     final top = MediaQuery.paddingOf(context).top;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(Space.md, top + Space.sm, Space.md, 20),
+      padding: EdgeInsets.fromLTRB(
+        Space.md,
+        top + Space.sm,
+        Space.md,
+        22 + overlap,
+      ),
       decoration: BoxDecoration(
-        color: brand.hero,
+        color: brand.band,
         borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(_radius),
         ),
@@ -63,7 +73,6 @@ class DashboardHero extends StatelessWidget {
   Widget _content(BuildContext context) {
     final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
-    final soft = brand.onHero.withValues(alpha: 0.85);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,6 +81,12 @@ class DashboardHero extends StatelessWidget {
         Row(
           spacing: Space.sm,
           children: [
+            BrandMark(
+              onDark: true,
+              textColor: brand.onBand,
+              showWordmark: false,
+              size: 18,
+            ),
             Expanded(
               child: Semantics(
                 header: true,
@@ -81,17 +96,15 @@ class DashboardHero extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleSmall?.copyWith(
                     fontSize: 15,
-                    color: brand.onHero,
+                    fontWeight: FontWeight.w700,
+                    color: brand.onBand,
                   ),
                 ),
               ),
             ),
-            Flexible(
-              child: Text(
-                syncLine,
-                textAlign: TextAlign.end,
-                style: textTheme.bodySmall?.copyWith(color: soft),
-              ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: _SyncChip(text: syncLine),
             ),
           ],
         ),
@@ -101,36 +114,57 @@ class DashboardHero extends StatelessWidget {
           onPrevious: onPrevious,
           onNext: onNext,
         ),
-        if (summary case final summary?) ...[
-          _Balance(summary: summary),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 10,
-            children: [
-              Expanded(
-                child: _TotalTile(
-                  label: AppLocalizations.of(context).dashboardExpenses,
-                  amount: summary.totals.expenses,
-                  sign: AmountSign.negative,
-                  color: brand.expense,
-                  delta: summary.expensesDelta,
-                  previous: summary.month.previous,
-                ),
+        if (summary case final summary?)
+          MonthSwitcher(
+            month: month,
+            child: _Balance(summary: summary),
+          ),
+      ],
+    );
+  }
+}
+
+/// La línea de sync en una píldora translúcida, con el punto amarillo.
+class _SyncChip extends StatelessWidget {
+  const _SyncChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = context.lukaColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      // Oscurece la banda (no la aclara): el texto de 12 px pasa AA.
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: Radii.pillAll,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: brand.gold,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 12,
+                color: brand.onBand,
               ),
-              Expanded(
-                child: _TotalTile(
-                  label: AppLocalizations.of(context).dashboardIncome,
-                  amount: summary.totals.income,
-                  sign: AmountSign.positive,
-                  color: brand.income,
-                  delta: summary.incomeDelta,
-                  previous: summary.month.previous,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -152,14 +186,13 @@ class _MonthSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final brand = context.lukaColors;
-    final scheme = Theme.of(context).colorScheme;
     final style = IconButton.styleFrom(
       fixedSize: const Size.square(minTouchTarget),
       minimumSize: const Size.square(minTouchTarget),
-      backgroundColor: brand.heroChip,
-      foregroundColor: scheme.onPrimaryContainer,
+      backgroundColor: brand.onBand.withValues(alpha: 0.16),
+      foregroundColor: brand.onBand,
       disabledBackgroundColor: Colors.transparent,
-      disabledForegroundColor: brand.onHero.withValues(alpha: 0.35),
+      disabledForegroundColor: brand.onBand.withValues(alpha: 0.4),
     );
 
     return Row(
@@ -178,7 +211,7 @@ class _MonthSelector extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontSize: 20,
-                color: brand.onHero,
+                color: brand.onBand,
               ),
             ),
           ),
@@ -221,8 +254,8 @@ class _Balance extends StatelessWidget {
           Text(
             l10n.dashboardBalance,
             style: textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w400,
-              color: brand.onHero.withValues(alpha: 0.85),
+              fontSize: 14,
+              color: brand.onBand,
             ),
           ),
           FittedBox(
@@ -230,77 +263,14 @@ class _Balance extends StatelessWidget {
             child: Text(
               formatCop(balance, sign: sign),
               maxLines: 1,
-              style: textTheme.displayMedium?.copyWith(color: brand.onHero),
+              style: textTheme.displayLarge?.copyWith(
+                color: brand.onBand,
+                letterSpacing: -2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TotalTile extends StatelessWidget {
-  const _TotalTile({
-    required this.label,
-    required this.amount,
-    required this.sign,
-    required this.color,
-    required this.delta,
-    required this.previous,
-  });
-
-  final String label;
-  final Cop amount;
-  final AmountSign sign;
-  final Color color;
-  final AmountDelta delta;
-  final ColombiaMonth previous;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final brand = context.lukaColors;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final muted = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-
-    return Semantics(
-      container: true,
-      excludeSemantics: true,
-      label: l10n.dashboardTileSemantics(
-        label,
-        spokenNumber(amount),
-        deltaSemantics(l10n, delta, previous),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: brand.heroCard,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: Space.xxs,
-          children: [
-            Text(label, style: muted?.copyWith(fontWeight: FontWeight.w600)),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                formatCop(amount, sign: sign),
-                maxLines: 1,
-                style: TextStyle(
-                  fontFamily: FontFamilies.mono,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 17,
-                  height: 22 / 17,
-                  color: color,
-                ),
-              ),
-            ),
-            Text(deltaText(l10n, delta, previous), style: muted),
-          ],
-        ),
       ),
     );
   }

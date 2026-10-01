@@ -41,6 +41,12 @@ String longDate(DateTime instant) {
   return '$weekday ${local.day} ${_shortMonth(local)} ${local.year}';
 }
 
+/// "23 sep", fecha de Colombia.
+String shortDate(DateTime instant) {
+  final local = colombiaLocal(instant);
+  return '${local.day} ${_shortMonth(local)}';
+}
+
 /// "Martes 23 sep 2026 · 12:41", hora de Colombia.
 String longDateTime(DateTime instant) =>
     '${longDate(instant)} · ${timeOfDay(instant)}';

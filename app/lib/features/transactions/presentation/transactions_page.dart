@@ -9,6 +9,7 @@ import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/presentation/sync_refresh.dart';
+import 'package:luka/features/transactions/application/dedupe_hint_controller.dart';
 import 'package:luka/features/transactions/application/transaction_actions.dart';
 import 'package:luka/features/transactions/application/transactions_list_controller.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
@@ -17,15 +18,16 @@ import 'package:luka/features/transactions/domain/transaction_filter.dart';
 import 'package:luka/features/transactions/domain/transaction_view.dart';
 import 'package:luka/features/transactions/presentation/widgets/change_category.dart';
 import 'package:luka/features/transactions/presentation/widgets/day_card.dart';
+import 'package:luka/features/transactions/presentation/widgets/dedupe_hint_banner.dart';
 import 'package:luka/features/transactions/presentation/widgets/filter_sheet.dart';
 import 'package:luka/features/transactions/presentation/widgets/list_states.dart';
 import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
 import 'package:luka/features/transactions/presentation/widgets/rejected_banner.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
-/// "Movimientos" (diseño B "Tarjetas por día", spec 008 §3.3): buscador,
-/// filtros, tarjetas por día con paginación infinita y los estados vacío,
-/// sin resultados, sin conexión y primera sincronización.
+/// "Movimientos" (diseño S, spec 008 §3.3): buscador, filtros, el aviso
+/// "Sin duplicados", tarjetas por día con paginación infinita y los estados
+/// vacío, sin resultados, sin conexión y primera sincronización.
 class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
 
@@ -126,6 +128,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
       );
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -233,24 +236,60 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: Space.sm,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.xxs),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Expanded(
-                  child: Semantics(
-                    header: true,
+          Row(
+            spacing: Space.sm,
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  // Se encoge antes que partirse junto a la píldora.
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       l10n.navTransactionsLabel,
-                      style: textTheme.headlineLarge?.copyWith(fontSize: 30),
+                      maxLines: 1,
+                      style: textTheme.headlineLarge?.copyWith(
+                        fontSize: 34,
+                        letterSpacing: -1.2,
+                      ),
                     ),
                   ),
                 ),
-                Text(period, style: muted),
-              ],
-            ),
+              ),
+              // El periodo se cambia en la hoja de filtros.
+              Semantics(
+                button: true,
+                excludeSemantics: true,
+                label: l10n.transactionsPeriodSemantics(period),
+                onTap: onFilters,
+                child: Material(
+                  color: brand.card,
+                  shape: StadiumBorder(side: BorderSide(color: brand.hairline)),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: onFilters,
+                    child: Container(
+                      height: minTouchTarget,
+                      padding: const EdgeInsets.only(left: 14, right: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 4,
+                        children: [
+                          Text(
+                            period,
+                            style: textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Icon(Icons.expand_more_rounded, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           Row(
             spacing: Space.xs,
@@ -275,15 +314,15 @@ class _Header extends StatelessWidget {
                     fillColor: brand.card,
                     isDense: true,
                     constraints: const BoxConstraints(
-                      minHeight: minTouchTarget,
-                      maxHeight: minTouchTarget,
+                      minHeight: height,
+                      maxHeight: height,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: Space.md,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: Radii.pillAll,
-                      borderSide: BorderSide(color: scheme.outlineVariant),
+                      borderSide: BorderSide(color: brand.hairline),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: Radii.pillAll,
@@ -303,6 +342,9 @@ class _Header extends StatelessWidget {
       ),
     );
   }
+
+  /// Alto del buscador y del botón de filtros.
+  static const height = 52.0;
 }
 
 class _FiltersButton extends StatelessWidget {
@@ -314,6 +356,7 @@ class _FiltersButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -322,53 +365,51 @@ class _FiltersButton extends StatelessWidget {
       excludeSemantics: true,
       label: l10n.transactionsFiltersSemantics(count),
       onTap: onTap,
-      child: Material(
-        color: scheme.primaryContainer,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            height: minTouchTarget,
-            padding: const EdgeInsets.symmetric(horizontal: Space.md),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: Space.xs,
-              children: [
-                Icon(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Material(
+            color: brand.card,
+            shape: CircleBorder(side: BorderSide(color: brand.hairline)),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox.square(
+                dimension: _Header.height,
+                child: Icon(
                   Icons.filter_list_rounded,
-                  size: 18,
-                  color: scheme.onPrimaryContainer,
+                  size: 22,
+                  color: scheme.primary,
                 ),
-                Text(
-                  l10n.transactionsFilters,
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
-                if (count > 0)
-                  Container(
-                    constraints: const BoxConstraints(minWidth: 22),
-                    height: 22,
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: scheme.onPrimary,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
+          if (count > 0)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: IgnorePointer(
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  height: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: brand.card, width: 2),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: textTheme.labelSmall?.copyWith(
+                      fontSize: 11,
+                      color: scheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -398,7 +439,18 @@ class _DayList extends ConsumerWidget {
         for (final tx in group.items)
           if (tx.sync == SyncMark.rejected) tx,
     ];
+    // El aviso explica el sello: solo si hay alguno a la vista.
+    final showHint =
+        (ref.watch(dedupeHintControllerProvider).value ?? false) &&
+        groups.any((g) => g.items.any((tx) => tx.channels.length > 1));
     final children = <Widget>[
+      if (showHint)
+        DedupeHintBanner(
+          key: const ValueKey('dedupe-hint'),
+          onDismiss: () => unawaited(
+            ref.read(dedupeHintControllerProvider.notifier).dismiss(),
+          ),
+        ),
       for (final tx in rejected)
         RejectedBanner(
           key: ValueKey('rejected-${tx.id}'),
@@ -423,7 +475,11 @@ class _DayList extends ConsumerWidget {
     return ListView.separated(
       controller: scroll,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(Space.md).copyWith(top: Space.sm),
+      // La barra translúcida va encima: su alto entra en el margen.
+      padding: const EdgeInsets.all(Space.md).copyWith(
+        top: Space.sm,
+        bottom: Space.md + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: children.length,
       separatorBuilder: (_, _) => const SizedBox(height: Space.sm),
       itemBuilder: (_, index) => children[index],

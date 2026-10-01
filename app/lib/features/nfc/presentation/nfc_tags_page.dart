@@ -49,6 +49,7 @@ class NfcTagsPage extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: context.lukaColors.card,
                   borderRadius: Radii.noticeAll,
+                  border: Border.all(color: context.lukaColors.hairline),
                 ),
                 child: Column(
                   children: [
@@ -106,13 +107,13 @@ class _TagRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
+                  color: context.lukaColors.neutralChip,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.nfc_rounded,
                   size: 18,
-                  color: scheme.onPrimaryContainer,
+                  color: scheme.primary,
                 ),
               ),
             ),

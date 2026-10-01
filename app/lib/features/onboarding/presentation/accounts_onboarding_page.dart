@@ -132,6 +132,7 @@ class _TransferExample extends StatelessWidget {
         decoration: BoxDecoration(
           color: brand.card,
           borderRadius: Radii.rowAll,
+          border: Border.all(color: brand.hairline),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(

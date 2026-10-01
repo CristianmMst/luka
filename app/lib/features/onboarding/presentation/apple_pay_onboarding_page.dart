@@ -60,7 +60,9 @@ class _ApplePayOnboardingPageState
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // El hero es oscuro en ambos temas: íconos de estado claros.
-      value: SystemUiOverlayStyle.light,
+      value: Theme.of(context).brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -90,6 +92,7 @@ class _ApplePayOnboardingPageState
                               decoration: BoxDecoration(
                                 color: brand.card,
                                 borderRadius: Radii.noticeAll,
+                                border: Border.all(color: brand.hairline),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -193,7 +196,7 @@ class _Hero extends StatelessWidget {
               Row(
                 children: [
                   if (inOnboarding) ...[
-                    BrandMark(onDark: true, textColor: brand.onHero),
+                    const HeroBrandMark(),
                     const Spacer(),
                     const OnboardingDots(
                       step: OnboardingStep.applePay,

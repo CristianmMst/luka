@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -6,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/app_theme.dart';
 import 'package:luka/features/auth/application/auth_controller.dart';
+import 'package:luka/features/review/application/review_actions.dart';
 import 'package:luka/features/review/application/review_providers.dart';
 import 'package:luka/features/review/domain/review_item.dart';
 import 'package:luka/features/review/domain/review_repository.dart';
@@ -18,11 +21,18 @@ import 'review_fixtures.dart';
 
 class _Repository extends Mock implements ReviewRepository {}
 
+class _Actions extends Mock implements ReviewActions {}
+
 void main() {
+  setUpAll(() => registerFallbackValue(emailItem));
+
   late _Repository repository;
+  late _Actions actions;
   late List<ReviewItem> rows;
 
   setUp(() {
+    actions = _Actions();
+    when(() => actions.discard(any())).thenAnswer((_) async {});
     repository = _Repository();
     rows = [emailItem, notificationItem, purgedItem];
     when(
@@ -32,6 +42,7 @@ void main() {
 
   List<Override> overrides(SyncStatus status) => [
     reviewRepositoryProvider.overrideWithValue(repository),
+    reviewActionsProvider.overrideWithValue(actions),
     authControllerProvider.overrideWith(SignedInAuth.new),
     syncCoordinatorProvider.overrideWith(() => FixedCoordinator(status)),
   ];
@@ -72,6 +83,7 @@ void main() {
     expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
 
     // Sin banco se ve el remitente; un motivo desconocido, el genérico.
+    await tester.scrollUntilVisible(find.text('891333'), 200);
     expect(find.text('891333'), findsOneWidget);
     expect(find.text('Necesita tu ayuda'), findsOneWidget);
     expect(
@@ -160,7 +172,8 @@ void main() {
     expect(find.text('Bancolombia'), findsOneWidget);
   });
 
-  testWidgets('tocar una tarjeta abre su detalle', (tester) async {
+  /// La lista dentro de un GoRouter cuyo detalle muestra la ruta pedida.
+  Future<void> pumpRouted(WidgetTester tester) async {
     tester.view
       ..physicalSize = const Size(390, 844) * 3
       ..devicePixelRatio = 3;
@@ -174,8 +187,13 @@ void main() {
           routes: [
             GoRoute(
               path: ':rawMessageId',
-              builder: (_, state) =>
-                  Text('detalle ${state.pathParameters['rawMessageId']}'),
+              builder: (_, state) => Text(
+                [
+                  'detalle ${state.pathParameters['rawMessageId']}',
+                  if (state.uri.queryParameters['monto'] case final monto?)
+                    'monto $monto',
+                ].join(' '),
+              ),
             ),
           ],
         ),
@@ -195,6 +213,74 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  testWidgets(r'"Usar $X" abre el detalle con ese monto puesto', (
+    tester,
+  ) async {
+    await pumpRouted(tester);
+
+    final use = find.text(r'Usar $38.900');
+    await tester.ensureVisible(use);
+    await tester.pumpAndSettle();
+    await tester.tap(use);
+    await tester.pumpAndSettle();
+
+    expect(find.text('detalle m-notif monto 3890000'), findsOneWidget);
+  });
+
+  testWidgets('"Descartar" en la lista confirma y descarta', (tester) async {
+    await pumpRouted(tester);
+
+    await tester.tap(find.text('Descartar').first);
+    await tester.pumpAndSettle();
+    expect(find.text('¿Descartar este mensaje?'), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Descartar'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => actions.discard(any())).called(1);
+    expect(find.text('Descartado'), findsOneWidget);
+  });
+
+  testWidgets('sin texto ofrece "Registrar a mano"', (tester) async {
+    await pumpRouted(tester);
+
+    await tester.scrollUntilVisible(find.text('Registrar a mano'), 200);
+    expect(find.text('Registrar a mano'), findsOneWidget);
+  });
+
+  testWidgets('lo resuelto sale animado y luego desaparece', (tester) async {
+    // Como Drift: quien escucha recibe el último valor y luego los cambios.
+    final live = StreamController<List<ReviewItem>>.broadcast();
+    addTearDown(live.close);
+    var latest = [emailItem, notificationItem];
+    when(() => repository.watchOpen()).thenAnswer((_) async* {
+      yield latest;
+      yield* live.stream;
+    });
+    await pumpPage(tester);
+    expect(find.text('Nequi'), findsOneWidget);
+
+    latest = [emailItem];
+    live.add(latest);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    // A mitad de la salida sigue a la vista, sin poder tocarse.
+    expect(find.text('Nequi'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('Nequi'), findsNothing);
+    expect(find.text('Bancolombia'), findsOneWidget);
+  });
+
+  testWidgets('tocar una tarjeta abre su detalle', (tester) async {
+    await pumpRouted(tester);
 
     await tester.tap(find.text('Nequi'));
     await tester.pumpAndSettle();

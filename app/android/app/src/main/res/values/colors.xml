@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Café de marca: fondo del arranque nativo, igual al splash. -->
-    <color name="launch_background">#5C1A10</color>
+    <!-- Fondo del arranque nativo, igual al splash: blanco en claro. -->
+    <color name="launch_background">#FFFFFF</color>
     <!-- Tomate de marca: color de los avisos de FCM. -->
     <color name="brand_tomato">#E23D28</color>
     <!-- Amarillo de marca: fondo del ícono adaptativo. -->

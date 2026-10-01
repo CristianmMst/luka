@@ -7,7 +7,9 @@ import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/features/categories/presentation/category_form_sheet.dart';
 import 'package:luka/features/categories/presentation/category_visuals.dart';
+import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_fit.dart';
 import 'package:luka/features/transactions/domain/category_option.dart';
 import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
 import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart';
@@ -16,14 +18,19 @@ import 'package:luka/features/transactions/presentation/widgets/sheet_frame.dart
 /// filtro).
 typedef CategoryChoice = ({String? id, String? name});
 
-/// Hoja "Categoría" (diseño "Categoria"): rejilla de 3 columnas con las
-/// categorías y "+ Nueva categoría" (F4.8a), que abre la hoja de crear y
-/// deja elegida la nueva. En el filtro ([allowAll]) no se ofrece crear.
-class CategorySheet extends ConsumerWidget {
+/// Hoja "Categoría" (diseño "Hoja"): las categorías en una lista, la
+/// elegida con su ícono en tomate y un check, y al final "Nueva categoría"
+/// (F4.8a), que abre la hoja de crear y deja elegida la nueva. En el filtro
+/// ([allowAll]) no se ofrece crear y "Todas" va primero.
+///
+/// Con [direction] (Registrar, diseño Y2) solo muestra las categorías de
+/// ese tipo y suma un buscador sin tildes.
+class CategorySheet extends ConsumerStatefulWidget {
   const CategorySheet({
     required this.selectedId,
     this.subtitle,
     this.allowAll = false,
+    this.direction,
     super.key,
   });
 
@@ -33,29 +40,48 @@ class CategorySheet extends ConsumerWidget {
   /// Agrega "Todas" al principio (el filtro por categoría).
   final bool allowAll;
 
+  /// Tipo del movimiento: filtra las categorías y muestra el buscador.
+  final TxDirection? direction;
+
   /// Abre la hoja; `null` si se cerró sin elegir.
   static Future<CategoryChoice?> show(
     BuildContext context, {
     required String? selectedId,
     String? subtitle,
     bool allowAll = false,
+    TxDirection? direction,
   }) => showLukaSheet<CategoryChoice>(
     context,
     builder: (_) => CategorySheet(
       selectedId: selectedId,
       subtitle: subtitle,
       allowAll: allowAll,
+      direction: direction,
     ),
   );
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CategorySheet> createState() => _CategorySheetState();
+}
+
+class _CategorySheetState extends ConsumerState<CategorySheet> {
+  var _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final categories =
+    final selectedId = widget.selectedId;
+    final subtitle = widget.subtitle;
+    final allowAll = widget.allowAll;
+    final direction = widget.direction;
+    final all =
         ref.watch(transactionCategoriesProvider).value ??
         const <CategoryOption>[];
+    final categories = direction == null
+        ? all
+        : categoriesFor(all, direction, query: _query);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
@@ -68,12 +94,20 @@ class CategorySheet extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 2,
             children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  l10n.categorySheetTitle,
-                  style: textTheme.headlineSmall?.copyWith(fontSize: 22),
-                ),
+              Row(
+                spacing: Space.sm,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.categorySheetTitle,
+                        style: textTheme.headlineSmall?.copyWith(fontSize: 22),
+                      ),
+                    ),
+                  ),
+                  if (direction != null) _KindChip(direction: direction),
+                ],
               ),
               if (subtitle case final subtitle?)
                 Text(
@@ -85,46 +119,85 @@ class CategorySheet extends ConsumerWidget {
                 ),
             ],
           ),
-          GridView(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: Space.xs,
-              crossAxisSpacing: Space.xs,
-              mainAxisExtent: 76,
-            ),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              if (allowAll)
-                _CategoryTile(
-                  icon: Icons.apps_rounded,
-                  label: l10n.categorySheetAll,
-                  selected: selectedId == null,
-                  onTap: () =>
-                      Navigator.of(context).pop((id: null, name: null)),
+          if (direction != null)
+            TextField(
+              onChanged: (value) => setState(() => _query = value),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: l10n.categorySheetSearchHint,
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                isDense: true,
+                constraints: const BoxConstraints(minHeight: minTouchTarget),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: Radii.pillAll,
+                  borderSide: BorderSide(color: context.lukaColors.hairline),
                 ),
-              for (final category in categories)
-                _CategoryTile(
-                  icon: category.isSystem
-                      ? categoryIcon(category.slug)
-                      : ownCategoryIcon(category.icon),
-                  label: category.name,
-                  selected: category.id == selectedId,
-                  onTap: () => Navigator.of(
-                    context,
-                  ).pop((id: category.id, name: category.name)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: Radii.pillAll,
+                  borderSide: BorderSide(color: scheme.primary, width: 2),
                 ),
-            ],
-          ),
-          if (!allowAll)
-            OutlinedButton(
-              onPressed: () => unawaited(_create(context)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(minTouchTarget),
-                side: BorderSide(color: scheme.outline),
               ),
-              child: Text(l10n.categorySheetNew),
             ),
+          if (direction != null && categories.isEmpty)
+            Text(
+              l10n.categorySheetNoMatches(_query.trim()),
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          // Lista (diseño "Hoja"): una fila por categoría, la elegida con
+          // su ícono en tomate y un check.
+          Material(
+            color: context.lukaColors.card,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: context.lukaColors.hairline),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, row) in [
+                  if (allowAll)
+                    _CategoryRow(
+                      icon: Icons.apps_rounded,
+                      label: l10n.categorySheetAll,
+                      selected: selectedId == null,
+                      onTap: () =>
+                          Navigator.of(context).pop((id: null, name: null)),
+                    ),
+                  for (final category in categories)
+                    _CategoryRow(
+                      icon: category.isSystem
+                          ? categoryIcon(category.slug)
+                          : ownCategoryIcon(category.icon),
+                      label: category.name,
+                      selected: category.id == selectedId,
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pop((id: category.id, name: category.name)),
+                    ),
+                  if (!allowAll)
+                    _CategoryRow(
+                      icon: Icons.add_rounded,
+                      label: l10n.categorySheetNew,
+                      selected: false,
+                      isAction: true,
+                      onTap: () => unawaited(_create(context)),
+                    ),
+                ].indexed) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 64,
+                      color: context.lukaColors.hairline,
+                    ),
+                  row,
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -139,12 +212,13 @@ Future<void> _create(BuildContext context) async {
   }
 }
 
-class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.isAction = false,
   });
 
   final IconData icon;
@@ -152,48 +226,87 @@ class _CategoryTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  /// "Nueva categoría": texto e ícono en `primary`, sin check.
+  final bool isAction;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
-    final foreground = selected ? scheme.onPrimaryContainer : scheme.onSurface;
 
     return Semantics(
       button: true,
       selected: selected,
-      child: Material(
-        color: selected ? scheme.primaryContainer : brand.tile,
-        shape: RoundedRectangleBorder(
-          borderRadius: Radii.noticeAll,
-          side: selected
-              ? BorderSide(color: scheme.primary, width: 2)
-              : BorderSide.none,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 6,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              spacing: Space.sm,
               children: [
-                Icon(icon, size: 22, color: foreground),
-                Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 16 / 13,
-                    color: foreground,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: selected ? scheme.primary : brand.neutralChip,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: selected ? scheme.onPrimary : scheme.primary,
                   ),
                 ),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isAction ? scheme.primary : scheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (selected)
+                  Icon(Icons.check_rounded, size: 22, color: scheme.primary),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Gasto" o "Ingreso" junto al título: la hoja solo muestra las de ese
+/// tipo.
+class _KindChip extends StatelessWidget {
+  const _KindChip({required this.direction});
+
+  final TxDirection direction;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final expense = direction == TxDirection.debit;
+    final color = expense
+        ? Theme.of(context).colorScheme.primary
+        : context.lukaColors.income;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: Radii.pillAll,
+      ),
+      child: Text(
+        expense ? l10n.detailKindExpense : l10n.detailKindIncome,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: color,
         ),
       ),
     );

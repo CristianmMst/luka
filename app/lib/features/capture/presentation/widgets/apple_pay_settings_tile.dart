@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/routing/routes.dart';
-import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/settings_group.dart';
 
 /// Fila "Pagos con Apple Pay" de Ajustes (F4.3b, solo iOS): abre la guía
 /// del Atajo, la misma del onboarding.
@@ -17,8 +17,7 @@ class ApplePaySettingsTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: context.lukaColors.card,
-      borderRadius: Radii.rowAll,
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push(Routes.settingsApplePay),
@@ -32,20 +31,8 @@ class ApplePaySettingsTile extends StatelessWidget {
           child: Row(
             spacing: Space.sm,
             children: [
-              ExcludeSemantics(
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.contactless_outlined,
-                    size: 20,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
+              const ExcludeSemantics(
+                child: SettingsIcon(Icons.contactless_outlined),
               ),
               Expanded(
                 child: Column(

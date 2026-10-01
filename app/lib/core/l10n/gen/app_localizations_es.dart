@@ -18,6 +18,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loginHeadline => 'Tus gastos se anotan solos.';
 
   @override
+  String get loginHeadlineLead => 'Tus gastos se anotan ';
+
+  @override
+  String get loginHeadlineAccent => 'solos.';
+
+  @override
   String get loginBody =>
       'luka lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.';
 
@@ -46,22 +52,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loginLegalSuffix => '.';
 
   @override
-  String get tickerNotificationSource => 'NOTIFICACIÓN · BANCOLOMBIA';
+  String get loginTraceTransport => 'TransMilenio';
 
   @override
-  String get tickerNotificationText => 'Compra en La Espiga';
+  String get loginTraceMerchant => 'D1';
 
   @override
-  String get tickerEmailSource => 'CORREO · BANCOLOMBIA';
+  String get loginTraceDeduped => '1 registro · sin duplicados';
 
   @override
-  String get tickerEmailText => 'Compraste en La Espiga';
-
-  @override
-  String get tickerResultTitle => '1 registro';
-
-  @override
-  String get tickerResultSubtitle => 'Mercado · sin duplicados';
+  String get loginTraceIncome => 'Nómina';
 
   @override
   String tickerSemantics(String amount) {
@@ -193,11 +193,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboardOtherCategories => 'Otras categorías';
 
   @override
-  String dashboardOtherAmount(String amount, int percent) {
-    return '$amount · $percent %';
-  }
-
-  @override
   String dashboardOtherSemantics(int percent, String amount) {
     return 'Otras categorías, $percent % del gasto, $amount';
   }
@@ -302,6 +297,26 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get transactionsFilters => 'Filtros';
+
+  @override
+  String transactionsPeriodSemantics(String period) {
+    return 'Periodo: $period. Cambiar en filtros';
+  }
+
+  @override
+  String get transactionsDedupeTitle => 'Sin duplicados.';
+
+  @override
+  String get transactionsDedupeBody =>
+      'Cuando una compra llega por notificación y por correo, queda un solo registro con este sello.';
+
+  @override
+  String get transactionsDedupeDismiss => 'Ocultar aviso';
+
+  @override
+  String txDedupedSemantics(int count) {
+    return 'Un solo registro de $count avisos';
+  }
 
   @override
   String transactionsFiltersSemantics(int count) {
@@ -514,7 +529,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get categorySheetAll => 'Todas';
 
   @override
-  String get categorySheetNew => '+ Nueva categoría';
+  String get categorySheetNew => 'Nueva categoría';
 
   @override
   String merchantRuleTitle(String merchant) {
@@ -949,6 +964,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reviewNoText => 'El texto de este mensaje ya no está disponible.';
 
   @override
+  String get reviewIntro =>
+      'Estos avisos no los pudimos leer solos. Con tu ayuda quedan registrados.';
+
+  @override
+  String reviewUseAmount(String amount) {
+    return 'Usar $amount';
+  }
+
+  @override
+  String get reviewRegisterByHand => 'Registrar a mano';
+
+  @override
+  String get registerAmountUnknown => '¿Cuánto fue?';
+
+  @override
   String get reviewEmptyTitle => 'Nada por revisar';
 
   @override
@@ -1069,7 +1099,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get registerSave => 'Guardar movimiento';
 
   @override
+  String get registerKindGroup => '¿Qué vas a registrar?';
+
+  @override
+  String get registerAmountExpense => '¿Cuánto gastaste?';
+
+  @override
+  String get registerAmountIncome => '¿Cuánto recibiste?';
+
+  @override
+  String get registerCategoryChange => 'Cambiar';
+
+  @override
+  String get registerDateTimeLabel => 'Fecha y hora';
+
+  @override
+  String get registerNotesHint => 'Opcional';
+
+  @override
+  String get categorySheetSearchHint => 'Buscar categoría';
+
+  @override
+  String categorySheetNoMatches(String query) {
+    return 'Ninguna categoría con «$query».';
+  }
+
+  @override
   String get registerSaved => 'Movimiento guardado';
+
+  @override
+  String get registerSavedCardTitle => 'Quedó registrado';
 
   @override
   String get registerSavedOffline =>
@@ -1639,6 +1698,18 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get captureStoppedReconnectFailed =>
       'No pudimos reconectar Gmail. Inténtalo desde Ajustes.';
+
+  @override
+  String get settingsMemberLabel => 'Tu cuenta luka';
+
+  @override
+  String get settingsGroupCapture => 'Captura automática';
+
+  @override
+  String get settingsGroupData => 'Tus datos';
+
+  @override
+  String get settingsGroupPrivacy => 'Privacidad';
 
   @override
   String get settingsTitle => 'Ajustes';

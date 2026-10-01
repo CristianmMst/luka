@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/routing/routes.dart';
-import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/settings_group.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
 
 /// Fila "Gastos fijos" de Ajustes (spec 008 §3.7): abre `/gastos-fijos`.
@@ -20,8 +20,7 @@ class RecurringSettingsTile extends ConsumerWidget {
     final active = expenses.where((e) => e.active).length;
 
     return Material(
-      color: context.lukaColors.card,
-      borderRadius: Radii.rowAll,
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push(Routes.recurring),
@@ -35,20 +34,8 @@ class RecurringSettingsTile extends ConsumerWidget {
           child: Row(
             spacing: Space.sm,
             children: [
-              ExcludeSemantics(
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.event_repeat_rounded,
-                    size: 20,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
+              const ExcludeSemantics(
+                child: SettingsIcon(Icons.event_repeat_rounded),
               ),
               Expanded(
                 child: Column(

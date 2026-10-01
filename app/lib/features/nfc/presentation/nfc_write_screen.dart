@@ -77,7 +77,9 @@ class _NfcWriteScreenState extends ConsumerState<NfcWriteScreen> {
     final soft = brand.onHero.withValues(alpha: 0.85);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: Theme.of(context).brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
         backgroundColor: brand.hero,
         body: SafeArea(

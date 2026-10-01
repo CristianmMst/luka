@@ -9,8 +9,8 @@ import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/routing/routes.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/core/widgets/inline_notice.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
 import 'package:luka/features/review/application/review_actions.dart';
 import 'package:luka/features/review/application/review_providers.dart';
 import 'package:luka/features/review/domain/review_draft.dart';
@@ -18,17 +18,28 @@ import 'package:luka/features/review/domain/review_item.dart';
 import 'package:luka/features/review/presentation/widgets/review_card.dart';
 import 'package:luka/features/review/presentation/widgets/review_format.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/transactions_providers.dart';
+import 'package:luka/features/transactions/domain/category_fit.dart';
+import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
 import 'package:luka/features/transactions/presentation/widgets/category_sheet.dart';
-import 'package:luka/features/transactions/presentation/widgets/transaction_form_card.dart';
+import 'package:luka/features/transactions/presentation/widgets/registrar_form.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
 /// Detalle de un mensaje en revisión (spec 008 §3.5, AC-8.1): el texto
-/// completo con los montos resaltados y el formulario prellenado para
-/// crear el movimiento, o descartar el mensaje.
+/// completo con los montos resaltados y el formulario de Registrar (diseño
+/// Y2) prellenado para crear el movimiento, o descartar el mensaje.
 class ReviewDetailPage extends ConsumerStatefulWidget {
-  const ReviewDetailPage({required this.rawMessageId, super.key});
+  const ReviewDetailPage({
+    required this.rawMessageId,
+    this.initialAmountCents,
+    super.key,
+  });
 
   final String rawMessageId;
+
+  /// Monto elegido con "Usar $X" en la lista, en centavos.
+  final int? initialAmountCents;
 
   @override
   ConsumerState<ReviewDetailPage> createState() => _ReviewDetailPageState();
@@ -48,6 +59,7 @@ class _ReviewDetailPageState extends ConsumerState<ReviewDetailPage> {
     final item = state.value ?? (_busy ? _last : null);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -59,6 +71,10 @@ class _ReviewDetailPageState extends ConsumerState<ReviewDetailPage> {
                 _ when item != null => _ReviewForm(
                   key: ValueKey(item.rawMessageId),
                   item: item,
+                  initialAmount: switch (widget.initialAmountCents) {
+                    final cents? when cents > 0 => Cop(cents),
+                    _ => null,
+                  },
                   onBusy: (busy) => setState(() => _busy = busy),
                 ),
                 AsyncData() => _Message(l10n.reviewNotFound),
@@ -100,11 +116,17 @@ class _TopBar extends StatelessWidget {
             onPressed: () => _back(context),
             icon: const Icon(Icons.chevron_left_rounded, size: 28),
           ),
-          Semantics(
-            header: true,
-            child: Text(
-              l10n.reviewDetailTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+          Flexible(
+            child: Semantics(
+              header: true,
+              child: Text(
+                l10n.reviewDetailTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineSmall?.copyWith(fontSize: 22),
+              ),
             ),
           ),
         ],
@@ -136,9 +158,15 @@ class _Message extends StatelessWidget {
 }
 
 class _ReviewForm extends ConsumerStatefulWidget {
-  const _ReviewForm({required this.item, required this.onBusy, super.key});
+  const _ReviewForm({
+    required this.item,
+    required this.onBusy,
+    this.initialAmount,
+    super.key,
+  });
 
   final ReviewItem item;
+  final Cop? initialAmount;
   final ValueChanged<bool> onBusy;
 
   @override
@@ -150,7 +178,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
     widget.item.partialExtract,
   );
   late final _amount = TextEditingController(
-    text: switch (_initial.amount) {
+    text: switch (widget.initialAmount ?? _initial.amount) {
       final amount? => copInputText(amount),
       null => '',
     },
@@ -168,10 +196,37 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
   var _saveFailed = false;
 
   @override
+  void initState() {
+    super.initState();
+    // El chip del monto en uso se marca: se redibuja al escribir.
+    _amount.addListener(_onAmount);
+  }
+
+  void _onAmount() => setState(() {});
+
+  @override
   void dispose() {
-    _amount.dispose();
+    _amount
+      ..removeListener(_onAmount)
+      ..dispose();
     _merchant.dispose();
     super.dispose();
+  }
+
+  /// Cambia el tipo; la categoría elegida se suelta si no sirve para él.
+  void _setDirection(TxDirection direction) {
+    final categories =
+        ref.read(transactionCategoriesProvider).value ??
+        const <CategoryOption>[];
+    final current = categories.where((c) => c.id == _categoryId).firstOrNull;
+    setState(() {
+      _direction = direction;
+      if (current != null && !fitsDirection(current, direction)) {
+        _categoryId = null;
+        _categoryName = null;
+      }
+    });
+    _clearError(ReviewDraftError.directionRequired);
   }
 
   ReviewDraft get _draft => ReviewDraft(
@@ -234,7 +289,11 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
   }
 
   Future<void> _pickCategory() async {
-    final choice = await CategorySheet.show(context, selectedId: _categoryId);
+    final choice = await CategorySheet.show(
+      context,
+      selectedId: _categoryId,
+      direction: _direction,
+    );
     final id = choice?.id;
     if (id == null || !mounted) return;
     setState(() {
@@ -328,46 +387,79 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
     final textTheme = Theme.of(context).textTheme;
     final item = widget.item;
 
+    final scheme = Theme.of(context).colorScheme;
+    final categories =
+        ref.watch(transactionCategoriesProvider).value ??
+        const <CategoryOption>[];
+    final category = categories.where((c) => c.id == _categoryId).firstOrNull;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(Space.md, 0, Space.md, Space.xl),
       children: [
-        _MessageCard(item: item, onAmount: _useAmount),
+        _MessageCard(
+          item: item,
+          selected: parseCopInput(_amount.text),
+          onAmount: _useAmount,
+        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(Space.xxs, 22, Space.xxs, 10),
+          padding: const EdgeInsets.fromLTRB(Space.xxs, 24, Space.xxs, 12),
           child: Semantics(
             header: true,
             child: Text(
               l10n.reviewFormTitle,
-              style: textTheme.headlineSmall?.copyWith(fontSize: 22),
+              style: textTheme.headlineSmall?.copyWith(letterSpacing: -0.5),
             ),
           ),
         ),
-        TransactionFormCard(
-          amount: _amount,
-          merchant: _merchant,
+        KindSwitch(direction: _direction, onChanged: _setDirection),
+        if (_errors.contains(ReviewDraftError.directionRequired))
+          Padding(
+            padding: const EdgeInsets.only(top: Space.xs, left: Space.xxs),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                l10n.reviewDirectionRequired,
+                style: textTheme.bodySmall?.copyWith(color: scheme.error),
+              ),
+            ),
+          ),
+        const SizedBox(height: 20),
+        AmountField(
+          controller: _amount,
           direction: _direction,
-          occurredAt: _occurredAt,
-          categoryName: _categoryName,
-          amountError: _errors.contains(ReviewDraftError.amountRequired)
+          error: _errors.contains(ReviewDraftError.amountRequired)
               ? l10n.reviewAmountRequired
               : null,
-          directionError: _errors.contains(ReviewDraftError.directionRequired)
-              ? l10n.reviewDirectionRequired
-              : null,
-          dateError: _errors.contains(ReviewDraftError.occurredAtRequired)
-              ? l10n.reviewDateRequired
-              : null,
-          dateHint: _dateFromReceived ? l10n.reviewDateFromReceived : null,
-          onAmountChanged: () => _clearError(ReviewDraftError.amountRequired),
-          onDirection: (direction) {
-            setState(() => _direction = direction);
-            _clearError(ReviewDraftError.directionRequired);
-          },
+          onChanged: () => _clearError(ReviewDraftError.amountRequired),
+        ),
+        const SizedBox(height: 20),
+        CategoryField(
+          name: _categoryName ?? l10n.txNoCategory,
+          icon: category == null
+              ? categoryIcon(null)
+              : category.isSystem
+              ? categoryIcon(category.slug)
+              : ownCategoryIcon(category.icon),
+          direction: _direction,
+          onTap: () => unawaited(_pickCategory()),
+        ),
+        const SizedBox(height: Space.sm),
+        RegistrarDetails(
+          occurredAt: _occurredAt,
+          now: ref.read(transactionsClockProvider)(),
+          merchant: _merchant,
           onPickDate: () => unawaited(_pickDate()),
           onPickTime: () => unawaited(_pickTime()),
-          onPickCategory: () => unawaited(_pickCategory()),
+          dateNote: _errors.contains(ReviewDraftError.occurredAtRequired)
+              ? l10n.reviewDateRequired
+              : _dateFromReceived
+              ? l10n.reviewDateFromReceived
+              : null,
+          dateNoteIsError: _errors.contains(
+            ReviewDraftError.occurredAtRequired,
+          ),
         ),
-        const SizedBox(height: Space.lg),
+        const SizedBox(height: 22),
         if (_saveFailed)
           Padding(
             padding: const EdgeInsets.only(bottom: Space.sm),
@@ -379,7 +471,11 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
         FilledButton(
           onPressed: _busy ? null : () => unawaited(_convert()),
           style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
+            minimumSize: const Size.fromHeight(58),
+            shape: const StadiumBorder(),
+            textStyle: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
           child: _busy
               ? const SizedBox.square(
@@ -388,12 +484,12 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
                 )
               : Text(l10n.reviewConvert),
         ),
-        const SizedBox(height: Space.xs),
+        const SizedBox(height: Space.xxs),
         TextButton(
           onPressed: _busy ? null : () => unawaited(_discard()),
           style: TextButton.styleFrom(
             minimumSize: const Size.fromHeight(minTouchTarget),
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            foregroundColor: scheme.onSurfaceVariant,
           ),
           child: Text(l10n.reviewDiscard),
         ),
@@ -408,9 +504,16 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
 /// completo: así el formulario queda cerca y no hay un desplazamiento
 /// vertical dentro de otro.
 class _MessageCard extends StatefulWidget {
-  const _MessageCard({required this.item, required this.onAmount});
+  const _MessageCard({
+    required this.item,
+    required this.selected,
+    required this.onAmount,
+  });
 
   final ReviewItem item;
+
+  /// Monto que tiene el formulario: su chip se marca.
+  final Cop? selected;
   final ValueChanged<Cop> onAmount;
 
   @override
@@ -453,7 +556,8 @@ class _MessageCardState extends State<_MessageCard> {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.lukaColors.card,
-        borderRadius: Radii.cardAll,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Space.md),
@@ -509,6 +613,7 @@ class _MessageCardState extends State<_MessageCard> {
                     for (final amount in amounts)
                       _AmountChip(
                         amount: amount,
+                        selected: amount == widget.selected,
                         onTap: () => widget.onAmount(amount),
                       ),
                   ],
@@ -597,9 +702,14 @@ class _HighlightedTextState extends State<_HighlightedText> {
 }
 
 class _AmountChip extends StatelessWidget {
-  const _AmountChip({required this.amount, required this.onTap});
+  const _AmountChip({
+    required this.amount,
+    required this.selected,
+    required this.onTap,
+  });
 
   final Cop amount;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -607,34 +717,34 @@ class _AmountChip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
+    final brand = context.lukaColors;
     return Semantics(
       button: true,
+      selected: selected,
       excludeSemantics: true,
       label: l10n.reviewUseAmountSemantics(spokenAmount(amount)),
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.chipAll,
-        child: SizedBox(
+        borderRadius: Radii.pillAll,
+        child: Container(
           height: minTouchTarget,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: Radii.pillAll,
+            color: selected ? scheme.primary.withValues(alpha: 0.08) : null,
+            border: Border.all(
+              color: selected ? scheme.primary : brand.hairline,
+              width: selected ? 2 : 1,
+            ),
+          ),
           child: Center(
             widthFactor: 1,
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: Space.sm),
-              decoration: BoxDecoration(
-                borderRadius: Radii.chipAll,
-                color: scheme.primaryContainer,
-              ),
-              child: Center(
-                widthFactor: 1,
-                child: Text(
-                  formatCop(amount, withDecimals: amount.cents % 100 != 0),
-                  style: amountTextStyle.copyWith(
-                    fontSize: 14,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
+            child: Text(
+              formatCop(amount, withDecimals: amount.cents % 100 != 0),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ),

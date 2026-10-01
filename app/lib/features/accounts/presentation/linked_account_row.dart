@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
+import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/features/accounts/domain/accounts_ports.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
@@ -53,13 +54,13 @@ class LinkedAccountRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
+                  color: context.lukaColors.neutralChip,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.account_balance_outlined,
                   size: 18,
-                  color: scheme.onPrimaryContainer,
+                  color: scheme.primary,
                 ),
               ),
             ),

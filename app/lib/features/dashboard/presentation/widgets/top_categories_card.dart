@@ -3,15 +3,14 @@ import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
 
-/// "En qué se fue": top 5 del gasto con barras relativas a la mayor, el %
-/// del gasto total y "Otras categorías". Tocar una fila llama a [onOpen]
-/// con su `categoryId` (las que no tienen id no se pueden abrir, y ninguna
-/// si [onOpen] es null).
+/// "En qué se fue" (diseño Q): una franja con la parte de cada categoría
+/// del gasto y, debajo, el top 5 más "Otras categorías" en tarjetas de dos
+/// columnas. Tocar una tarjeta llama a [onOpen] con su `categoryId` (las
+/// que no tienen id no se pueden abrir, y ninguna si [onOpen] es null).
 class TopCategoriesCard extends StatelessWidget {
   const TopCategoriesCard({
     required this.summary,
@@ -22,95 +21,161 @@ class TopCategoriesCard extends StatelessWidget {
   final MonthlySummary summary;
   final ValueChanged<String>? onOpen;
 
+  /// Rampa tomate por puesto: de más a menos gasto. Cada tono difiere en
+  /// claridad, no solo en matiz; la tinta sobre el primero es blanca.
+  static const List<(Color, Color)> ramp = [
+    (Color(0xFFC8331F), Colors.white),
+    (Color(0xFFE9705A), Color(0xFF2A1210)),
+    (Color(0xFFF5A592), Color(0xFF2A1210)),
+    (Color(0xFFFBD5CB), Color(0xFF2A1210)),
+    (Color(0xFFFDE9E3), Color(0xFF2A1210)),
+  ];
+  static const (Color, Color) otherTone = (
+    Color(0xFFEDE6E4),
+    Color(0xFF2A1210),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final brand = context.lukaColors;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final total = summary.totals.expenses;
     final top = summary.topCategories;
-    final largest = top.isEmpty ? 0 : top.first.amount.cents;
     final other = summary.otherAmount;
 
-    return Material(
-      color: brand.card,
-      borderRadius: Radii.cardAll,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.md, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final tiles = <_Tile>[
+      for (final (i, spend) in top.indexed)
+        _Tile(
+          name: spendName(l10n, spend),
+          icon: categoryIcon(spend.slug),
+          amount: spend.amount,
+          percent: sharePercent(spend.amount, total),
+          tone: ramp[i.clamp(0, ramp.length - 1)],
+          other: false,
+          onTap: switch ((spend.categoryId, onOpen)) {
+            (final id?, final open?) => () => open(id),
+            _ => null,
+          },
+        ),
+      if (other.cents > 0)
+        _Tile(
+          name: l10n.dashboardOtherCategories,
+          icon: Icons.more_horiz_rounded,
+          amount: other,
+          percent: sharePercent(other, total),
+          tone: otherTone,
+          other: true,
+          onTap: null,
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Text(
+                  l10n.dashboardTopTitle,
+                  style: textTheme.headlineSmall?.copyWith(letterSpacing: -0.5),
+                ),
+              ),
+            ),
+            Text(
+              l10n.dashboardTopSubtitle,
+              style: textTheme.bodySmall?.copyWith(
+                fontSize: 13,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        if (tiles.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: Text(
+              l10n.dashboardNoExpenses(monthName(summary.month)),
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        else ...[
+          const SizedBox(height: 14),
+          ExcludeSemantics(
+            child: SizedBox(
+              height: 12,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 3,
                 children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        l10n.dashboardTopTitle,
-                        style: textTheme.headlineSmall?.copyWith(fontSize: 20),
+                  for (final tile in tiles)
+                    Expanded(
+                      // Partes por mil del gasto; al menos 1 para que se vea.
+                      flex: total.cents <= 0
+                          ? 1
+                          : (tile.amount.cents * 1000 ~/ total.cents).clamp(
+                              1,
+                              1000,
+                            ),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: tile.tone.$1,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    l10n.dashboardTopSubtitle,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
                 ],
               ),
             ),
-            if (top.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                child: Text(
-                  l10n.dashboardNoExpenses(monthName(summary.month)),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+          ),
+          const SizedBox(height: 14),
+          for (var i = 0; i < tiles.length; i += 2)
+            Padding(
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 10,
+                  children: [
+                    Expanded(child: tiles[i]),
+                    Expanded(
+                      child: i + 1 < tiles.length
+                          ? tiles[i + 1]
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
               ),
-            for (final spend in top)
-              _CategoryRow(
-                spend: spend,
-                percent: sharePercent(spend.amount, total),
-                fraction: largest <= 0 ? 0 : spend.amount.cents / largest,
-                onTap: switch ((spend.categoryId, onOpen)) {
-                  (final id?, final open?) => () => open(id),
-                  _ => null,
-                },
-              ),
-            if (other.cents > 0) _OtherRow(amount: other, total: total),
-          ],
-        ),
-      ),
+            ),
+        ],
+      ],
     );
   }
 }
 
-/// Separador fino entre filas.
-BorderSide _hairline(BuildContext context) =>
-    BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh);
-
-class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({
-    required this.spend,
+class _Tile extends StatelessWidget {
+  const _Tile({
+    required this.name,
+    required this.icon,
+    required this.amount,
     required this.percent,
-    required this.fraction,
+    required this.tone,
+    required this.other,
     required this.onTap,
   });
 
-  final CategorySpend spend;
+  final String name;
+  final IconData icon;
+  final Cop amount;
   final int percent;
-
-  /// Ancho de la barra frente a la categoría mayor (0–1, solo de vista).
-  final double fraction;
+  final (Color, Color) tone;
+  final bool other;
   final VoidCallback? onTap;
 
   @override
@@ -118,161 +183,82 @@ class _CategoryRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final name = spendName(l10n, spend);
-    final amount = formatCop(spend.amount);
+    final formatted = formatCop(amount);
+    final border = BorderRadius.circular(16);
 
     return Semantics(
       button: onTap != null,
       excludeSemantics: true,
-      label: l10n.dashboardCategorySemantics(name, percent, amount),
+      label: other
+          ? l10n.dashboardOtherSemantics(percent, formatted)
+          : l10n.dashboardCategorySemantics(name, percent, formatted),
       onTap: onTap,
-      child: InkWell(
-        onTap: onTap,
-        child: DecoratedBox(
-          decoration: BoxDecoration(border: Border(top: _hairline(context))),
+      child: Material(
+        color: scheme.surfaceContainerLowest,
+        shape: RoundedRectangleBorder(
+          borderRadius: border,
+          side: BorderSide(color: context.lukaColors.hairline),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 56),
-            child: Row(
-              spacing: Space.sm,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    shape: BoxShape.circle,
+            constraints: const BoxConstraints(minHeight: 64),
+            child: Padding(
+              padding: const EdgeInsets.all(Space.sm),
+              child: Row(
+                spacing: 10,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: tone.$1,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(icon, size: 18, color: tone.$2),
                   ),
-                  child: Icon(
-                    categoryIcon(spend.slug),
-                    size: 18,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: Space.xs),
+                  Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 6,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 1,
                       children: [
-                        Row(
-                          spacing: Space.xs,
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
+                        Text(
+                          name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.labelMedium?.copyWith(
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                        Wrap(
+                          spacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.end,
                           children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.titleSmall,
+                            Text(
+                              formatted,
+                              style: textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
                               ),
                             ),
                             Text(
-                              amount,
-                              style: TextStyle(
-                                fontFamily: FontFamilies.mono,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                height: 20 / 14,
-                                color: scheme.onSurface,
+                              l10n.dashboardCategoryPercent(percent),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
                         ),
-                        _Bar(fraction: fraction),
                       ],
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    l10n.dashboardCategoryPercent(percent),
-                    textAlign: TextAlign.end,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  const _Bar({required this.fraction});
-
-  final double fraction;
-
-  static const _height = 8.0;
-  static const _radius = BorderRadius.all(Radius.circular(_height / 2));
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Container(
-      height: _height,
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: _radius,
-      ),
-      alignment: AlignmentDirectional.centerStart,
-      child: FractionallySizedBox(
-        widthFactor: fraction.clamp(0, 1),
-        child: Container(
-          decoration: BoxDecoration(
-            color: scheme.primary,
-            borderRadius: _radius,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OtherRow extends StatelessWidget {
-  const _OtherRow({required this.amount, required this.total});
-
-  final Cop amount;
-  final Cop total;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
-      fontWeight: FontWeight.w400,
-      color: scheme.onSurfaceVariant,
-    );
-    final percent = sharePercent(amount, total);
-    final formatted = formatCop(amount);
-
-    return Semantics(
-      container: true,
-      excludeSemantics: true,
-      label: l10n.dashboardOtherSemantics(percent, formatted),
-      child: DecoratedBox(
-        decoration: BoxDecoration(border: Border(top: _hairline(context))),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(48, 10, 0, 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(l10n.dashboardOtherCategories, style: style),
-              ),
-              Text(
-                l10n.dashboardOtherAmount(formatted, percent),
-                style: style?.copyWith(fontFamily: FontFamilies.mono),
-              ),
-            ],
           ),
         ),
       ),

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:luka/features/transactions/domain/transaction_view.dart';
 import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
-/// Fila de un movimiento dentro de su `DayCard` (diseño "ListaB"): ícono
-/// de categoría, comercio, chip de categoría editable, monto con signo,
-/// canales, hora y sello de sync.
+/// Fila de un movimiento dentro de su `DayCard` (diseño S): ícono de
+/// categoría (con el sello "1 registro" si llegó por varios canales),
+/// comercio, chip de categoría editable, monto con signo, canales, hora y
+/// sello de sync.
 ///
 /// Toda la fila abre el detalle; el chip es un botón aparte con su propia
 /// área táctil de 48 dp.
@@ -38,6 +38,8 @@ class TransactionRow extends StatelessWidget {
       for (final channel in channelOrder)
         if (tx.channels.contains(channel)) channel,
     ];
+    // Varios avisos de la misma compra quedaron en un solo registro.
+    final deduped = channels.length > 1;
 
     return Semantics(
       container: true,
@@ -46,29 +48,45 @@ class TransactionRow extends StatelessWidget {
         onTap: onOpen,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: scheme.outlineVariant)),
+            border: Border(top: BorderSide(color: brand.hairline)),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: Space.md),
             child: Row(
               spacing: Space.sm,
               children: [
-                ExcludeSemantics(
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isTransfer
-                          ? brand.transfer.withValues(alpha: 0.16)
-                          : scheme.primaryContainer,
-                    ),
-                    child: Icon(
-                      isTransfer ? transferIcon : categoryIcon(tx.categorySlug),
-                      size: 20,
-                      color: isTransfer
-                          ? brand.transfer
-                          : scheme.onPrimaryContainer,
+                Semantics(
+                  label: deduped
+                      ? l10n.txDedupedSemantics(channels.length)
+                      : null,
+                  child: ExcludeSemantics(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            color: isTransfer
+                                ? brand.transfer.withValues(alpha: 0.14)
+                                : brand.neutralChip,
+                          ),
+                          child: Icon(
+                            isTransfer
+                                ? transferIcon
+                                : categoryIcon(tx.categorySlug),
+                            size: 20,
+                            color: isTransfer ? brand.transfer : scheme.primary,
+                          ),
+                        ),
+                        if (deduped)
+                          const Positioned(
+                            right: -4,
+                            bottom: -4,
+                            child: DedupeSeal(size: 18, ring: true),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -82,7 +100,7 @@ class TransactionRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           height: 20 / 15,
                         ),
                       ),
@@ -114,9 +132,11 @@ class TransactionRow extends StatelessWidget {
                       child: ExcludeSemantics(
                         child: Text(
                           listAmount(tx.amount, tx.kind),
-                          style: amountTextStyle.copyWith(
+                          style: textTheme.titleSmall?.copyWith(
                             fontSize: 15,
+                            fontWeight: FontWeight.w700,
                             color: amountColor(brand, tx.kind),
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                       ),
@@ -185,7 +205,7 @@ class CategoryChip extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.chipAll,
+        borderRadius: Radii.pillAll,
         child: SizedBox(
           height: minTouchTarget,
           child: Center(
@@ -194,8 +214,8 @@ class CategoryChip extends StatelessWidget {
               height: 28,
               padding: const EdgeInsets.only(left: 10, right: 6),
               decoration: BoxDecoration(
-                borderRadius: Radii.chipAll,
-                border: Border.all(color: scheme.outline),
+                borderRadius: Radii.pillAll,
+                border: Border.all(color: context.lukaColors.hairline),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -264,6 +284,31 @@ class SyncMarkLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Sello amarillo "1 registro" (el del login): un check sobre el amarillo
+/// de marca. Con [ring], un borde del color de la tarjeta lo separa del
+/// ícono que tapa.
+class DedupeSeal extends StatelessWidget {
+  const DedupeSeal({required this.size, this.ring = false, super.key});
+
+  final double size;
+  final bool ring;
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = context.lukaColors;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: brand.gold,
+        shape: BoxShape.circle,
+        border: ring ? Border.all(color: brand.card, width: 2) : null,
+      ),
+      child: Icon(Icons.check_rounded, size: size * 0.62, color: brand.onGold),
     );
   }
 }

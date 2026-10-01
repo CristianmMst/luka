@@ -70,7 +70,7 @@ lib/
     │   ├── domain/        # User, AuthFailure (sellado), AuthRepository — Dart puro
     │   ├── data/          # AuthApi, SessionManager, TokenStore, IdTokenProvider, repo impl
     │   ├── application/   # AuthController (sesión global), SignInController (acción)
-    │   └── presentation/  # SplashPage, LoginPage, ticker de captura, botón de Google
+    │   └── presentation/  # SplashPage, LoginPage, trazo de captura, botón de Google
     ├── sync/              # SyncCoordinator (F4.1): outbox + pull incremental
     ├── transactions/      # Movimientos (F4.2): lista, filtros, detalle, categoría/transfer
     ├── capture/           # Captura de notificaciones Android (F4.3): cola nativa → /ingest

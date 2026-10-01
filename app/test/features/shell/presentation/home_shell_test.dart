@@ -24,6 +24,7 @@ import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/capture_health.dart';
+import '../../../helpers/pump_app.dart';
 
 class _MockSyncStore extends Mock implements SyncStore {}
 
@@ -151,6 +152,7 @@ void main() {
     await tester.tap(find.text('Ajustes'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('Cerrar sesión'), 200);
     expect(find.text('Cerrar sesión'), findsOneWidget);
   });
 
@@ -265,5 +267,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Continuar con Google'), findsOneWidget);
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    testWidgets('barra translúcida sobre Ajustes', tags: ['golden'], (
+      tester,
+    ) async {
+      await pumpShell(tester, buildContainer());
+      await tester.tap(find.text('Ajustes'));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(LukaApp),
+        matchesGoldenFile('goldens/shell_light.png'),
+      );
+    });
   });
 }

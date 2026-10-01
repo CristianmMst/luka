@@ -7,7 +7,6 @@ import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/routing/routes.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/features/recurring/presentation/recurring_form_sheet.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
@@ -282,15 +281,15 @@ class _Hero extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                borderRadius: Radii.noticeAll,
+                borderRadius: BorderRadius.circular(18),
                 color: isTransfer
-                    ? brand.transfer.withValues(alpha: 0.16)
-                    : scheme.primaryContainer,
+                    ? brand.transfer.withValues(alpha: 0.14)
+                    : brand.neutralChip,
               ),
               child: Icon(
                 isTransfer ? transferIcon : categoryIcon(tx.categorySlug),
                 size: 28,
-                color: isTransfer ? brand.transfer : scheme.onPrimaryContainer,
+                color: isTransfer ? brand.transfer : scheme.primary,
               ),
             ),
           ),
@@ -334,11 +333,12 @@ class _Hero extends StatelessWidget {
                 child: Text(
                   detailAmount(tx.amount, tx.kind),
                   maxLines: 1,
-                  style: amountTextStyle.copyWith(
-                    fontSize: 40,
-                    height: 48 / 40,
-                    letterSpacing: -1,
+                  style: textTheme.displayLarge?.copyWith(
+                    fontSize: 48,
+                    height: 1.1,
+                    letterSpacing: -2,
                     color: amountColor(brand, tx.kind),
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
@@ -374,7 +374,6 @@ class _FieldsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final bank = tx.bank;
     final parsedBy = parsedByLabel(l10n, tx.parsedBy);
     final account =
@@ -405,6 +404,7 @@ class _FieldsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: Column(
         children: [
@@ -413,7 +413,9 @@ class _FieldsCard extends StatelessWidget {
               decoration: BoxDecoration(
                 border: index == 0
                     ? null
-                    : Border(top: BorderSide(color: scheme.outlineVariant)),
+                    : Border(
+                        top: BorderSide(color: context.lukaColors.hairline),
+                      ),
               ),
               child: row,
             ),
@@ -489,7 +491,7 @@ class _CategoryButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final foreground = scheme.onPrimaryContainer;
+    final foreground = scheme.onSurface;
 
     return Semantics(
       button: true,
@@ -499,7 +501,7 @@ class _CategoryButton extends StatelessWidget {
       onTap: onTap,
       child: InkWell(
         onTap: onTap,
-        borderRadius: Radii.chipAll,
+        borderRadius: Radii.pillAll,
         child: SizedBox(
           height: minTouchTarget,
           child: Center(
@@ -508,8 +510,8 @@ class _CategoryButton extends StatelessWidget {
               height: 36,
               padding: const EdgeInsets.only(left: Space.sm, right: Space.xs),
               decoration: BoxDecoration(
-                borderRadius: Radii.chipAll,
-                color: scheme.primaryContainer,
+                borderRadius: Radii.pillAll,
+                border: Border.all(color: context.lukaColors.hairline),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -574,7 +576,10 @@ class _PairCard extends ConsumerWidget {
       onTap: open,
       child: Material(
         color: brand.card,
-        borderRadius: Radii.noticeAll,
+        shape: RoundedRectangleBorder(
+          borderRadius: Radii.noticeAll,
+          side: BorderSide(color: brand.hairline),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: open,

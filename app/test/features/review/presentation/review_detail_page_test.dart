@@ -18,6 +18,7 @@ import 'package:luka/features/sync/domain/synced_models.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
 import 'package:luka/features/transactions/domain/category_option.dart';
 import 'package:luka/features/transactions/domain/transactions_repository.dart';
+import 'package:luka/features/transactions/presentation/widgets/registrar_form.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../helpers/pump_app.dart';
@@ -156,6 +157,10 @@ void main() {
           reviewRepositoryProvider.overrideWithValue(repository),
           reviewActionsProvider.overrideWithValue(actions),
           transactionsRepositoryProvider.overrideWithValue(transactions),
+          // "Hoy" / "Ayer" dependen del reloj: una semana después.
+          transactionsClockProvider.overrideWithValue(
+            () => DateTime.utc(2026, 9, 30, 17),
+          ),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light,
@@ -194,11 +199,11 @@ void main() {
       findsOneWidget,
     );
     expect(amountText(tester), '38.900');
-    final direction = tester.widget<SegmentedButton<TxDirection>>(
-      find.byType(SegmentedButton<TxDirection>),
+    expect(
+      tester.widget<KindSwitch>(find.byType(KindSwitch)).direction,
+      TxDirection.debit,
     );
-    expect(direction.selected, {TxDirection.debit});
-    expect(find.text('Martes 22 sep 2026'), findsOneWidget);
+    expect(find.text('22 sep'), findsOneWidget);
     expect(find.text('18:25'), findsOneWidget);
     expect(find.text('Rappi'), findsOneWidget);
     expect(find.text('Sin categoría'), findsOneWidget);
@@ -216,11 +221,12 @@ void main() {
     await pumpDetail(tester, id: 'm-email');
 
     expect(amountText(tester), isEmpty);
-    final direction = tester.widget<SegmentedButton<TxDirection>>(
-      find.byType(SegmentedButton<TxDirection>),
+    expect(
+      tester.widget<KindSwitch>(find.byType(KindSwitch)).direction,
+      isNull,
     );
-    expect(direction.selected, isEmpty);
-    expect(find.text('Miércoles 23 sep 2026'), findsOneWidget);
+    expect(find.text('¿Cuánto fue?'), findsOneWidget);
+    expect(find.text('23 sep'), findsOneWidget);
     expect(find.text('12:41'), findsOneWidget);
     expect(
       find.text(
@@ -344,11 +350,11 @@ void main() {
     final ok = find.textContaining(RegExp(r'^aceptar$', caseSensitive: false));
     await pumpDetail(tester, id: 'm-email');
 
-    await tapVisible(tester, find.text('Miércoles 23 sep 2026'));
+    await tapVisible(tester, find.text('23 sep'));
     await tester.tap(find.text('20'));
     await tester.tap(ok);
     await tester.pumpAndSettle();
-    expect(find.text('Domingo 20 sep 2026'), findsOneWidget);
+    expect(find.text('20 sep'), findsOneWidget);
     expect(
       find.text(
         'Es la fecha en que llegó el mensaje; cámbiala si no coincide.',
@@ -496,7 +502,12 @@ void main() {
 
       // Recortado, el formulario queda cerca y el texto no se desplaza por
       // dentro.
-      expect(find.text('Monto'), findsOneWidget);
+      await tester.dragUntilVisible(
+        find.byType(AmountField),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      expect(find.byType(AmountField), findsOneWidget);
       await tapVisible(tester, find.text('Ver mensaje completo'));
       expect(find.text('Ver menos'), findsOneWidget);
 
@@ -522,7 +533,15 @@ void main() {
       tester,
     ) async {
       await pumpDetail(tester, id: 'm-long', size: phone);
-      final amount = find.byType(TextField).first;
+      final amount = find.descendant(
+        of: find.byType(AmountField),
+        matching: find.byType(TextField),
+      );
+      await tester.dragUntilVisible(
+        find.byType(AmountField),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
 
       await tapVisible(tester, amount);
       tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);

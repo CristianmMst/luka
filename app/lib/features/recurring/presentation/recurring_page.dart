@@ -110,6 +110,7 @@ class _RecurringPageState extends ConsumerState<RecurringPage> {
         decoration: BoxDecoration(
           color: context.lukaColors.card,
           borderRadius: Radii.noticeAll,
+          border: Border.all(color: context.lukaColors.hairline),
         ),
         child: ClipRRect(
           borderRadius: Radii.noticeAll,
@@ -231,6 +232,7 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: Padding(
         padding: const EdgeInsets.all(Space.lg),
@@ -282,6 +284,7 @@ class _ExpensesCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.lukaColors.card,
         borderRadius: Radii.noticeAll,
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: ClipRRect(
         borderRadius: Radii.noticeAll,

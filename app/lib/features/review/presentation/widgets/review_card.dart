@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
@@ -6,71 +7,131 @@ import 'package:luka/features/review/domain/review_item.dart';
 import 'package:luka/features/review/presentation/widgets/review_format.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
-/// Tarjeta de un mensaje en revisión: canal, banco, fecha de recepción,
-/// motivo y un extracto con los montos resaltados. Toda la tarjeta abre el
-/// detalle.
+/// Tarjeta de un mensaje en revisión (diseño AA "Bandeja"): canal, banco,
+/// fecha de recepción, motivo y un extracto con los montos resaltados. Lleva
+/// sus acciones: "Usar $X" abre el detalle con ese monto puesto (o
+/// "Registrar a mano" si no hay ninguno) y "Descartar".
 class ReviewCard extends StatelessWidget {
-  const ReviewCard({required this.item, required this.onOpen, super.key});
+  const ReviewCard({
+    required this.item,
+    required this.onOpen,
+    required this.onDiscard,
+    super.key,
+  });
 
   final ReviewItem item;
-  final VoidCallback onOpen;
+
+  /// Abre el detalle; con un monto, ya puesto en el formulario.
+  final ValueChanged<Cop?> onOpen;
+  final VoidCallback onDiscard;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
     final source = reviewSource(l10n, item);
     final date = shortDateTime(item.receivedAt);
     final reason = reasonLabel(l10n, item.reason);
     final text = item.text;
+    final amount = suggestedAmount(item);
 
-    return Semantics(
-      button: true,
-      container: true,
-      excludeSemantics: true,
-      label: [
-        l10n.reviewCardSemantics(source, date, reason),
-        if (text != null) reviewPreview(text),
-      ].join('. '),
-      onTap: onOpen,
-      child: Material(
-        color: context.lukaColors.card,
-        borderRadius: Radii.cardAll,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onOpen,
-          child: Padding(
-            padding: const EdgeInsets.all(Space.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: Space.sm,
-              children: [
-                ReviewHeader(item: item),
-                if (text != null)
-                  Text.rich(
-                    TextSpan(
-                      children: highlightedSpans(
-                        l10n,
-                        reviewPreview(text),
-                        highlightStyle(scheme),
+    return Material(
+      color: brand.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: brand.hairline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            container: true,
+            excludeSemantics: true,
+            label: [
+              l10n.reviewCardSemantics(source, date, reason),
+              if (text != null) reviewPreview(text),
+            ].join('. '),
+            onTap: () => onOpen(null),
+            child: InkWell(
+              onTap: () => onOpen(null),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: Space.sm,
+                  children: [
+                    ReviewHeader(item: item),
+                    if (text != null)
+                      Text.rich(
+                        TextSpan(
+                          children: highlightedSpans(
+                            l10n,
+                            reviewPreview(text),
+                            highlightStyle(scheme),
+                          ),
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(height: 1.55),
+                      )
+                    else
+                      Text(
+                        l10n.reviewNoText,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, Space.sm, 6, 14),
+            // Si no caben juntas (letra grande), "Descartar" baja.
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              runSpacing: Space.xxs,
+              children: [
+                if (amount != null)
+                  FilledButton.icon(
+                    onPressed: () => onOpen(amount),
+                    iconAlignment: IconAlignment.end,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    label: Text(l10n.reviewUseAmount(formatCop(amount))),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, minTouchTarget),
+                      shape: const StadiumBorder(),
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyMedium?.copyWith(height: 1.45),
                   )
                 else
-                  Text(
-                    l10n.reviewNoText,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                  OutlinedButton(
+                    onPressed: () => onOpen(null),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, minTouchTarget),
+                      shape: const StadiumBorder(),
+                      side: BorderSide(color: brand.hairline),
                     ),
+                    child: Text(l10n.reviewRegisterByHand),
                   ),
+                TextButton(
+                  onPressed: onDiscard,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, minTouchTarget),
+                    foregroundColor: scheme.onSurfaceVariant,
+                  ),
+                  child: Text(l10n.reviewDiscard),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -98,13 +159,13 @@ class ReviewHeader extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(13),
+            color: brand.neutralChip,
           ),
           child: Icon(
             reviewChannelIcon(item.channel),
             size: 20,
-            color: scheme.onPrimaryContainer,
+            color: scheme.primary,
             semanticLabel: reviewChannelName(l10n, item.channel),
           ),
         ),
@@ -142,9 +203,8 @@ class ReviewHeader extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  borderRadius: Radii.chipAll,
-                  border: Border.all(color: scheme.outlineVariant),
-                  color: brand.tile,
+                  borderRadius: Radii.pillAll,
+                  color: brand.neutralChip,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

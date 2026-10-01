@@ -57,12 +57,14 @@ void main() {
     WidgetTester tester, {
     List<RejectedChange> changes = const [],
     SyncStatus status = const SyncStatus(),
+    ThemeMode themeMode = ThemeMode.light,
   }) async {
     final coordinator = _Coordinator(
       status.copyWith(lastSyncedAt: _now.subtract(const Duration(minutes: 3))),
     );
     await tester.pumpApp(
       Scaffold(body: SyncSheet(now: () => _now)),
+      themeMode: themeMode,
       overrides: [
         syncCoordinatorProvider.overrideWith(() => coordinator),
         rejectedChangesProvider.overrideWith((ref) => Stream.value(changes)),
@@ -133,5 +135,21 @@ void main() {
     );
     expect(size.width, greaterThanOrEqualTo(48));
     expect(size.height, greaterThanOrEqualTo(48));
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('sincronizacion ${mode.name}', tags: ['golden'], (
+        tester,
+      ) async {
+        await pumpSheet(tester, themeMode: mode);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/sync_sheet_${mode.name}.png'),
+        );
+      });
+    }
   });
 }

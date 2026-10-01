@@ -67,6 +67,7 @@ class MyCategoriesPage extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: context.lukaColors.card,
                   borderRadius: Radii.noticeAll,
+                  border: Border.all(color: context.lukaColors.hairline),
                 ),
                 child: Column(
                   children: [
@@ -101,6 +102,7 @@ class MyCategoriesPage extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: context.lukaColors.card,
                 borderRadius: Radii.noticeAll,
+                border: Border.all(color: context.lukaColors.hairline),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(14),

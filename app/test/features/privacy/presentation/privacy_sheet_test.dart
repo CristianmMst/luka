@@ -18,9 +18,13 @@ void main() {
     when(() => actions.deleteAccount()).thenAnswer((_) async {});
   });
 
-  Future<void> pumpSheet(WidgetTester tester) async {
+  Future<void> pumpSheet(
+    WidgetTester tester, {
+    ThemeMode themeMode = ThemeMode.light,
+  }) async {
     await tester.pumpApp(
       const Scaffold(body: PrivacySheet()),
+      themeMode: themeMode,
       overrides: [privacyActionsProvider.overrideWithValue(actions)],
     );
     await tester.pumpAndSettle();
@@ -79,5 +83,19 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(PrivacySheet), findsOneWidget);
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('privacidad ${mode.name}', tags: ['golden'], (tester) async {
+        await pumpSheet(tester, themeMode: mode);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/privacy_sheet_${mode.name}.png'),
+        );
+      });
+    }
   });
 }

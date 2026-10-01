@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/settings_group.dart';
 import 'package:luka/features/gmail/application/gmail_controller.dart';
 import 'package:luka/features/gmail/domain/gmail_connection.dart';
 import 'package:luka/features/gmail/domain/gmail_failure.dart';
@@ -40,7 +41,8 @@ class GmailSettingsTile extends ConsumerWidget {
           info.email == null
               ? l10n.settingsGmailConnectedNoEmail
               : l10n.settingsGmailConnected(info.email!),
-          scheme.primary,
+          // Bien en verde: el tomate de marca se leería como error.
+          context.lukaColors.income,
         ),
         GmailStatus.revoked => (l10n.settingsGmailRevoked, scheme.error),
         GmailStatus.error => (l10n.settingsGmailError, scheme.error),
@@ -80,9 +82,8 @@ class GmailSettingsTile extends ConsumerWidget {
       spacing: Space.xs,
       children: [
         DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.lukaColors.card,
-            borderRadius: Radii.rowAll,
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -94,20 +95,8 @@ class GmailSettingsTile extends ConsumerWidget {
             child: Row(
               spacing: Space.sm,
               children: [
-                ExcludeSemantics(
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.mail_outline_rounded,
-                      size: 20,
-                      color: scheme.onPrimaryContainer,
-                    ),
-                  ),
+                const ExcludeSemantics(
+                  child: SettingsIcon(Icons.mail_outline_rounded),
                 ),
                 Expanded(
                   child: MergeSemantics(

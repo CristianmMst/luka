@@ -196,6 +196,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => ReviewDetailPage(
                       rawMessageId: state.pathParameters['rawMessageId']!,
+                      // "Usar $X" de la lista: el monto ya puesto.
+                      initialAmountCents: int.tryParse(
+                        state.uri.queryParameters['monto'] ?? '',
+                      ),
                     ),
                   ),
                 ],

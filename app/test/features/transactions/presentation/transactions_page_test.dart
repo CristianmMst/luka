@@ -8,10 +8,12 @@ import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/app_theme.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
+import 'package:luka/features/transactions/application/dedupe_hint_controller.dart';
 import 'package:luka/features/transactions/application/transaction_actions.dart';
 import 'package:luka/features/transactions/application/transactions_list_controller.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
 import 'package:luka/features/transactions/domain/category_option.dart';
+import 'package:luka/features/transactions/domain/dedupe_hint_store.dart';
 import 'package:luka/features/transactions/domain/transaction_filter.dart';
 import 'package:luka/features/transactions/domain/transaction_view.dart';
 import 'package:luka/features/transactions/domain/transactions_repository.dart';
@@ -23,6 +25,18 @@ import '../../../helpers/pump_app.dart';
 class _Repository extends Mock implements TransactionsRepository {}
 
 class _Actions extends Mock implements TransactionActions {}
+
+/// La marca del aviso "Sin duplicados" en memoria; arranca descartado
+/// para que no desplace la lista en los demás tests.
+class _HintStore implements DedupeHintStore {
+  bool dismissed = true;
+
+  @override
+  Future<bool> wasDismissed() async => dismissed;
+
+  @override
+  Future<void> dismiss() async => dismissed = true;
+}
 
 class _FixedCoordinator extends SyncCoordinator {
   _FixedCoordinator(this._status);
@@ -160,6 +174,7 @@ List<TransactionView> _sample() => [
 void main() {
   late _Repository repository;
   late _Actions actions;
+  late _HintStore hintStore;
   late List<TransactionView> Function(TransactionFilter filter) rows;
 
   setUpAll(() => registerFallbackValue(const TransactionFilter()));
@@ -167,6 +182,7 @@ void main() {
   setUp(() {
     repository = _Repository();
     actions = _Actions();
+    hintStore = _HintStore();
     rows = (_) => _sample();
     when(() => repository.watch(any(), limit: any(named: 'limit'))).thenAnswer(
       (invocation) => Stream.value(
@@ -191,6 +207,7 @@ void main() {
     transactionsRepositoryProvider.overrideWithValue(repository),
     transactionsClockProvider.overrideWithValue(() => _now),
     transactionActionsProvider.overrideWithValue(actions),
+    dedupeHintStoreProvider.overrideWithValue(hintStore),
     syncCoordinatorProvider.overrideWith(() => _FixedCoordinator(status)),
   ];
 
@@ -298,7 +315,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text(r'Éxito Calle 80 · −$126.400'), findsOneWidget);
-      expect(find.text('+ Nueva categoría'), findsOneWidget);
+      expect(find.text('Nueva categoría'), findsOneWidget);
       await tester.tap(find.text('Salud y farmacia').last);
       await tester.pumpAndSettle();
     }
@@ -387,6 +404,43 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('el aviso "Sin duplicados" explica el sello y se oculta', (
+    tester,
+  ) async {
+    hintStore.dismissed = false;
+    await pumpPage(tester);
+
+    expect(find.textContaining('Sin duplicados.'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('Un solo registro de 2 avisos')),
+      findsWidgets,
+    );
+
+    await tester.tap(find.byTooltip('Ocultar aviso'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Sin duplicados.'), findsNothing);
+    expect(hintStore.dismissed, isTrue);
+  });
+
+  testWidgets('sin compras con sello no se muestra el aviso', (tester) async {
+    hintStore.dismissed = false;
+    rows = (_) => [
+      for (final tx in _sample())
+        if (tx.channels.length < 2) tx,
+    ];
+    await pumpPage(tester);
+
+    expect(find.textContaining('Sin duplicados.'), findsNothing);
+  });
+
+  testWidgets('ya descartado, el aviso no vuelve', (tester) async {
+    hintStore.dismissed = true;
+    await pumpPage(tester);
+
+    expect(find.textContaining('Sin duplicados.'), findsNothing);
+  });
+
   testWidgets('una categoría fuera de la lista se lee "Sin categoría"', (
     tester,
   ) async {
@@ -400,7 +454,7 @@ void main() {
 
     expect(find.text('Este mes · Sin categoría'), findsOneWidget);
 
-    await tester.tap(find.text('Filtros'));
+    await tester.tap(find.bySemanticsLabel(RegExp('^Filtros')));
     await tester.pumpAndSettle();
     expect(find.text('Sin categoría'), findsOneWidget);
     expect(find.text('Categoría'), findsOneWidget);
@@ -410,7 +464,7 @@ void main() {
     tester,
   ) async {
     await pumpPage(tester);
-    await tester.tap(find.text('Filtros'));
+    await tester.tap(find.bySemanticsLabel(RegExp('^Filtros')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ingresos'));
     await tester.tap(find.text('Limpiar'));
@@ -589,7 +643,18 @@ void main() {
     setUpAll(loadBrandFonts);
 
     for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('filtros ${mode.name}', tags: ['golden'], (tester) async {
+        await pumpPage(tester, themeMode: mode);
+        await tester.tap(find.bySemanticsLabel(RegExp('^Filtros')));
+        await tester.pumpAndSettle();
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/filter_sheet_${mode.name}.png'),
+        );
+      });
+
       testWidgets('movimientos ${mode.name}', tags: ['golden'], (tester) async {
+        hintStore.dismissed = false;
         await pumpPage(tester, themeMode: mode);
         await expectLater(
           find.byType(TransactionsPage),

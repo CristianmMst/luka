@@ -43,9 +43,28 @@ void main() {
 
   testWidgets('muestra la propuesta y el botón de Google', (tester) async {
     await pumpLogin(tester);
-    expect(find.text('Tus gastos se anotan solos.'), findsOneWidget);
+    expect(
+      find.text('Tus gastos se anotan solos.', findRichText: true),
+      findsOneWidget,
+    );
     expect(find.text('Continuar con Google'), findsOneWidget);
-    expect(find.text('1 registro'), findsOneWidget);
+    expect(find.text('1 registro · sin duplicados'), findsOneWidget);
+  });
+
+  testWidgets('con reducir movimiento aparece quieto', (tester) async {
+    await tester.pumpApp(
+      Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: const LoginPage(),
+        ),
+      ),
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    );
+    await tester.pump();
+
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(find.text('1 registro · sin duplicados'), findsOneWidget);
   });
 
   testWidgets('mientras conecta bloquea el botón', (tester) async {

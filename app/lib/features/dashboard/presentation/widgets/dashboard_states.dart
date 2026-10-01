@@ -160,7 +160,11 @@ class _StateCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-      decoration: BoxDecoration(color: brand.card, borderRadius: Radii.cardAll),
+      decoration: BoxDecoration(
+        color: brand.card,
+        borderRadius: Radii.cardAll,
+        border: Border.all(color: brand.hairline),
+      ),
       child: Column(
         spacing: 10,
         children: [

@@ -13,6 +13,8 @@ import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_hero.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_states.dart';
+import 'package:luka/features/dashboard/presentation/widgets/dashboard_totals_card.dart';
+import 'package:luka/features/dashboard/presentation/widgets/month_switcher.dart';
 import 'package:luka/features/dashboard/presentation/widgets/top_categories_card.dart';
 import 'package:luka/features/recurring/presentation/upcoming_payments_card.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
@@ -21,8 +23,8 @@ import 'package:luka/features/transactions/application/transactions_list_control
 import 'package:luka/features/transactions/domain/transaction_filter.dart';
 import 'package:luka/features/transactions/presentation/widgets/offline_banner.dart';
 
-/// Inicio (F4.6, diseño A "Balance protagonista", spec 008 §3.2): balance
-/// del mes, gastos e ingresos contra el mes anterior y "En qué se fue".
+/// Inicio (F4.6, diseño Q, spec 008 §3.2): banda tomate con el balance del
+/// mes, gastos e ingresos contra el mes anterior y "En qué se fue".
 /// Las cifras se calculan en local, sin red.
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -40,14 +42,24 @@ class DashboardPage extends ConsumerWidget {
     final summary = state.summary.value;
     final shown = summary != null && hasMovements(summary) ? summary : null;
 
+    final scheme = Theme.of(context).colorScheme;
+    // Con cifras, la tarjeta de gastos e ingresos se monta sobre la banda.
+    final overlap = shown != null ? DashboardTotalsCard.overlap : 0.0;
+
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        // La banda café va detrás de la barra de estado en ambos temas.
+        // La banda tomate va detrás de la barra de estado en ambos temas.
         value: SystemUiOverlayStyle.light,
         child: SyncRefresh(
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: Space.md),
+            // La barra translúcida va encima: su alto entra en el margen.
+            padding: EdgeInsets.only(
+              bottom:
+                  (overlap > 0 ? 0 : Space.md) +
+                  MediaQuery.paddingOf(context).bottom,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -60,25 +72,56 @@ class DashboardPage extends ConsumerWidget {
                   onNext: controller.nextMonth,
                   summary: shown,
                   alert: const CaptureStoppedStrip(),
+                  overlap: overlap,
                 ),
-                if (sync.offline)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Space.md,
-                      Space.md,
-                      Space.md,
-                      0,
+                // Subir el resto [overlap] px deja ese mismo blanco al final
+                // del scroll, que hace de margen inferior.
+                Transform.translate(
+                  offset: Offset(0, -overlap),
+                  // Al cambiar de mes, entra por el lado del elegido.
+                  child: MonthSwitcher(
+                    month: state.month,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (shown != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Space.md,
+                            ),
+                            child: DashboardTotalsCard(summary: shown),
+                          ),
+                        if (sync.offline)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              Space.md,
+                              Space.md,
+                              Space.md,
+                              0,
+                            ),
+                            child: OfflineBanner(
+                              message: l10n.dashboardOffline,
+                            ),
+                          ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            Space.md,
+                            shown != null ? 28 : Space.md,
+                            Space.md,
+                            Space.md,
+                          ),
+                          child: _body(context, ref, state, sync, shown),
+                        ),
+                        // Gastos fijos del mes elegido (spec 008 §3.2, F7.6).
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Space.md,
+                          ),
+                          child: UpcomingPaymentsCard(month: state.month),
+                        ),
+                      ],
                     ),
-                    child: OfflineBanner(message: l10n.dashboardOffline),
                   ),
-                Padding(
-                  padding: const EdgeInsets.all(Space.md),
-                  child: _body(context, ref, state, sync, shown),
-                ),
-                // Gastos fijos del mes elegido (spec 008 §3.2, F7.6).
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Space.md),
-                  child: UpcomingPaymentsCard(month: state.month),
                 ),
               ],
             ),

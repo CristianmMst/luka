@@ -3,6 +3,8 @@
   "appName": "luka",
   "splashRestoring": "Restaurando tu sesión",
   "loginHeadline": "Tus gastos se anotan solos.",
+  "loginHeadlineLead": "Tus gastos se anotan ",
+  "loginHeadlineAccent": "solos.",
   "loginBody": "luka lee las notificaciones y correos de tu banco y deja cada compra registrada una sola vez.",
   "loginContinueWithGoogle": "Continuar con Google",
   "loginConnecting": "Conectando con Google…",
@@ -12,12 +14,10 @@
   "loginLegalJoin": " y la ",
   "loginLegalPrivacy": "Política de tratamiento de datos",
   "loginLegalSuffix": ".",
-  "tickerNotificationSource": "NOTIFICACIÓN · BANCOLOMBIA",
-  "tickerNotificationText": "Compra en La Espiga",
-  "tickerEmailSource": "CORREO · BANCOLOMBIA",
-  "tickerEmailText": "Compraste en La Espiga",
-  "tickerResultTitle": "1 registro",
-  "tickerResultSubtitle": "Mercado · sin duplicados",
+  "loginTraceTransport": "TransMilenio",
+  "loginTraceMerchant": "D1",
+  "loginTraceDeduped": "1 registro · sin duplicados",
+  "loginTraceIncome": "Nómina",
   "tickerSemantics": "Ejemplo: una notificación y un correo de la misma compra de {amount} quedan como un solo registro.",
   "@tickerSemantics": {
     "placeholders": {
@@ -172,17 +172,6 @@
     }
   },
   "dashboardOtherCategories": "Otras categorías",
-  "dashboardOtherAmount": "{amount} · {percent} %",
-  "@dashboardOtherAmount": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      },
-      "percent": {
-        "type": "int"
-      }
-    }
-  },
   "dashboardOtherSemantics": "Otras categorías, {percent} % del gasto, {amount}",
   "@dashboardOtherSemantics": {
     "placeholders": {
@@ -258,6 +247,25 @@
   "shellComingSoonBody": "Llega pronto",
   "transactionsSearchHint": "Buscar comercio, categoría o nota",
   "transactionsFilters": "Filtros",
+  "transactionsPeriodSemantics": "Periodo: {period}. Cambiar en filtros",
+  "@transactionsPeriodSemantics": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionsDedupeTitle": "Sin duplicados.",
+  "transactionsDedupeBody": "Cuando una compra llega por notificación y por correo, queda un solo registro con este sello.",
+  "transactionsDedupeDismiss": "Ocultar aviso",
+  "txDedupedSemantics": "Un solo registro de {count} avisos",
+  "@txDedupedSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "transactionsFiltersSemantics": "{count, plural, =0{Filtros} =1{Filtros, 1 activo} other{Filtros, {count} activos}}",
   "@transactionsFiltersSemantics": {
     "placeholders": {
@@ -426,7 +434,7 @@
     }
   },
   "categorySheetAll": "Todas",
-  "categorySheetNew": "+ Nueva categoría",
+  "categorySheetNew": "Nueva categoría",
   "merchantRuleTitle": "¿Aplicar siempre a {merchant}?",
   "@merchantRuleTitle": {
     "placeholders": {
@@ -655,6 +663,17 @@
   "reviewReasonLlmUnreliable": "La lectura no fue confiable",
   "reviewReasonOther": "Necesita tu ayuda",
   "reviewNoText": "El texto de este mensaje ya no está disponible.",
+  "reviewIntro": "Estos avisos no los pudimos leer solos. Con tu ayuda quedan registrados.",
+  "reviewUseAmount": "Usar {amount}",
+  "@reviewUseAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewRegisterByHand": "Registrar a mano",
+  "registerAmountUnknown": "¿Cuánto fue?",
   "reviewEmptyTitle": "Nada por revisar",
   "reviewEmptyBody": "Cuando no podamos leer solos un mensaje de tu banco, aparece aquí para que lo completes.",
   "reviewLoadError": "No pudimos cargar los mensajes por revisar.",
@@ -728,7 +747,23 @@
   "reviewSaveError": "No pudimos guardar el cambio. Intenta de nuevo.",
   "registerSubtitle": "Anota un gasto o un ingreso a mano.",
   "registerSave": "Guardar movimiento",
+  "registerKindGroup": "¿Qué vas a registrar?",
+  "registerAmountExpense": "¿Cuánto gastaste?",
+  "registerAmountIncome": "¿Cuánto recibiste?",
+  "registerCategoryChange": "Cambiar",
+  "registerDateTimeLabel": "Fecha y hora",
+  "registerNotesHint": "Opcional",
+  "categorySheetSearchHint": "Buscar categoría",
+  "categorySheetNoMatches": "Ninguna categoría con «{query}».",
+  "@categorySheetNoMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "registerSaved": "Movimiento guardado",
+  "registerSavedCardTitle": "Quedó registrado",
   "registerSavedOffline": "Movimiento guardado. Se enviará cuando haya conexión.",
   "registerAmountRequired": "Escribe un monto mayor a $0.",
   "registerSaveError": "No pudimos guardar el movimiento. Intenta de nuevo.",
@@ -1015,6 +1050,10 @@
     }
   },
   "captureStoppedReconnectFailed": "No pudimos reconectar Gmail. Inténtalo desde Ajustes.",
+  "settingsMemberLabel": "Tu cuenta luka",
+  "settingsGroupCapture": "Captura automática",
+  "settingsGroupData": "Tus datos",
+  "settingsGroupPrivacy": "Privacidad",
   "settingsTitle": "Ajustes",
   "settingsProfileSemantics": "{name}, {email}",
   "@settingsProfileSemantics": {

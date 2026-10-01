@@ -112,6 +112,18 @@ abstract class AppLocalizations {
   /// **'Tus gastos se anotan solos.'**
   String get loginHeadline;
 
+  /// No description provided for @loginHeadlineLead.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus gastos se anotan '**
+  String get loginHeadlineLead;
+
+  /// No description provided for @loginHeadlineAccent.
+  ///
+  /// In es, this message translates to:
+  /// **'solos.'**
+  String get loginHeadlineAccent;
+
   /// No description provided for @loginBody.
   ///
   /// In es, this message translates to:
@@ -166,41 +178,29 @@ abstract class AppLocalizations {
   /// **'.'**
   String get loginLegalSuffix;
 
-  /// No description provided for @tickerNotificationSource.
+  /// No description provided for @loginTraceTransport.
   ///
   /// In es, this message translates to:
-  /// **'NOTIFICACIÓN · BANCOLOMBIA'**
-  String get tickerNotificationSource;
+  /// **'TransMilenio'**
+  String get loginTraceTransport;
 
-  /// No description provided for @tickerNotificationText.
+  /// No description provided for @loginTraceMerchant.
   ///
   /// In es, this message translates to:
-  /// **'Compra en La Espiga'**
-  String get tickerNotificationText;
+  /// **'D1'**
+  String get loginTraceMerchant;
 
-  /// No description provided for @tickerEmailSource.
+  /// No description provided for @loginTraceDeduped.
   ///
   /// In es, this message translates to:
-  /// **'CORREO · BANCOLOMBIA'**
-  String get tickerEmailSource;
+  /// **'1 registro · sin duplicados'**
+  String get loginTraceDeduped;
 
-  /// No description provided for @tickerEmailText.
+  /// No description provided for @loginTraceIncome.
   ///
   /// In es, this message translates to:
-  /// **'Compraste en La Espiga'**
-  String get tickerEmailText;
-
-  /// No description provided for @tickerResultTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'1 registro'**
-  String get tickerResultTitle;
-
-  /// No description provided for @tickerResultSubtitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Mercado · sin duplicados'**
-  String get tickerResultSubtitle;
+  /// **'Nómina'**
+  String get loginTraceIncome;
 
   /// No description provided for @tickerSemantics.
   ///
@@ -376,12 +376,6 @@ abstract class AppLocalizations {
   /// **'Otras categorías'**
   String get dashboardOtherCategories;
 
-  /// No description provided for @dashboardOtherAmount.
-  ///
-  /// In es, this message translates to:
-  /// **'{amount} · {percent} %'**
-  String dashboardOtherAmount(String amount, int percent);
-
   /// No description provided for @dashboardOtherSemantics.
   ///
   /// In es, this message translates to:
@@ -519,6 +513,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Filtros'**
   String get transactionsFilters;
+
+  /// No description provided for @transactionsPeriodSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Periodo: {period}. Cambiar en filtros'**
+  String transactionsPeriodSemantics(String period);
+
+  /// No description provided for @transactionsDedupeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin duplicados.'**
+  String get transactionsDedupeTitle;
+
+  /// No description provided for @transactionsDedupeBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando una compra llega por notificación y por correo, queda un solo registro con este sello.'**
+  String get transactionsDedupeBody;
+
+  /// No description provided for @transactionsDedupeDismiss.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar aviso'**
+  String get transactionsDedupeDismiss;
+
+  /// No description provided for @txDedupedSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Un solo registro de {count} avisos'**
+  String txDedupedSemantics(int count);
 
   /// No description provided for @transactionsFiltersSemantics.
   ///
@@ -865,7 +889,7 @@ abstract class AppLocalizations {
   /// No description provided for @categorySheetNew.
   ///
   /// In es, this message translates to:
-  /// **'+ Nueva categoría'**
+  /// **'Nueva categoría'**
   String get categorySheetNew;
 
   /// No description provided for @merchantRuleTitle.
@@ -1552,6 +1576,30 @@ abstract class AppLocalizations {
   /// **'El texto de este mensaje ya no está disponible.'**
   String get reviewNoText;
 
+  /// No description provided for @reviewIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Estos avisos no los pudimos leer solos. Con tu ayuda quedan registrados.'**
+  String get reviewIntro;
+
+  /// No description provided for @reviewUseAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar {amount}'**
+  String reviewUseAmount(String amount);
+
+  /// No description provided for @reviewRegisterByHand.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar a mano'**
+  String get reviewRegisterByHand;
+
+  /// No description provided for @registerAmountUnknown.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto fue?'**
+  String get registerAmountUnknown;
+
   /// No description provided for @reviewEmptyTitle.
   ///
   /// In es, this message translates to:
@@ -1768,11 +1816,65 @@ abstract class AppLocalizations {
   /// **'Guardar movimiento'**
   String get registerSave;
 
+  /// No description provided for @registerKindGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué vas a registrar?'**
+  String get registerKindGroup;
+
+  /// No description provided for @registerAmountExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto gastaste?'**
+  String get registerAmountExpense;
+
+  /// No description provided for @registerAmountIncome.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto recibiste?'**
+  String get registerAmountIncome;
+
+  /// No description provided for @registerCategoryChange.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar'**
+  String get registerCategoryChange;
+
+  /// No description provided for @registerDateTimeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha y hora'**
+  String get registerDateTimeLabel;
+
+  /// No description provided for @registerNotesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional'**
+  String get registerNotesHint;
+
+  /// No description provided for @categorySheetSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar categoría'**
+  String get categorySheetSearchHint;
+
+  /// No description provided for @categorySheetNoMatches.
+  ///
+  /// In es, this message translates to:
+  /// **'Ninguna categoría con «{query}».'**
+  String categorySheetNoMatches(String query);
+
   /// No description provided for @registerSaved.
   ///
   /// In es, this message translates to:
   /// **'Movimiento guardado'**
   String get registerSaved;
+
+  /// No description provided for @registerSavedCardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Quedó registrado'**
+  String get registerSavedCardTitle;
 
   /// No description provided for @registerSavedOffline.
   ///
@@ -2751,6 +2853,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No pudimos reconectar Gmail. Inténtalo desde Ajustes.'**
   String get captureStoppedReconnectFailed;
+
+  /// No description provided for @settingsMemberLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu cuenta luka'**
+  String get settingsMemberLabel;
+
+  /// No description provided for @settingsGroupCapture.
+  ///
+  /// In es, this message translates to:
+  /// **'Captura automática'**
+  String get settingsGroupCapture;
+
+  /// No description provided for @settingsGroupData.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos'**
+  String get settingsGroupData;
+
+  /// No description provided for @settingsGroupPrivacy.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad'**
+  String get settingsGroupPrivacy;
 
   /// No description provided for @settingsTitle.
   ///

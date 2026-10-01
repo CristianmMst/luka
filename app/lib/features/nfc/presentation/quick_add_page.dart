@@ -132,7 +132,10 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
       alignment: Alignment.bottomCenter,
       child: Material(
         color: brand.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          side: BorderSide(color: brand.hairline),
+        ),
         clipBehavior: Clip.antiAlias,
         child: SafeArea(
           top: false,
@@ -157,13 +160,13 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: scheme.primaryContainer,
-                          shape: BoxShape.circle,
+                          color: context.lukaColors.neutralChip,
+                          borderRadius: BorderRadius.circular(13),
                         ),
                         child: Icon(
                           Icons.nfc_rounded,
                           size: 20,
-                          color: scheme.onPrimaryContainer,
+                          color: scheme.primary,
                         ),
                       ),
                     ),

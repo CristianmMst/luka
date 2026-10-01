@@ -15,6 +15,7 @@ import 'package:luka/features/dashboard/application/dashboard_providers.dart';
 import 'package:luka/features/dashboard/domain/insights_repository.dart';
 import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/dashboard_page.dart';
+import 'package:luka/features/dashboard/presentation/widgets/month_switcher.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/application/sync_engine.dart';
 import 'package:luka/features/transactions/application/transactions_list_controller.dart';
@@ -209,7 +210,8 @@ void main() {
     expect(find.text('32 %'), findsOneWidget);
     expect(find.text('8 %'), findsOneWidget);
     expect(find.text('Otras categorías'), findsOneWidget);
-    expect(find.text(r'$199.900 · 16 %'), findsOneWidget);
+    expect(find.text(r'$199.900'), findsOneWidget);
+    expect(find.text('16 %'), findsOneWidget);
     expect(find.text('Sin conexión — datos locales'), findsNothing);
   });
 
@@ -479,6 +481,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Mes anterior'));
     await tester.pump();
+    // Termina la transición de mes (las dos versiones conviven mientras).
+    await tester.pump(MonthSwitcher.duration * 2);
     expect(find.text('Agosto 2026'), findsOneWidget);
     // Las cifras siguen siendo las de septiembre, con su comparación.
     expect(find.text('Restaurantes'), findsOneWidget);

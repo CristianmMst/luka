@@ -17,6 +17,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
     required this.onWarningContainer,
     required this.hero,
     required this.onHero,
+    required this.band,
+    required this.onBand,
+    required this.hairline,
+    required this.neutralChip,
     required this.heroCard,
     required this.heroChip,
     required this.card,
@@ -35,6 +39,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
     onWarningContainer: LightTokens.onWarningContainer,
     hero: LightTokens.hero,
     onHero: LightTokens.onHero,
+    band: LightTokens.band,
+    onBand: LightTokens.onBand,
+    hairline: LightTokens.hairline,
+    neutralChip: LightTokens.neutralChip,
     heroCard: LightTokens.heroCard,
     heroChip: LightTokens.heroChip,
     card: LightTokens.card,
@@ -53,6 +61,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
     onWarningContainer: DarkTokens.onWarningContainer,
     hero: DarkTokens.hero,
     onHero: DarkTokens.onHero,
+    band: DarkTokens.band,
+    onBand: DarkTokens.onBand,
+    hairline: DarkTokens.hairline,
+    neutralChip: DarkTokens.neutralChip,
     heroCard: DarkTokens.heroCard,
     heroChip: DarkTokens.heroChip,
     card: DarkTokens.card,
@@ -75,6 +87,16 @@ class LukaColors extends ThemeExtension<LukaColors> {
   final Color onWarningContainer;
   final Color hero;
   final Color onHero;
+
+  /// Banda tomate del Inicio (spec 008 §7.1); en oscuro, tomate profundo.
+  final Color band;
+  final Color onBand;
+
+  /// Bordes de tarjetas sobre fondo blanco: cálidos pero sin tinte rojo.
+  final Color hairline;
+
+  /// Píldoras neutras (un delta sin cambio) sobre blanco.
+  final Color neutralChip;
   final Color heroCard;
   final Color heroChip;
 
@@ -97,6 +119,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
     Color? onWarningContainer,
     Color? hero,
     Color? onHero,
+    Color? band,
+    Color? onBand,
+    Color? hairline,
+    Color? neutralChip,
     Color? heroCard,
     Color? heroChip,
     Color? card,
@@ -114,6 +140,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
       onWarningContainer: onWarningContainer ?? this.onWarningContainer,
       hero: hero ?? this.hero,
       onHero: onHero ?? this.onHero,
+      band: band ?? this.band,
+      onBand: onBand ?? this.onBand,
+      hairline: hairline ?? this.hairline,
+      neutralChip: neutralChip ?? this.neutralChip,
       heroCard: heroCard ?? this.heroCard,
       heroChip: heroChip ?? this.heroChip,
       card: card ?? this.card,
@@ -144,6 +174,10 @@ class LukaColors extends ThemeExtension<LukaColors> {
       )!,
       hero: Color.lerp(hero, other.hero, t)!,
       onHero: Color.lerp(onHero, other.onHero, t)!,
+      band: Color.lerp(band, other.band, t)!,
+      onBand: Color.lerp(onBand, other.onBand, t)!,
+      hairline: Color.lerp(hairline, other.hairline, t)!,
+      neutralChip: Color.lerp(neutralChip, other.neutralChip, t)!,
       heroCard: Color.lerp(heroCard, other.heroCard, t)!,
       heroChip: Color.lerp(heroChip, other.heroChip, t)!,
       card: Color.lerp(card, other.card, t)!,

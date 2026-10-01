@@ -92,6 +92,7 @@ class LinkedAccountsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.lukaColors.card,
         borderRadius: Radii.noticeAll,
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: Column(
         children: [

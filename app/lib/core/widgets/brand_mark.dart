@@ -67,3 +67,30 @@ class BrandMark extends StatelessWidget {
     );
   }
 }
+
+/// La marca sobre la cabecera `hero` (splash, onboarding): blanca en claro,
+/// así que va la variante del login (símbolo tomate y wordmark `#AA2E1E`);
+/// en oscuro, la variante para fondo oscuro con el wordmark crema.
+class HeroBrandMark extends StatelessWidget {
+  const HeroBrandMark({
+    this.size = 26,
+    this.direction = Axis.horizontal,
+    super.key,
+  });
+
+  final double size;
+  final Axis direction;
+
+  static const _wordmarkRed = Color(0xFFAA2E1E);
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return BrandMark(
+      onDark: dark,
+      textColor: dark ? const Color(0xFFFFF6F0) : _wordmarkRed,
+      size: size,
+      direction: direction,
+    );
+  }
+}

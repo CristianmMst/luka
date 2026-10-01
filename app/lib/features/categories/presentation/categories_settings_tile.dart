@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/routing/routes.dart';
-import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/settings_group.dart';
 
 /// Fila "Mis categorías" de Ajustes (F4.8a): abre la lista de las propias.
 class CategoriesSettingsTile extends StatelessWidget {
@@ -16,8 +16,7 @@ class CategoriesSettingsTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Material(
-      color: context.lukaColors.card,
-      borderRadius: Radii.rowAll,
+      color: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push(Routes.settingsCategories),
@@ -31,20 +30,8 @@ class CategoriesSettingsTile extends StatelessWidget {
           child: Row(
             spacing: Space.sm,
             children: [
-              ExcludeSemantics(
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.category_outlined,
-                    size: 20,
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
+              const ExcludeSemantics(
+                child: SettingsIcon(Icons.category_outlined),
               ),
               Expanded(
                 child: Column(

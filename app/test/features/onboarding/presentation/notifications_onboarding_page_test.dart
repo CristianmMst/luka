@@ -9,6 +9,7 @@ import 'package:luka/features/onboarding/presentation/notifications_onboarding_p
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/pump_app.dart';
 import 'onboarding_harness.dart';
 
 class _MockSource extends Mock implements NotificationSource {}
@@ -27,8 +28,12 @@ void main() {
     when(() => source.openPermissionSettings()).thenAnswer((_) async {});
   });
 
-  Future<void> pumpPage(WidgetTester tester) => pumpOnboardingStep(
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    ThemeMode themeMode = ThemeMode.light,
+  }) => pumpOnboardingStep(
     tester,
+    themeMode: themeMode,
     location: Routes.onboardingNotifications,
     page: const NotificationsOnboardingPage(),
     overrides: [
@@ -87,5 +92,23 @@ void main() {
 
     expect(find.text(nextAccounts), findsOneWidget);
     verifyNever(() => source.openPermissionSettings());
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('notificaciones ${mode.name}', tags: ['golden'], (
+        tester,
+      ) async {
+        await pumpPage(tester, themeMode: mode);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile(
+            'goldens/notifications_onboarding_${mode.name}.png',
+          ),
+        );
+      });
+    }
   });
 }

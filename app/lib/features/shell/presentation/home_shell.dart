@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +7,10 @@ import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 
-/// Shell de la app autenticada: un `IndexedStack` de 5 ramas con una barra
-/// de navegación inferior fija (diseño "ListaB", spec 008 §7).
+/// Shell de la app autenticada: un `IndexedStack` de 5 ramas con la barra
+/// de navegación inferior translúcida (spec 008 §7.1): el contenido pasa por
+/// debajo (`extendBody`), así que cada pestaña suma
+/// `MediaQuery.paddingOf(context).bottom` a su margen inferior.
 class HomeShell extends ConsumerWidget {
   const HomeShell({required this.navigationShell, super.key});
 
@@ -17,6 +21,7 @@ class HomeShell extends ConsumerWidget {
     final reviewCount = ref.watch(openReviewCountProvider).value ?? 0;
 
     return Scaffold(
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: _MainNavigationBar(
         currentIndex: navigationShell.currentIndex,
@@ -30,8 +35,9 @@ class HomeShell extends ConsumerWidget {
   }
 }
 
-/// Barra inferior de 80 dp con indicador `primaryContainer`, el botón
-/// circular de "Registrar" y el badge de "Revisión".
+/// Barra inferior de 80 dp: material blanco translúcido con blur y una línea
+/// fina arriba; el destino activo en `primary`, "Registrar" como botón
+/// circular y el badge de "Revisión". Con alto contraste es opaca.
 class _MainNavigationBar extends StatelessWidget {
   const _MainNavigationBar({
     required this.currentIndex,
@@ -49,51 +55,62 @@ class _MainNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final opaque = MediaQuery.highContrastOf(context);
+    final material = scheme.surfaceContainerLowest;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        border: Border(top: BorderSide(color: scheme.outlineVariant)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: _height,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Destination(
-                icon: Icons.home_outlined,
-                label: l10n.navHomeLabel,
-                selected: currentIndex == 0,
-                onTap: () => onSelect(0),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: opaque
+            ? ImageFilter.blur()
+            : ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: opaque ? material : material.withValues(alpha: 0.84),
+            border: Border(
+              top: BorderSide(color: scheme.onSurface.withValues(alpha: 0.08)),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: _height,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Destination(
+                    icon: Icons.home_outlined,
+                    label: l10n.navHomeLabel,
+                    selected: currentIndex == 0,
+                    onTap: () => onSelect(0),
+                  ),
+                  _Destination(
+                    icon: Icons.receipt_long_outlined,
+                    label: l10n.navTransactionsLabel,
+                    selected: currentIndex == 1,
+                    onTap: () => onSelect(1),
+                  ),
+                  _RegisterDestination(
+                    label: l10n.navRegisterLabel,
+                    selected: currentIndex == 2,
+                    onTap: () => onSelect(2),
+                  ),
+                  _Destination(
+                    icon: Icons.fact_check_outlined,
+                    label: l10n.navReviewLabel,
+                    selected: currentIndex == 3,
+                    onTap: () => onSelect(3),
+                    badgeCount: reviewCount,
+                    badgeSemantics: l10n.reviewBadgeSemantics(reviewCount),
+                  ),
+                  _Destination(
+                    icon: Icons.settings_outlined,
+                    label: l10n.navSettingsLabel,
+                    selected: currentIndex == 4,
+                    onTap: () => onSelect(4),
+                  ),
+                ],
               ),
-              _Destination(
-                icon: Icons.receipt_long_outlined,
-                label: l10n.navTransactionsLabel,
-                selected: currentIndex == 1,
-                onTap: () => onSelect(1),
-              ),
-              _RegisterDestination(
-                label: l10n.navRegisterLabel,
-                selected: currentIndex == 2,
-                onTap: () => onSelect(2),
-              ),
-              _Destination(
-                icon: Icons.fact_check_outlined,
-                label: l10n.navReviewLabel,
-                selected: currentIndex == 3,
-                onTap: () => onSelect(3),
-                badgeCount: reviewCount,
-                badgeSemantics: l10n.reviewBadgeSemantics(reviewCount),
-              ),
-              _Destination(
-                icon: Icons.settings_outlined,
-                label: l10n.navSettingsLabel,
-                selected: currentIndex == 4,
-                onTap: () => onSelect(4),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -121,12 +138,8 @@ class _Destination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final brand = context.lukaColors;
     final textTheme = Theme.of(context).textTheme;
-    final iconColor = selected
-        ? scheme.onPrimaryContainer
-        : scheme.onSurfaceVariant;
-    final labelColor = selected ? scheme.onSurface : scheme.onSurfaceVariant;
+    final color = selected ? scheme.primary : scheme.onSurfaceVariant;
 
     return Expanded(
       child: Semantics(
@@ -143,17 +156,10 @@ class _Destination extends StatelessWidget {
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 56,
                     height: 30,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? scheme.primaryContainer
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(icon, size: 22, color: iconColor),
+                    child: Icon(icon, size: 24, color: color),
                   ),
                   if (badgeCount > 0)
                     Positioned(
@@ -170,7 +176,11 @@ class _Destination extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: brand.expense,
+                            color: scheme.primary,
+                            border: Border.all(
+                              color: scheme.surfaceContainerLowest,
+                              width: 1.5,
+                            ),
                             // Píldora: con 10 o más crece a lo ancho sin
                             // recortar los dígitos; con uno es un círculo.
                             borderRadius: BorderRadius.circular(9),
@@ -180,7 +190,7 @@ class _Destination extends StatelessWidget {
                             child: Text(
                               '$badgeCount',
                               style: textTheme.labelSmall?.copyWith(
-                                color: brand.onExpense,
+                                color: scheme.onPrimary,
                               ),
                             ),
                           ),
@@ -194,8 +204,9 @@ class _Destination extends StatelessWidget {
                 child: Text(
                   label,
                   style: textTheme.bodySmall?.copyWith(
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: labelColor,
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: color,
                   ),
                 ),
               ),
@@ -207,8 +218,8 @@ class _Destination extends StatelessWidget {
   }
 }
 
-/// "Registrar": botón circular `primary` de 52 dp, sin indicador de
-/// selección (siempre el mismo estilo, como una acción).
+/// "Registrar": botón circular `primary` de 52 dp con su sombra; en esa
+/// pestaña lleva un anillo amarillo de marca.
 class _RegisterDestination extends StatelessWidget {
   const _RegisterDestination({
     required this.label,
@@ -238,6 +249,17 @@ class _RegisterDestination extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: scheme.primary,
+                border: selected
+                    ? Border.all(color: context.lukaColors.gold, width: 4)
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.45),
+                    blurRadius: 14,
+                    spreadRadius: -4,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Icon(Icons.add, color: scheme.onPrimary, size: 24),
             ),

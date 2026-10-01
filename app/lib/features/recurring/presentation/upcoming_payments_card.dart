@@ -38,7 +38,10 @@ class UpcomingPaymentsCard extends ConsumerWidget {
     if (expenses.isEmpty) {
       return Material(
         color: context.lukaColors.card,
-        borderRadius: Radii.cardAll,
+        shape: RoundedRectangleBorder(
+          borderRadius: Radii.cardAll,
+          side: BorderSide(color: context.lukaColors.hairline),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => unawaited(RecurringFormSheet.show(context)),
@@ -92,6 +95,7 @@ class UpcomingPaymentsCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: context.lukaColors.card,
         borderRadius: Radii.cardAll,
+        border: Border.all(color: context.lukaColors.hairline),
       ),
       child: ClipRRect(
         borderRadius: Radii.cardAll,

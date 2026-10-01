@@ -17,6 +17,8 @@ import 'package:luka/features/transactions/domain/transactions_repository.dart';
 import 'package:luka/features/transactions/presentation/registrar_page.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/pump_app.dart';
+
 class _Actions extends Mock implements TransactionActions {}
 
 class _Accounts extends Mock implements AccountsStore {}
@@ -67,6 +69,21 @@ void main() {
           name: 'Mercado',
           isSystem: true,
           slug: 'mercado',
+          fiscalTag: 'no_deducible',
+        ),
+        CategoryOption(
+          id: 'c-sal',
+          name: 'Salud y farmacia',
+          isSystem: true,
+          slug: 'salud',
+          fiscalTag: 'no_deducible',
+        ),
+        CategoryOption(
+          id: 'c-nom',
+          name: 'Nómina y salario',
+          isSystem: true,
+          slug: 'nomina',
+          fiscalTag: 'ingreso_laboral',
         ),
       ]),
     );
@@ -75,6 +92,7 @@ void main() {
   Future<void> pumpRegistrar(
     WidgetTester tester, {
     bool offline = false,
+    ThemeMode themeMode = ThemeMode.light,
   }) async {
     tester.view
       ..physicalSize = const Size(390, 1200) * 3
@@ -104,6 +122,8 @@ void main() {
         ],
         child: MaterialApp.router(
           theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
           locale: const Locale('es', 'CO'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -113,6 +133,74 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('el tipo cambia la pregunta y el signo del monto', (
+    tester,
+  ) async {
+    await pumpRegistrar(tester);
+    expect(find.text('¿Cuánto gastaste?'), findsOneWidget);
+    expect(find.text(r'−$'), findsOneWidget);
+
+    await tester.tap(find.text('Ingreso'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('¿Cuánto recibiste?'), findsOneWidget);
+    expect(find.text(r'+$'), findsOneWidget);
+    expect(find.text('Guardar movimiento'), findsOneWidget);
+  });
+
+  testWidgets('la hoja solo ofrece las categorías del tipo y busca', (
+    tester,
+  ) async {
+    await pumpRegistrar(tester);
+    await tester.tap(find.text('Sin categoría'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mercado'), findsOneWidget);
+    expect(find.text('Salud y farmacia'), findsOneWidget);
+    expect(find.text('Nómina y salario'), findsNothing);
+
+    final search = find.widgetWithText(TextField, 'Buscar categoría');
+    await tester.enterText(search, 'SALUD');
+    await tester.pump();
+    expect(find.text('Mercado'), findsNothing);
+    expect(find.text('Salud y farmacia'), findsOneWidget);
+
+    await tester.enterText(search, 'xyz');
+    await tester.pump();
+    expect(find.text('Ninguna categoría con «xyz».'), findsOneWidget);
+  });
+
+  testWidgets('pasar a ingreso suelta una categoría de gasto', (tester) async {
+    await pumpRegistrar(tester);
+    await tester.tap(find.text('Sin categoría'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mercado'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mercado'), findsOneWidget);
+
+    await tester.tap(find.text('Ingreso'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mercado'), findsNothing);
+    expect(find.text('Sin categoría'), findsOneWidget);
+  });
+
+  testWidgets('al guardar aterriza "Quedó registrado" y se va solo', (
+    tester,
+  ) async {
+    await pumpRegistrar(tester);
+    await tester.enterText(find.byType(TextField).at(0), '38450');
+    await tester.tap(find.text('Guardar movimiento'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Quedó registrado'), findsOneWidget);
+    expect(find.text(r'−$38.450'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('Quedó registrado'), findsNothing);
+  });
 
   testWidgets('sin monto avisa y no guarda', (tester) async {
     await pumpRegistrar(tester);
@@ -237,5 +325,31 @@ void main() {
     );
     final amount = tester.widget<TextField>(find.byType(TextField).at(0));
     expect(amount.controller!.text, isNotEmpty);
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('hoja de categorias ${mode.name}', tags: ['golden'], (
+        tester,
+      ) async {
+        await pumpRegistrar(tester, themeMode: mode);
+        await tester.tap(find.text('Sin categoría'));
+        await tester.pumpAndSettle();
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/category_sheet_${mode.name}.png'),
+        );
+      });
+
+      testWidgets('registrar ${mode.name}', tags: ['golden'], (tester) async {
+        await pumpRegistrar(tester, themeMode: mode);
+        await expectLater(
+          find.byType(RegistrarPage),
+          matchesGoldenFile('goldens/registrar_${mode.name}.png'),
+        );
+      });
+    }
   });
 }

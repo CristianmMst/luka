@@ -40,7 +40,9 @@ class NotificationsOnboardingPage extends ConsumerWidget {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // El hero es oscuro en ambos temas: íconos de estado claros.
-      value: SystemUiOverlayStyle.light,
+      value: Theme.of(context).brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -196,11 +198,11 @@ class _Hero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: Space.xl - 4,
             children: [
-              Row(
+              const Row(
                 children: [
-                  BrandMark(onDark: true, textColor: brand.onHero),
-                  const Spacer(),
-                  const OnboardingDots(
+                  HeroBrandMark(),
+                  Spacer(),
+                  OnboardingDots(
                     step: OnboardingStep.notifications,
                     onHero: true,
                   ),

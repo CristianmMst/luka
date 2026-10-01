@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/features/review/domain/amount_highlight.dart';
+import 'package:luka/features/review/domain/review_draft.dart';
 import 'package:luka/features/review/domain/review_item.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 
@@ -72,10 +72,58 @@ String reviewPreview(String text) {
 
 /// Estilo del monto resaltado: fondo `primaryContainer` y la fuente mono,
 /// con contraste AA sobre la tarjeta.
-TextStyle highlightStyle(ColorScheme scheme) => amountTextStyle.copyWith(
-  color: scheme.onPrimaryContainer,
-  backgroundColor: scheme.primaryContainer,
+/// Montos del mensaje como con un resaltador (diseño AA): el amarillo de
+/// marca con tinta oscura fija, legible en claro y en oscuro.
+TextStyle highlightStyle(ColorScheme scheme) => const TextStyle(
+  fontWeight: FontWeight.w800,
+  color: Color(0xFF2A1210),
+  backgroundColor: Color(0xC0FFD27A),
 );
+
+/// El monto que propone "Usar $X" en la lista: el extraído o, si no, el
+/// primero del texto.
+Cop? suggestedAmount(ReviewItem item) {
+  final extracted = ReviewDraft.fromPartialExtract(item.partialExtract).amount;
+  if (extracted != null) return extracted;
+  final text = item.text;
+  if (text == null) return null;
+  final amounts = distinctAmounts(text);
+  return amounts.isEmpty ? null : amounts.first;
+}
+
+/// Pide confirmar que el mensaje no era un movimiento, corre [discard]
+/// y avisa.
+Future<void> confirmAndDiscard(
+  BuildContext context,
+  Future<void> Function() discard,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.reviewDiscardTitle),
+      content: Text(l10n.reviewDiscardBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.reviewDiscardCancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l10n.reviewDiscardConfirm),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  try {
+    await discard();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.reviewDiscarded)));
+  } on Object {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.reviewSaveError)));
+  }
+}
 
 /// [text] como spans, con los montos de [highlightAmounts] resaltados. Con
 /// [recognizers], el monto i-ésimo lleva el reconocedor i-ésimo; quien los

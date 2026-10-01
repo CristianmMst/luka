@@ -52,13 +52,13 @@ class MerchantRuleDialog extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: scheme.primaryContainer,
+                      color: context.lukaColors.neutralChip,
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.history_rounded,
                       size: 22,
-                      color: scheme.onPrimaryContainer,
+                      color: scheme.primary,
                     ),
                   ),
                 ),

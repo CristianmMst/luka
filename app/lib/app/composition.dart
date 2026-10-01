@@ -28,6 +28,7 @@ import 'package:luka/features/review/application/review_providers.dart';
 import 'package:luka/features/review/data/review_data_providers.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/data/sync_data_providers.dart';
+import 'package:luka/features/transactions/application/dedupe_hint_controller.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
 import 'package:luka/features/transactions/data/transactions_data_providers.dart';
 
@@ -80,6 +81,9 @@ List<Override> get appOverrides => [
   ),
   transactionsRepositoryProvider.overrideWith(
     (ref) => ref.watch(driftTransactionsRepositoryProvider),
+  ),
+  dedupeHintStoreProvider.overrideWith(
+    (ref) => ref.watch(driftDedupeHintStoreProvider),
   ),
   reviewRepositoryProvider.overrideWith(
     (ref) => ref.watch(driftReviewRepositoryProvider),

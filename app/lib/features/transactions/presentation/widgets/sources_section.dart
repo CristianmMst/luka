@@ -117,6 +117,7 @@ class _SourceCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.lukaColors.card,
           borderRadius: Radii.noticeAll,
+          border: Border.all(color: context.lukaColors.hairline),
         ),
         child: Row(
           spacing: Space.sm,
@@ -126,13 +127,13 @@ class _SourceCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: scheme.primaryContainer,
+                  color: context.lukaColors.neutralChip,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   channelIcon(source.channel),
                   size: 18,
-                  color: scheme.onPrimaryContainer,
+                  color: scheme.primary,
                 ),
               ),
             ),

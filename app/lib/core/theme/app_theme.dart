@@ -93,6 +93,14 @@ abstract final class AppTheme {
       extensions: [brand],
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          // En oscuro el botón principal sigue en tomate de marca (blanco
+          // encima da 5.3:1); el `primary` rosado queda para texto y enlaces.
+          backgroundColor: scheme.brightness == Brightness.dark
+              ? LightTokens.primary
+              : null,
+          foregroundColor: scheme.brightness == Brightness.dark
+              ? LightTokens.onPrimary
+              : null,
           minimumSize: buttonSize,
           shape: pillShape,
           textStyle: textTheme.labelLarge,
@@ -104,7 +112,8 @@ abstract final class AppTheme {
           minimumSize: buttonSize,
           shape: pillShape,
           textStyle: textTheme.labelLarge,
-          side: BorderSide(color: scheme.outline),
+          // Borde fino neutro, como las tarjetas sobre blanco.
+          side: BorderSide(color: brand.hairline),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -122,7 +131,10 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: scheme.surfaceContainerLowest,
-        shape: const RoundedRectangleBorder(borderRadius: Radii.cardAll),
+        shape: RoundedRectangleBorder(
+          borderRadius: Radii.cardAll,
+          side: BorderSide(color: brand.hairline),
+        ),
         margin: EdgeInsets.zero,
       ),
       snackBarTheme: SnackBarThemeData(

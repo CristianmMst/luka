@@ -5,18 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
-import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/core/widgets/brand_mark.dart';
 import 'package:luka/core/widgets/inline_notice.dart';
 import 'package:luka/features/auth/application/auth_controller.dart';
 import 'package:luka/features/auth/application/sign_in_controller.dart';
 import 'package:luka/features/auth/domain/auth_failure.dart';
-import 'package:luka/features/auth/presentation/widgets/capture_ticker.dart';
+import 'package:luka/features/auth/presentation/widgets/capture_trace.dart';
 import 'package:luka/features/auth/presentation/widgets/google_sign_in_button.dart';
 
-/// Login "Veta esmeralda": bloque hero con el ticker de captura, titular y
-/// botón de Google (canvas de diseño, spec 008 §7.1).
+/// Login "Trazo" (spec 008 §7.1): fondo blanco (el más oscuro de la
+/// superficie en tema oscuro), la flecha del logo que se dibuja con tres
+/// compras capturadas, titular y botón de Google. La entrada dura ~1,85 s y
+/// nunca bloquea el botón.
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -24,14 +25,34 @@ class LoginPage extends ConsumerStatefulWidget {
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage>
+    with SingleTickerProviderStateMixin {
+  static const _wordmarkRed = Color(0xFFAA2E1E);
+
   /// Segundos que faltan para poder reintentar tras un 429.
   int? _secondsLeft;
   Timer? _countdown;
 
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1850),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Con "reducir movimiento" la pantalla aparece quieta en su estado final.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entrance.value = 1;
+    } else if (!_entrance.isAnimating && _entrance.value == 0) {
+      unawaited(_entrance.forward());
+    }
+  }
+
   @override
   void dispose() {
     _countdown?.cancel();
+    _entrance.dispose();
     super.dispose();
   }
 
@@ -48,6 +69,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
   }
 
+  Animation<double> _step(double begin, double end) => CurvedAnimation(
+    parent: _entrance,
+    curve: Interval(begin, end, curve: CaptureTrace.entranceCurve),
+  );
+
   @override
   Widget build(BuildContext context) {
     ref.listen(signInControllerProvider, (_, next) {
@@ -59,9 +85,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final l10n = AppLocalizations.of(context);
     final signIn = ref.watch(signInControllerProvider);
     final auth = ref.watch(authControllerProvider);
-    final brand = context.lukaColors;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     final remaining = _secondsLeft;
     final notice = _noticeFor(
@@ -76,75 +99,108 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
     final isNetworkError = signIn.error is AuthNetworkFailure;
 
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final dark = scheme.brightness == Brightness.dark;
+    const gutter = EdgeInsets.symmetric(horizontal: Space.screen);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // El hero es oscuro en ambos temas: íconos de estado claros.
-      value: SystemUiOverlayStyle.light,
+      value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Hero(color: brand.hero, onColor: brand.onHero),
-                  Expanded(
-                    child: SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          Space.screen,
-                          Space.xl - 4,
-                          Space.screen,
-                          Space.screen,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                l10n.loginHeadline,
-                                style: textTheme.displaySmall,
-                              ),
-                            ),
-                            const SizedBox(height: Space.sm),
-                            Text(
-                              l10n.loginBody,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const Spacer(),
-                            const SizedBox(height: Space.lg),
-                            if (notice != null) ...[
-                              notice,
-                              const SizedBox(height: Space.sm),
-                            ],
-                            GoogleSignInButton(
-                              label: signIn.isLoading
-                                  ? l10n.loginConnecting
-                                  : isNetworkError
-                                  ? l10n.loginRetryWithGoogle
-                                  : l10n.loginContinueWithGoogle,
-                              loading: signIn.isLoading,
-                              onPressed: remaining != null
-                                  ? null
-                                  : () => ref
-                                        .read(signInControllerProvider.notifier)
-                                        .signIn(),
-                            ),
-                            const SizedBox(height: Space.sm),
-                            const _LegalText(),
-                          ],
-                        ),
-                      ),
+        backgroundColor: scheme.surfaceContainerLowest,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(top: Space.md, bottom: Space.screen),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: gutter,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: BrandMark(
+                      // Wordmark de marca en claro (spec 008 §7.1).
+                      textColor: dark ? scheme.primary : _wordmarkRed,
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: Space.md),
+                // El trazo toma el alto que sobra y se encoge en pantallas
+                // bajas o con letra grande: el botón siempre queda a la vista.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 430),
+                      child: CaptureTrace(progress: _entrance),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Space.lg),
+                _Rise(
+                  animation: _step(0.73, 0.99),
+                  child: Padding(
+                    padding: gutter,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Semantics(
+                          header: true,
+                          label: l10n.loginHeadline,
+                          excludeSemantics: true,
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(text: l10n.loginHeadlineLead),
+                                TextSpan(
+                                  text: l10n.loginHeadlineAccent,
+                                  style: TextStyle(color: scheme.primary),
+                                ),
+                              ],
+                            ),
+                            style: textTheme.displayMedium?.copyWith(
+                              color: scheme.onSurface,
+                              height: 1,
+                              letterSpacing: -1.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Space.sm),
+                        Text(
+                          l10n.loginBody,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: Space.lg),
+                        if (notice != null) ...[
+                          notice,
+                          const SizedBox(height: Space.sm),
+                        ],
+                        GoogleSignInButton(
+                          label: signIn.isLoading
+                              ? l10n.loginConnecting
+                              : isNetworkError
+                              ? l10n.loginRetryWithGoogle
+                              : l10n.loginContinueWithGoogle,
+                          loading: signIn.isLoading,
+                          onPressed: remaining != null
+                              ? null
+                              : () => ref
+                                    .read(
+                                      signInControllerProvider.notifier,
+                                    )
+                                    .signIn(),
+                        ),
+                        const SizedBox(height: Space.sm),
+                        const _LegalText(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -200,43 +256,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 }
 
-class _Hero extends StatelessWidget {
-  const _Hero({required this.color, required this.onColor});
+/// Sube 12 px mientras aparece.
+class _Rise extends AnimatedWidget {
+  const _Rise({required Animation<double> animation, required this.child})
+    : super(listenable: animation);
 
-  final Color color;
-  final Color onColor;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(Radii.hero),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Space.screen,
-            Space.md,
-            Space.screen,
-            Space.xl - 4,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: Space.xl - 4,
-            children: [
-              BrandMark(
-                onDark: true,
-                textColor: onColor,
-              ),
-              const CaptureTicker(),
-            ],
-          ),
-        ),
-      ),
+    final t = (listenable as Animation<double>).value;
+    return Opacity(
+      opacity: t.clamp(0, 1),
+      child: Transform.translate(offset: Offset(0, 12 * (1 - t)), child: child),
     );
   }
 }
@@ -253,7 +285,7 @@ class _LegalText extends StatelessWidget {
     ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     final strong = base?.copyWith(
       color: scheme.primary,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
     );
 
     // TODO(F6): enlazar Términos y Política cuando existan sus URLs públicas.

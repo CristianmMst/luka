@@ -218,7 +218,7 @@ void main() {
       (context) => CategorySheet.show(context, selectedId: null),
     );
 
-    await _tap(tester, find.text('+ Nueva categoría'));
+    await _tap(tester, find.text('Nueva categoría'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Mascotas');
     await _tap(tester, find.text('Crear categoría'));
@@ -234,6 +234,6 @@ void main() {
           CategorySheet.show(context, selectedId: null, allowAll: true),
     );
 
-    expect(find.text('+ Nueva categoría'), findsNothing);
+    expect(find.text('Nueva categoría'), findsNothing);
   });
 }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/core/widgets/settings_group.dart';
 import 'package:luka/features/capture/application/notification_access_controller.dart';
 import 'package:luka/features/capture/presentation/widgets/notification_disclosure_sheet.dart';
 
@@ -35,7 +36,7 @@ class NotificationCaptureTile extends ConsumerWidget {
     final (String status, Color statusColor) = switch (access.value) {
       NotificationAccess.granted => (
         l10n.settingsNotificationsActive,
-        scheme.primary,
+        context.lukaColors.income,
       ),
       NotificationAccess.denied => (
         l10n.settingsNotificationsInactive,
@@ -57,9 +58,8 @@ class NotificationCaptureTile extends ConsumerWidget {
     };
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.lukaColors.card,
-        borderRadius: Radii.rowAll,
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -71,20 +71,8 @@ class NotificationCaptureTile extends ConsumerWidget {
         child: Row(
           spacing: Space.sm,
           children: [
-            ExcludeSemantics(
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.notifications_active_outlined,
-                  size: 20,
-                  color: scheme.onPrimaryContainer,
-                ),
-              ),
+            const ExcludeSemantics(
+              child: SettingsIcon(Icons.notifications_active_outlined),
             ),
             Expanded(
               child: MergeSemantics(

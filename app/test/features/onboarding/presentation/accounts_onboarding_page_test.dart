@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luka/core/routing/routes.dart';
 import 'package:luka/features/accounts/application/account_actions.dart';
@@ -11,6 +12,7 @@ import 'package:luka/features/onboarding/domain/onboarding_store.dart';
 import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../../helpers/pump_app.dart';
 import 'onboarding_harness.dart';
 
 class _MockAccounts extends Mock implements AccountsStore {}
@@ -48,10 +50,15 @@ void main() {
     when(() => onboarding.markDone(any())).thenAnswer((_) async {});
   });
 
-  Future<void> pumpPage(WidgetTester tester, List<LinkedAccount> all) {
+  Future<void> pumpPage(
+    WidgetTester tester,
+    List<LinkedAccount> all, {
+    ThemeMode themeMode = ThemeMode.light,
+  }) {
     when(() => accounts.watchAll()).thenAnswer((_) => Stream.value(all));
     return pumpOnboardingStep(
       tester,
+      themeMode: themeMode,
       location: Routes.onboardingAccounts,
       page: const AccountsOnboardingPage(),
       overrides: [
@@ -107,5 +114,19 @@ void main() {
 
     expect(find.text('Nueva cuenta'), findsOneWidget);
     expect(find.text('Elige tu banco'), findsOneWidget);
+  });
+
+  group('goldens', () {
+    setUpAll(loadBrandFonts);
+
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('cuentas ${mode.name}', tags: ['golden'], (tester) async {
+        await pumpPage(tester, const [], themeMode: mode);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/accounts_onboarding_${mode.name}.png'),
+        );
+      });
+    }
   });
 }

@@ -73,6 +73,7 @@ void main() {
     expect(find.text('Gmail'), findsOneWidget);
     expect(find.text('Conectado · ana@gmail.com'), findsOneWidget);
     expect(action('Desconectar'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Cerrar sesión'), 200);
     expect(find.text('Cerrar sesión'), findsOneWidget);
   });
 

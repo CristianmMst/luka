@@ -14,15 +14,15 @@ class SplashPage extends StatelessWidget {
     final label = AppLocalizations.of(context).splashRestoring;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: Theme.of(context).brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
         backgroundColor: brand.hero,
         body: Stack(
           children: [
-            Center(
-              child: BrandMark(
-                onDark: true,
-                textColor: brand.onHero,
+            const Center(
+              child: HeroBrandMark(
                 size: 36,
                 direction: Axis.vertical,
               ),

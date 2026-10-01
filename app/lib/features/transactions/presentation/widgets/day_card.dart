@@ -4,14 +4,14 @@ import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
-import 'package:luka/core/theme/tokens/type_tokens.dart';
 import 'package:luka/features/transactions/domain/day_group.dart';
 import 'package:luka/features/transactions/domain/transaction_view.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_format.dart';
 import 'package:luka/features/transactions/presentation/widgets/transaction_row.dart';
 
-/// Tarjeta de un día (diseño "ListaB"): número del día en display, "Hoy",
-/// "Ayer" o el día de la semana, el total de gastos y sus movimientos.
+/// Tarjeta de un día (diseño S): el número del día grande en tomate,
+/// "Hoy", "Ayer" o el día de la semana, el total de gastos y sus
+/// movimientos, con borde fino sobre el fondo blanco.
 class DayCard extends StatelessWidget {
   const DayCard({
     required this.group,
@@ -50,7 +50,10 @@ class DayCard extends StatelessWidget {
 
     return Material(
       color: brand.card,
-      borderRadius: Radii.cardAll,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: brand.hairline),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.only(top: 14, bottom: 6),
@@ -71,11 +74,17 @@ class DayCard extends StatelessWidget {
                 child: Row(
                   spacing: Space.sm,
                   children: [
-                    Text(
-                      '${day.day}',
-                      style: textTheme.headlineMedium?.copyWith(
-                        height: 1,
-                        letterSpacing: -0.5,
+                    SizedBox(
+                      width: 46,
+                      child: Text(
+                        '${day.day}',
+                        style: textTheme.headlineLarge?.copyWith(
+                          fontSize: 34,
+                          height: 1,
+                          letterSpacing: -1.4,
+                          color: scheme.primary,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
                     ),
                     Expanded(
@@ -85,6 +94,7 @@ class DayCard extends StatelessWidget {
                           Text(
                             title,
                             style: textTheme.titleSmall?.copyWith(
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -100,9 +110,11 @@ class DayCard extends StatelessWidget {
                     if (hasExpenses)
                       Text(
                         formatCop(group.expenses, sign: AmountSign.negative),
-                        style: amountTextStyle.copyWith(
-                          fontSize: 14,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: brand.expense,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                   ],
