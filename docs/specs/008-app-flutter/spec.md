@@ -192,22 +192,22 @@ Los tokens viven en `app/lib/core/theme/` (`ColorScheme` explícito, sin `fromSe
 
 | Rol | Claro | Oscuro | Uso |
 |---|---|---|---|
-| primary (tomate) | `#C8331F` | `#FFB4A6` | botones, enlaces. El tomate puro `#E23D28` solo va en el logo: con blanco da 4.3:1 |
-| primaryContainer | `#FFDAD3` | `#8C2415` | chip activo, botón tonal |
+| primary (tomate) | `#C8331F` | `#FF7A63` | botones, enlaces. El tomate puro `#E23D28` solo va en el logo: con blanco da 4.3:1 |
+| primaryContainer | `#FFDAD3` | `#432827` | chip activo, botón tonal |
 | amarillo de marca | `#FFD27A` | `#FFD27A` | **solo** registro confirmado y relevancia fiscal, como relleno. Nunca texto; el borde del sello va en `tertiary` (`#9A6400` en claro) |
-| hero | `#FFFFFF` | `#3A100A` | cabecera de marca del onboarding, NFC y el splash: blanca en claro (con tinta `#2A1210`), café oscuro en oscuro. El arranque nativo usa el mismo color |
-| band (tomate) | `#C8331F` | `#8C2415` | banda del Inicio; texto en crema `#FFF6F0` |
-| hairline | `#ECE6E4` | `#3A2824` | bordes de tarjetas sobre blanco, sin tinte rojo |
-| surface | `#FFFFFF` | `#1C0F0C` | fondo; los contenedores (`surfaceContainer*`, `tile`) son grises cálidos neutros, sin tinte rojizo |
-| onSurface | `#2A1210` | `#F5DED9` | texto |
-| expense (café) | `#5C1A10` | `#E8C4B0` | montos de salida (no rojo, para no confundirse con la marca) |
-| income | `#17774E` | `#7BD8A6` | montos de entrada |
-| transfer | `#45617A` | `#9DB8D3` | entre cuentas propias |
+| hero | `#FFFFFF` | `#0E1116` | cabecera de marca del onboarding, NFC y el splash: igual al fondo en los dos temas (tinta `#2A1210` en claro, `#EEF1F5` en oscuro). El arranque nativo usa el mismo color |
+| band (tomate) | `#C8331F` | `#D93A25` | banda del Inicio; texto en crema `#FFF6F0` en claro y blanco en oscuro (4.6:1) |
+| hairline | `#ECE6E4` | `#262C35` | bordes de tarjetas sobre blanco, sin tinte rojo |
+| surface | `#FFFFFF` | `#0E1116` | fondo; en claro los contenedores (`surfaceContainer*`, `tile`) son grises cálidos neutros y en oscuro, azul noche; las tarjetas van en `card` (`#FFFFFF` / `#171B22`) |
+| onSurface | `#2A1210` | `#EEF1F5` | texto |
+| expense | `#5C1A10` | `#FF8F7A` | montos de salida: café en claro, tomate suave en oscuro |
+| income | `#17774E` | `#5FD39A` | montos de entrada |
+| transfer | `#45617A` | `#8FB3D9` | entre cuentas propias |
 
 - Todo par texto/fondo cumple ≥ 4.5:1 y los bordes ≥ 3:1 (verificado al definir la paleta).
 - Tipografía empaquetada en `assets/fonts` (sin descarga en runtime, P4; licencias OFL registradas en `LicenseRegistry`): Bricolage Grotesque para display (titulares y saldos; el wordmark es SVG), Manrope para texto, IBM Plex Mono tabular para montos y Roboto Medium solo en el botón de Google.
 - Espaciado de base 4. Radios: 8 chips, 12 filas, 16 avisos, 24 tarjetas y píldora en botones. Sobre el fondo blanco, las tarjetas, las `Card` y los botones con contorno llevan el borde fino `hairline`, y los íconos de las filas van en un cuadro neutro (`neutralChip`) con el ícono en `primary`.
-- **Tema oscuro.** Sigue la misma estructura que el claro: la cabecera `hero` es igual al fondo (no hay bandas salvo la del Inicio, en tomate profundo) y el botón principal (`FilledButton`) va en tomate de marca con texto blanco; el `primary` rosado del oscuro queda para texto, enlaces y la perilla de Gasto. En las cabeceras `hero` la marca usa la variante del login en claro y la de fondo oscuro en oscuro (`HeroBrandMark`).
+- **Tema oscuro "Noche"** (diseño D2 del canvas): fondo azul noche `#0E1116` con tarjetas `#171B22`, sin cafés ni vino. Sigue la misma estructura que el claro: la cabecera `hero` es igual al fondo (no hay bandas salvo la del Inicio, en tomate de marca) y el botón principal (`FilledButton`) va en tomate `#C8331F` con texto blanco; el `primary` tomate claro del oscuro queda para texto, enlaces y la perilla de Gasto. En "En qué se fue" la rampa es el tomate que se apaga hacia el fondo. En las cabeceras `hero` la marca usa la variante del login en claro y la de fondo oscuro en oscuro (`HeroBrandMark`).
 - Los bancos se nombran solo en texto, nunca con sus colores de marca.
 - **Barra de navegación** (shell): material blanco translúcido con blur (opaco con alto contraste) y una línea fina arriba; el contenido pasa por debajo (`extendBody`), así que cada pestaña suma el alto de la barra a su margen inferior. Cinco destinos con el activo en `primary`; "Registrar" es un botón circular tomate con sombra que en su pestaña lleva un anillo amarillo, y "Revisión" muestra el conteo en un badge tomate.
 - **Login** (F1.9, diseño F "Trazo" del canvas https://claude.ai/artifact/Ht1fXBuffrojnVGcfnnGVA): fondo blanco (`surfaceContainerLowest`; en oscuro, la superficie más oscura). La flecha del logo cruza la pantalla en tomate puro con su sombra amarilla y en su camino quedan tres compras: "TransMilenio −$3.200", "D1 −$38.450 · 1 registro · sin duplicados" (la notificación y el correo de la misma compra) y "Nómina +$3.503.000". Debajo van el titular con "solos." en `primary`, el texto, el botón "Continuar con Google" con la guía de marca de Google y el texto legal. El trazo ocupa el alto que sobra y se encoge en pantallas bajas o con letra grande, así que el botón siempre queda a la vista. La entrada dura 1,85 s: la línea se dibuja con `Cubic(0.65, 0, 0.35, 1)`, cada compra aparece cuando el trazo pasa por su punto (`Cubic(0.23, 1, 0.32, 1)`) y al final sube el texto con el botón; nunca bloquea el toque y con "reducir movimiento" queda quieta en su estado final. Estados: cargando (botón bloqueado), sin conexión (reintentar), cancelado (sin aviso), 429 (cuenta regresiva con `Retry-After`) y sesión cerrada por seguridad.

@@ -23,11 +23,10 @@ class DashboardTotalsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final brand = context.lukaColors;
-    final scheme = Theme.of(context).colorScheme;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLowest,
+        color: brand.card,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: brand.hairline),
         boxShadow: const [

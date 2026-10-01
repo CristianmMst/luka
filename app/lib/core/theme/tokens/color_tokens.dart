@@ -60,56 +60,63 @@ abstract final class LightTokens {
   static const goldContainer = Color(0xFFFFF3D6);
 }
 
+/// Modo oscuro "Noche" (D2): azul noche neutro, sin cafés ni vino; el
+/// tomate claro para texto e íconos y el de marca para la banda y los
+/// botones.
 abstract final class DarkTokens {
-  static const primary = Color(0xFFFFB4A6);
-  static const onPrimary = Color(0xFF5F1509);
-  static const primaryContainer = Color(0xFF8C2415);
+  static const primary = Color(0xFFFF7A63);
+  static const onPrimary = Color(0xFF1A0A07);
+  static const primaryContainer = Color(0xFF432827);
   static const onPrimaryContainer = Color(0xFFFFDAD3);
-  static const secondary = Color(0xFFE7BDB5);
-  static const onSecondary = Color(0xFF442A24);
-  static const secondaryContainer = Color(0xFF5D3F3A);
-  static const onSecondaryContainer = Color(0xFFFFDAD3);
+  static const secondary = Color(0xFFB8C2CF);
+  static const onSecondary = Color(0xFF1F242C);
+  static const secondaryContainer = Color(0xFF262C35);
+  static const onSecondaryContainer = Color(0xFFE3E8EF);
   static const tertiary = Color(0xFFFFD27A);
   static const onTertiary = Color(0xFF3F2E00);
-  static const tertiaryContainer = Color(0xFF5C4300);
+  static const tertiaryContainer = Color(0xFF454034);
   static const onTertiaryContainer = Color(0xFFFFE9B8);
   static const error = Color(0xFFFFB4AB);
   static const onError = Color(0xFF690005);
   static const errorContainer = Color(0xFF93000A);
   static const onErrorContainer = Color(0xFFFFDAD6);
-  static const surface = Color(0xFF1C0F0C);
-  static const onSurface = Color(0xFFF5DED9);
-  static const onSurfaceVariant = Color(0xFFD8C2BD);
-  static const surfaceContainerLowest = Color(0xFF150906);
-  static const surfaceContainerLow = Color(0xFF24130F);
-  static const surfaceContainer = Color(0xFF2B1814);
-  static const surfaceContainerHigh = Color(0xFF361F1A);
-  static const surfaceContainerHighest = Color(0xFF412923);
-  static const outline = Color(0xFFA08C87);
-  static const outlineVariant = Color(0xFF534340);
-  static const inverseSurface = Color(0xFFF5DED9);
-  static const onInverseSurface = Color(0xFF3E2C28);
-  static const inversePrimary = Color(0xFFA82A19);
+  static const surface = Color(0xFF0E1116);
+  static const onSurface = Color(0xFFEEF1F5);
+  static const onSurfaceVariant = Color(0xFF9AA4B2);
 
-  static const expense = Color(0xFFE8C4B0);
-  static const onExpense = Color(0xFF3A0B00);
-  static const income = Color(0xFF7BD8A6);
-  static const transfer = Color(0xFF9DB8D3);
-  static const warningContainer = Color(0xFF5C3D00);
+  /// Igual al fondo, como en claro: las tarjetas van en [card].
+  static const surfaceContainerLowest = Color(0xFF0E1116);
+  static const surfaceContainerLow = Color(0xFF13171D);
+  static const surfaceContainer = Color(0xFF171B22);
+  static const surfaceContainerHigh = Color(0xFF1F242C);
+  static const surfaceContainerHighest = Color(0xFF262C35);
+  static const outline = Color(0xFF7A8494);
+  static const outlineVariant = Color(0xFF343B46);
+  static const inverseSurface = Color(0xFFEEF1F5);
+  static const onInverseSurface = Color(0xFF1F242C);
+  static const inversePrimary = Color(0xFFC8331F);
+
+  static const expense = Color(0xFFFF8F7A);
+  static const onExpense = Color(0xFF1A0A07);
+  static const income = Color(0xFF5FD39A);
+  static const transfer = Color(0xFF8FB3D9);
+  static const warningContainer = Color(0xFF454034);
   static const onWarningContainer = Color(0xFFFFE9B8);
 
   /// Igual al fondo: como en claro, la cabecera de marca no es una banda.
-  static const hero = Color(0xFF1C0F0C);
-  static const onHero = Color(0xFFFFF6F0);
-  static const band = Color(0xFF8C2415);
-  static const onBand = Color(0xFFFFF6F0);
-  static const hairline = Color(0xFF3A2824);
-  static const neutralChip = Color(0xFF2E201D);
-  static const heroCard = Color(0xFF2B1814);
-  static const heroChip = Color(0xFF5C1A10);
-  static const card = Color(0xFF2B1814);
-  static const tile = Color(0xFF361F1A);
-  static const goldContainer = Color(0xFF2E2410);
+  static const hero = Color(0xFF0E1116);
+  static const onHero = Color(0xFFEEF1F5);
+
+  /// Banda de Inicio en tomate de marca: blanco encima da 4.6:1.
+  static const band = Color(0xFFD93A25);
+  static const onBand = Color(0xFFFFFFFF);
+  static const hairline = Color(0xFF262C35);
+  static const neutralChip = Color(0xFF1F242C);
+  static const heroCard = Color(0xFF171B22);
+  static const heroChip = Color(0xFF432827);
+  static const card = Color(0xFF171B22);
+  static const tile = Color(0xFF1F242C);
+  static const goldContainer = Color(0xFF37352E);
 }
 
 /// Amarillo de marca: rellenos y sellos (no texto). Sobre fondos claros el

@@ -166,7 +166,7 @@ class NotificationsOnboardingPage extends ConsumerWidget {
   }
 }
 
-/// Hero café con la marca, el progreso y un ejemplo: la notificación
+/// Hero de marca con la marca, el progreso y un ejemplo: la notificación
 /// de una compra que queda registrada sola.
 class _Hero extends StatelessWidget {
   const _Hero();

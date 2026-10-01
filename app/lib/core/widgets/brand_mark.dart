@@ -19,7 +19,7 @@ class BrandMark extends StatelessWidget {
   /// Color del wordmark.
   final Color textColor;
 
-  /// Sobre fondos oscuros (el hero café) el símbolo va en su variante
+  /// Sobre fondos oscuros (el hero en oscuro) el símbolo va en su variante
   /// amarilla con la flecha tomate.
   final bool onDark;
 

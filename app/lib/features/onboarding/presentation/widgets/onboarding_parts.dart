@@ -13,7 +13,7 @@ class OnboardingDots extends ConsumerWidget {
 
   final OnboardingStep step;
 
-  /// Sobre el hero café (colores claros).
+  /// Sobre el hero oscuro (colores claros).
   final bool onHero;
 
   @override

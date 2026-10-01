@@ -159,7 +159,7 @@ class _ApplePayOnboardingPageState
   }
 }
 
-/// Hero café: marca y progreso en el onboarding, o volver en Ajustes.
+/// Hero de marca: marca y progreso en el onboarding, o volver en Ajustes.
 class _Hero extends StatelessWidget {
   const _Hero({required this.inOnboarding, required this.onBack});
 

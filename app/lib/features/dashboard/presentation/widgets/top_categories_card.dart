@@ -35,6 +35,20 @@ class TopCategoriesCard extends StatelessWidget {
     Color(0xFF2A1210),
   );
 
+  /// En oscuro (D2) la rampa es el tomate que se apaga hacia el fondo
+  /// azul noche; los íconos cumplen 3:1 sobre cada tono.
+  static const List<(Color, Color)> darkRamp = [
+    (Color(0xFFFF7A63), Color(0xFF1A0A07)),
+    (Color(0xFFBC5D4D), Color(0xFF1A0A07)),
+    (Color(0xFF86463C), Color(0xFFEEF1F5)),
+    (Color(0xFF603530), Color(0xFFEEF1F5)),
+    (Color(0xFF432827), Color(0xFFEEF1F5)),
+  ];
+  static const (Color, Color) darkOtherTone = (
+    Color(0xFF262C35),
+    Color(0xFFEEF1F5),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -43,6 +57,8 @@ class TopCategoriesCard extends StatelessWidget {
     final total = summary.totals.expenses;
     final top = summary.topCategories;
     final other = summary.otherAmount;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final tones = dark ? darkRamp : ramp;
 
     final tiles = <_Tile>[
       for (final (i, spend) in top.indexed)
@@ -51,7 +67,7 @@ class TopCategoriesCard extends StatelessWidget {
           icon: categoryIcon(spend.slug),
           amount: spend.amount,
           percent: sharePercent(spend.amount, total),
-          tone: ramp[i.clamp(0, ramp.length - 1)],
+          tone: tones[i.clamp(0, tones.length - 1)],
           other: false,
           onTap: switch ((spend.categoryId, onOpen)) {
             (final id?, final open?) => () => open(id),
@@ -64,7 +80,7 @@ class TopCategoriesCard extends StatelessWidget {
           icon: Icons.more_horiz_rounded,
           amount: other,
           percent: sharePercent(other, total),
-          tone: otherTone,
+          tone: dark ? darkOtherTone : otherTone,
           other: true,
           onTap: null,
         ),

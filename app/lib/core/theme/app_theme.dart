@@ -94,7 +94,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           // En oscuro el botón principal sigue en tomate de marca (blanco
-          // encima da 5.3:1); el `primary` rosado queda para texto y enlaces.
+          // encima da 5.3:1); el `primary` claro queda para texto y enlaces.
           backgroundColor: scheme.brightness == Brightness.dark
               ? LightTokens.primary
               : null,
@@ -130,7 +130,7 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: scheme.surfaceContainerLowest,
+        color: brand.card,
         shape: RoundedRectangleBorder(
           borderRadius: Radii.cardAll,
           side: BorderSide(color: brand.hairline),

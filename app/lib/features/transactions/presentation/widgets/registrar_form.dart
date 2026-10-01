@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
+import 'package:luka/core/theme/tokens/color_tokens.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/features/review/presentation/widgets/review_format.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
@@ -21,7 +22,7 @@ import 'package:luka/features/transactions/presentation/widgets/transaction_form
   final onAccent =
       ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
       ? Colors.white
-      : const Color(0xFF1C0F0C);
+      : DarkTokens.onPrimary;
   return (accent: accent, onAccent: onAccent);
 }
 
