@@ -98,4 +98,22 @@ void main() {
     );
     expect(found, isEmpty);
   });
+
+  // Una hoja abierta desde una pestaña del shell queda debajo de la barra
+  // de navegación, que tapa sus últimas filas: todas van al navegador raíz.
+  test('las hojas inferiores se abren en el navegador raíz', () {
+    final offenders = <String>[];
+    for (final entity in libDir.listSync(recursive: true)) {
+      final path = entity.path.replaceAll(r'\', '/');
+      if (entity is! File || !path.endsWith('.dart')) continue;
+      final source = entity.readAsStringSync();
+      for (final call in 'showModalBottomSheet<'.allMatches(source)) {
+        // Los argumentos de la llamada, hasta el `builder:`.
+        final end = source.indexOf('builder:', call.end);
+        final args = source.substring(call.end, end < 0 ? null : end);
+        if (!args.contains('useRootNavigator: true')) offenders.add(path);
+      }
+    }
+    expect(offenders, isEmpty);
+  });
 }

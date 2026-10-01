@@ -12,6 +12,9 @@ class NotificationDisclosureSheet extends StatelessWidget {
   static Future<bool> show(BuildContext context) async =>
       await showModalBottomSheet<bool>(
         context: context,
+        // Sobre la barra de navegación: se abre desde Ajustes y desde
+        // Inicio, dentro del shell.
+        useRootNavigator: true,
         isScrollControlled: true,
         showDragHandle: true,
         backgroundColor: context.lukaColors.card,
