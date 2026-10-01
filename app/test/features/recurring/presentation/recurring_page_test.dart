@@ -8,7 +8,6 @@ import 'package:luka/features/recurring/domain/recurring_ports.dart';
 import 'package:luka/features/recurring/presentation/occurrence_row.dart';
 import 'package:luka/features/recurring/presentation/recurring_page.dart';
 import 'package:luka/features/recurring/presentation/recurring_settings_tile.dart';
-import 'package:luka/features/recurring/presentation/upcoming_payments_card.dart';
 import 'package:luka/features/transactions/application/transactions_providers.dart';
 import 'package:luka/features/transactions/domain/category_option.dart';
 import 'package:mocktail/mocktail.dart';
@@ -187,29 +186,6 @@ void main() {
     for (final element in find.byType(OccurrenceRow).evaluate()) {
       expect(element.size!.height, greaterThanOrEqualTo(48));
     }
-  });
-
-  testWidgets('la tarjeta del Inicio cuenta los pagados', (tester) async {
-    await pump(
-      tester,
-      Scaffold(body: UpcomingPaymentsCard(month: ColombiaMonth(2026, 10))),
-    );
-
-    expect(find.text('Próximos pagos · 1 de 2 pagados'), findsOneWidget);
-    expect(find.text('Ver todos'), findsOneWidget);
-  });
-
-  testWidgets('la tarjeta sin gastos fijos invita a agregar uno', (
-    tester,
-  ) async {
-    await pump(
-      tester,
-      Scaffold(body: UpcomingPaymentsCard(month: ColombiaMonth(2026, 10))),
-      expenses: const [],
-      occurrences: const [],
-    );
-
-    expect(find.text('¿Pagas algo cada mes?'), findsOneWidget);
   });
 
   testWidgets('la fila de Ajustes cuenta los activos', (tester) async {

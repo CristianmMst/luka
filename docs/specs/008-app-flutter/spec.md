@@ -22,7 +22,6 @@ flowchart TD
     HOME --> ST[Ajustes]
 
     TX --> TXD[Detalle transacción]
-    D --> RE[Gastos fijos<br/>lista del mes, tachado]
     ST --> RE
     PUSH[Aviso push de pago] -.->|toque| RE
     ADD --> QA[Formulario rápido<br/>también vía NFC deep link]
@@ -65,7 +64,6 @@ Diseño Q del canvas de rediseño (https://claude.ai/artifact/Ht1fXBuffrojnVGcfn
 - **Captura detenida (AC-3.4, F4.4, diseño B "Franja dentro del hero").** Si la captura automática se detuvo, el hero termina con una franja ámbar tocable de 48 dp: "Captura detenida · Reactivar ›" cuando se perdió el acceso a notificaciones que estaba concedido, o "Gmail se desconectó · Reconectar ›" cuando Gmail quedó `revoked`; si pasan las dos, se muestra Gmail. Tocarla hace la acción: "Reactivar" pasa por la divulgación y abre el ajuste del sistema; "Reconectar" abre el consentimiento de Google (si falla: "No pudimos reconectar Gmail. Inténtalo desde Ajustes."). No se descarta: desaparece sola cuando se arregla. `error` de Gmail no avisa porque el backend lo reintenta solo (spec 005 §3). "Estaba concedido" es una marca local (`capture_was_granted:<userId>` en `sync_state`), así que a quien nunca activó el acceso no se le dice que "se detuvo". Mientras el Inicio está vivo, el estado de Gmail se relee al volver a primer plano, como mucho cada 15 min; el acceso a notificaciones se relee en cada vuelta.
 - **"En qué se fue".** Una franja muestra la parte de cada categoría en el gasto (rampa tomate por puesto, cada tono con distinta claridad). Debajo, las 5 categorías con más gasto en tarjetas de dos columnas, cada una con su ícono en el tono de su puesto, el monto y el % del gasto total. Los empates se ordenan por nombre. El resto se agrupa en la tarjeta "Otras categorías" (no se abre), y las 5 más "Otras" suman exactamente el gasto total. Tocar una categoría abre Movimientos filtrado por esa categoría y ese mes; el buscador de Movimientos se limpia porque el filtro se reemplaza. "Sin categoría" también se abre: el filtro por la fila `sin_categoria` incluye los movimientos con `category_id` nulo (el mismo reparto de las cifras) y Movimientos la nombra "Sin categoría" aunque no esté en la hoja de categorías.
 - **Transferencias.** Las `kind = transfer` no suman en ninguna cifra (AC-6.2).
-- **"Próximos pagos" (RF-12, F7.6).** Debajo de "En qué se fue", una tarjeta con las ocurrencias del mes elegido (`local_recurring_occurrences`), ordenadas por vencimiento, con los estados de spec 011 §2: las pagadas van **tachadas** (nombre y monto con `TextDecoration.lineThrough` en `onSurfaceVariant`, que conserva el contraste AA) con un check y "Pagado el 22 oct"; las pendientes muestran "Vence el 22" o el aviso ámbar. Encabezado "Próximos pagos · 2 de 5 pagados". Muestra hasta 5 y "Ver todos" abre `/gastos-fijos`. Sin gastos fijos, la tarjeta es una invitación: "¿Pagas algo cada mes? Regístralo y te avisamos antes." con "Agregar gasto fijo". No suma en el balance (AC-12.8).
 - **Estados:**
   - mes sin movimientos, con "Volver a {mes actual}" si no se está en el mes actual;
   - primera sincronización;
@@ -119,7 +117,7 @@ Diseño Q del canvas de rediseño (https://claude.ai/artifact/Ht1fXBuffrojnVGcfn
   - La política de privacidad se enlaza cuando exista su URL (F6.5).
 
 ### 3.8 Gastos fijos (RF-12)
-Feature `recurring` (spec 011). Ruta `/gastos-fijos`, a pantalla completa sobre el navegador raíz, desde la tarjeta del Inicio, desde Ajustes o desde el aviso push.
+Feature `recurring` (spec 011). Ruta `/gastos-fijos`, a pantalla completa sobre el navegador raíz, desde Ajustes o desde el aviso push. Es el único lugar con la lista del mes: el Inicio no muestra los próximos pagos.
 
 - **Lista del mes.** Selector de mes con flechas de 48 dp (del mes anterior al siguiente, lo que trae el sync). Arriba, el resumen "Este mes: $X pagados de $Y" (suma de `expected_amount` de las ocurrencias, sin las omitidas). Una fila por ocurrencia, en orden de vencimiento: ícono de la categoría (o uno genérico), nombre, monto esperado y la línea de estado de spec 011 §2. **Pagado** tacha nombre y monto, muestra el check y "Pagado el 22 oct · {comercio del movimiento}" y, al tocarlo, abre el detalle del movimiento (§3.3) si lo tiene. Las filas miden 48 dp o más.
 - **Acciones por fila** (menú de 48 dp): Próximo o Pendiente ofrece "Marcar como pagado", "Elegir movimiento" y "Omitir este mes"; Pagado ofrece "Deshacer" y "Ver movimiento"; Omitido ofrece "Deshacer". "Elegir movimiento" abre una hoja con los gastos locales de la ventana ±5 días, primero los de monto más cercano. Cada acción va a su endpoint (spec 005 §10), avisa con un snackbar y actualiza la copia local con la respuesta.

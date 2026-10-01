@@ -2331,26 +2331,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get recurringUpcomingTitle => 'Próximos pagos';
-
-  @override
-  String recurringUpcomingCount(int paid, int total) {
-    return '$paid de $total pagados';
-  }
-
-  @override
-  String get recurringUpcomingSeeAll => 'Ver todos';
-
-  @override
-  String get recurringUpcomingInviteTitle => '¿Pagas algo cada mes?';
-
-  @override
-  String get recurringUpcomingInviteBody => 'Regístralo y te avisamos antes.';
-
-  @override
-  String get recurringUpcomingInviteAction => 'Agregar gasto fijo';
-
-  @override
   String get settingsRecurringTitle => 'Gastos fijos';
 
   @override

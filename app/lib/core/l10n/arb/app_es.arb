@@ -1423,22 +1423,6 @@
       }
     }
   },
-  "recurringUpcomingTitle": "Próximos pagos",
-  "recurringUpcomingCount": "{paid} de {total} pagados",
-  "@recurringUpcomingCount": {
-    "placeholders": {
-      "paid": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "recurringUpcomingSeeAll": "Ver todos",
-  "recurringUpcomingInviteTitle": "¿Pagas algo cada mes?",
-  "recurringUpcomingInviteBody": "Regístralo y te avisamos antes.",
-  "recurringUpcomingInviteAction": "Agregar gasto fijo",
   "settingsRecurringTitle": "Gastos fijos",
   "settingsRecurringSubtitle": "{count, plural, =0{Spotify, arriendo, servicios…} =1{1 activo} other{{count} activos}}",
   "@settingsRecurringSubtitle": {

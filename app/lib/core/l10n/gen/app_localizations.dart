@@ -3940,42 +3940,6 @@ abstract class AppLocalizations {
   /// **'No hay gastos entre el {from} y el {to}.'**
   String recurringPickEmpty(String from, String to);
 
-  /// No description provided for @recurringUpcomingTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Próximos pagos'**
-  String get recurringUpcomingTitle;
-
-  /// No description provided for @recurringUpcomingCount.
-  ///
-  /// In es, this message translates to:
-  /// **'{paid} de {total} pagados'**
-  String recurringUpcomingCount(int paid, int total);
-
-  /// No description provided for @recurringUpcomingSeeAll.
-  ///
-  /// In es, this message translates to:
-  /// **'Ver todos'**
-  String get recurringUpcomingSeeAll;
-
-  /// No description provided for @recurringUpcomingInviteTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'¿Pagas algo cada mes?'**
-  String get recurringUpcomingInviteTitle;
-
-  /// No description provided for @recurringUpcomingInviteBody.
-  ///
-  /// In es, this message translates to:
-  /// **'Regístralo y te avisamos antes.'**
-  String get recurringUpcomingInviteBody;
-
-  /// No description provided for @recurringUpcomingInviteAction.
-  ///
-  /// In es, this message translates to:
-  /// **'Agregar gasto fijo'**
-  String get recurringUpcomingInviteAction;
-
   /// No description provided for @settingsRecurringTitle.
   ///
   /// In es, this message translates to:
