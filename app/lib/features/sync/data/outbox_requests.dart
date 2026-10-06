@@ -64,5 +64,10 @@ Map<String, Object?> _patchBody(TransactionPatch patch) => {
   if (patch.kind != null) 'kind': patch.kind!.name,
   if (patch.notes != null) 'notes': patch.notes!.value,
   if (patch.merchant != null) 'merchant': patch.merchant!.value,
+  if (patch.amount != null) 'amount': patch.amount!.toWire(),
+  if (patch.direction != null) 'direction': patch.direction!.name,
+  if (patch.occurredAt != null)
+    'occurred_at': patch.occurredAt!.toUtc().toIso8601String(),
+  if (patch.accountId != null) 'account_id': patch.accountId!.value,
   'learn_merchant_rule': patch.learnMerchantRule,
 };

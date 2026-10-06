@@ -5,6 +5,9 @@ abstract final class Routes {
   static const login = '/login';
   static const home = '/';
   static const transactions = '/movimientos';
+
+  /// "Editar movimiento" (spec 008 §3.3), sobre su detalle.
+  static String transactionEdit(String id) => '$transactions/$id/editar';
   static const register = '/registrar';
   static const review = '/revision';
   static const settings = '/ajustes';

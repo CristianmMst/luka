@@ -1474,6 +1474,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get detailDeleted => 'Movimiento eliminado';
 
   @override
+  String get detailDeleteBodyCaptured =>
+      'Se quita de tus movimientos y de tu reporte. Si vuelve a llegar el aviso de esta compra, no se registrará otra vez.';
+
+  @override
+  String get detailEdit => 'Editar movimiento';
+
+  @override
+  String get editTitle => 'Editar movimiento';
+
+  @override
+  String get editSave => 'Guardar cambios';
+
+  @override
+  String get editSaved => 'Cambios guardados';
+
+  @override
+  String get editTransferLocked =>
+      'Es una transferencia emparejada: desmárcala para cambiar el monto o el tipo.';
+
+  @override
   String get settingsAccountsTitle => 'Mis cuentas';
 
   @override

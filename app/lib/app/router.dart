@@ -24,6 +24,7 @@ import 'package:luka/features/shell/presentation/ajustes_page.dart';
 import 'package:luka/features/shell/presentation/home_shell.dart';
 import 'package:luka/features/transactions/presentation/registrar_page.dart';
 import 'package:luka/features/transactions/presentation/transaction_detail_page.dart';
+import 'package:luka/features/transactions/presentation/transaction_edit_page.dart';
 import 'package:luka/features/transactions/presentation/transactions_page.dart';
 
 export 'package:luka/core/routing/routes.dart';
@@ -172,6 +173,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => TransactionDetailPage(
                       id: state.pathParameters['id']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        parentNavigatorKey: rootNavigatorKey,
+                        builder: (context, state) => TransactionEditPage(
+                          id: state.pathParameters['id']!,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

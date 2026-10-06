@@ -189,6 +189,14 @@ void main() {
               path: ':id',
               builder: (_, state) =>
                   TransactionDetailPage(id: state.pathParameters['id']!),
+              routes: [
+                GoRoute(
+                  path: 'editar',
+                  builder: (_, state) => Scaffold(
+                    body: Text('editar ${state.pathParameters['id']}'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -490,11 +498,33 @@ void main() {
     });
 
     for (final id in ['exito', 'to-nequi']) {
-      testWidgets('uno capturado ($id) no se puede eliminar', (tester) async {
+      testWidgets('uno capturado ($id) también se elimina y avisa que no '
+          'vuelve', (tester) async {
         await pumpDetail(tester, id: id);
-        expect(find.text('Eliminar movimiento'), findsNothing);
+
+        await tester.ensureVisible(find.text('Eliminar movimiento'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Eliminar movimiento'));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('no se registrará otra vez'),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Eliminar'));
+        await tester.pumpAndSettle();
+
+        verify(() => actions.delete(id)).called(1);
       });
     }
+  });
+
+  testWidgets('el lápiz abre "Editar movimiento"', (tester) async {
+    await pumpDetail(tester);
+
+    await tester.tap(find.byTooltip('Editar movimiento'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('editar exito'), findsOneWidget);
   });
 
   testWidgets('un movimiento borrado lo dice', (tester) async {

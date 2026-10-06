@@ -219,6 +219,7 @@ class DriftTransactionsRepository implements TransactionsRepository {
       categoryName: category?.name,
       categorySlug: category?.slug,
       bank: tx.bank,
+      accountId: tx.accountId,
       accountBank: account?.bank,
       accountKind: account?.kind,
       accountLast4: account?.last4,

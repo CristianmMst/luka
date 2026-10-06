@@ -53,6 +53,9 @@ abstract class TransactionView with _$TransactionView {
     String? categorySlug,
     String? bank,
 
+    /// Id de la cuenta vinculada (para editarla, spec 008 §3.3).
+    String? accountId,
+
     /// Cuenta vinculada, en crudo (`Bank`/`AccountKind` del cable, spec 004
     /// §2.4); presentation arma la etiqueta con l10n. Sin cuenta, todas
     /// son `null`.

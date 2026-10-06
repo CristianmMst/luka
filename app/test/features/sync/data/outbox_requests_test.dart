@@ -135,4 +135,27 @@ void main() {
       'learn_merchant_rule': false,
     });
   });
+
+  test('PATCH de la edición envía monto, dirección, fecha y cuenta', () {
+    final request = requestFor(
+      OutboxOperation.patchTransaction(
+        id: 't1',
+        patch: TransactionPatch(
+          amount: Cop.pesos(45900),
+          direction: TxDirection.credit,
+          occurredAt: DateTime.utc(2026, 10, 4, 20, 31),
+          accountId: (value: 'acc-2'),
+          learnMerchantRule: false,
+        ),
+      ),
+    );
+
+    expect(request.body, {
+      'amount': '45900.00',
+      'direction': 'credit',
+      'occurred_at': '2026-10-04T20:31:00.000Z',
+      'account_id': 'acc-2',
+      'learn_merchant_rule': false,
+    });
+  });
 }

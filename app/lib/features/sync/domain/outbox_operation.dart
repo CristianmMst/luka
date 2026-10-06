@@ -21,8 +21,9 @@ abstract class NewTransaction with _$NewTransaction {
   }) = _NewTransaction;
 }
 
-/// Cambios de `PATCH /transactions/{id}`. Un campo nulo no se envía;
-/// `notes` y `merchant` usan un record para distinguir "borrar" de "no tocar".
+/// Cambios de `PATCH /transactions/{id}` (spec 005 §6). Un campo nulo no se
+/// envía; `notes`, `merchant` y `accountId` usan un record para distinguir
+/// "borrar" de "no tocar".
 @freezed
 abstract class TransactionPatch with _$TransactionPatch {
   const factory TransactionPatch({
@@ -30,6 +31,10 @@ abstract class TransactionPatch with _$TransactionPatch {
     TxKind? kind,
     ({String? value})? notes,
     ({String? value})? merchant,
+    Cop? amount,
+    TxDirection? direction,
+    DateTime? occurredAt,
+    ({String? value})? accountId,
     @Default(true) bool learnMerchantRule,
   }) = _TransactionPatch;
 }

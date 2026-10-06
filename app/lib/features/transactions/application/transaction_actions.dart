@@ -40,6 +40,11 @@ class TransactionActions {
     return _patch(tx, TransactionPatch(kind: kind, learnMerchantRule: false));
   }
 
+  /// Guarda los cambios de "Editar movimiento" (spec 008 §3.3) en un solo
+  /// `PATCH`.
+  Future<void> edit(TransactionView tx, TransactionPatch patch) =>
+      _patch(tx, patch);
+
   /// Guarda la nota; vacía (o solo espacios) la borra.
   Future<void> saveNotes(TransactionView tx, String notes) {
     final trimmed = notes.trim();
@@ -67,8 +72,9 @@ class TransactionActions {
   /// si el sync ya canjeó el local.
   String resolveId(String id) => _coordinator.resolveId(id);
 
-  /// Elimina un movimiento manual (el backend rechaza los demás). Si su
-  /// creación todavía no se envió, se cancela y no viaja nada.
+  /// Elimina un movimiento; si era una captura, el backend deja su lápida
+  /// para que otro aviso de la misma compra no lo vuelva a crear (spec 004
+  /// §3). Si su creación todavía no se envió, se cancela y no viaja nada.
   Future<void> delete(String id) => _coordinator.enqueue(
     OutboxOperation.deleteTransaction(id: _coordinator.resolveId(id)),
   );

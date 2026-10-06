@@ -298,7 +298,7 @@ as String?,
 /// @nodoc
 mixin _$TransactionPatch {
 
- String? get categoryId; TxKind? get kind; ({String? value})? get notes; ({String? value})? get merchant; bool get learnMerchantRule;
+ String? get categoryId; TxKind? get kind; ({String? value})? get notes; ({String? value})? get merchant; Cop? get amount; TxDirection? get direction; DateTime? get occurredAt; ({String? value})? get accountId; bool get learnMerchantRule;
 /// Create a copy of TransactionPatch
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,16 +309,16 @@ $TransactionPatchCopyWith<TransactionPatch> get copyWith => _$TransactionPatchCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionPatch&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.learnMerchantRule, learnMerchantRule) || other.learnMerchantRule == learnMerchantRule));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransactionPatch&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.learnMerchantRule, learnMerchantRule) || other.learnMerchantRule == learnMerchantRule));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,categoryId,kind,notes,merchant,learnMerchantRule);
+int get hashCode => Object.hash(runtimeType,categoryId,kind,notes,merchant,amount,direction,occurredAt,accountId,learnMerchantRule);
 
 @override
 String toString() {
-  return 'TransactionPatch(categoryId: $categoryId, kind: $kind, notes: $notes, merchant: $merchant, learnMerchantRule: $learnMerchantRule)';
+  return 'TransactionPatch(categoryId: $categoryId, kind: $kind, notes: $notes, merchant: $merchant, amount: $amount, direction: $direction, occurredAt: $occurredAt, accountId: $accountId, learnMerchantRule: $learnMerchantRule)';
 }
 
 
@@ -329,7 +329,7 @@ abstract mixin class $TransactionPatchCopyWith<$Res>  {
   factory $TransactionPatchCopyWith(TransactionPatch value, $Res Function(TransactionPatch) _then) = _$TransactionPatchCopyWithImpl;
 @useResult
 $Res call({
- String? categoryId, TxKind? kind, ({String? value})? notes, ({String? value})? merchant, bool learnMerchantRule
+ String? categoryId, TxKind? kind, ({String? value})? notes, ({String? value})? merchant, Cop? amount, TxDirection? direction, DateTime? occurredAt, ({String? value})? accountId, bool learnMerchantRule
 });
 
 
@@ -346,12 +346,16 @@ class _$TransactionPatchCopyWithImpl<$Res>
 
 /// Create a copy of TransactionPatch
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? categoryId = freezed,Object? kind = freezed,Object? notes = freezed,Object? merchant = freezed,Object? learnMerchantRule = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? categoryId = freezed,Object? kind = freezed,Object? notes = freezed,Object? merchant = freezed,Object? amount = freezed,Object? direction = freezed,Object? occurredAt = freezed,Object? accountId = freezed,Object? learnMerchantRule = null,}) {
   return _then(_self.copyWith(
 categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TxKind?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as ({String? value})?,merchant: freezed == merchant ? _self.merchant : merchant // ignore: cast_nullable_to_non_nullable
+as ({String? value})?,amount: freezed == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Cop?,direction: freezed == direction ? _self.direction : direction // ignore: cast_nullable_to_non_nullable
+as TxDirection?,occurredAt: freezed == occurredAt ? _self.occurredAt : occurredAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as ({String? value})?,learnMerchantRule: null == learnMerchantRule ? _self.learnMerchantRule : learnMerchantRule // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -438,10 +442,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  bool learnMerchantRule)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  Cop? amount,  TxDirection? direction,  DateTime? occurredAt,  ({String? value})? accountId,  bool learnMerchantRule)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TransactionPatch() when $default != null:
-return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.learnMerchantRule);case _:
+return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.amount,_that.direction,_that.occurredAt,_that.accountId,_that.learnMerchantRule);case _:
   return orElse();
 
 }
@@ -459,10 +463,10 @@ return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.lea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  bool learnMerchantRule)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  Cop? amount,  TxDirection? direction,  DateTime? occurredAt,  ({String? value})? accountId,  bool learnMerchantRule)  $default,) {final _that = this;
 switch (_that) {
 case _TransactionPatch():
-return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.learnMerchantRule);case _:
+return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.amount,_that.direction,_that.occurredAt,_that.accountId,_that.learnMerchantRule);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -479,10 +483,10 @@ return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.lea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  bool learnMerchantRule)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? categoryId,  TxKind? kind,  ({String? value})? notes,  ({String? value})? merchant,  Cop? amount,  TxDirection? direction,  DateTime? occurredAt,  ({String? value})? accountId,  bool learnMerchantRule)?  $default,) {final _that = this;
 switch (_that) {
 case _TransactionPatch() when $default != null:
-return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.learnMerchantRule);case _:
+return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.amount,_that.direction,_that.occurredAt,_that.accountId,_that.learnMerchantRule);case _:
   return null;
 
 }
@@ -494,13 +498,17 @@ return $default(_that.categoryId,_that.kind,_that.notes,_that.merchant,_that.lea
 
 
 class _TransactionPatch implements TransactionPatch {
-  const _TransactionPatch({this.categoryId, this.kind, this.notes, this.merchant, this.learnMerchantRule = true});
+  const _TransactionPatch({this.categoryId, this.kind, this.notes, this.merchant, this.amount, this.direction, this.occurredAt, this.accountId, this.learnMerchantRule = true});
   
 
 @override final  String? categoryId;
 @override final  TxKind? kind;
 @override final  ({String? value})? notes;
 @override final  ({String? value})? merchant;
+@override final  Cop? amount;
+@override final  TxDirection? direction;
+@override final  DateTime? occurredAt;
+@override final  ({String? value})? accountId;
 @override@JsonKey() final  bool learnMerchantRule;
 
 /// Create a copy of TransactionPatch
@@ -513,16 +521,16 @@ _$TransactionPatchCopyWith<_TransactionPatch> get copyWith => __$TransactionPatc
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionPatch&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.learnMerchantRule, learnMerchantRule) || other.learnMerchantRule == learnMerchantRule));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TransactionPatch&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.learnMerchantRule, learnMerchantRule) || other.learnMerchantRule == learnMerchantRule));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,categoryId,kind,notes,merchant,learnMerchantRule);
+int get hashCode => Object.hash(runtimeType,categoryId,kind,notes,merchant,amount,direction,occurredAt,accountId,learnMerchantRule);
 
 @override
 String toString() {
-  return 'TransactionPatch(categoryId: $categoryId, kind: $kind, notes: $notes, merchant: $merchant, learnMerchantRule: $learnMerchantRule)';
+  return 'TransactionPatch(categoryId: $categoryId, kind: $kind, notes: $notes, merchant: $merchant, amount: $amount, direction: $direction, occurredAt: $occurredAt, accountId: $accountId, learnMerchantRule: $learnMerchantRule)';
 }
 
 
@@ -533,7 +541,7 @@ abstract mixin class _$TransactionPatchCopyWith<$Res> implements $TransactionPat
   factory _$TransactionPatchCopyWith(_TransactionPatch value, $Res Function(_TransactionPatch) _then) = __$TransactionPatchCopyWithImpl;
 @override @useResult
 $Res call({
- String? categoryId, TxKind? kind, ({String? value})? notes, ({String? value})? merchant, bool learnMerchantRule
+ String? categoryId, TxKind? kind, ({String? value})? notes, ({String? value})? merchant, Cop? amount, TxDirection? direction, DateTime? occurredAt, ({String? value})? accountId, bool learnMerchantRule
 });
 
 
@@ -550,12 +558,16 @@ class __$TransactionPatchCopyWithImpl<$Res>
 
 /// Create a copy of TransactionPatch
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? categoryId = freezed,Object? kind = freezed,Object? notes = freezed,Object? merchant = freezed,Object? learnMerchantRule = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? categoryId = freezed,Object? kind = freezed,Object? notes = freezed,Object? merchant = freezed,Object? amount = freezed,Object? direction = freezed,Object? occurredAt = freezed,Object? accountId = freezed,Object? learnMerchantRule = null,}) {
   return _then(_TransactionPatch(
 categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,kind: freezed == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as TxKind?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as ({String? value})?,merchant: freezed == merchant ? _self.merchant : merchant // ignore: cast_nullable_to_non_nullable
+as ({String? value})?,amount: freezed == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
+as Cop?,direction: freezed == direction ? _self.direction : direction // ignore: cast_nullable_to_non_nullable
+as TxDirection?,occurredAt: freezed == occurredAt ? _self.occurredAt : occurredAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as ({String? value})?,learnMerchantRule: null == learnMerchantRule ? _self.learnMerchantRule : learnMerchantRule // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

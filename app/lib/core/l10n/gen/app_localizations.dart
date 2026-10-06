@@ -2482,6 +2482,42 @@ abstract class AppLocalizations {
   /// **'Movimiento eliminado'**
   String get detailDeleted;
 
+  /// No description provided for @detailDeleteBodyCaptured.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quita de tus movimientos y de tu reporte. Si vuelve a llegar el aviso de esta compra, no se registrará otra vez.'**
+  String get detailDeleteBodyCaptured;
+
+  /// No description provided for @detailEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar movimiento'**
+  String get detailEdit;
+
+  /// No description provided for @editTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar movimiento'**
+  String get editTitle;
+
+  /// No description provided for @editSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get editSave;
+
+  /// No description provided for @editSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios guardados'**
+  String get editSaved;
+
+  /// No description provided for @editTransferLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'Es una transferencia emparejada: desmárcala para cambiar el monto o el tipo.'**
+  String get editTransferLocked;
+
   /// No description provided for @settingsAccountsTitle.
   ///
   /// In es, this message translates to:

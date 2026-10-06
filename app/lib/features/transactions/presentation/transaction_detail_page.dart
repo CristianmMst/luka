@@ -49,7 +49,14 @@ class TransactionDetailPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _TopBar(),
+            _TopBar(
+              onEdit: switch (state.tx) {
+                AsyncData(value: final tx?) => () => unawaited(
+                  GoRouter.of(context).push(Routes.transactionEdit(tx.id)),
+                ),
+                _ => null,
+              },
+            ),
             Expanded(
               child: switch (state.tx) {
                 AsyncData(value: final tx?) => _DetailBody(
@@ -69,7 +76,10 @@ class TransactionDetailPage extends ConsumerWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar();
+  const _TopBar({this.onEdit});
+
+  /// Abre "Editar movimiento"; `null` mientras el movimiento no cargó.
+  final VoidCallback? onEdit;
 
   void _back(BuildContext context) {
     final router = GoRouter.of(context);
@@ -94,13 +104,21 @@ class _TopBar extends StatelessWidget {
             onPressed: () => _back(context),
             icon: const Icon(Icons.chevron_left_rounded, size: 28),
           ),
-          Semantics(
-            header: true,
-            child: Text(
-              l10n.detailTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(
+                l10n.detailTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
           ),
+          if (onEdit != null)
+            IconButton(
+              tooltip: l10n.detailEdit,
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined, size: 22),
+            ),
         ],
       ),
     );
@@ -199,17 +217,15 @@ class _DetailBody extends ConsumerWidget {
                 label: Text(l10n.detailCreateRecurring),
               ),
             _NotesField(key: ValueKey('notes-${tx.id}'), tx: tx),
-            // Solo los manuales: el backend rechaza borrar lo capturado.
-            if (tx.parsedBy == 'manual')
-              TextButton.icon(
-                onPressed: () => unawaited(_delete(context, actions)),
-                style: TextButton.styleFrom(
-                  minimumSize: const Size.fromHeight(minTouchTarget),
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                label: Text(l10n.detailDelete),
+            TextButton.icon(
+              onPressed: () => unawaited(_delete(context, actions)),
+              style: TextButton.styleFrom(
+                minimumSize: const Size.fromHeight(minTouchTarget),
+                foregroundColor: Theme.of(context).colorScheme.error,
               ),
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              label: Text(l10n.detailDelete),
+            ),
           ],
         ),
       ],
@@ -223,7 +239,12 @@ class _DetailBody extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.detailDeleteTitle),
-        content: Text(l10n.detailDeleteBody),
+        // Una captura deja lápida: otro aviso de la compra no la recrea.
+        content: Text(
+          tx.parsedBy == 'manual'
+              ? l10n.detailDeleteBody
+              : l10n.detailDeleteBodyCaptured,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

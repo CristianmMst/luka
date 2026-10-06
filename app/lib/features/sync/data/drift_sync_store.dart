@@ -588,7 +588,23 @@ class DriftSyncStore implements SyncStore {
 
   Future<void> _applyPatch(String id, TransactionPatch patch) async {
     final categoryId = patch.categoryId;
-    final kind = patch.kind;
+    final direction = patch.direction;
+    var kind = patch.kind;
+    if (kind == null && direction != null) {
+      // Como el backend: una transferencia sigue siéndolo; gasto e ingreso
+      // siguen a la dirección.
+      final current = await _findLocalTransaction(id);
+      if (current?.kind != TxKind.transfer.name) {
+        kind = direction == TxDirection.debit ? TxKind.expense : TxKind.income;
+      }
+    }
+    final accountId = patch.accountId;
+    final newAccountId = accountId?.value;
+    final accountBank = newAccountId == null
+        ? null
+        : (await (_db.select(
+            _db.localAccounts,
+          )..where((a) => a.id.equals(newAccountId))).getSingleOrNull())?.bank;
     String? fiscalTag;
     if (categoryId != null || kind != null) {
       // Como el backend: con el kind resultante, una transferencia queda en
@@ -616,6 +632,20 @@ class DriftSyncStore implements SyncStore {
         merchant: merchant == null
             ? const Value.absent()
             : Value(merchant.value),
+        amountCents: patch.amount == null
+            ? const Value.absent()
+            : Value(patch.amount!.cents),
+        direction: direction == null
+            ? const Value.absent()
+            : Value(direction.name),
+        occurredAt: patch.occurredAt == null
+            ? const Value.absent()
+            : Value(patch.occurredAt!.toUtc()),
+        accountId: accountId == null
+            ? const Value.absent()
+            : Value(accountId.value),
+        // Con cuenta, el banco es el suyo; al quitarla, el banco se queda.
+        bank: accountBank == null ? const Value.absent() : Value(accountBank),
         updatedAt: Value(_now()),
         pendingPush: const Value(true),
       ),

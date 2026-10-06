@@ -18,6 +18,17 @@ void main() {
         id: 't1',
         patch: TransactionPatch(categoryId: 'c1', notes: (value: null)),
       ),
+      OutboxOperation.patchTransaction(
+        id: 't1',
+        patch: TransactionPatch(
+          amount: Cop.pesos(45900),
+          direction: TxDirection.credit,
+          occurredAt: DateTime.utc(2026, 10, 4, 20, 31),
+          accountId: (value: null),
+          merchant: (value: 'Frisby'),
+          learnMerchantRule: false,
+        ),
+      ),
       const OutboxOperation.setTransferPair(id: 't1', pairId: 't2'),
       const OutboxOperation.unsetTransferPair(id: 't1'),
       const OutboxOperation.deleteTransaction(id: 't1'),

@@ -120,21 +120,35 @@ class OutboxCodec {
     if (patch.kind != null) 'kind': patch.kind!.name,
     if (patch.notes != null) 'notes': patch.notes!.value,
     if (patch.merchant != null) 'merchant': patch.merchant!.value,
+    if (patch.amount != null) 'amount': patch.amount!.toWire(),
+    if (patch.direction != null) 'direction': patch.direction!.name,
+    if (patch.occurredAt != null)
+      'occurred_at': patch.occurredAt!.toUtc().toIso8601String(),
+    if (patch.accountId != null) 'account_id': patch.accountId!.value,
     'learn_merchant_rule': patch.learnMerchantRule,
   });
 
-  static TransactionPatch _decodePatch(Map<String, dynamic> body) =>
-      TransactionPatch(
-        categoryId: body['category_id'] as String?,
-        kind: body['kind'] == null
-            ? null
-            : TxKind.values.byName(body['kind'] as String),
-        notes: body.containsKey('notes')
-            ? (value: body['notes'] as String?)
-            : null,
-        merchant: body.containsKey('merchant')
-            ? (value: body['merchant'] as String?)
-            : null,
-        learnMerchantRule: body['learn_merchant_rule'] as bool? ?? true,
-      );
+  static TransactionPatch _decodePatch(
+    Map<String, dynamic> body,
+  ) => TransactionPatch(
+    categoryId: body['category_id'] as String?,
+    kind: body['kind'] == null
+        ? null
+        : TxKind.values.byName(body['kind'] as String),
+    notes: body.containsKey('notes') ? (value: body['notes'] as String?) : null,
+    merchant: body.containsKey('merchant')
+        ? (value: body['merchant'] as String?)
+        : null,
+    amount: body['amount'] == null ? null : Cop.parse(body['amount'] as String),
+    direction: body['direction'] == null
+        ? null
+        : TxDirection.values.byName(body['direction'] as String),
+    occurredAt: body['occurred_at'] == null
+        ? null
+        : DateTime.parse(body['occurred_at'] as String),
+    accountId: body.containsKey('account_id')
+        ? (value: body['account_id'] as String?)
+        : null,
+    learnMerchantRule: body['learn_merchant_rule'] as bool? ?? true,
+  );
 }
