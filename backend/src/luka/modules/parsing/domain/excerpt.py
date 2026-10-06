@@ -24,7 +24,9 @@ _PHONE_RE = re.compile(
 # Corridas de 10+ cifras (referencias, cuentas completas): el fallback descarta
 # la linea entera para que no lleguen al LLM (RNF-5).
 _LONG_DIGITS_RE = re.compile(r"\d{10,}")
-_TIME_RE = re.compile(r"\d{2}:\d{2}")
+# Los segundos opcionales (`15:45:13`, pago desde producto) quedan en la cabeza:
+# si no, el `:13` pasaria a la cola como digitos sueltos.
+_TIME_RE = re.compile(r"\d{2}:\d{2}(?::\d{2})?")
 _CURRENCY_MARKER_RE = re.compile(r"\$\s?\d|COP")
 _THOUSANDS_RE = re.compile(
     r"\d{1,3}(?:[.,]\d{3}){2,}"  # miles sin decimales pero con >=2 grupos (1.234.567)

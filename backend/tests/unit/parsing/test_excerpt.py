@@ -139,7 +139,9 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
         `45` ni `018000931987` dejar `87` (revision F4.7).
         """
         excerpt = extract_excerpt(fixture.body, PREFIX)
-        tail = excerpt[re.search(r"\d{2}:\d{2}", excerpt).end() :]  # type: ignore[union-attr]
+        # La hora puede traer segundos (pago desde producto): van en la cabeza.
+        hour = re.search(r"\d{2}:\d{2}(?::\d{2})?", excerpt)
+        tail = excerpt[hour.end() :]  # type: ignore[union-attr]
         # `Icon 1` (etiqueta de imagen de los `_wrap`) es el unico digito legitimo.
         assert not re.search(r"\d{2,}", tail), tail
 
@@ -157,6 +159,11 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
                 "Bancolombia: DIANA, recibiste una transferencia de CARLOS RUIZ por $482,500.00 "
                 "en tu cuenta *9081 conectada a la llave @druiz882 el 15/06/26 a las 11:24. Con "
                 "llaves es de una y gratis. Dudas al . Icon 1 ",
+            ),
+            (
+                "transferencia_cuenta_wrap.txt",
+                "Bancolombia: Transferiste $21,700.00 desde tu cuenta *5533 a la cuenta "
+                "*3001234567 el 02/10/26 a las 20:06. ¿Dudas? Llamanos al . Estamos cerca. icon1 ",
             ),
             (
                 "pago_qr_wrap.txt",

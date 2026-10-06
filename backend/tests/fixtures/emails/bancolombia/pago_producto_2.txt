@@ -1,0 +1,23 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-10-03T15:39:31-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "418900.00"
+  merchant: "Compania de Medicina Prepagada"
+  last4: "5533"
+  occurred_at: 2026-10-03T15:39:00-05:00
+  channel_hint: pago_producto
+  note: igual que pago_producto.txt, otro comercio y monto; aqui la frase va en su propio parrafo
+---
+¡Listo!
+
+Todo salió bien con tus movimientos Bancolombia: Pagaste $418,900.00 a Compania de Medicina Prepagada desde tu producto 5533 el 03/10/2026 15:39:24. ¿Dudas? Llamanos al 6045109095. Estamos cerca
+
+¿Quieres ver el equilibrio de tus gastos y tus ingresos? Haz eso y mucho más desde Día a Día en nuestra app Mi Bancolombia.
+
+DESCUBRIR MÁS
+
+Esto es un mensaje automático. Por favor, no contestes. Estamos para ti en nuestros canales de atención. Gracias por elegirnos.

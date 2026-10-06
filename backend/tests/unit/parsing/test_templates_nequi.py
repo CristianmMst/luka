@@ -49,6 +49,7 @@ class TestTemplateRegistryNequi:
 
     def test_parsed_by_de_las_plantillas_entre_personas(self, registry: TemplateRegistry) -> None:
         assert registry.person_parsed_by() == {
+            "rule:bancolombia:transferencia_cuenta:v1",
             "rule:bancolombia:transferencia_llave:v1",
             "rule:bancolombia:transferencia_llave_recibida:v1",
             "rule:nequi:breb_recibida:v1",

@@ -1,0 +1,25 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-10-03T15:45:20-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "742300.00"
+  merchant: "MERCADOPAGO COLOMBIA LTDA"
+  last4: "5533"
+  occurred_at: 2026-10-03T15:45:00-05:00
+  channel_hint: pago_producto
+  note: pago a comercio desde un producto (sin asterisco antes de las 4 cifras); la hora trae segundos y no lleva "a las". Todo el correo es un solo parrafo, sin lineas vacias
+---
+¡Listo!
+Todo salió bien con tus movimientos Bancolombia: Pagaste $742,300.00 a MERCADOPAGO COLOMBIA LTDA desde tu producto 5533 el 03/10/2026 15:45:13. ¿Dudas? Llamanos al 6045109095. Estamos cerca
+¿Quieres ver el equilibrio de tus gastos y tus ingresos? Haz eso y mucho más desde Día a Día en nuestra app Mi Bancolombia.
+DESCUBRIR MÁS
+Esto es un mensaje automático. Por favor, no contestes. Estamos para ti en nuestros canales de atención. Gracias por elegirnos.
+Tu seguridad es nuestra prioridad:
+• Protege tus datos. No des información confidencial por llamadas o enlaces de correos.
+• Ingresa siempre a la Sucursal Virtual Personas. Escribe www.bancolombia.com directamente en la barra de tu navegador. Evita enlaces antiguos o usados.
+• Cuida tu usuario, clave, número de tarjeta de crédito, fecha de vencimiento y código de seguridad. No los compartas.
+• Cuando compres, no pierdas de vista tu tarjeta. Revisa que si sea la tuya. Márcala para reconocerla con facilidad.
+Por tu seguridad, desde Bancolombia nunca te solicitaremos tus datos personales, como usuario y clave; ni tus datos bancarios, como números de tarjetas de crédito, códigos de seguridad y plazos.

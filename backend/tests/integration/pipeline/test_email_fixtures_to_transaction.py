@@ -39,18 +39,24 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.integration
 
 
+# Prefijo del fixture -> `template_id`. `transferencia_llave_recibida` va antes
+# de `transferencia_llave`: gana el primer prefijo que coincide.
+_TEMPLATE_BY_PREFIX = (
+    ("compra_tdeb", "compra_tdeb"),
+    ("transferencia_llave_recibida", "transferencia_llave_recibida"),
+    ("transferencia_llave", "transferencia_llave"),
+    ("transferencia_cuenta", "transferencia_cuenta"),
+    ("nomina", "nomina"),
+    ("pago_producto", "pago_producto"),
+    ("pago_qr", "pago_qr"),
+)
+
+
 def _template_id(fixture_name: str) -> str:
     """Deriva el `template_id` esperado del nombre del fixture (controller ruling 3)."""
-    if fixture_name.startswith("compra_tdeb"):
-        return "compra_tdeb"
-    if fixture_name.startswith("transferencia_llave_recibida"):
-        return "transferencia_llave_recibida"
-    if fixture_name.startswith("transferencia_llave"):
-        return "transferencia_llave"
-    if fixture_name.startswith("nomina"):
-        return "nomina"
-    if fixture_name.startswith("pago_qr"):
-        return "pago_qr"
+    for prefix, template_id in _TEMPLATE_BY_PREFIX:
+        if fixture_name.startswith(prefix):
+            return template_id
     msg = f"fixture sin template_id mapeado: {fixture_name}"
     raise AssertionError(msg)
 

@@ -1,0 +1,19 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-10-02T20:07:05-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "21700.00"
+  merchant: "Transferencia"
+  last4: "5533"
+  occurred_at: 2026-10-02T20:06:00-05:00
+  channel_hint: transferencia_cuenta
+  note: transferencia a otra cuenta (10 cifras, parece un celular Nequi); el correo no nombra al destinatario, asi que la plantilla fija "Transferencia". Cortado a ~76 caracteres
+---
+Logo Bancolombia [https://bancolombia-email-wsuite.s3.amazonaws.com/templates/605ce7f68622a5425353ea51/img/header-logo.png] yellow-icon [https://bancolombia-email-wsuite.s3.amazonaws.com/templates/64e68b61fa57f445dc99747d/img/chulo.png]
+¡Listo! Todo salió bien con tus movimientos Bancolombia: Transferiste
+$21,700.00 desde tu cuenta *5533 a la cuenta *3001234567 el 02/10/26 a las
+20:06. ¿Dudas? Llamanos al 018000931987. Estamos cerca.
+icon1 [https://bancolombia-email-wsuite.s3.amazonaws.com/templates/62e856ff1756f66d2ab9d78c/img/Icono_celular_diaadia.png]

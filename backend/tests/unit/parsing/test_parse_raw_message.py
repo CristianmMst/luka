@@ -52,14 +52,17 @@ TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb.txt": "compra_tdeb",
     "compra_tdeb_2.txt": "compra_tdeb",
     "nomina.txt": "nomina",
+    "pago_producto.txt": "pago_producto",
+    "pago_producto_2.txt": "pago_producto",
     "pago_qr.txt": "pago_qr",
     "pago_qr_wrap.txt": "pago_qr",
+    "transferencia_cuenta_wrap.txt": "transferencia_cuenta",
     "transferencia_llave.txt": "transferencia_llave",
     "transferencia_llave_wrap.txt": "transferencia_llave",
     "transferencia_llave_recibida_wrap.txt": "transferencia_llave_recibida",
 }
 
-# Extracto de Bancolombia que no matchea ninguna de las 5 plantillas conocidas
+# Extracto de Bancolombia que no matchea ninguna de las 7 plantillas conocidas
 # (retiro de cajero: variante especulativa explicitamente NO incluida, spec 006
 # SS4.1) pero contiene un monto -> cae al LLM.
 _UNRECOGNIZED_BODY = "Bancolombia: Retiraste $50.000 en el cajero de la Calle 10 con tu tarjeta."

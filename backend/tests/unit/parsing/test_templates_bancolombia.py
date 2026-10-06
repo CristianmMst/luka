@@ -26,8 +26,11 @@ TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb.txt": "compra_tdeb",
     "compra_tdeb_2.txt": "compra_tdeb",
     "nomina.txt": "nomina",
+    "pago_producto.txt": "pago_producto",
+    "pago_producto_2.txt": "pago_producto",
     "pago_qr.txt": "pago_qr",
     "pago_qr_wrap.txt": "pago_qr",
+    "transferencia_cuenta_wrap.txt": "transferencia_cuenta",
     "transferencia_llave.txt": "transferencia_llave",
     "transferencia_llave_wrap.txt": "transferencia_llave",
     "transferencia_llave_recibida_wrap.txt": "transferencia_llave_recibida",
@@ -90,6 +93,36 @@ class TestTemplateRegistryBancolombia:
         assert match.template.id == "pago_qr"
         assert match.template.default_merchant == "Pago QR"
 
+    def test_pago_producto_con_segundos_y_asterisco_opcional(
+        self, registry: TemplateRegistry
+    ) -> None:
+        """La hora del pago desde producto trae segundos (que se ignoran) y el
+        producto puede venir con o sin `*` (spec 006 §4.1)."""
+        for product in ("5533", "*5533"):
+            excerpt = (
+                f"Bancolombia: Pagaste $1,000.00 a TIENDA X desde tu producto {product} "
+                "el 03/10/2026 15:45:13."
+            )
+            match = registry.match("bancolombia", excerpt)
+            assert match is not None
+            assert match.template.id == "pago_producto"
+            assert match.groups["last4"] == "5533"
+            assert match.groups["time"] == "15:45"
+
+    def test_transferencia_cuenta_sin_destinatario_usa_el_merchant_fijo(
+        self, registry: TemplateRegistry
+    ) -> None:
+        """El correo solo trae el numero de la cuenta destino: el comercio es
+        "Transferencia", nunca ese numero (spec 006 §4.1)."""
+        excerpt = (
+            "Bancolombia: Transferiste $14,300.00 desde tu cuenta *5533 a la cuenta "
+            "*3001234567 el 02/10/26 a las 20:06."
+        )
+        match = registry.match("bancolombia", excerpt)
+        assert match is not None
+        assert match.template.id == "transferencia_cuenta"
+        assert match.template.default_merchant == "Transferencia"
+
     def test_fecha_fuera_de_ventana_lanza_extraction_invalid(
         self, registry: TemplateRegistry
     ) -> None:
@@ -106,13 +139,13 @@ class TestTemplateRegistryBancolombia:
         bank_config = registry.bank_config("bancolombia")
         assert bank_config is not None
         assert bank_config.version == 1
-        assert len(bank_config.templates) == 5
+        assert len(bank_config.templates) == 7
         assert registry.bank_config("davivienda") is None
 
-    def test_config_real_tiene_exactamente_las_5_plantillas_esperadas(
+    def test_config_real_tiene_exactamente_las_7_plantillas_esperadas(
         self, registry: TemplateRegistry
     ) -> None:
-        """Guarda que `templates/bancolombia.yaml` siga declarando los 5 template
+        """Guarda que `templates/bancolombia.yaml` siga declarando los 7 template
         ids esperados en version 1 (si alguien borra/renombra uno, este test lo
         detecta sin depender de que un fixture tambien deje de matchear).
         """
@@ -125,6 +158,8 @@ class TestTemplateRegistryBancolombia:
             "transferencia_llave_recibida",
             "nomina",
             "pago_qr",
+            "pago_producto",
+            "transferencia_cuenta",
         }
 
 

@@ -29,3 +29,15 @@ templates:
     default_merchant: Pago QR # el correo solo trae una llave numerica, no el comercio
     pattern: 'Bancolombia: (?:(?P<holder>[^$]{1,80}?),? )?pagaste \$(?P<amount>[\d.,]+) por codigo QR desde tu cuenta \*(?P<last4>\d{4}) a la llave (?P<key>\S+) el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
     date_format: "%d/%m/%Y"
+  - id: pago_producto # fixtures: pago_producto.txt, pago_producto_2.txt
+    direction: debit
+    # "Pagaste $X a <COMERCIO> desde tu producto NNNN el dd/mm/aaaa hh:mm:ss":
+    # el producto va sin asterisco y la hora trae segundos (se ignoran).
+    pattern: 'Bancolombia: Pagaste \$(?P<amount>[\d.,]+) a (?P<merchant>.+?) desde tu producto \*?(?P<last4>\d{4}) el (?P<date>\d{2}/\d{2}/\d{4}) (?:a las )?(?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%Y"
+  - id: transferencia_cuenta # fixture: transferencia_cuenta_wrap.txt
+    direction: debit
+    counterparty: true # envio a otra persona, aunque el correo no la nombra
+    default_merchant: Transferencia # el correo solo trae el numero de la cuenta destino
+    pattern: 'Bancolombia: (?:(?P<holder>[^$]{1,80}?),? )?[Tt]ransferiste \$(?P<amount>[\d.,]+) desde tu cuenta \*(?P<last4>\d{4}) a la cuenta \*\d+ el (?P<date>\d{2}/\d{2}/\d{2}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%y"

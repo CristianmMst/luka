@@ -184,7 +184,7 @@ templates:
   sola, por espacio) y se busca el prefijo en **cualquier posición** de cada párrafo desenvuelto,
   no solo al inicio de línea — así se reconoce el correo que el proveedor corta a ~76 caracteres y
   cuya frase útil empieza a mitad de línea (p. ej. tras "¡Listo! Todo salió bien con tus
-  movimientos"). El extracto arranca en el prefijo. Lo que sigue a la hora `HH:MM` de la transacción
+  movimientos"). El extracto arranca en el prefijo. Lo que sigue a la hora `HH:MM` (o `HH:MM:SS`) de la transacción
   (el boilerplate: "Dudas al `<teléfono>`", imágenes tipo `Icon 1 [https://...]`, el inicio del pie
   de seguridad) se recorta en la primera URL o el primer `[`, lo que aparezca antes, y además se le
   quitan secuencias tipo teléfono completas (3-3-4, 3-3-3-3 espaciada o gratuita pegada
@@ -198,11 +198,17 @@ templates:
   `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
   (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`), `nomina`
   y `pago_qr` ("<TITULAR> pagaste $<monto en-US> por codigo QR desde tu cuenta *<last4> a la llave
-  <n> el DD/MM/YYYY a las HH:MM"; `direction: debit`, fixtures `pago_qr.txt` y `pago_qr_wrap.txt`).
-  Las dos de transferencia llevan `counterparty: true`. El correo QR no nombra el comercio (solo
+  <n> el DD/MM/YYYY a las HH:MM"; `direction: debit`, fixtures `pago_qr.txt` y `pago_qr_wrap.txt`),
+  `pago_producto` ("Pagaste $<monto en-US> a <COMERCIO> desde tu producto <last4> el DD/MM/YYYY
+  HH:MM:SS"; `direction: debit`, el producto va sin asterisco y los segundos se ignoran, fixtures
+  `pago_producto.txt` y `pago_producto_2.txt`) y `transferencia_cuenta` ("Transferiste $<monto
+  en-US> desde tu cuenta *<last4> a la cuenta *<n> el DD/MM/YY a las HH:MM"; `direction: debit`,
+  fixture `transferencia_cuenta_wrap.txt`).
+  Las de transferencia llevan `counterparty: true`. El correo QR no nombra el comercio (solo
   una llave numérica), así que `pago_qr` declara `default_merchant: Pago QR`: una plantilla puede
   fijar el comercio cuando su regex no tiene grupo `merchant` (o no lo captura); nunca se usa la
-  llave como comercio.
+  llave como comercio. Igual con `transferencia_cuenta`, que solo trae el número de la cuenta
+  destino: `default_merchant: Transferencia`.
 - Plantillas Nequi vigentes (`parsing/config/templates/nequi.yaml`, v1, F2.7): `breb_recibida`
   ("Recibiste 2.600 de <persona> el 26 de septiembre de 2026 a las 11:21 a.m, desde el banco
   <banco>"; `direction: credit`, `counterparty: true`, fixture `nequi/breb_recibida.txt`). El
