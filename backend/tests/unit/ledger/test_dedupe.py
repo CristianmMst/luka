@@ -9,11 +9,14 @@ import pytest
 from luka.modules.ledger.domain.dedupe import (
     BUCKET_SECONDS,
     SAME_CAPTURE_WINDOW,
+    base_dedupe_key,
     candidate_keys,
+    counterparty_dedupe_key,
     dedupe_key,
     is_same_capture,
     manual_dedupe_key,
     normalize_bank,
+    same_counterparty,
     time_bucket,
 )
 from luka.modules.ledger.domain.enums import Bank, Direction
@@ -170,3 +173,45 @@ class TestNormalizeBank:
 @pytest.mark.unit
 def test_bucket_seconds_es_600() -> None:
     assert BUCKET_SECONDS == 600
+
+
+@pytest.mark.unit
+class TestSameCounterparty:
+    """Dos capturas entre personas con contrapartes distintas nunca son el mismo
+    movimiento (spec 004 SS3): tres amigos que envian $7.100 a la vez."""
+
+    def test_mismo_nombre_es_la_misma_contraparte(self) -> None:
+        assert same_counterparty("MANUEL NIETO", "Manuel Nieto")
+
+    def test_tildes_y_puntuacion_no_importan(self) -> None:
+        assert same_counterparty("TOMÁS RODRÍGUEZ", "tomas rodriguez.")
+
+    def test_nombre_recortado_es_la_misma_contraparte(self) -> None:
+        assert same_counterparty("MANUEL", "MANUEL NIETO")
+
+    def test_nombres_distintos_no_son_la_misma_contraparte(self) -> None:
+        assert not same_counterparty("MANUEL NIETO", "MARIANA GOMEZ ABRIL")
+
+    def test_un_apellido_en_comun_no_alcanza(self) -> None:
+        assert not same_counterparty("JUAN GOMEZ", "MARIANA GOMEZ ABRIL")
+
+    def test_nombre_sin_letras_no_es_contraparte(self) -> None:
+        assert not same_counterparty("123", "MANUEL NIETO")
+
+
+@pytest.mark.unit
+class TestCounterpartyKey:
+    def test_es_determinista_e_ignora_tildes_y_mayusculas(self) -> None:
+        base = _key()
+        assert counterparty_dedupe_key(base, "Tomás Rodríguez") == counterparty_dedupe_key(
+            base, "TOMAS RODRIGUEZ"
+        )
+
+    def test_distinta_de_la_clave_base_y_por_contraparte(self) -> None:
+        base = _key()
+        manuel = counterparty_dedupe_key(base, "MANUEL NIETO")
+        mariana = counterparty_dedupe_key(base, "MARIANA GOMEZ ABRIL")
+        assert manuel != mariana
+        assert manuel.startswith(f"{base}:")
+        assert base_dedupe_key(manuel) == base
+        assert base_dedupe_key(base) == base

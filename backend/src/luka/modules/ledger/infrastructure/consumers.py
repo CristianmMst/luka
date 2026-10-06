@@ -50,6 +50,29 @@ def _bank(value: str) -> Bank:
         return Bank.OTHER
 
 
+def capture_command_from_parsed(event: TransactionParsed) -> CapturedTransactionCommand:
+    """El comando de captura de ledger para un `TransactionParsed` (F2.6)."""
+    return CapturedTransactionCommand(
+        user_id=event.user_id,
+        bank=_bank(event.bank),
+        amount=event.amount,
+        direction=Direction(event.direction.value),
+        occurred_at=event.transaction_occurred_at,
+        last4=event.last4,
+        merchant=event.merchant,
+        description=None,
+        suggested_category_slug=event.suggested_category,
+        parsed_by=event.parsed_by,
+        confidence=event.confidence,
+        source=SourceInput(
+            channel=Channel(event.channel),
+            raw_message_id=event.raw_message_id,
+            received_at=event.received_at,
+        ),
+        merchant_is_person=event.merchant_is_person,
+    )
+
+
 def make_transaction_parsed_handler(
     *,
     session_factory: async_sessionmaker[AsyncSession],
@@ -68,25 +91,7 @@ def make_transaction_parsed_handler(
             return
 
         bank = _bank(event.bank)
-        cmd = CapturedTransactionCommand(
-            user_id=event.user_id,
-            bank=bank,
-            amount=event.amount,
-            direction=Direction(event.direction.value),
-            occurred_at=event.transaction_occurred_at,
-            last4=event.last4,
-            merchant=event.merchant,
-            description=None,
-            suggested_category_slug=event.suggested_category,
-            parsed_by=event.parsed_by,
-            confidence=event.confidence,
-            source=SourceInput(
-                channel=Channel(event.channel),
-                raw_message_id=event.raw_message_id,
-                received_at=event.received_at,
-            ),
-            merchant_is_person=event.merchant_is_person,
-        )
+        cmd = capture_command_from_parsed(event)
 
         try:
             async with session_factory() as session:

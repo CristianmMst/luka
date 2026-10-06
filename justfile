@@ -30,6 +30,11 @@ reparse *args:
 mark-self-transfers *args:
 	cd backend && uv run python -m luka.tools.mark_self_transfers {{args}}
 
+# Separa los envios/recibos entre personas que el dedupe viejo fusiono (spec 004 §3).
+# Uso: `just split-merged-captures` o `--user <uuid>`. Idempotente.
+split-merged-captures *args:
+	cd backend && uv run python -m luka.tools.split_merged_captures {{args}}
+
 # Corre toda la suite de tests.
 test:
 	cd backend && uv run pytest -q

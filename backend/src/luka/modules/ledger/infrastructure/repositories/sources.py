@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import CursorResult, select
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,6 +49,22 @@ class SqlAlchemyTransactionSourceRepository:
         )
         result = await self._session.execute(stmt)
         return [source_row_to_entity(row) for row in result.scalars()]
+
+    async def detach(self, transaction_id: UUID, raw_message_id: UUID) -> bool:
+        stmt = delete(TransactionSourceRow).where(
+            TransactionSourceRow.transaction_id == transaction_id,
+            TransactionSourceRow.raw_message_id == raw_message_id,
+        )
+        result = cast("CursorResult[tuple[()]]", await self._session.execute(stmt))
+        return result.rowcount > 0
+
+    async def transaction_id_for_raw_message(self, raw_message_id: UUID) -> UUID | None:
+        stmt = (
+            select(TransactionSourceRow.transaction_id)
+            .where(TransactionSourceRow.raw_message_id == raw_message_id)
+            .limit(1)
+        )
+        return (await self._session.execute(stmt)).scalar_one_or_none()
 
     async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
         if not ids:

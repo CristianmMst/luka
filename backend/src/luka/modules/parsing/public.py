@@ -8,16 +8,21 @@ parsing (R4).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from luka.modules.parsing.domain.allowlist import NotificationDecision
-from luka.modules.parsing.domain.errors import ParsingError
-from luka.modules.parsing.events import ParseFailed, TransactionParsed
+from luka.modules.parsing.domain.errors import ParsingError, TemplateExtractionInvalid
+from luka.modules.parsing.domain.excerpt import extract_excerpt
+from luka.modules.parsing.events import ParseFailed, TransactionParsed, deterministic_event_id
 from luka.modules.parsing.infrastructure.config_loader import load_parsing_config
 from luka.modules.parsing.infrastructure.consumers import make_raw_message_received_handler
 from luka.modules.parsing.infrastructure.llm import build_llm_parser
 from luka.modules.parsing.infrastructure.llm.budget_redis import RedisLlmBudget
 from luka.modules.parsing.infrastructure.metrics import StructlogMetrics
+
+if TYPE_CHECKING:
+    from datetime import datetime
+    from uuid import UUID
 
 __all__ = [
     "NotificationDecision",
@@ -32,6 +37,7 @@ __all__ = [
     "capture_config",
     "load_parsing_config",
     "make_raw_message_received_handler",
+    "parse_with_templates",
     "person_transfer_parsed_by",
 ]
 
@@ -64,3 +70,47 @@ def capture_config() -> dict[str, Any]:
         **config.capture_raw,
         "email_senders": {bank: list(patterns) for bank, patterns in config.senders.banks.items()},
     }
+
+
+def parse_with_templates(  # noqa: PLR0913 - un parametro por campo del mensaje crudo
+    *,
+    raw_message_id: UUID,
+    user_id: UUID,
+    channel: str,
+    bank: str | None,
+    body: str,
+    received_at: datetime,
+    now: datetime,
+) -> TransactionParsed | None:
+    """Re-parsea un mensaje ya capturado solo con plantillas (sin LLM ni bus): el
+    mismo `TransactionParsed` que publicaria el pipeline, o `None` si ninguna
+    plantilla lo extrae. Lo usa `luka.tools.split_merged_captures` (spec 004 SS3).
+    """
+    registry = load_parsing_config().templates
+    cfg = registry.bank_config(bank) if bank else None
+    excerpt = extract_excerpt(body, cfg.relevant_line_prefix if cfg is not None else None)
+    match = registry.match(bank, excerpt)
+    if match is None:
+        return None
+    try:
+        parsed = match.to_parsed(received_at)
+    except TemplateExtractionInvalid:
+        return None
+    return TransactionParsed(
+        event_id=deterministic_event_id("parsed", raw_message_id),
+        occurred_at=now,
+        raw_message_id=raw_message_id,
+        user_id=user_id,
+        channel=channel,
+        bank=parsed.bank,
+        amount=parsed.amount,
+        direction=parsed.direction,
+        transaction_occurred_at=parsed.occurred_at,
+        last4=parsed.last4,
+        merchant=parsed.merchant,
+        suggested_category=parsed.suggested_category,
+        parsed_by=parsed.parsed_by,
+        confidence=parsed.confidence,
+        received_at=received_at,
+        merchant_is_person=parsed.merchant_is_person,
+    )

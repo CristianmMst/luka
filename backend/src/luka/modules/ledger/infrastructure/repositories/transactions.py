@@ -64,6 +64,21 @@ class SqlAlchemyTransactionRepository:
         result = await self._session.execute(stmt)
         return [transaction_row_to_entity(row) for row in result.scalars()]
 
+    async def find_by_base_dedupe_keys(
+        self, user_id: UUID, keys: Sequence[str]
+    ) -> list[Transaction]:
+        if not keys:
+            return []
+        stmt = select(TransactionRow).where(
+            TransactionRow.user_id == user_id,
+            or_(
+                TransactionRow.dedupe_key.in_(keys),
+                *(TransactionRow.dedupe_key.startswith(f"{key}:") for key in keys),
+            ),
+        )
+        result = await self._session.execute(stmt)
+        return [transaction_row_to_entity(row) for row in result.scalars()]
+
     async def get(self, user_id: UUID, id: UUID) -> Transaction | None:
         stmt = select(TransactionRow).where(
             TransactionRow.id == id, TransactionRow.user_id == user_id
@@ -161,6 +176,17 @@ class SqlAlchemyTransactionRepository:
             TransactionRow.parsed_by.in_(list(parsed_by)),
             TransactionRow.kind != "transfer",
         )
+        if user_id is not None:
+            stmt = stmt.where(TransactionRow.user_id == user_id)
+        result = await self._session.execute(stmt.order_by(TransactionRow.created_at))
+        return [transaction_row_to_entity(row) for row in result.scalars()]
+
+    async def find_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        if not parsed_by:
+            return []
+        stmt = select(TransactionRow).where(TransactionRow.parsed_by.in_(list(parsed_by)))
         if user_id is not None:
             stmt = stmt.where(TransactionRow.user_id == user_id)
         result = await self._session.execute(stmt.order_by(TransactionRow.created_at))

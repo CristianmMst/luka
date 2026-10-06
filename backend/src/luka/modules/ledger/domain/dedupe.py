@@ -8,6 +8,7 @@ from uuid import UUID
 
 from luka.modules.ledger.domain.entities import quantize_amount
 from luka.modules.ledger.domain.enums import Bank, Direction
+from luka.modules.ledger.domain.self_transfer import normalize_person_name
 
 BUCKET_SECONDS = 600
 SAME_CAPTURE_WINDOW = timedelta(minutes=10)
@@ -90,3 +91,31 @@ def is_same_capture(existing_occurred_at: datetime, incoming_occurred_at: dateti
     _require_aware(existing_occurred_at)
     _require_aware(incoming_occurred_at)
     return abs(existing_occurred_at - incoming_occurred_at) <= SAME_CAPTURE_WINDOW
+
+
+def same_counterparty(a: str, b: str) -> bool:
+    """`True` si dos contrapartes de capturas entre personas son la misma persona.
+
+    Los bancos recortan nombres distinto en correo y notificacion ("MARIANA GOMEZ"
+    frente a "MARIANA GOMEZ ABRIL"): basta con que las palabras del mas corto esten
+    todas en el mas largo (spec 004 SS3).
+    """
+    x = set(normalize_person_name(a))
+    y = set(normalize_person_name(b))
+    shorter, longer = (x, y) if len(x) <= len(y) else (y, x)
+    return bool(shorter) and shorter <= longer
+
+
+def counterparty_dedupe_key(base_key: str, counterparty: str) -> str:
+    """Clave de una captura entre personas cuya clave base ya usa OTRA contraparte
+    (mismo monto, cuenta y ventana: tres amigos que envian lo mismo a la vez):
+    `<clave base>:<hash del nombre>`. El prefijo deja que la otra fuente del mismo
+    envio la encuentre aunque traiga el nombre recortado (spec 004 SS3).
+    """
+    name = " ".join(normalize_person_name(counterparty))
+    return f"{base_key}:{hashlib.sha256(name.encode()).hexdigest()[:16]}"
+
+
+def base_dedupe_key(key: str) -> str:
+    """La clave base de `key` (sin el sufijo de contraparte)."""
+    return key.partition(":")[0]

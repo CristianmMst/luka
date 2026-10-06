@@ -303,6 +303,24 @@ bucket = int(occurred_at_utc.timestamp()) // 600  # floor a ventanas de 10 min
 - El insert usa `ON CONFLICT (user_id, dedupe_key) DO NOTHING` + adjuntar la nueva fuente a la transacción existente (AC-5.1).
 - Ventanas: para tolerar relojes distintos entre banco/correo/notificación, el matcher consulta bucket N y N±1 antes de insertar; el índice único usa el bucket canónico del primer insert. Los candidatos de los buckets N±1 solo se aceptan si además `|Δoccurred_at| ≤ 10 min` respecto al `occurred_at` original: sin esa condición, dos movimientos reales cercanos al borde de la ventana (p. ej. 14:01 y 14:19) podrían fusionarse por error, violando AC-5.3.
 - Registro manual: `dedupe_key` aleatoria (no debe colisionar con capturas automáticas).
+- **Capturas entre personas** (plantilla `counterparty: true`, spec 006 §4.1): la huella no lleva la
+  contraparte, así que tres amigos que envían el mismo monto a la misma cuenta en la misma ventana
+  darían la misma clave. Por eso un candidato solo se acepta si además es la misma persona: los
+  nombres se comparan sin tildes ni puntuación y basta con que las palabras del más corto estén en
+  el más largo ("MARIANA GOMEZ" de la notificación = "MARIANA GOMEZ ABRIL" del correo;
+  `same_counterparty`). Un candidato sin nombre (p. ej. una notificación que no lo trae) sí se acepta,
+  como antes. Si el candidato es de otra persona, la captura nace como movimiento propio con la clave
+  `<clave base>:<16 hex del sha256 del nombre normalizado>`; el matcher busca por la clave base y
+  también por esas variantes (`find_by_base_dedupe_keys`). Las compras no usan esta regla: el
+  comercio llega escrito distinto en correo y notificación.
+- **Reentrega:** si el `raw_message` ya está adjunto a un movimiento, se devuelve ese movimiento sin
+  mirar la huella (el usuario pudo renombrar el comercio).
+- **Movimientos fusionados antes de esta regla:** `just split-merged-captures`
+  (`luka.tools.split_merged_captures`, caso de uso `SplitMergedCaptures`) re-parsea con plantillas
+  (sin LLM) cada fuente de las capturas entre personas con 2 o más fuentes; las de otra contraparte
+  se sueltan y se registran como movimiento propio (publicando `TransactionCaptured`). Se queda en el
+  movimiento la fuente que coincide con su comercio. Una fuente con el cuerpo ya purgado se cuenta
+  (`unreadable`) y no se mueve. Idempotente.
 
 ## 4. Matcher de transferencias (reglas de dominio, RF-6)
 

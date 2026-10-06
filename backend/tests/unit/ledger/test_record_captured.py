@@ -1,5 +1,6 @@
 """Tests unitarios de `RecordCapturedTransaction` (spec 004 SS3/SS4, spec 006 SS4.3)."""
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID, uuid4
@@ -528,3 +529,115 @@ class TestSelfTransfer:
             _cmd(merchant="CRISTIAN MORA", merchant_is_person=True)
         )
         assert result.transaction.kind == Kind.EXPENSE
+
+
+def _transfer(
+    name: str | None,
+    *,
+    minutes: int = 0,
+    channel: Channel = Channel.EMAIL,
+    raw_id: UUID | None = None,
+) -> CapturedTransactionCommand:
+    """Recibo Bre-B de $7.100 de `name` a la cuenta *8761, `minutes` despues de NOW."""
+    at = NOW + timedelta(minutes=minutes)
+    return _cmd(
+        amount=Decimal("7100"),
+        direction=Direction.CREDIT,
+        occurred_at=at,
+        last4="8761",
+        merchant=name,
+        parsed_by="rule:bancolombia:transferencia_llave_recibida:v1",
+        confidence=None,
+        source=SourceInput(channel, raw_id or uuid4(), at),
+        merchant_is_person=True,
+    )
+
+
+@pytest.mark.unit
+async def test_tres_amigos_que_envian_el_mismo_monto_a_la_vez_son_tres_movimientos() -> None:
+    """Mismo monto, cuenta y ventana pero contrapartes distintas: no hay dedupe
+    (spec 004 SS3). Antes se fusionaban en uno solo."""
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+
+    results = [
+        await use_case.execute(_transfer("MANUEL NIETO")),
+        await use_case.execute(_transfer("TOMAS ALEJANDRO RODRIGUEZ COLMENARES", minutes=2)),
+        await use_case.execute(_transfer("MARIANA GOMEZ ABRIL", minutes=2)),
+    ]
+
+    assert all(r.created for r in results)
+    assert len({r.transaction.id for r in results}) == 3
+    assert [r.transaction.merchant for r in results] == [
+        "MANUEL NIETO",
+        "TOMAS ALEJANDRO RODRIGUEZ COLMENARES",
+        "MARIANA GOMEZ ABRIL",
+    ]
+    assert len({r.transaction.dedupe_key for r in results}) == 3
+
+
+@pytest.mark.unit
+async def test_notificacion_de_una_transferencia_se_une_a_su_correo_y_no_a_otra() -> None:
+    """La notificacion de Mariana encuentra el movimiento de Mariana aunque
+    Manuel haya llegado primero y tenga la clave base."""
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    await use_case.execute(_transfer("MANUEL NIETO"))
+    mariana = await use_case.execute(_transfer("MARIANA GOMEZ ABRIL", minutes=1))
+
+    notification = await use_case.execute(
+        _transfer("MARIANA GOMEZ", minutes=1, channel=Channel.NOTIFICATION)
+    )
+
+    assert notification.created is False
+    assert notification.transaction.id == mariana.transaction.id
+    assert len(await repos.sources.list_for(mariana.transaction.id)) == 2
+
+
+@pytest.mark.unit
+async def test_captura_entre_personas_sin_nombre_se_une_como_antes() -> None:
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    first = await use_case.execute(_transfer("MANUEL NIETO"))
+
+    second = await use_case.execute(_transfer(None, minutes=1, channel=Channel.NOTIFICATION))
+
+    assert second.created is False
+    assert second.transaction.id == first.transaction.id
+
+
+@pytest.mark.unit
+async def test_reentrega_del_mismo_mensaje_tras_editar_el_comercio_no_duplica() -> None:
+    """Si el usuario renombro la contraparte, reprocesar el mismo `raw_message`
+    devuelve su movimiento: la fuente ya adjunta manda sobre el nombre."""
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    raw_id = uuid4()
+    first = await use_case.execute(_transfer("MANUEL NIETO", raw_id=raw_id))
+    await repos.transactions.update(replace(first.transaction, merchant="Manuel Sua"))
+
+    again = await use_case.execute(_transfer("MANUEL NIETO", raw_id=raw_id))
+
+    assert again.created is False
+    assert again.transaction.id == first.transaction.id
+    assert again.source_attached is False
+
+
+@pytest.mark.unit
+async def test_compras_en_comercios_distintos_con_el_mismo_monto_siguen_uniendose() -> None:
+    """La regla de contraparte es solo para capturas entre personas: una compra
+    por correo y por notificacion puede traer el comercio escrito distinto."""
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    first = await use_case.execute(_cmd(merchant="KS*PAGSEGURO CO"))
+    later = NOW + timedelta(seconds=30)
+    second = await use_case.execute(
+        _cmd(
+            merchant="PAGSEGURO",
+            occurred_at=later,
+            source=SourceInput(Channel.NOTIFICATION, uuid4(), later),
+        )
+    )
+
+    assert second.created is False
+    assert second.transaction.id == first.transaction.id

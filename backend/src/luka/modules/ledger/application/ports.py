@@ -8,7 +8,12 @@ from decimal import Decimal
 from typing import Protocol
 from uuid import UUID
 
-from luka.modules.ledger.application.dto import Cursor, Filters, ReviewSourceView
+from luka.modules.ledger.application.dto import (
+    CapturedTransactionCommand,
+    Cursor,
+    Filters,
+    ReviewSourceView,
+)
 from luka.modules.ledger.domain.entities import (
     Category,
     LinkedAccount,
@@ -31,6 +36,13 @@ class TransactionRepositoryPort(Protocol):
 
     async def find_by_dedupe_keys(self, user_id: UUID, keys: Sequence[str]) -> list[Transaction]:
         """Transacciones del usuario cuyo `dedupe_key` este en `keys`."""
+        ...
+
+    async def find_by_base_dedupe_keys(
+        self, user_id: UUID, keys: Sequence[str]
+    ) -> list[Transaction]:
+        """Las de `find_by_dedupe_keys` mas las de contraparte (`<clave>:<sufijo>`)
+        de esas mismas claves base (spec 004 SS3)."""
         ...
 
     async def get(self, user_id: UUID, id: UUID) -> Transaction | None:
@@ -59,6 +71,13 @@ class TransactionRepositoryPort(Protocol):
         """Las que no son `transfer`, con `parsed_by` en `parsed_by`, de `user_id`
         (o de todos si es `None`). Para reclasificar transferencias propias
         (spec 004 SS4.1)."""
+        ...
+
+    async def find_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        """Todas las de `parsed_by` (de `user_id`, o de todos si es `None`), de
+        cualquier `kind`, por `created_at`."""
         ...
 
     async def touch(self, user_id: UUID, id: UUID, at: datetime) -> None:
@@ -121,6 +140,14 @@ class TransactionSourceRepositoryPort(Protocol):
         """Todas las fuentes adjuntas a una transaccion."""
         ...
 
+    async def transaction_id_for_raw_message(self, raw_message_id: UUID) -> UUID | None:
+        """La transaccion a la que ya esta adjunto `raw_message_id`, si alguna."""
+        ...
+
+    async def detach(self, transaction_id: UUID, raw_message_id: UUID) -> bool:
+        """Suelta la fuente `raw_message_id` de la transaccion; `True` si existia."""
+        ...
+
     async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
         """Canales unicos por transaccion, para armar el listado sin N+1 (spec 005 SS6).
 
@@ -162,6 +189,15 @@ class CategoryRepositoryPort(Protocol):
 
 
 # --- Cuentas vinculadas ----------------------------------------------------------------
+
+
+class CaptureReaderPort(Protocol):
+    """Re-parsea un `raw_message` ya capturado (con plantillas, sin LLM) para
+    separar capturas fusionadas (spec 004 SS3)."""
+
+    async def capture_for(self, raw_message_id: UUID) -> CapturedTransactionCommand | None:
+        """El comando de captura del mensaje, o `None` si ya no se puede leer."""
+        ...
 
 
 class OwnerNamePort(Protocol):

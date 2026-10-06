@@ -20,6 +20,10 @@ from luka.modules.ledger.application.use_cases.mark_self_transfers import (
 from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
+from luka.modules.ledger.application.use_cases.split_merged_captures import (
+    SplitMergedCaptures,
+    SplitMergedCapturesSummary,
+)
 from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
 from luka.modules.ledger.infrastructure import snapshots as _snapshots
 from luka.modules.ledger.infrastructure.data_export import export_ledger_data
@@ -44,7 +48,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from luka.modules.ledger.application.ports import ClockPort
+    from luka.modules.ledger.application.ports import CaptureReaderPort, ClockPort
     from luka.shared.events.port import EventBusPort
 
 __all__ = [
@@ -52,6 +56,7 @@ __all__ = [
     "MarkSelfTransfersSummary",
     "Recorded",
     "SourceInput",
+    "SplitMergedCapturesSummary",
     "TransactionCaptured",
     "TransactionDeleted",
     "TransactionSnapshot",
@@ -62,6 +67,7 @@ __all__ = [
     "get_transaction_snapshot",
     "mark_self_transfers",
     "record_captured_transaction",
+    "split_merged_captures",
     "transaction_snapshots",
 ]
 
@@ -80,7 +86,13 @@ async def record_captured_transaction(
     Lanza `CaptureAlreadyResolved` si el usuario ya convirtio o descarto el item de
     revision de ese `raw_message` (spec 006 SS4.4); no se escribe nada.
     """
-    use_case = RecordCapturedTransaction(
+    return await _record_use_case(session, event_bus, clock).execute(cmd)
+
+
+def _record_use_case(
+    session: AsyncSession, event_bus: EventBusPort, clock: ClockPort
+) -> RecordCapturedTransaction:
+    return RecordCapturedTransaction(
         transactions=SqlAlchemyTransactionRepository(session),
         sources=SqlAlchemyTransactionSourceRepository(session),
         categories=SqlAlchemyCategoryRepository(session),
@@ -93,7 +105,28 @@ async def record_captured_transaction(
         ids=SecretsIdGenerator(),
         uow=SqlAlchemyUnitOfWork(session),
     )
-    return await use_case.execute(cmd)
+
+
+async def split_merged_captures(  # noqa: PLR0913 - un parametro por dependencia externa + filtros
+    session: AsyncSession,
+    event_bus: EventBusPort,
+    clock: ClockPort,
+    *,
+    reader: CaptureReaderPort,
+    person_parsed_by: Collection[str],
+    user_id: UUID | None,
+) -> SplitMergedCapturesSummary:
+    """Separa las capturas entre personas que el dedupe viejo fusiono (spec 004
+    SS3); `reader` re-parsea cada fuente y `person_parsed_by` lo da parsing."""
+    use_case = SplitMergedCaptures(
+        transactions=SqlAlchemyTransactionRepository(session),
+        sources=SqlAlchemyTransactionSourceRepository(session),
+        reader=reader,
+        record=_record_use_case(session, event_bus, clock),
+        clock=clock,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+    return await use_case.execute(person_parsed_by=person_parsed_by, user_id=user_id)
 
 
 async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, object]:

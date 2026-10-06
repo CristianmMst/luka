@@ -59,6 +59,18 @@ class InMemoryTransactionSourceRepo:
     async def list_for(self, transaction_id: UUID) -> list[TransactionSource]:
         return list(self._by_tx.get(transaction_id, []))
 
+    async def detach(self, transaction_id: UUID, raw_message_id: UUID) -> bool:
+        sources = self._by_tx.get(transaction_id, [])
+        kept = [s for s in sources if s.raw_message_id != raw_message_id]
+        self._by_tx[transaction_id] = kept
+        return len(kept) != len(sources)
+
+    async def transaction_id_for_raw_message(self, raw_message_id: UUID) -> UUID | None:
+        for transaction_id, sources in self._by_tx.items():
+            if any(s.raw_message_id == raw_message_id for s in sources):
+                return transaction_id
+        return None
+
     async def channels_for(self, ids: Sequence[UUID]) -> dict[UUID, list[Channel]]:
         id_set = set(ids)
         result: dict[UUID, list[Channel]] = {}
@@ -116,6 +128,16 @@ class InMemoryTransactionRepo:
         key_set = set(keys)
         return [t for t in self._by_id.values() if t.user_id == user_id and t.dedupe_key in key_set]
 
+    async def find_by_base_dedupe_keys(
+        self, user_id: UUID, keys: Sequence[str]
+    ) -> list[Transaction]:
+        key_set = set(keys)
+        return [
+            t
+            for t in self._by_id.values()
+            if t.user_id == user_id and t.dedupe_key.partition(":")[0] in key_set
+        ]
+
     async def get(self, user_id: UUID, id: UUID) -> Transaction | None:
         tx = self._by_id.get(id)
         return tx if tx is not None and tx.user_id == user_id else None
@@ -169,6 +191,18 @@ class InMemoryTransactionRepo:
                 if t.parsed_by in parsed_by
                 and t.kind != Kind.TRANSFER
                 and (user_id is None or t.user_id == user_id)
+            ),
+            key=lambda t: t.created_at,
+        )
+
+    async def find_by_parsed_by(
+        self, parsed_by: Collection[str], user_id: UUID | None
+    ) -> list[Transaction]:
+        return sorted(
+            (
+                t
+                for t in self._by_id.values()
+                if t.parsed_by in parsed_by and (user_id is None or t.user_id == user_id)
             ),
             key=lambda t: t.created_at,
         )

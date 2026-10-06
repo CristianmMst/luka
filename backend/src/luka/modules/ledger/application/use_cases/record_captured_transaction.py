@@ -30,7 +30,12 @@ from luka.modules.ledger.application.ports import (
 )
 from luka.modules.ledger.application.use_cases._transfer_matching import try_auto_pair
 from luka.modules.ledger.domain.classification import mark_as_transfer
-from luka.modules.ledger.domain.dedupe import candidate_keys, is_same_capture
+from luka.modules.ledger.domain.dedupe import (
+    candidate_keys,
+    counterparty_dedupe_key,
+    is_same_capture,
+    same_counterparty,
+)
 from luka.modules.ledger.domain.entities import (
     Category,
     Transaction,
@@ -88,6 +93,10 @@ class RecordCapturedTransaction:
         convirtio o descarto el usuario (no se escribe nada).
         """
         await self._claim_review(cmd)
+        already = await self._already_recorded(cmd)
+        if already is not None:
+            return Recorded(transaction=already, created=False, source_attached=False)
+
         keys = candidate_keys(
             user_id=cmd.user_id,
             bank=cmd.bank,
@@ -97,9 +106,18 @@ class RecordCapturedTransaction:
             last4=cmd.last4,
         )
 
-        existing_candidates = await self._transactions.find_by_dedupe_keys(cmd.user_id, keys)
+        # Captura entre personas con nombre: otra contraparte con el mismo monto en
+        # la misma ventana es otro movimiento (spec 004 SS3), con su propia clave.
+        person = cmd.merchant if cmd.merchant_is_person and cmd.merchant else None
+        candidates = [
+            t
+            for t in await self._transactions.find_by_base_dedupe_keys(cmd.user_id, keys)
+            if is_same_capture(t.occurred_at, cmd.occurred_at)
+        ]
         existing = [
-            t for t in existing_candidates if is_same_capture(t.occurred_at, cmd.occurred_at)
+            t
+            for t in candidates
+            if person is None or t.merchant is None or same_counterparty(t.merchant, person)
         ]
         if existing:
             target = min(existing, key=lambda t: t.created_at)
@@ -131,7 +149,11 @@ class RecordCapturedTransaction:
             account_id=account.id if account is not None else None,
             parsed_by=cmd.parsed_by,
             confidence=cmd.confidence,
-            dedupe_key=keys[1],
+            dedupe_key=(
+                counterparty_dedupe_key(keys[1], person)
+                if candidates and person is not None
+                else keys[1]
+            ),
         )
         if await self._is_self_transfer(cmd):
             # Plata entre cuentas propias (spec 004 SS4.1): transferencia
@@ -141,7 +163,7 @@ class RecordCapturedTransaction:
         inserted_id = await self._transactions.insert_if_absent(tx)
         if inserted_id is None:
             # Carrera: otro proceso inserto la misma clave canonica primero.
-            reread = await self._transactions.find_by_dedupe_keys(cmd.user_id, [keys[1]])
+            reread = await self._transactions.find_by_dedupe_keys(cmd.user_id, [tx.dedupe_key])
             if not reread:
                 raise LedgerError("carrera de insercion sin fila resultante")
             target = reread[0]
@@ -173,6 +195,18 @@ class RecordCapturedTransaction:
             )
         )
         return Recorded(transaction=tx, created=True, source_attached=True)
+
+    async def _already_recorded(self, cmd: CapturedTransactionCommand) -> Transaction | None:
+        """El movimiento al que ya esta adjunto este `raw_message` (reentrega o
+        reproceso): manda sobre la huella, que pudo cambiar si el usuario edito el
+        comercio."""
+        raw_message_id = cmd.source.raw_message_id
+        if raw_message_id is None:
+            return None
+        transaction_id = await self._sources.transaction_id_for_raw_message(raw_message_id)
+        if transaction_id is None:
+            return None
+        return await self._transactions.get(cmd.user_id, transaction_id)
 
     async def _is_self_transfer(self, cmd: CapturedTransactionCommand) -> bool:
         """El envio o recibo es entre personas y la contraparte es el titular."""
