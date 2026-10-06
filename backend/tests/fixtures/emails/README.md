@@ -25,6 +25,8 @@ debe extraer), separado del cuerpo por `---`. El cuerpo es el texto plano extra�
 | `bancolombia/transferencia_llave.txt` | email | `<NOMBRE>, transferiste $<monto en-US> a la llave <n> desde tu cuenta *<last4> a <NOMBRE> el DD/MM/YY a las HH:MM` |
 | `bancolombia/transferencia_llave_wrap.txt` | email | igual, pero cortado a ~76 caracteres: la frase empieza a mitad de línea, tras "¡Listo! Todo salió bien con tus movimientos" |
 | `bancolombia/transferencia_llave_recibida_wrap.txt` | email | `<NOMBRE>, recibiste una transferencia de <NOMBRE> por $<monto en-US> en tu cuenta *<last4> conectada a la llave <alias> el DD/MM/YY a las HH:MM`, cortado a ~76 caracteres igual que el anterior |
+| `bancolombia/pago_qr.txt` | email | `<NOMBRE COMPLETO> pagaste $<monto en-US> por codigo QR desde tu cuenta *<last4> a la llave <n> el DD/MM/YYYY a las HH:MM` (titular sin coma; sin comercio, la plantilla fija `Pago QR`). Capturado el 2026-10-05 |
+| `bancolombia/pago_qr_wrap.txt` | email | igual, cortado a ~76 caracteres |
 | `bancolombia/nomina.txt` | email | `Recibiste un pago de Nomina de <EMPRESA> por $<monto en-US> en tu cuenta de Ahorros el DD/MM/YYYY a las HH:MM` |
 | `other/nu_pago.txt` | email | descartado por remitente (AC-2.4); cuerpo reutilizado en test unitario del LLM |
 

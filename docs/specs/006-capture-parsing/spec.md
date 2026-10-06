@@ -196,8 +196,13 @@ templates:
   cuentas completas no llegan al LLM, RNF-5), truncado a 1500 caracteres).
 - Plantillas Bancolombia vigentes (`parsing/config/templates/bancolombia.yaml`, v1): `compra_tdeb`,
   `transferencia_llave` (Bre-B saliente, `direction: debit`), `transferencia_llave_recibida`
-  (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`) y `nomina`.
-  Las dos de transferencia llevan `counterparty: true`.
+  (Bre-B entrante, `direction: credit`, fixture `transferencia_llave_recibida_wrap.txt`), `nomina`
+  y `pago_qr` ("<TITULAR> pagaste $<monto en-US> por codigo QR desde tu cuenta *<last4> a la llave
+  <n> el DD/MM/YYYY a las HH:MM"; `direction: debit`, fixtures `pago_qr.txt` y `pago_qr_wrap.txt`).
+  Las dos de transferencia llevan `counterparty: true`. El correo QR no nombra el comercio (solo
+  una llave numérica), así que `pago_qr` declara `default_merchant: Pago QR`: una plantilla puede
+  fijar el comercio cuando su regex no tiene grupo `merchant` (o no lo captura); nunca se usa la
+  llave como comercio.
 - Plantillas Nequi vigentes (`parsing/config/templates/nequi.yaml`, v1, F2.7): `breb_recibida`
   ("Recibiste 2.600 de <persona> el 26 de septiembre de 2026 a las 11:21 a.m, desde el banco
   <banco>"; `direction: credit`, `counterparty: true`, fixture `nequi/breb_recibida.txt`). El

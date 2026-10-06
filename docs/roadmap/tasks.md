@@ -35,7 +35,7 @@ Convención: `F<fase>.<n>` · deps = tareas previas requeridas.
 |---|---|---|---|---|
 | F2.1 | Migraciones: raw_messages (+unique idempotencia), review_queue | 004 §2.7, 2.10 | F1.5 | ✅ |
 | F2.2 | Workers arq + wiring de eventos RawMessageReceived→parsing→ledger | 003 §2.4 | F1.8 | ✅ |
-| F2.3 | Motor de plantillas regex (YAML) + normalizadores de monto/fecha/comercio; plantillas Bancolombia + Nequi con fixtures reales anonimizados | 006 §4.1, 4.3 | F2.2 | ✅ solo Bancolombia; Nequi diferido a F2.7 (sin fixture real) |
+| F2.3 | Motor de plantillas regex (YAML) + normalizadores de monto/fecha/comercio; plantillas Bancolombia + Nequi con fixtures reales anonimizados | 006 §4.1, 4.3 | F2.2 | ✅ solo Bancolombia; Nequi diferido a F2.7 (sin fixture real). 2026-10-05: plantilla `pago_qr` (pago por código QR, comercio fijo `Pago QR` vía `default_merchant`) |
 | F2.4 | Adapter DeepSeek (`LlmParserPort`): JSON mode, validación Pydantic, reintento, presupuesto por usuario en Redis | 006 §4.2 | F2.2 | ✅ con salvedad: todo el camino HTTP está probado solo con `httpx.MockTransport` y el recorrido en vivo corrió con el LLM deshabilitado; nunca se ejercitó contra la API real de DeepSeek (backend/README.md §13) |
 | F2.5 | Flujo dedupe end-to-end: ON CONFLICT + adjuntar fuente + test de doble procesamiento (AC-5.1/5.2) | 004 §3 | F2.3, F1.6 | ✅ |
 | F2.6 | Review queue: endpoints convert/discard + partial_extract | 005 §7 | F2.1 | ✅ |

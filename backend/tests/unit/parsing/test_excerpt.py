@@ -124,7 +124,11 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
         assert "Para que enviar" not in excerpt
         expected = fixture.expected
         occurred_at = expected["occurred_at"]
-        assert occurred_at.strftime("%d/%m/%y") in excerpt
+        # Las transferencias traen el anio en 2 digitos; el pago QR, en 4.
+        assert (
+            occurred_at.strftime("%d/%m/%y ") in excerpt
+            or occurred_at.strftime("%d/%m/%Y ") in excerpt
+        )
         assert occurred_at.strftime("%H:%M") in excerpt
 
     @pytest.mark.parametrize(
@@ -153,6 +157,12 @@ class TestExtractExcerptRecortaBoilerplateTrasLaHora:
                 "Bancolombia: DIANA, recibiste una transferencia de CARLOS RUIZ por $482,500.00 "
                 "en tu cuenta *9081 conectada a la llave @druiz882 el 15/06/26 a las 11:24. Con "
                 "llaves es de una y gratis. Dudas al . Icon 1 ",
+            ),
+            (
+                "pago_qr_wrap.txt",
+                "Bancolombia: ANA MARIA PEREZ GOMEZ pagaste $1,250,000.00 por codigo QR desde tu "
+                "cuenta *5533 a la llave 0097654321 el 04/10/2026 a las 02:25. Con codigo QR es "
+                "facil y de una. Dudas al . Icon 1 ",
             ),
         ],
     )

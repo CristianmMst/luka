@@ -26,6 +26,8 @@ TEMPLATE_ID_BY_FIXTURE = {
     "compra_tdeb.txt": "compra_tdeb",
     "compra_tdeb_2.txt": "compra_tdeb",
     "nomina.txt": "nomina",
+    "pago_qr.txt": "pago_qr",
+    "pago_qr_wrap.txt": "pago_qr",
     "transferencia_llave.txt": "transferencia_llave",
     "transferencia_llave_wrap.txt": "transferencia_llave",
     "transferencia_llave_recibida_wrap.txt": "transferencia_llave_recibida",
@@ -76,6 +78,18 @@ class TestTemplateRegistryBancolombia:
         excerpt = "Bancolombia: Compraste en CARBON Y XILVESTRE T con tu T.Deb *1234"
         assert registry.match("bancolombia", excerpt) is None
 
+    def test_pago_qr_sin_comercio_usa_el_merchant_fijo(self, registry: TemplateRegistry) -> None:
+        """El correo QR solo trae una llave numerica: el comercio es "Pago QR",
+        nunca la llave (spec 006 §4.1)."""
+        excerpt = (
+            "Bancolombia: ANA PEREZ pagaste $5,000.00 por codigo QR desde tu cuenta *5533 "
+            "a la llave 0091234567 el 03/10/2026 a las 22:03."
+        )
+        match = registry.match("bancolombia", excerpt)
+        assert match is not None
+        assert match.template.id == "pago_qr"
+        assert match.template.default_merchant == "Pago QR"
+
     def test_fecha_fuera_de_ventana_lanza_extraction_invalid(
         self, registry: TemplateRegistry
     ) -> None:
@@ -92,13 +106,13 @@ class TestTemplateRegistryBancolombia:
         bank_config = registry.bank_config("bancolombia")
         assert bank_config is not None
         assert bank_config.version == 1
-        assert len(bank_config.templates) == 4
+        assert len(bank_config.templates) == 5
         assert registry.bank_config("davivienda") is None
 
-    def test_config_real_tiene_exactamente_las_4_plantillas_esperadas(
+    def test_config_real_tiene_exactamente_las_5_plantillas_esperadas(
         self, registry: TemplateRegistry
     ) -> None:
-        """Guarda que `templates/bancolombia.yaml` siga declarando los 4 template
+        """Guarda que `templates/bancolombia.yaml` siga declarando los 5 template
         ids esperados en version 1 (si alguien borra/renombra uno, este test lo
         detecta sin depender de que un fixture tambien deje de matchear).
         """
@@ -110,6 +124,7 @@ class TestTemplateRegistryBancolombia:
             "transferencia_llave",
             "transferencia_llave_recibida",
             "nomina",
+            "pago_qr",
         }
 
 
@@ -163,6 +178,23 @@ class TestTemplateRegistryConfigErrors:
                     "id": "roto",
                     "direction": "debit",
                     "counterparty": "si",
+                    "pattern": r"Bancolombia: (?P<amount>\d+) (?P<date>\S+) (?P<time>\S+)",
+                    "date_format": "%d/%m/%Y",
+                }
+            ],
+        }
+        with pytest.raises(TemplateConfigError):
+            TemplateRegistry.from_dicts([bad_config])
+
+    def test_default_merchant_vacio_lanza_template_config_error(self) -> None:
+        bad_config = {
+            "bank": "bancolombia",
+            "version": 1,
+            "templates": [
+                {
+                    "id": "roto",
+                    "direction": "debit",
+                    "default_merchant": "  ",
                     "pattern": r"Bancolombia: (?P<amount>\d+) (?P<date>\S+) (?P<time>\S+)",
                     "date_format": "%d/%m/%Y",
                 }

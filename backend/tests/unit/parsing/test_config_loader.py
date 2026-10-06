@@ -12,17 +12,18 @@ class TestLoadParsingConfig:
         assert isinstance(config, ParsingConfig)
         assert load_parsing_config() is config
 
-    def test_templates_carga_bancolombia_con_4_plantillas(self) -> None:
+    def test_templates_carga_bancolombia_con_5_plantillas(self) -> None:
         config = load_parsing_config()
         bank_config = config.templates.bank_config("bancolombia")
         assert bank_config is not None
         assert bank_config.version == 1
-        assert len(bank_config.templates) == 4
+        assert len(bank_config.templates) == 5
         assert {t.id for t in bank_config.templates} == {
             "compra_tdeb",
             "transferencia_llave",
             "transferencia_llave_recibida",
             "nomina",
+            "pago_qr",
         }
 
     def test_senders_bancolombia_verificado(self) -> None:

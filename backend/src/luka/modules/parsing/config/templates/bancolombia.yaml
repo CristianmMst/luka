@@ -24,3 +24,8 @@ templates:
     pattern: 'Bancolombia: Recibiste un pago de Nomina de (?P<merchant>.+?) por \$(?P<amount>[\d.,]+) en tu cuenta de (?P<account_kind>Ahorros|Corriente) el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
     date_format: "%d/%m/%Y"
     suggested_category: nomina
+  - id: pago_qr # fixtures: pago_qr.txt, pago_qr_wrap.txt
+    direction: debit
+    default_merchant: Pago QR # el correo solo trae una llave numerica, no el comercio
+    pattern: 'Bancolombia: (?:(?P<holder>[^$]{1,80}?),? )?pagaste \$(?P<amount>[\d.,]+) por codigo QR desde tu cuenta \*(?P<last4>\d{4}) a la llave (?P<key>\S+) el (?P<date>\d{2}/\d{2}/\d{4}) a las (?P<time>\d{2}:\d{2})'
+    date_format: "%d/%m/%Y"

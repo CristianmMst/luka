@@ -49,6 +49,8 @@ def _template_id(fixture_name: str) -> str:
         return "transferencia_llave"
     if fixture_name.startswith("nomina"):
         return "nomina"
+    if fixture_name.startswith("pago_qr"):
+        return "pago_qr"
     msg = f"fixture sin template_id mapeado: {fixture_name}"
     raise AssertionError(msg)
 

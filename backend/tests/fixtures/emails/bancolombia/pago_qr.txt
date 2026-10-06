@@ -1,0 +1,29 @@
+from: alertasynotificaciones@an.notificacionesbancolombia.com
+subject: Alertas y Notificaciones
+received_at: 2026-10-03T22:04:11-05:00
+expected:
+  is_transaction: true
+  bank: bancolombia
+  direction: debit
+  amount: "38000.00"
+  merchant: "Pago QR"
+  last4: "5533"
+  occurred_at: 2026-10-03T22:03:00-05:00
+  channel_hint: pago_qr
+  note: el correo no trae el comercio, solo una llave numerica de 10 digitos; merchant fijo "Pago QR". El titular va sin coma y con nombre completo, y la fecha con anio de 4 digitos
+---
+¡Listo!
+Todo salió bien con tus movimientos
+
+Bancolombia: ANA MARIA PEREZ GOMEZ pagaste $38,000.00 por codigo QR desde tu cuenta *5533 a la llave 0091234567 el 03/10/2026 a las 22:03. Con codigo QR es facil y de una. Dudas al 018000912345.
+
+Para que enviar plata siempre sea un éxito, estos consejos de seguridad:
+
+• Revisa que la llave de la persona a quién le transfieras plata, coincida con el nombre que aparece en la pantalla de verificación de nuestra app.
+• ¿Debes digitar el valor? Confirma que esté bien.
+• Verifica que la persona a quien le transfieras plata sí la reciba. Comparte la pantalla de transferencia exitosa y revisa tus movimientos.
+• Este proceso de elección de llaves es diferente al que operará con Bre-B, el Sistema de Pagos Inmediatos del Banco de la República.
+
+La seguridad la logramos entre todos.
+
+Tu equipo Bancolombia.

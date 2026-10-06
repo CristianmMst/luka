@@ -38,6 +38,7 @@ class Template:
     __slots__ = (
         "counterparty",
         "date_format",
+        "default_merchant",
         "direction",
         "id",
         "pattern",
@@ -53,6 +54,7 @@ class Template:
         date_format: str,
         suggested_category: str | None,
         counterparty: bool = False,
+        default_merchant: str | None = None,
     ) -> None:
         self.id = id
         self.direction = direction
@@ -63,6 +65,9 @@ class Template:
         # no un comercio: ledger lo compara con el titular (transferencia
         # propia, spec 004 §4.1).
         self.counterparty = counterparty
+        # Comercio fijo cuando el mensaje no lo trae (p. ej. el pago QR solo
+        # trae una llave numerica, spec 006 §4.1).
+        self.default_merchant = default_merchant
 
 
 class BankTemplates:
@@ -131,7 +136,7 @@ class TemplateMatch:
             )
 
         merchant_raw = self.groups.get("merchant")
-        merchant = clean_text(merchant_raw) if merchant_raw else None
+        merchant = clean_text(merchant_raw) if merchant_raw else self.template.default_merchant
 
         return ParsedTransaction(
             bank=self.bank,
@@ -178,6 +183,14 @@ def _compile_template(bank: str, raw: dict[str, Any]) -> Template:
             f"plantilla {raw.get('id')!r} de {bank!r}: counterparty debe ser true/false"
         )
 
+    default_merchant = raw.get("default_merchant")
+    if default_merchant is not None and not (
+        isinstance(default_merchant, str) and default_merchant.strip()
+    ):
+        raise TemplateConfigError(
+            f"plantilla {raw.get('id')!r} de {bank!r}: default_merchant debe ser texto no vacio"
+        )
+
     return Template(
         id=str(raw["id"]),
         direction=direction,
@@ -185,6 +198,7 @@ def _compile_template(bank: str, raw: dict[str, Any]) -> Template:
         date_format=str(raw["date_format"]),
         suggested_category=raw.get("suggested_category"),
         counterparty=counterparty,
+        default_merchant=default_merchant,
     )
 
 
