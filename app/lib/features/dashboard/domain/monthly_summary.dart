@@ -20,7 +20,8 @@ abstract class MonthlyTotals with _$MonthlyTotals {
 
 /// Gasto de un mes en una categoría. [categoryId] es null para lo que no
 /// tiene categoría y no hay fila `sin_categoria` a la cual asignarlo;
-/// [name] es null si la categoría no está en la base local.
+/// [name] es null si la categoría no está en la base local; [icon] es la
+/// clave del ícono de una categoría propia (las del sistema van por [slug]).
 @freezed
 abstract class CategorySpend with _$CategorySpend {
   const factory CategorySpend({
@@ -28,6 +29,7 @@ abstract class CategorySpend with _$CategorySpend {
     required Cop amount,
     String? slug,
     String? name,
+    String? icon,
   }) = _CategorySpend;
 }
 
@@ -120,6 +122,7 @@ MonthlySummary buildSummary({
             amount: Cop(current.amount.cents + assigned.amount.cents),
             slug: current.slug ?? assigned.slug,
             name: current.name ?? assigned.name,
+            icon: current.icon ?? assigned.icon,
           );
   }
 

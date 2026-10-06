@@ -307,6 +307,29 @@ void main() {
     expect(find.text('Sin datos de agosto'), findsNWidgets(2));
   });
 
+  testWidgets('una categoría propia muestra el ícono que eligió el usuario', (
+    tester,
+  ) async {
+    summaryFor = (month) => MonthlySummary(
+      month: month,
+      totals: MonthlyTotals(expenses: Cop.pesos(30000)),
+      previousTotals: const MonthlyTotals(),
+      topCategories: [
+        CategorySpend(
+          categoryId: 'cat-mascota',
+          name: 'Mascota',
+          icon: 'pets',
+          amount: Cop.pesos(30000),
+        ),
+      ],
+      otherAmount: const Cop(0),
+    );
+    await pumpPage(tester);
+
+    expect(find.byIcon(Icons.pets_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.label_outline_rounded), findsNothing);
+  });
+
   testWidgets('un mes solo con ingresos dice que no hubo gastos', (
     tester,
   ) async {

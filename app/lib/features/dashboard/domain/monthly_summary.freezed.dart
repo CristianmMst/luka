@@ -274,7 +274,7 @@ as Cop,
 /// @nodoc
 mixin _$CategorySpend {
 
- String? get categoryId; Cop get amount; String? get slug; String? get name;
+ String? get categoryId; Cop get amount; String? get slug; String? get name; String? get icon;
 /// Create a copy of CategorySpend
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -285,16 +285,16 @@ $CategorySpendCopyWith<CategorySpend> get copyWith => _$CategorySpendCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySpend&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategorySpend&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,categoryId,amount,slug,name);
+int get hashCode => Object.hash(runtimeType,categoryId,amount,slug,name,icon);
 
 @override
 String toString() {
-  return 'CategorySpend(categoryId: $categoryId, amount: $amount, slug: $slug, name: $name)';
+  return 'CategorySpend(categoryId: $categoryId, amount: $amount, slug: $slug, name: $name, icon: $icon)';
 }
 
 
@@ -305,7 +305,7 @@ abstract mixin class $CategorySpendCopyWith<$Res>  {
   factory $CategorySpendCopyWith(CategorySpend value, $Res Function(CategorySpend) _then) = _$CategorySpendCopyWithImpl;
 @useResult
 $Res call({
- String? categoryId, Cop amount, String? slug, String? name
+ String? categoryId, Cop amount, String? slug, String? name, String? icon
 });
 
 
@@ -322,12 +322,13 @@ class _$CategorySpendCopyWithImpl<$Res>
 
 /// Create a copy of CategorySpend
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? categoryId = freezed,Object? amount = null,Object? slug = freezed,Object? name = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? categoryId = freezed,Object? amount = null,Object? slug = freezed,Object? name = freezed,Object? icon = freezed,}) {
   return _then(_self.copyWith(
 categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Cop,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -413,10 +414,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? categoryId,  Cop amount,  String? slug,  String? name)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? categoryId,  Cop amount,  String? slug,  String? name,  String? icon)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategorySpend() when $default != null:
-return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
+return $default(_that.categoryId,_that.amount,_that.slug,_that.name,_that.icon);case _:
   return orElse();
 
 }
@@ -434,10 +435,10 @@ return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? categoryId,  Cop amount,  String? slug,  String? name)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? categoryId,  Cop amount,  String? slug,  String? name,  String? icon)  $default,) {final _that = this;
 switch (_that) {
 case _CategorySpend():
-return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
+return $default(_that.categoryId,_that.amount,_that.slug,_that.name,_that.icon);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -454,10 +455,10 @@ return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? categoryId,  Cop amount,  String? slug,  String? name)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? categoryId,  Cop amount,  String? slug,  String? name,  String? icon)?  $default,) {final _that = this;
 switch (_that) {
 case _CategorySpend() when $default != null:
-return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
+return $default(_that.categoryId,_that.amount,_that.slug,_that.name,_that.icon);case _:
   return null;
 
 }
@@ -469,13 +470,14 @@ return $default(_that.categoryId,_that.amount,_that.slug,_that.name);case _:
 
 
 class _CategorySpend implements CategorySpend {
-  const _CategorySpend({required this.categoryId, required this.amount, this.slug, this.name});
+  const _CategorySpend({required this.categoryId, required this.amount, this.slug, this.name, this.icon});
   
 
 @override final  String? categoryId;
 @override final  Cop amount;
 @override final  String? slug;
 @override final  String? name;
+@override final  String? icon;
 
 /// Create a copy of CategorySpend
 /// with the given fields replaced by the non-null parameter values.
@@ -487,16 +489,16 @@ _$CategorySpendCopyWith<_CategorySpend> get copyWith => __$CategorySpendCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySpend&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategorySpend&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.icon, icon) || other.icon == icon));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,categoryId,amount,slug,name);
+int get hashCode => Object.hash(runtimeType,categoryId,amount,slug,name,icon);
 
 @override
 String toString() {
-  return 'CategorySpend(categoryId: $categoryId, amount: $amount, slug: $slug, name: $name)';
+  return 'CategorySpend(categoryId: $categoryId, amount: $amount, slug: $slug, name: $name, icon: $icon)';
 }
 
 
@@ -507,7 +509,7 @@ abstract mixin class _$CategorySpendCopyWith<$Res> implements $CategorySpendCopy
   factory _$CategorySpendCopyWith(_CategorySpend value, $Res Function(_CategorySpend) _then) = __$CategorySpendCopyWithImpl;
 @override @useResult
 $Res call({
- String? categoryId, Cop amount, String? slug, String? name
+ String? categoryId, Cop amount, String? slug, String? name, String? icon
 });
 
 
@@ -524,12 +526,13 @@ class __$CategorySpendCopyWithImpl<$Res>
 
 /// Create a copy of CategorySpend
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? categoryId = freezed,Object? amount = null,Object? slug = freezed,Object? name = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? categoryId = freezed,Object? amount = null,Object? slug = freezed,Object? name = freezed,Object? icon = freezed,}) {
   return _then(_CategorySpend(
 categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Cop,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,icon: freezed == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

@@ -155,6 +155,14 @@ void main() {
       );
     });
 
+    test('al sumar filas de una categoria propia se conserva su icono', () {
+      final summary = _build([
+        const CategorySpend(categoryId: 'a', amount: Cop(100)),
+        const CategorySpend(categoryId: 'a', amount: Cop(50), icon: 'pets'),
+      ]);
+      expect(summary.topCategories.single.icon, 'pets');
+    });
+
     test('el top es inmodificable', () {
       final summary = _build([_spend('a', 1)]);
       expect(

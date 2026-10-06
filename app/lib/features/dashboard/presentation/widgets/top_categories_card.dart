@@ -3,6 +3,7 @@ import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
 import 'package:luka/core/theme/tokens/spacing.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
 import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:luka/features/transactions/presentation/widgets/category_icon.dart';
@@ -64,7 +65,9 @@ class TopCategoriesCard extends StatelessWidget {
       for (final (i, spend) in top.indexed)
         _Tile(
           name: spendName(l10n, spend),
-          icon: categoryIcon(spend.slug),
+          icon: spend.slug == null
+              ? ownCategoryIcon(spend.icon)
+              : categoryIcon(spend.slug),
           amount: spend.amount,
           percent: sharePercent(spend.amount, total),
           tone: tones[i.clamp(0, tones.length - 1)],

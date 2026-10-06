@@ -11,7 +11,7 @@ import 'package:luka/features/dashboard/domain/monthly_summary.dart';
 ///
 /// ```sql
 /// SELECT t.kind, t.occurred_at >= :from AS in_month, t.category_id,
-///        c.slug, c.name, SUM(t.amount_cents),
+///        c.slug, c.name, c.icon, SUM(t.amount_cents),
 ///        (SELECT id   FROM local_categories WHERE slug = 'sin_categoria'),
 ///        (SELECT name FROM local_categories WHERE slug = 'sin_categoria')
 /// FROM local_transactions t LEFT JOIN local_categories c
@@ -69,6 +69,7 @@ class DriftInsightsRepository implements InsightsRepository {
             t.categoryId,
             c.slug,
             c.name,
+            c.icon,
             total,
             uncategorizedId,
             uncategorizedName,
@@ -101,6 +102,7 @@ class DriftInsightsRepository implements InsightsRepository {
                 amount: Cop(cents),
                 slug: row.read(c.slug),
                 name: row.read(c.name),
+                icon: row.read(c.icon),
               ),
             );
           case (_expense, false):
