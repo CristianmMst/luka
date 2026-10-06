@@ -12,6 +12,7 @@ from luka.modules.ledger.domain.dedupe import (
     SAME_CAPTURE_WINDOW,
     base_dedupe_key,
     candidate_keys,
+    capture_origin,
     counterparty_dedupe_key,
     dedupe_key,
     is_compatible_capture,
@@ -328,6 +329,7 @@ def _tombstone(
         direction=tx.direction,
         occurred_at=tx.occurred_at,
         channels=channels,
+        origin="rule:apple_wallet" if bank == Bank.OTHER else "rule:bancolombia",
         deleted_at=OCCURRED_AT + timedelta(hours=1),
     )
 
@@ -359,6 +361,7 @@ class TestMatchesTombstone:
             last4="1234",
             occurred_at=later,
             channel=Channel.EMAIL,
+            parsed_by="rule:bancolombia:compra_tdeb:v1",
         )
 
     def test_el_correo_tardio_de_un_atajo_borrado(self) -> None:
@@ -372,6 +375,7 @@ class TestMatchesTombstone:
             last4="1234",
             occurred_at=OCCURRED_AT,
             channel=Channel.EMAIL,
+            parsed_by="rule:bancolombia:compra_tdeb:v1",
         )
 
     def test_otro_aviso_del_mismo_canal_es_otra_compra(self) -> None:
@@ -385,6 +389,7 @@ class TestMatchesTombstone:
             last4="1234",
             occurred_at=OCCURRED_AT,
             channel=Channel.NOTIFICATION,
+            parsed_by="rule:apple_wallet:compra:v1",
         )
 
     def test_fuera_de_la_ventana_no_coincide(self) -> None:
@@ -399,6 +404,7 @@ class TestMatchesTombstone:
             last4="1234",
             occurred_at=later,
             channel=Channel.EMAIL,
+            parsed_by="rule:bancolombia:compra_tdeb:v1",
         )
 
     def test_last4_distinto_no_coincide(self) -> None:
@@ -412,9 +418,41 @@ class TestMatchesTombstone:
             last4="1234",
             occurred_at=OCCURRED_AT,
             channel=Channel.NOTIFICATION,
+            parsed_by="rule:apple_wallet:compra:v1",
         )
 
 
 def test_is_manual_key() -> None:
     assert is_manual_key(manual_dedupe_key("ab" * 8))
     assert not is_manual_key("a" * 64)
+
+
+@pytest.mark.unit
+class TestCaptureOrigin:
+    @pytest.mark.parametrize(
+        ("parsed_by", "origin"),
+        [
+            ("rule:bancolombia:pago_producto:v1", "rule:bancolombia"),
+            ("rule:pse:pago:v1", "rule:pse"),
+            ("rule:apple_wallet:compra:v1", "rule:apple_wallet"),
+            ("llm", "llm"),
+            ("manual", "manual"),
+        ],
+    )
+    def test_origen(self, parsed_by: str, origin: str) -> None:
+        assert capture_origin(parsed_by) == origin
+
+    def test_el_correo_de_pse_tras_borrar_el_del_banco_no_vuelve(self) -> None:
+        """Mismo canal (correo) pero otro origen: es la misma compra borrada."""
+        tombstone = _tombstone(
+            bank=Bank.BANCOLOMBIA, last4="1234", channels=frozenset({Channel.EMAIL})
+        )
+        assert matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.OTHER, last4=None),
+            bank=Bank.OTHER,
+            last4=None,
+            occurred_at=OCCURRED_AT + timedelta(minutes=1),
+            channel=Channel.EMAIL,
+            parsed_by="rule:pse:pago:v1",
+        )

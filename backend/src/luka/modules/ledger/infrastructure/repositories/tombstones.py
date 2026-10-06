@@ -27,6 +27,7 @@ def _to_entity(row: TransactionTombstoneRow) -> TransactionTombstone:
         direction=Direction(row.direction),
         occurred_at=row.occurred_at,
         channels=frozenset(Channel(c) for c in row.channels),
+        origin=row.origin,
         deleted_at=row.deleted_at,
     )
 
@@ -48,6 +49,7 @@ class SqlAlchemyTombstoneRepository:
                 direction=tombstone.direction.value,
                 occurred_at=tombstone.occurred_at,
                 channels=sorted(c.value for c in tombstone.channels),
+                origin=tombstone.origin,
                 deleted_at=tombstone.deleted_at,
             )
         )

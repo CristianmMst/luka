@@ -31,6 +31,8 @@ debe extraer), separado del cuerpo por `---`. El cuerpo es el texto plano extra�
 | `bancolombia/pago_producto_2.txt` | email | igual, otro comercio y monto, con la frase en su propio párrafo |
 | `bancolombia/transferencia_cuenta_wrap.txt` | email | `Transferiste $<monto en-US> desde tu cuenta *<last4> a la cuenta *<n> el DD/MM/YY a las HH:MM` (sin destinatario: la plantilla fija `Transferencia`), cortado a ~76 caracteres. Capturado el 2026-10-05 |
 | `bancolombia/nomina.txt` | email | `Recibiste un pago de Nomina de <EMPRESA> por $<monto en-US> en tu cuenta de Ahorros el DD/MM/YYYY a las HH:MM` |
+| `pse/pago_aprobado.txt` | email | PSE (`serviciopse@achcolombia.com.co`, entra como `other`): `Valor: $ <monto es-CO>`, `Empresa: <COMERCIO>`, `Descripción`, `Fecha de la transacción: DD/MM/YYYY` (sin hora), `CUS`. Capturado el 2026-10-05 de la captura de pantalla del correo |
+| `pse/pago_aprobado_celdas.txt` | email | igual, con cada etiqueta y su valor en líneas separadas; es el mismo pago que `bancolombia/pago_producto_2.txt`. Pendiente: la variante cuyo resumen empieza "traves de PSE <n> Fecha de la transacción" (sin texto real todavía) |
 | `other/nu_pago.txt` | email | descartado por remitente (AC-2.4); cuerpo reutilizado en test unitario del LLM |
 
 Observaciones para los normalizadores (F2.3):

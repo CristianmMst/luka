@@ -1,8 +1,8 @@
 """Motor de plantillas regex por banco (spec 006 §4.1, F2.3). Puro (stdlib
 solo, P3). Ninguna plantilla entra sin fixture real (regla de oro, spec 006
 §4.1): `config/templates/bancolombia.yaml` y `nequi.yaml`. Las plantillas
-genericas (`generic: true`, p. ej. `apple_wallet.yaml`, F4.3b) no son de un
-banco: se prueban despues de las del banco y toman el banco del mensaje.
+genericas (`generic: true`, p. ej. `apple_wallet.yaml`, F4.3b, y `pse.yaml`) no
+son de un banco: se prueban despues de las del banco y toman el banco del mensaje.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import re
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any, cast
+from zoneinfo import ZoneInfo
 
 from luka.modules.parsing.domain.enums import Direction
 from luka.modules.parsing.domain.errors import (
@@ -29,7 +30,8 @@ from luka.modules.parsing.domain.parsed import ParsedTransaction
 _MAX_DRIFT = timedelta(days=7)
 # Banco de una plantilla generica cuando el mensaje no trae uno (spec 004 §2.4).
 _OTHER = "other"
-_REQUIRED_GROUPS = frozenset({"amount", "date", "time"})
+_REQUIRED_GROUPS = frozenset({"amount", "date"})
+_BOGOTA = ZoneInfo("America/Bogota")
 
 
 class Template:
@@ -43,6 +45,7 @@ class Template:
         "id",
         "pattern",
         "suggested_category",
+        "time_from_received",
     )
 
     def __init__(  # noqa: PLR0913 - un campo por clave del YAML
@@ -55,6 +58,7 @@ class Template:
         suggested_category: str | None,
         counterparty: bool = False,
         default_merchant: str | None = None,
+        time_from_received: bool = False,
     ) -> None:
         self.id = id
         self.direction = direction
@@ -68,6 +72,9 @@ class Template:
         # Comercio fijo cuando el mensaje no lo trae (p. ej. el pago QR solo
         # trae una llave numerica, spec 006 §4.1).
         self.default_merchant = default_merchant
+        # El mensaje trae la fecha pero no la hora (p. ej. PSE): la hora es la
+        # de llegada, en hora de Colombia (spec 006 SS4.1).
+        self.time_from_received = time_from_received
 
 
 class BankTemplates:
@@ -120,11 +127,14 @@ class TemplateMatch:
         invalidos, lanzan `TemplateExtractionInvalid` (el caso de uso sigue
         al LLM en vez de fallar duro).
         """
+        time = self.groups.get("time")
+        if not time and self.template.time_from_received:
+            time = received_at.astimezone(_BOGOTA).strftime("%H:%M")
         try:
             amount = parse_amount(self.groups["amount"] or "")
             occurred_at = parse_local_datetime(
                 self.groups["date"] or "",
-                self.groups["time"] or "",
+                time or "",
                 self.template.date_format,
             )
         except (AmountInvalid, DateInvalid) as exc:
@@ -171,7 +181,14 @@ def _compile_template(bank: str, raw: dict[str, Any]) -> Template:
             f"plantilla {raw.get('id')!r} de {bank!r}: regex invalida: {exc}"
         ) from exc
 
-    missing = _REQUIRED_GROUPS - set(pattern.groupindex)
+    time_from_received = raw.get("time_from_received", False)
+    if not isinstance(time_from_received, bool):
+        raise TemplateConfigError(
+            f"plantilla {raw.get('id')!r} de {bank!r}: time_from_received debe ser true/false"
+        )
+
+    required = _REQUIRED_GROUPS if time_from_received else _REQUIRED_GROUPS | {"time"}
+    missing = required - set(pattern.groupindex)
     if missing:
         raise TemplateConfigError(
             f"plantilla {raw.get('id')!r} de {bank!r}: faltan grupos nombrados {sorted(missing)}"
@@ -199,6 +216,7 @@ def _compile_template(bank: str, raw: dict[str, Any]) -> Template:
         suggested_category=raw.get("suggested_category"),
         counterparty=counterparty,
         default_merchant=default_merchant,
+        time_from_received=time_from_received,
     )
 
 

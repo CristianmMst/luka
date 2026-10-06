@@ -700,19 +700,59 @@ class TestFusionEntreCanales:
         assert second.transaction.id == first.transaction.id
         assert len(await repos.sources.list_for(first.transaction.id)) == 2
 
-    async def test_mismo_canal_no_se_fusiona(self) -> None:
-        """Dos avisos distintos del mismo monto son dos compras (AC-5.3)."""
+    async def test_mismo_canal_y_origen_no_se_fusiona(self) -> None:
+        """Dos Atajos del mismo monto son dos compras (AC-5.3), aunque el segundo
+        traiga el banco en el nombre de la tarjeta y su huella sea otra."""
         repos = await build_ledger_repos()
         use_case = _make_use_case(repos)
 
         await use_case.execute(_apple_pay(at=NOW))
         second = await use_case.execute(
-            _cmd(
-                last4="1234",
-                occurred_at=NOW + timedelta(minutes=2),
-                source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
-            )
+            _apple_pay(at=NOW + timedelta(minutes=2), bank=Bank.BANCOLOMBIA)
         )
+
+        assert second.created is True
+
+    @pytest.mark.parametrize("pse_first", [True, False])
+    async def test_correo_de_pse_y_del_banco_quedan_en_uno(self, pse_first: bool) -> None:
+        """Mismo canal (correo) pero otro origen: PSE llega sin banco ni last4 y el
+        banco con los dos; es la misma compra (spec 004 SS3)."""
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+        pse = _cmd(
+            bank=Bank.OTHER,
+            last4=None,
+            occurred_at=NOW + timedelta(minutes=1),
+            merchant="Compania de Medicina Prepagada",
+            parsed_by="rule:pse:pago:v1",
+            source=SourceInput(Channel.EMAIL, uuid4(), NOW),
+        )
+        bank = _email(at=NOW)
+        first_cmd, second_cmd = (pse, bank) if pse_first else (bank, pse)
+
+        first = await use_case.execute(first_cmd)
+        second = await use_case.execute(second_cmd)
+
+        assert second.created is False
+        assert second.transaction.id == first.transaction.id
+        assert len(await repos.sources.list_for(first.transaction.id)) == 2
+
+    async def test_dos_pagos_pse_iguales_son_dos(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        def pse(minutes: int, last4: str | None):
+            return _cmd(
+                bank=Bank.OTHER,
+                last4=last4,
+                occurred_at=NOW + timedelta(minutes=minutes),
+                parsed_by="rule:pse:pago:v1",
+                source=SourceInput(Channel.EMAIL, uuid4(), NOW),
+            )
+
+        await use_case.execute(pse(0, None))
+        # Otra huella (con last4) para no caer en el match exacto.
+        second = await use_case.execute(pse(3, "1234"))
 
         assert second.created is True
 
@@ -788,18 +828,28 @@ class TestLapidas:
 
         assert await repos.transactions.list(USER, Filters(), None, 10) == []
 
-    async def test_otra_compra_del_mismo_canal_si_se_registra(self) -> None:
+    async def test_otro_atajo_del_mismo_monto_si_se_registra(self) -> None:
         repos = await build_ledger_repos()
         use_case = _make_use_case(repos)
         apple = await use_case.execute(_apple_pay(at=NOW))
         await self._delete(repos, apple.transaction.id)
 
         second = await use_case.execute(
-            _cmd(
-                last4="1234",
-                occurred_at=NOW + timedelta(minutes=2),
-                source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
-            )
+            _apple_pay(at=NOW + timedelta(minutes=2), bank=Bank.BANCOLOMBIA)
         )
 
         assert second.created is True
+
+
+@pytest.mark.unit
+async def test_fusion_entre_canales_respeta_la_contraparte() -> None:
+    """Spec 004 SS3: la notificacion sin last4 de OTRA persona con el mismo monto
+    no se une al correo de la primera, aunque banco y canal la dejarian."""
+    repos = await build_ledger_repos()
+    use_case = _make_use_case(repos)
+    await use_case.execute(_transfer("ANA PEREZ"))
+
+    other = _transfer("JUAN RUIZ", minutes=1, channel=Channel.NOTIFICATION)
+    result = await use_case.execute(replace(other, last4=None))
+
+    assert result.created is True

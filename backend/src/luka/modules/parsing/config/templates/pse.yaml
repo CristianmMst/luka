@@ -1,0 +1,18 @@
+# Plantilla generica de PSE (ACH Colombia, spec 006 SS4.1). PSE no es un banco:
+# el remitente serviciopse@achcolombia.com.co entra como `other` (senders.yaml)
+# y el movimiento queda con bank=other. Fixtures: tests/fixtures/emails/pse/.
+#
+# El correo (texto del HTML) trae, en ese orden o con cada valor en su propia
+# linea: "Valor: $ 523.034,00", "Empresa: <COMERCIO>", "Descripcion: ...",
+# "Fecha de la transaccion: dd/mm/aaaa" (sin hora) y "CUS: <n>". Los lookaheads
+# no dependen del orden; exigir CUS o Empresa evita que esta generica atrape
+# avisos de otros bancos. La hora es la de llegada (`time_from_received`).
+bank: pse
+generic: true
+version: 1
+templates:
+  - id: pago
+    direction: debit
+    time_from_received: true
+    pattern: '(?s)(?=.*Valor:\s*\$\s*(?P<amount>[\d.,]+))(?=.*Fecha de la transacci[oó]n:\s*(?P<date>\d{2}/\d{2}/\d{4}))(?=.*(?:CUS|Empresa):)(?:(?=.*Empresa:\s*(?P<merchant>[^\n]+?)\s*(?:\n|$)))?'
+    date_format: "%d/%m/%Y"

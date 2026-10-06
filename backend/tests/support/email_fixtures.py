@@ -62,10 +62,17 @@ def nequi_fixtures() -> list[EmailFixture]:
     return load_email_fixtures(FIXTURES_DIR / "nequi")
 
 
+def pse_fixtures() -> list[EmailFixture]:
+    """Los fixtures de PSE (correo real anonimizado de ACH Colombia): plantilla
+    generica, sin banco (spec 006 SS4.1)."""
+    return load_email_fixtures(FIXTURES_DIR / "pse")
+
+
 __all__ = [
     "FIXTURES_DIR",
     "EmailFixture",
     "bancolombia_fixtures",
     "load_email_fixtures",
     "nequi_fixtures",
+    "pse_fixtures",
 ]

@@ -301,6 +301,7 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 | direction | TEXT NOT NULL | `debit` / `credit` |
 | occurred_at | TIMESTAMPTZ NOT NULL | |
 | channels | TEXT[] NOT NULL | canales de sus fuentes al borrarla |
+| origin | TEXT NOT NULL | `capture_origin(parsed_by)`: `rule:<config>` (p. ej. `rule:bancolombia`, `rule:pse`), `llm` o `manual` |
 | deleted_at | TIMESTAMPTZ NOT NULL | ancla de la purga |
 
 **Índices**: `(user_id, occurred_at)` y `(deleted_at)`. Guarda solo lo necesario para reconocer otra fuente de la misma compra (P6); no tiene comercio, notas ni cuenta. Se purga a los 7 días (§6) y se borra con el usuario.
@@ -341,14 +342,14 @@ bucket = int(occurred_at_utc.timestamp()) // 600  # floor a ventanas de 10 min
   - mismo usuario, `amount` y `direction`, y `|Δoccurred_at| ≤ 10 min`;
   - la existente es una captura (`dedupe_key` sin `manual:`) y no tiene `transfer_pair_id`;
   - los bancos son iguales o uno es `other`, y los `last4` son iguales o uno falta. El `last4` de la existente no se guarda: se deduce recalculando su huella (la clave base, sin el sufijo de contraparte) con `----` o con el `last4` entrante (`dedupe.is_compatible_capture`). Si la huella no se puede recalcular (por ejemplo, porque se editó la hora), solo es compatible una entrante sin `last4`;
-  - la existente no tiene ya una fuente del canal entrante: dos avisos del mismo canal son dos compras (AC-5.3);
+  - la existente no tiene ya un aviso como el entrante, es decir, del mismo canal **y** del mismo origen (`dedupe.capture_origin`: `rule:<config>` de su `parsed_by`, o `llm`/`manual`). Dos Atajos o dos correos de PSE del mismo monto son dos compras (AC-5.3). En cambio, el correo de PSE y el de Bancolombia del mismo pago son los dos `email` pero de origen distinto, así que se unen. Límite: el origen de una transacción es el de su primera fuente;
   - si la captura es entre personas, el candidato es de la misma contraparte (`same_counterparty`, como arriba);
   - hay **un único** candidato. Con dos o más, el caso es ambiguo y se crea la transacción.
 
   Se conserva la existente (no se reescriben su comercio ni su banco) y solo se le adjunta la fuente, igual que con un match por huella.
 - **Lápidas.** El usuario puede borrar cualquier movimiento (spec 005 §6). Si es una captura (`dedupe_key` sin `manual:`), antes de borrarla se guarda su lápida (§2.16). Sin ella, la siguiente fuente de la misma compra (un correo que llega tarde, la cola de avisos del teléfono o un `reparse`) ya no encontraría la fila y la volvería a crear. Cuando una captura no coincide con ninguna transacción viva, se descarta sin escribir nada si coincide con una lápida, es decir, si se cumple alguna de estas dos condiciones (`dedupe.matches_tombstone`):
   - una de sus claves candidatas es la de la lápida y `|Δoccurred_at| ≤ 10 min`;
-  - cumple la regla de fusión entre canales contra la lápida: misma ventana, banco y `last4` compatibles, y un canal que la compra borrada no tenía.
+  - cumple la regla de fusión entre canales contra la lápida: misma ventana, banco y `last4` compatibles, y no es un aviso como los que ya tenía (mismo canal y mismo `origin`). Así, borrar el movimiento del banco y que después llegue el correo de PSE no lo recrea.
 
   El consumer la da por atendida (`ledger_capture_skipped`, `reason=transaction_deleted`). Las lápidas viven 7 días, la misma ventana en la que una plantilla todavía acepta el mensaje (spec 006 §4.1). Editar un movimiento no cambia su `dedupe_key`: la huella original sigue absorbiendo las fuentes tardías.
 

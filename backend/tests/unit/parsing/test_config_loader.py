@@ -37,6 +37,7 @@ class TestLoadParsingConfig:
             "daviplata",
             "bbva",
             "banco_bogota",
+            "other",  # remitentes que no son de un banco (PSE)
         }
         assert (
             config.senders.bank_for_email_sender(

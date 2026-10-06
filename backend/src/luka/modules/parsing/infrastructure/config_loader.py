@@ -21,7 +21,7 @@ from luka.modules.parsing.domain.templates import TemplateRegistry
 _CONFIG_PACKAGE = "luka.modules.parsing.config"
 _TEMPLATES_PACKAGE = f"{_CONFIG_PACKAGE}.templates"
 # Orden de prueba en `TemplateRegistry.match(None, ...)`.
-_TEMPLATE_FILES = ("bancolombia.yaml", "nequi.yaml", "apple_wallet.yaml")
+_TEMPLATE_FILES = ("bancolombia.yaml", "nequi.yaml", "apple_wallet.yaml", "pse.yaml")
 
 
 @dataclass(frozen=True, slots=True)

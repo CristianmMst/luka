@@ -1,0 +1,27 @@
+from: serviciopse <serviciopse@achcolombia.com.co>
+subject: PSE - Transacción Aprobada ✅ CUS 712244959
+received_at: 2026-10-04T10:12:41-05:00
+expected:
+  is_transaction: true
+  bank: other
+  direction: debit
+  amount: "487210.00"
+  merchant: "COLPROCESA SAS"
+  occurred_at: 2026-10-04T10:12:00-05:00
+  channel_hint: pago
+  note: el correo trae solo la fecha; la hora es la de llegada (time_from_received). Empresa = comercio. Monto, CUS y nombre alterados
+---
+¡Hola, ANA MARIA PEREZ !
+Estado de la Transacción: Aprobada
+Los siguientes son los datos de tu transacción:
+Valor: $ 487.210,00
+Empresa: COLPROCESA SAS
+Descripción: Payment PC
+Fecha de la transacción: 04/10/2026
+CUS: 712200001
+Gracias por utilizar nuestro servicio.
+Ten encuenta estos tips de seguridad:
+Usa dispositivos personales o de confianza para realizar tus pagos.
+No abras enlaces sospechosos.
+Cambia tus contraseñas con regularidad.
+Digita manualmente la URL del portal de tu entidad financiera.

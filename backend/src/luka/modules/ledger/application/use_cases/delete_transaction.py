@@ -17,7 +17,7 @@ from luka.modules.ledger.application.ports import (
     TransactionSourceRepositoryPort,
     UnitOfWorkPort,
 )
-from luka.modules.ledger.domain.dedupe import is_manual_key
+from luka.modules.ledger.domain.dedupe import capture_origin, is_manual_key
 from luka.modules.ledger.domain.entities import Transaction, TransactionTombstone
 from luka.modules.ledger.domain.enums import Bank, FiscalTag
 from luka.modules.ledger.domain.errors import CategoryNotFound, TransactionNotFound
@@ -94,6 +94,7 @@ class DeleteTransaction:
                 direction=tx.direction,
                 occurred_at=tx.occurred_at,
                 channels=frozenset(channels.get(tx.id, [])),
+                origin=capture_origin(tx.parsed_by),
                 deleted_at=self._clock.now(),
             )
         )

@@ -2,6 +2,7 @@
 
 import hashlib
 import re
+from collections.abc import Collection
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Protocol
@@ -85,6 +86,26 @@ def candidate_keys(  # noqa: PLR0913 - un parametro por componente de la formula
         )
 
     return (_key_for(bucket - 1), _key_for(bucket), _key_for(bucket + 1))
+
+
+def capture_origin(parsed_by: str) -> str:
+    """Quien escribio el aviso: `rule:<config>` (p. ej. `rule:bancolombia`,
+    `rule:pse`, `rule:apple_wallet`), o `parsed_by` tal cual (`llm`, `manual`).
+
+    Dos avisos del mismo canal y del mismo origen son dos compras; de origenes
+    distintos (el correo de PSE y el del banco) pueden ser la misma (spec 004 SS3).
+    """
+    if parsed_by.startswith("rule:"):
+        return ":".join(parsed_by.split(":")[:2])
+    return parsed_by
+
+
+def same_source(
+    *, channels: Collection[Channel], origin: str, channel: Channel, parsed_by: str
+) -> bool:
+    """`True` si una compra con esos canales y ese origen ya tiene un aviso como el
+    entrante (mismo canal y mismo origen): entonces el entrante es otra compra."""
+    return channel in channels and origin == capture_origin(parsed_by)
 
 
 def is_manual_key(key: str) -> bool:
@@ -203,16 +224,22 @@ def matches_tombstone(  # noqa: PLR0913 - un parametro por dato de la captura en
     last4: str | None,
     occurred_at: datetime,
     channel: Channel,
+    parsed_by: str,
 ) -> bool:
     """`True` si la captura entrante es otra fuente de la compra que el usuario borro
-    (spec 004 SS3): la misma huella dentro de la ventana, o una huella compatible de
-    un canal que la compra borrada no tenia (la regla de fusion entre canales).
-    Monto y direccion ya los filtro la consulta.
+    (spec 004 SS3): la misma huella dentro de la ventana, o una huella compatible
+    que no sea un aviso como los que ya tenia (mismo canal y mismo origen), igual
+    que la fusion entre canales. Monto y direccion ya los filtro la consulta.
     """
     if not is_same_capture(tombstone.occurred_at, occurred_at):
         return False
     if base_dedupe_key(tombstone.dedupe_key) in keys:
         return True
-    if channel in tombstone.channels:
+    if same_source(
+        channels=tombstone.channels,
+        origin=tombstone.origin,
+        channel=channel,
+        parsed_by=parsed_by,
+    ):
         return False
     return _footprint_compatible(tombstone, bank=bank, last4=last4)

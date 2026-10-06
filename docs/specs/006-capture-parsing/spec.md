@@ -166,11 +166,14 @@ templates:
                              # (envio o recibo entre personas), no un comercio
 ```
 
-- Una config con `generic: true` (hoy solo `apple_wallet.yaml`, §3.3) no es de un banco: su `bank`
-  es solo el nombre que va en `parsed_by` (`rule:apple_wallet:compra:v1`). Sus plantillas se prueban
-  después de las del banco del mensaje y el movimiento toma ese banco, o `other` si no se conoce. No
-  cuenta en `known_banks()`. Su contrato es el texto que arma la app, así que el test lleva los
-  ejemplos en lugar de un fixture de correo.
+- Una config con `generic: true` (`apple_wallet.yaml`, §3.3, y `pse.yaml`) no es de un banco: su
+  `bank` es solo el nombre que va en `parsed_by` (`rule:apple_wallet:compra:v1`, `rule:pse:pago:v1`).
+  Sus plantillas se prueban después de las del banco del mensaje y el movimiento toma ese banco, o
+  `other` si no se conoce. No cuenta en `known_banks()`. El contrato de `apple_wallet` es el texto
+  que arma la app, así que el test lleva los ejemplos en lugar de un fixture de correo.
+- `time_from_received: true` (opcional, default `false`): el mensaje trae la fecha pero no la hora,
+  así que `<time>` deja de ser obligatorio y la hora es la de llegada (`received_at`) en hora de
+  Colombia, con la fecha del mensaje. Sigue la validación de ±7 días.
 
 - `<time>` es `HH:MM` de 24 horas, o de 12 horas con meridiano ("11:21 a.m", "1:05 p. m.",
   "9:00 AM"), que se pasa a 24 horas antes de parsear.
@@ -209,6 +212,16 @@ templates:
   fijar el comercio cuando su regex no tiene grupo `merchant` (o no lo captura); nunca se usa la
   llave como comercio. Igual con `transferencia_cuenta`, que solo trae el número de la cuenta
   destino: `default_merchant: Transferencia`.
+- PSE (`parsing/config/templates/pse.yaml`, genérica, v1): el remitente
+  `serviciopse@achcolombia.com.co` está en `senders.yaml` bajo `other` (PSE no es un banco y
+  `raw_messages.bank` solo acepta el enum), así que el movimiento queda con `bank = other` y sin
+  `last4`. La plantilla `pago` (`direction: debit`, `time_from_received: true`) toma "Valor: $
+  523.034,00", "Empresa: <COMERCIO>" (el comercio; si falta queda sin comercio) y "Fecha de la
+  transacción: dd/mm/aaaa", con lookaheads que no dependen del orden ni de si cada valor va en su
+  propia línea. Exige además "CUS:" o "Empresa:" para no atrapar avisos de otros bancos. Sin
+  `relevant_line_prefix`: usa el extracto de respaldo. Fixtures `pse/pago_aprobado.txt` y
+  `pse/pago_aprobado_celdas.txt`. Si el mismo pago llega también por el correo del banco, queda
+  una sola transacción (004 §3, regla de origen).
 - Plantillas Nequi vigentes (`parsing/config/templates/nequi.yaml`, v1, F2.7): `breb_recibida`
   ("Recibiste 2.600 de <persona> el 26 de septiembre de 2026 a las 11:21 a.m, desde el banco
   <banco>"; `direction: credit`, `counterparty: true`, fixture `nequi/breb_recibida.txt`). El

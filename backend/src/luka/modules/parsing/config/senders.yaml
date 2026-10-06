@@ -14,6 +14,12 @@
 # "x@bancolombia.com.co.evil.com").
 version: 1
 banks:
+  # Sin banco: avisos de pagos que no son de un banco. Entran con bank=other y
+  # los lee una plantilla generica (spec 006 SS4.1).
+  other:
+    verified: true # fixtures reales: pse/*.txt
+    senders:
+      - serviciopse@achcolombia.com.co
   bancolombia:
     verified: true
     senders:

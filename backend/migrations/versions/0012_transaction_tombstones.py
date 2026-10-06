@@ -37,6 +37,7 @@ def upgrade() -> None:
         sa.Column("direction", sa.Text(), nullable=False),
         sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("channels", postgresql.ARRAY(sa.Text()), nullable=False),
+        sa.Column("origin", sa.Text(), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=False),
         sa.CheckConstraint("amount > 0", name="amount_positivo"),
         sa.CheckConstraint(f"direction IN ({_DIRECTION_VALUES})", name="direction_valido"),

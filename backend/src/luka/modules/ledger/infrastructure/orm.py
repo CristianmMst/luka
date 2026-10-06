@@ -243,4 +243,5 @@ class TransactionTombstoneRow(Base, UUIDPrimaryKeyMixin):
     direction: Mapped[str] = mapped_column(Text, nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     channels: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
+    origin: Mapped[str] = mapped_column(Text, nullable=False)
     deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

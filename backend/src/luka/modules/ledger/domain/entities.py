@@ -101,6 +101,8 @@ class TransactionTombstone:
     direction: Direction
     occurred_at: datetime
     channels: frozenset[Channel]
+    # `dedupe.capture_origin` de su `parsed_by` (p. ej. `rule:bancolombia`).
+    origin: str
     deleted_at: datetime
 
     def __post_init__(self) -> None:

@@ -34,11 +34,13 @@ from luka.modules.ledger.domain.classification import mark_as_transfer
 from luka.modules.ledger.domain.dedupe import (
     SAME_CAPTURE_WINDOW,
     candidate_keys,
+    capture_origin,
     counterparty_dedupe_key,
     is_compatible_capture,
     is_same_capture,
     matches_tombstone,
     same_counterparty,
+    same_source,
 )
 from luka.modules.ledger.domain.entities import (
     Category,
@@ -223,11 +225,13 @@ class RecordCapturedTransaction:
     async def _same_purchase_other_channel(
         self, cmd: CapturedTransactionCommand, person: str | None
     ) -> list[Transaction]:
-        """La misma compra que ya llego por otro canal con una huella distinta (spec
-        004 SS3, fusion entre canales): el Atajo de Apple Pay no trae banco o
-        `last4`, el correo si. Solo si hay un unico candidato compatible en la
-        ventana de 10 min y sin fuentes del canal entrante; si no, `[]`. Una
-        captura entre personas solo se une a la misma contraparte.
+        """La misma compra que ya llego por otro aviso con una huella distinta (spec
+        004 SS3, fusion entre canales): el Atajo de Apple Pay o el correo de PSE no
+        traen banco o `last4`, el del banco si. Solo si hay un unico candidato
+        compatible en la ventana de 10 min que no tenga ya un aviso como el
+        entrante (mismo canal y mismo origen); si no, `[]`. El origen de una
+        transaccion es el de su primera fuente (`parsed_by`). Una captura entre
+        personas solo se une a la misma contraparte.
         """
         nearby = await self._transactions.find_captures_near(
             cmd.user_id,
@@ -245,7 +249,16 @@ class RecordCapturedTransaction:
         if not compatible:
             return []
         channels = await self._sources.channels_for([t.id for t in compatible])
-        candidates = [t for t in compatible if cmd.source.channel not in channels.get(t.id, [])]
+        candidates = [
+            t
+            for t in compatible
+            if not same_source(
+                channels=channels.get(t.id, []),
+                origin=capture_origin(t.parsed_by),
+                channel=cmd.source.channel,
+                parsed_by=cmd.parsed_by,
+            )
+        ]
         return candidates if len(candidates) == 1 else []
 
     async def _was_deleted(self, cmd: CapturedTransactionCommand, keys: tuple[str, ...]) -> bool:
@@ -265,6 +278,7 @@ class RecordCapturedTransaction:
                 last4=cmd.last4,
                 occurred_at=cmd.occurred_at,
                 channel=cmd.source.channel,
+                parsed_by=cmd.parsed_by,
             )
             for t in tombstones
         )
