@@ -226,6 +226,23 @@ class SqlAlchemyTransactionRepository:
         result = await self._session.execute(stmt)
         return [transaction_row_to_entity(row) for row in result.scalars()]
 
+    async def find_captures_near(
+        self,
+        user_id: UUID,
+        direction: Direction,
+        amount: Decimal,
+        since: datetime,
+        until: datetime,
+    ) -> list[Transaction]:
+        stmt = select(TransactionRow).where(
+            TransactionRow.user_id == user_id,
+            TransactionRow.direction == direction.value,
+            TransactionRow.amount == amount,
+            TransactionRow.occurred_at.between(since, until),
+        )
+        result = await self._session.execute(stmt)
+        return [transaction_row_to_entity(row) for row in result.scalars()]
+
     async def reassign_category(
         self,
         user_id: UUID,

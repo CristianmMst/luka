@@ -1,4 +1,9 @@
-"""Caso de uso: borrar una transaccion manual propia (spec 005 SS6)."""
+"""Caso de uso: borrar una transaccion propia, manual o capturada (spec 005 SS6).
+
+Una captura deja una lapida (spec 004 SS3) para que otra fuente de la misma
+compra (un correo tardio, la cola de avisos del telefono, un `reparse`) no la
+vuelva a crear.
+"""
 
 from uuid import UUID
 
@@ -7,21 +12,22 @@ from luka.modules.ledger.application.ports import (
     ClockPort,
     EventPublisherPort,
     IdGeneratorPort,
+    TombstoneRepositoryPort,
     TransactionRepositoryPort,
+    TransactionSourceRepositoryPort,
     UnitOfWorkPort,
 )
-from luka.modules.ledger.domain.enums import FiscalTag
-from luka.modules.ledger.domain.errors import (
-    CategoryNotFound,
-    NotManualTransaction,
-    TransactionNotFound,
-)
+from luka.modules.ledger.domain.dedupe import is_manual_key
+from luka.modules.ledger.domain.entities import Transaction, TransactionTombstone
+from luka.modules.ledger.domain.enums import Bank, FiscalTag
+from luka.modules.ledger.domain.errors import CategoryNotFound, TransactionNotFound
 from luka.modules.ledger.domain.transfers import unpair
 from luka.modules.ledger.events import TransactionDeleted
 
 
 class DeleteTransaction:
-    """Borra una transaccion manual propia; si estaba emparejada, restaura la pareja.
+    """Borra una transaccion propia; si estaba emparejada, restaura la pareja, y si
+    era una captura deja su lapida.
 
     Tras el commit publica `TransactionDeleted` para que recurring libere la
     ocurrencia que esa transaccion pagaba (spec 011 SS4).
@@ -31,6 +37,8 @@ class DeleteTransaction:
         self,
         *,
         transactions: TransactionRepositoryPort,
+        sources: TransactionSourceRepositoryPort,
+        tombstones: TombstoneRepositoryPort,
         categories: CategoryRepositoryPort,
         events: EventPublisherPort,
         clock: ClockPort,
@@ -38,6 +46,8 @@ class DeleteTransaction:
         uow: UnitOfWorkPort,
     ) -> None:
         self._transactions = transactions
+        self._sources = sources
+        self._tombstones = tombstones
         self._categories = categories
         self._events = events
         self._clock = clock
@@ -45,12 +55,12 @@ class DeleteTransaction:
         self._uow = uow
 
     async def execute(self, user_id: UUID, id: UUID) -> None:
-        """Lanza `TransactionNotFound` si no existe y `NotManualTransaction` si no es manual."""
+        """Lanza `TransactionNotFound` si no existe (o es ajena)."""
         tx = await self._transactions.get(user_id, id)
         if tx is None:
             raise TransactionNotFound
-        if tx.parsed_by != "manual":
-            raise NotManualTransaction
+        if not is_manual_key(tx.dedupe_key):
+            await self._leave_tombstone(tx)
 
         if tx.transfer_pair_id is not None:
             other = await self._transactions.get(user_id, tx.transfer_pair_id)
@@ -69,6 +79,22 @@ class DeleteTransaction:
                 occurred_at=self._clock.now(),
                 user_id=user_id,
                 transaction_id=id,
+            )
+        )
+
+    async def _leave_tombstone(self, tx: Transaction) -> None:
+        channels = await self._sources.channels_for([tx.id])
+        await self._tombstones.add(
+            TransactionTombstone(
+                id=self._ids.new_id(),
+                user_id=tx.user_id,
+                dedupe_key=tx.dedupe_key,
+                bank=tx.bank or Bank.OTHER,
+                amount=tx.amount,
+                direction=tx.direction,
+                occurred_at=tx.occurred_at,
+                channels=frozenset(channels.get(tx.id, [])),
+                deleted_at=self._clock.now(),
             )
         )
 

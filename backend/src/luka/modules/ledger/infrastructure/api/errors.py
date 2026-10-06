@@ -2,7 +2,7 @@
 
 Recurso ajeno siempre es `NotFoundError` (404), nunca `ForbiddenError` (009 SS4):
 `ForbiddenError` (403) queda reservado para acciones no permitidas sobre un recurso
-propio o visible (categoria del sistema, borrar una transaccion no manual).
+propio o visible (modificar o borrar una categoria del sistema).
 """
 
 from luka.modules.ledger.domain.errors import (
@@ -15,11 +15,11 @@ from luka.modules.ledger.domain.errors import (
     InvalidCursor,
     InvalidKindChange,
     InvalidLast4,
-    NotManualTransaction,
     ReviewAlreadyResolved,
     ReviewItemNotFound,
     SystemCategoryImmutable,
     TransactionNotFound,
+    TransferPairedEdit,
     TransferPairInvalid,
 )
 from luka.shared.errors import (
@@ -35,11 +35,13 @@ LEDGER_EXCEPTION_MAP: ExceptionMap = {
     CategoryNotFound: lambda e: NotFoundError(),
     AccountNotFound: lambda e: NotFoundError(),
     SystemCategoryImmutable: lambda e: ForbiddenError(),
-    NotManualTransaction: lambda e: ForbiddenError(),
     # `field` se omite: la unicidad es sobre `(bank, last4)`, no sobre `last4` solo.
     DuplicateAccount: lambda e: ConflictError(message="La cuenta ya existe"),
     DuplicateCategoryName: lambda e: ConflictError(message="El nombre ya existe", field="name"),
     AlreadyPaired: lambda e: ConflictError(message="La transaccion ya esta emparejada"),
+    TransferPairedEdit: lambda e: ConflictError(
+        message="Desmarca la transferencia para cambiar el monto o el tipo", field="amount"
+    ),
     TransferPairInvalid: lambda e: ValidationAppError(message="Par de transferencia invalido"),
     InvalidAmount: lambda e: ValidationAppError(message="Monto invalido", field="amount"),
     InvalidLast4: lambda e: ValidationAppError(message="last4 invalido", field="last4"),

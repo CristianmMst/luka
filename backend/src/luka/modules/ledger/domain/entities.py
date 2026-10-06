@@ -89,6 +89,26 @@ class TransactionSource:
 
 
 @dataclass(frozen=True, slots=True)
+class TransactionTombstone:
+    """Lapida de una captura borrada por el usuario (spec 004 SS3): lo minimo para
+    reconocer otra fuente de la misma compra y no volver a crearla (P6)."""
+
+    id: UUID
+    user_id: UUID
+    dedupe_key: str
+    bank: Bank
+    amount: Decimal
+    direction: Direction
+    occurred_at: datetime
+    channels: frozenset[Channel]
+    deleted_at: datetime
+
+    def __post_init__(self) -> None:
+        _require_aware(self.occurred_at)
+        _require_aware(self.deleted_at)
+
+
+@dataclass(frozen=True, slots=True)
 class Category:
     """Categoria de clasificacion: del sistema (`user_id is None`) o propia del usuario."""
 

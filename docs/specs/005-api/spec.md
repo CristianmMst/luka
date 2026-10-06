@@ -18,7 +18,7 @@
 |---|---|---|
 | 400 | `validation_error` | entrada inválida; reemplaza el 422 por defecto de FastAPI. `field` es el `loc` del error sin el prefijo `body`/`query`/`path` |
 | 401 | `unauthorized` / `token_expired` | sin token o vencido |
-| 403 | `forbidden` | acción no permitida sobre un recurso propio o visible (p. ej. modificar/borrar una categoría del sistema, o borrar una transacción no manual). **Nunca** para un recurso ajeno: ver 404 |
+| 403 | `forbidden` | acción no permitida sobre un recurso propio o visible (p. ej. modificar/borrar una categoría del sistema). **Nunca** para un recurso ajeno: ver 404 |
 | 404 | `not_found` | recurso inexistente **o de otro usuario** (spec 009 §4: no se distingue para no filtrar existencia) |
 | 409 | `conflict` | p. ej. cuenta duplicada |
 | 429 | `rate_limited` | header `Retry-After` |
@@ -138,8 +138,8 @@ Logs: solo `gmail_push_received` con `jobs_enqueued`; nunca el `emailAddress` ni
 | GET | `/transactions` | Filtros: `from`, `to`, `kind`, `category_id`, `bank`, `account_id`, `channel`, `q` (texto), `updated_since` (sync). Paginado; los ítems no incluyen `sources` ni `pair` (ver `GET /transactions/{id}`), pero sí `channels[]`: valores únicos de `Channel` de sus fuentes, en el orden estable del enum (`email`, `notification`, `sms_notification`, `manual`, `nfc`); `[]` si no tiene fuentes. Una sola consulta agrupada arma `channels` de toda la página (sin N+1) |
 | POST | `/transactions` | Registro manual/NFC. Body: monto, dirección, fecha, comercio, categoría, cuenta opcional, `nfc_tag_id` opcional (marca la fuente con `channel: "nfc"`; el identificador en sí no se persiste) |
 | GET | `/transactions/{id}` | Incluye `sources[]` (AC-9.3) y transacción emparejada si es transfer |
-| PATCH | `/transactions/{id}` | Editables: `category_id` (dispara merchant_rule si el comercio no está vacío, AC-7.2; `learn_merchant_rule: bool = true` para omitirlo), `notes`, `merchant`, `kind` transfer↔original (AC-6.3/6.4) |
-| DELETE | `/transactions/{id}` | Solo transacciones manuales (`parsed_by = "manual"`); sobre una capturada automáticamente → 403 |
+| PATCH | `/transactions/{id}` | Editables:<br>• `category_id`: dispara merchant_rule si el comercio no está vacío (AC-7.2); `learn_merchant_rule: bool = true` para omitirlo.<br>• `notes`, `merchant`.<br>• `kind`: transfer↔original (AC-6.3/6.4).<br>• `amount`: texto como en `POST`, > 0.<br>• `direction`: gasto e ingreso siguen a la dirección; una transferencia sigue siéndolo.<br>• `occurred_at`: con zona horaria.<br>• `account_id`: cuenta propia (ajena → 404); `null` la quita. Con cuenta, `bank` pasa a ser el de la cuenta.<br>`null` en `amount`, `direction` u `occurred_at` → 400 con `field`. Cambiar `amount` o `direction` de una transferencia emparejada → 409 `field=amount` (hay que desmarcarla antes). La `dedupe_key` no cambia (004 §3) |
+| DELETE | `/transactions/{id}` | Cualquier transacción propia, manual o capturada; 204. Si estaba emparejada, la pareja vuelve a gasto o ingreso. Una capturada deja su lápida (004 §2.16, §3) para que otra fuente de la misma compra no la vuelva a crear |
 | POST | `/transactions/{id}/transfer-pair` | Body `{ "pair_id" }` — emparejar manualmente. Ambas deben ser propias (si no, 404) y de dirección opuesta; si alguna ya está emparejada → 409. No exige monto igual. Queda `transfer_auto: false` |
 | DELETE | `/transactions/{id}/transfer-pair` | Desemparejar (registra exclusión mutua que solo bloquea el emparejador automático; un nuevo `transfer-pair` manual entre las mismas dos sigue funcionando) |
 

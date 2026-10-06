@@ -24,6 +24,7 @@ from luka.modules.ledger.application.ports import (
     MerchantRuleRepositoryPort,
     OwnerNamePort,
     ReviewQueueRepositoryPort,
+    TombstoneRepositoryPort,
     TransactionRepositoryPort,
     TransactionSourceRepositoryPort,
     UnitOfWorkPort,
@@ -31,9 +32,12 @@ from luka.modules.ledger.application.ports import (
 from luka.modules.ledger.application.use_cases._transfer_matching import try_auto_pair
 from luka.modules.ledger.domain.classification import mark_as_transfer
 from luka.modules.ledger.domain.dedupe import (
+    SAME_CAPTURE_WINDOW,
     candidate_keys,
     counterparty_dedupe_key,
+    is_compatible_capture,
     is_same_capture,
+    matches_tombstone,
     same_counterparty,
 )
 from luka.modules.ledger.domain.entities import (
@@ -41,9 +45,11 @@ from luka.modules.ledger.domain.entities import (
     Transaction,
     TransactionSource,
     new_captured_transaction,
+    quantize_amount,
 )
 from luka.modules.ledger.domain.errors import (
     CaptureAlreadyResolved,
+    CaptureOfDeletedTransaction,
     CategoryNotFound,
     LedgerError,
 )
@@ -68,6 +74,7 @@ class RecordCapturedTransaction:
         accounts: LinkedAccountRepositoryPort,
         merchant_rules: MerchantRuleRepositoryPort,
         review_queue: ReviewQueueRepositoryPort,
+        tombstones: TombstoneRepositoryPort,
         owner_names: OwnerNamePort,
         events: EventPublisherPort,
         clock: ClockPort,
@@ -81,6 +88,7 @@ class RecordCapturedTransaction:
         self._accounts = accounts
         self._merchant_rules = merchant_rules
         self._review_queue = review_queue
+        self._tombstones = tombstones
         self._events = events
         self._clock = clock
         self._ids = ids
@@ -90,7 +98,8 @@ class RecordCapturedTransaction:
         """Deduplica, clasifica, inserta y empareja (si aplica) la captura entrante.
 
         `CaptureAlreadyResolved` si el item de revision del `raw_message` ya lo
-        convirtio o descarto el usuario (no se escribe nada).
+        convirtio o descarto el usuario, y `CaptureOfDeletedTransaction` si es otra
+        fuente de una compra que el usuario borro (en ninguno se escribe nada).
         """
         await self._claim_review(cmd)
         already = await self._already_recorded(cmd)
@@ -118,7 +127,7 @@ class RecordCapturedTransaction:
             t
             for t in candidates
             if person is None or t.merchant is None or same_counterparty(t.merchant, person)
-        ]
+        ] or await self._same_purchase_other_channel(cmd, person)
         if existing:
             target = min(existing, key=lambda t: t.created_at)
             attached = await self._attach_source(target.id, cmd)
@@ -126,6 +135,9 @@ class RecordCapturedTransaction:
                 target = await self._touch(target)
             await self._uow.commit()
             return Recorded(transaction=target, created=False, source_attached=attached)
+
+        if await self._was_deleted(cmd, keys):
+            raise CaptureOfDeletedTransaction
 
         category = await self._resolve_category(
             cmd.user_id, cmd.merchant, cmd.suggested_category_slug
@@ -207,6 +219,55 @@ class RecordCapturedTransaction:
         if transaction_id is None:
             return None
         return await self._transactions.get(cmd.user_id, transaction_id)
+
+    async def _same_purchase_other_channel(
+        self, cmd: CapturedTransactionCommand, person: str | None
+    ) -> list[Transaction]:
+        """La misma compra que ya llego por otro canal con una huella distinta (spec
+        004 SS3, fusion entre canales): el Atajo de Apple Pay no trae banco o
+        `last4`, el correo si. Solo si hay un unico candidato compatible en la
+        ventana de 10 min y sin fuentes del canal entrante; si no, `[]`. Una
+        captura entre personas solo se une a la misma contraparte.
+        """
+        nearby = await self._transactions.find_captures_near(
+            cmd.user_id,
+            cmd.direction,
+            quantize_amount(cmd.amount),
+            cmd.occurred_at - SAME_CAPTURE_WINDOW,
+            cmd.occurred_at + SAME_CAPTURE_WINDOW,
+        )
+        compatible = [
+            t
+            for t in nearby
+            if is_compatible_capture(t, bank=cmd.bank, last4=cmd.last4)
+            and (person is None or t.merchant is None or same_counterparty(t.merchant, person))
+        ]
+        if not compatible:
+            return []
+        channels = await self._sources.channels_for([t.id for t in compatible])
+        candidates = [t for t in compatible if cmd.source.channel not in channels.get(t.id, [])]
+        return candidates if len(candidates) == 1 else []
+
+    async def _was_deleted(self, cmd: CapturedTransactionCommand, keys: tuple[str, ...]) -> bool:
+        """La compra ya la borro el usuario: hay una lapida que coincide (spec 004 SS3)."""
+        tombstones = await self._tombstones.find_near(
+            cmd.user_id,
+            cmd.direction,
+            quantize_amount(cmd.amount),
+            cmd.occurred_at - SAME_CAPTURE_WINDOW,
+            cmd.occurred_at + SAME_CAPTURE_WINDOW,
+        )
+        return any(
+            matches_tombstone(
+                t,
+                keys=keys,
+                bank=cmd.bank,
+                last4=cmd.last4,
+                occurred_at=cmd.occurred_at,
+                channel=cmd.source.channel,
+            )
+            for t in tombstones
+        )
 
     async def _is_self_transfer(self, cmd: CapturedTransactionCommand) -> bool:
         """El envio o recibo es entre personas y la contraparte es el titular."""

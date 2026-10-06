@@ -38,6 +38,7 @@ async def _capture(
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
         review_queue=repos.review_queue,
+        tombstones=repos.tombstones,
         owner_names=repos.owner_names,
         events=repos.events,
         clock=FixedClock(NOW),

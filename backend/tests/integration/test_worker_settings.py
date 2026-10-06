@@ -256,16 +256,17 @@ async def test_on_shutdown_cierra_tareas_http_client_engine_y_redis_sin_dejar_na
     assert lingering == []
 
 
-def test_cron_jobs_tiene_los_seis_jobs_con_sus_horarios(worker_settings_module) -> None:
+def test_cron_jobs_tiene_los_siete_jobs_con_sus_horarios(worker_settings_module) -> None:
     """Task 10 (F3.7 adelantado, riesgo 4): purga diaria 08:00 UTC (= 03:00 en
     Bogota, el contenedor corre en UTC) y reencolado cada 15 min
     (`minute={0,15,30,45}`). Task 5 (F3.5): renovacion de watches en el mismo
     horario que la purga. F7.4: ocurrencias de gastos fijos a las 10:00 UTC (= 05:00
     en Bogota). F7.5: recordatorios push a las 14:00 UTC (= 09:00 en Bogota) y purga de
-    tokens junto a la de cuerpos. Ninguno corre al arrancar (`run_at_startup=False`).
+    tokens junto a la de cuerpos. F4.5c: purga de lapidas en el mismo horario.
+    Ninguno corre al arrancar (`run_at_startup=False`).
     """
     cron_jobs = worker_settings_module.WorkerSettings.cron_jobs
-    assert len(cron_jobs) == 6
+    assert len(cron_jobs) == 7
 
     by_name = {job.name: job for job in cron_jobs}
     assert set(by_name) == {
@@ -275,6 +276,7 @@ def test_cron_jobs_tiene_los_seis_jobs_con_sus_horarios(worker_settings_module) 
         "cron:ensure_recurring_occurrences",
         "cron:send_recurring_reminders",
         "cron:purge_stale_device_tokens",
+        "cron:purge_transaction_tombstones",
     }
 
     purge_job = by_name["cron:purge_raw_message_bodies"]
@@ -303,6 +305,11 @@ def test_cron_jobs_tiene_los_seis_jobs_con_sus_horarios(worker_settings_module) 
     tokens_job = by_name["cron:purge_stale_device_tokens"]
     assert tokens_job.hour == 8
     assert tokens_job.minute == 0
+
+    tombstones_job = by_name["cron:purge_transaction_tombstones"]
+    assert tombstones_job.hour == 8
+    assert tombstones_job.minute == 0
+    assert tombstones_job.run_at_startup is False
 
 
 @pytest.mark.parametrize(

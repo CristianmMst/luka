@@ -15,6 +15,9 @@ from luka.modules.ledger.infrastructure.repositories.review_queue import (
 from luka.modules.ledger.infrastructure.repositories.sources import (
     SqlAlchemyTransactionSourceRepository,
 )
+from luka.modules.ledger.infrastructure.repositories.tombstones import (
+    SqlAlchemyTombstoneRepository,
+)
 from luka.modules.ledger.infrastructure.repositories.transactions import (
     SqlAlchemyTransactionRepository,
 )
@@ -24,6 +27,7 @@ __all__ = [
     "SqlAlchemyLinkedAccountRepository",
     "SqlAlchemyMerchantRuleRepository",
     "SqlAlchemyReviewQueueRepository",
+    "SqlAlchemyTombstoneRepository",
     "SqlAlchemyTransactionRepository",
     "SqlAlchemyTransactionSourceRepository",
 ]

@@ -63,7 +63,18 @@ class PatchTransactionRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
     merchant: str | None = Field(default=None, max_length=200)
     kind: Kind | None = None
+    amount: AmountStr | None = None
+    direction: Direction | None = None
+    occurred_at: datetime | None = None
+    account_id: UUID | None = None
     learn_merchant_rule: bool = True
+
+    @field_validator("occurred_at")
+    @classmethod
+    def _occurred_at_debe_ser_aware(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.tzinfo.utcoffset(value) is None):
+            raise ValueError("occurred_at debe incluir zona horaria")
+        return value
 
 
 class TransferPairRequest(BaseModel):

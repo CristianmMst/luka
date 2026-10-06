@@ -289,6 +289,22 @@ filtrar por usuario sin join cross-módulo hacia `raw_messages` (ingestion).
 
 **Índices**: `(user_id)`. El token es un identificador del dispositivo: no se loguea (spec 009 §5).
 
+### 2.16 `transaction_tombstones` (ledger) — lápidas de capturas borradas
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID FK | `ON DELETE CASCADE` |
+| dedupe_key | TEXT NOT NULL | la huella que tenía la transacción borrada (§3) |
+| bank | TEXT NOT NULL | enum `Bank` |
+| amount | NUMERIC(14,2) NOT NULL | `> 0` |
+| direction | TEXT NOT NULL | `debit` / `credit` |
+| occurred_at | TIMESTAMPTZ NOT NULL | |
+| channels | TEXT[] NOT NULL | canales de sus fuentes al borrarla |
+| deleted_at | TIMESTAMPTZ NOT NULL | ancla de la purga |
+
+**Índices**: `(user_id, occurred_at)` y `(deleted_at)`. Guarda solo lo necesario para reconocer otra fuente de la misma compra (P6); no tiene comercio, notas ni cuenta. Se purga a los 7 días (§6) y se borra con el usuario.
+
 ## 3. Huella de dedupe (`dedupe_key`)
 
 Definición canónica (implementada en `ledger/domain`, testeada sin DB):
@@ -321,6 +337,20 @@ bucket = int(occurred_at_utc.timestamp()) // 600  # floor a ventanas de 10 min
   se sueltan y se registran como movimiento propio (publicando `TransactionCaptured`). Se queda en el
   movimiento la fuente que coincide con su comercio. Una fuente con el cuerpo ya purgado se cuenta
   (`unreadable`) y no se mueve. Idempotente.
+- **Fusión entre canales.** Si ninguna clave candidata coincide, la captura igual se adjunta a una transacción existente cuando es la misma compra llegada por otro canal con una huella distinta. El caso típico es el Atajo de Apple Pay (spec 006 §3.3): solo trae el nombre de la tarjeta, así que llega con `bank = other` o sin `last4`, mientras el correo del banco trae los dos. Se fusiona solo si se cumplen todas estas condiciones:
+  - mismo usuario, `amount` y `direction`, y `|Δoccurred_at| ≤ 10 min`;
+  - la existente es una captura (`dedupe_key` sin `manual:`) y no tiene `transfer_pair_id`;
+  - los bancos son iguales o uno es `other`, y los `last4` son iguales o uno falta. El `last4` de la existente no se guarda: se deduce recalculando su huella (la clave base, sin el sufijo de contraparte) con `----` o con el `last4` entrante (`dedupe.is_compatible_capture`). Si la huella no se puede recalcular (por ejemplo, porque se editó la hora), solo es compatible una entrante sin `last4`;
+  - la existente no tiene ya una fuente del canal entrante: dos avisos del mismo canal son dos compras (AC-5.3);
+  - si la captura es entre personas, el candidato es de la misma contraparte (`same_counterparty`, como arriba);
+  - hay **un único** candidato. Con dos o más, el caso es ambiguo y se crea la transacción.
+
+  Se conserva la existente (no se reescriben su comercio ni su banco) y solo se le adjunta la fuente, igual que con un match por huella.
+- **Lápidas.** El usuario puede borrar cualquier movimiento (spec 005 §6). Si es una captura (`dedupe_key` sin `manual:`), antes de borrarla se guarda su lápida (§2.16). Sin ella, la siguiente fuente de la misma compra (un correo que llega tarde, la cola de avisos del teléfono o un `reparse`) ya no encontraría la fila y la volvería a crear. Cuando una captura no coincide con ninguna transacción viva, se descarta sin escribir nada si coincide con una lápida, es decir, si se cumple alguna de estas dos condiciones (`dedupe.matches_tombstone`):
+  - una de sus claves candidatas es la de la lápida y `|Δoccurred_at| ≤ 10 min`;
+  - cumple la regla de fusión entre canales contra la lápida: misma ventana, banco y `last4` compatibles, y un canal que la compra borrada no tenía.
+
+  El consumer la da por atendida (`ledger_capture_skipped`, `reason=transaction_deleted`). Las lápidas viven 7 días, la misma ventana en la que una plantilla todavía acepta el mensaje (spec 006 §4.1). Editar un movimiento no cambia su `dedupe_key`: la huella original sigue absorbiendo las fuentes tardías.
 
 ## 4. Matcher de transferencias (reglas de dominio, RF-6)
 
@@ -366,6 +396,7 @@ Conflictos: gana `updated_at` más reciente, excepto ediciones manuales del usua
 | Backups | 30 días | rotación de backups cifrados |
 | Gastos fijos y ocurrencias | indefinida (dato del usuario) | borrado con el gasto fijo (CASCADE) o con la cuenta |
 | `device_tokens` | hasta cerrar sesión, hasta que FCM lo declare inválido o 270 días sin `last_seen_at` | la app lo borra al cerrar sesión; el consumer de `notifications` borra los `UNREGISTERED`; el job diario de purga borra los viejos (spec 011 §6) |
+| `transaction_tombstones` | 7 días desde `deleted_at` | `purge_transaction_tombstones`, cron diario a las 08:00 UTC junto a las demás purgas (§3, F4.5c) |
 
 El job de purga (`purge_raw_message_bodies`, cron arq diario a las **08:00 UTC =
 03:00 en Colombia**, F3.7 adelantado en F2 — Task 10) anula `raw_messages.body` (`UPDATE ... SET body =

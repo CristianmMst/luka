@@ -1,5 +1,6 @@
 """Tests unitarios de la huella de dedupe (spec 004 SS3, AC-5.1/AC-5.2/AC-5.3)."""
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import uuid4
@@ -13,13 +14,22 @@ from luka.modules.ledger.domain.dedupe import (
     candidate_keys,
     counterparty_dedupe_key,
     dedupe_key,
+    is_compatible_capture,
+    is_manual_key,
     is_same_capture,
     manual_dedupe_key,
+    matches_tombstone,
     normalize_bank,
     same_counterparty,
     time_bucket,
 )
-from luka.modules.ledger.domain.enums import Bank, Direction
+from luka.modules.ledger.domain.entities import (
+    Category,
+    Transaction,
+    TransactionTombstone,
+    new_captured_transaction,
+)
+from luka.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag
 
 USER_ID = uuid4()
 OCCURRED_AT = datetime(2026, 8, 5, 14, 30, 0, tzinfo=UTC)
@@ -215,3 +225,196 @@ class TestCounterpartyKey:
         assert manuel.startswith(f"{base}:")
         assert base_dedupe_key(manuel) == base
         assert base_dedupe_key(base) == base
+
+
+_CATEGORY = Category(
+    id=uuid4(),
+    user_id=None,
+    slug="sin_categoria",
+    name="Sin categoria",
+    icon=None,
+    color=None,
+    fiscal_tag=FiscalTag.NO_DEDUCIBLE,
+)
+
+
+def _captured(*, bank: Bank, last4: str | None, key: str | None = None) -> Transaction:
+    """Captura ya guardada, con la huella que le habria calculado el caso de uso."""
+    amount = Decimal("99000.00")
+    return new_captured_transaction(
+        id=uuid4(),
+        user_id=USER_ID,
+        amount=amount,
+        direction=Direction.DEBIT,
+        occurred_at=OCCURRED_AT,
+        category=_CATEGORY,
+        now=OCCURRED_AT,
+        bank=bank,
+        last4=last4,
+        merchant="FRISBY",
+        description=None,
+        account_id=None,
+        parsed_by="rule:test",
+        confidence=None,
+        dedupe_key=key
+        or dedupe_key(
+            user_id=USER_ID,
+            bank=bank,
+            amount=amount,
+            direction=Direction.DEBIT,
+            bucket=time_bucket(OCCURRED_AT),
+            last4=last4,
+        ),
+    )
+
+
+@pytest.mark.unit
+class TestIsCompatibleCapture:
+    """Fusion entre canales (spec 004 SS3): Apple Pay solo trae el nombre de la
+    tarjeta, asi que puede llegar sin banco (`other`) o sin `last4` mientras el
+    correo de la misma compra trae los dos."""
+
+    def test_apple_pay_sin_banco_ni_last4_y_correo_completo(self) -> None:
+        existing = _captured(bank=Bank.OTHER, last4=None)
+        assert is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_correo_completo_y_apple_pay_sin_banco_ni_last4(self) -> None:
+        existing = _captured(bank=Bank.BANCOLOMBIA, last4="1234")
+        assert is_compatible_capture(existing, bank=Bank.OTHER, last4=None)
+
+    def test_mismo_banco_y_una_sin_last4(self) -> None:
+        existing = _captured(bank=Bank.BANCOLOMBIA, last4=None)
+        assert is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_mismo_last4_con_banco_desconocido(self) -> None:
+        existing = _captured(bank=Bank.OTHER, last4="1234")
+        assert is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_last4_distintos_no_son_la_misma_compra(self) -> None:
+        existing = _captured(bank=Bank.BANCOLOMBIA, last4="5678")
+        assert not is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_bancos_conocidos_distintos_no_son_la_misma_compra(self) -> None:
+        existing = _captured(bank=Bank.NEQUI, last4=None)
+        assert not is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4=None)
+
+    def test_registro_manual_nunca_se_fusiona(self) -> None:
+        existing = _captured(bank=Bank.OTHER, last4=None, key=manual_dedupe_key("ab" * 8))
+        assert not is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_transferencia_emparejada_nunca_se_fusiona(self) -> None:
+        existing = replace(_captured(bank=Bank.OTHER, last4=None), transfer_pair_id=uuid4())
+        assert not is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+
+    def test_huella_que_no_se_puede_recalcular_no_se_fusiona(self) -> None:
+        """Si la hora se edito despues, la huella ya no dice que `last4` tenia:
+        ante la duda no se fusiona (AC-5.3)."""
+        existing = _captured(bank=Bank.OTHER, last4=None, key="f" * 64)
+        assert not is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4="1234")
+        assert is_compatible_capture(existing, bank=Bank.BANCOLOMBIA, last4=None)
+
+
+def _tombstone(
+    *, bank: Bank, last4: str | None, channels: frozenset[Channel]
+) -> TransactionTombstone:
+    """Lapida de una captura borrada, con la huella que tenia."""
+    tx = _captured(bank=bank, last4=last4)
+    return TransactionTombstone(
+        id=uuid4(),
+        user_id=tx.user_id,
+        dedupe_key=tx.dedupe_key,
+        bank=bank,
+        amount=tx.amount,
+        direction=tx.direction,
+        occurred_at=tx.occurred_at,
+        channels=channels,
+        deleted_at=OCCURRED_AT + timedelta(hours=1),
+    )
+
+
+def _keys(*, bank: Bank, last4: str | None, at: datetime = OCCURRED_AT) -> tuple[str, ...]:
+    return candidate_keys(
+        user_id=USER_ID,
+        bank=bank,
+        amount=Decimal("99000.00"),
+        direction=Direction.DEBIT,
+        occurred_at=at,
+        last4=last4,
+    )
+
+
+@pytest.mark.unit
+class TestMatchesTombstone:
+    """Una compra borrada no vuelve con otra fuente (spec 004 SS3)."""
+
+    def test_la_misma_huella_dentro_de_la_ventana(self) -> None:
+        tombstone = _tombstone(
+            bank=Bank.BANCOLOMBIA, last4="1234", channels=frozenset({Channel.EMAIL})
+        )
+        later = OCCURRED_AT + timedelta(minutes=3)
+        assert matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.BANCOLOMBIA, last4="1234", at=later),
+            bank=Bank.BANCOLOMBIA,
+            last4="1234",
+            occurred_at=later,
+            channel=Channel.EMAIL,
+        )
+
+    def test_el_correo_tardio_de_un_atajo_borrado(self) -> None:
+        tombstone = _tombstone(
+            bank=Bank.OTHER, last4=None, channels=frozenset({Channel.NOTIFICATION})
+        )
+        assert matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.BANCOLOMBIA, last4="1234"),
+            bank=Bank.BANCOLOMBIA,
+            last4="1234",
+            occurred_at=OCCURRED_AT,
+            channel=Channel.EMAIL,
+        )
+
+    def test_otro_aviso_del_mismo_canal_es_otra_compra(self) -> None:
+        tombstone = _tombstone(
+            bank=Bank.OTHER, last4=None, channels=frozenset({Channel.NOTIFICATION})
+        )
+        assert not matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.BANCOLOMBIA, last4="1234"),
+            bank=Bank.BANCOLOMBIA,
+            last4="1234",
+            occurred_at=OCCURRED_AT,
+            channel=Channel.NOTIFICATION,
+        )
+
+    def test_fuera_de_la_ventana_no_coincide(self) -> None:
+        tombstone = _tombstone(
+            bank=Bank.BANCOLOMBIA, last4="1234", channels=frozenset({Channel.EMAIL})
+        )
+        later = OCCURRED_AT + timedelta(minutes=11)
+        assert not matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.BANCOLOMBIA, last4="1234", at=later),
+            bank=Bank.BANCOLOMBIA,
+            last4="1234",
+            occurred_at=later,
+            channel=Channel.EMAIL,
+        )
+
+    def test_last4_distinto_no_coincide(self) -> None:
+        tombstone = _tombstone(
+            bank=Bank.BANCOLOMBIA, last4="5678", channels=frozenset({Channel.EMAIL})
+        )
+        assert not matches_tombstone(
+            tombstone,
+            keys=_keys(bank=Bank.BANCOLOMBIA, last4="1234"),
+            bank=Bank.BANCOLOMBIA,
+            last4="1234",
+            occurred_at=OCCURRED_AT,
+            channel=Channel.NOTIFICATION,
+        )
+
+
+def test_is_manual_key() -> None:
+    assert is_manual_key(manual_dedupe_key("ab" * 8))
+    assert not is_manual_key("a" * 64)

@@ -19,7 +19,7 @@ from sqlalchemy import (
     desc,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from luka.shared.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -216,3 +216,31 @@ class ReviewQueueRow(Base, TimestampMixin):
     )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class TransactionTombstoneRow(Base, UUIDPrimaryKeyMixin):
+    """Tabla `transaction_tombstones`: lapidas de capturas borradas (spec 004 SS2.16, SS3).
+
+    Solo lo necesario para reconocer otra fuente de la misma compra (P6); se purgan
+    a los 7 dias (cron diario de ledger).
+    """
+
+    __tablename__ = "transaction_tombstones"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="amount_positivo"),
+        CheckConstraint(f"direction IN ({_DIRECTION_VALUES})", name="direction_valido"),
+        CheckConstraint(f"bank IN ({_BANK_VALUES})", name="bank_valido"),
+        Index(None, "user_id", "occurred_at"),
+        Index(None, "deleted_at"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    dedupe_key: Mapped[str] = mapped_column(Text, nullable=False)
+    bank: Mapped[str] = mapped_column(Text, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    direction: Mapped[str] = mapped_column(Text, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    channels: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
+    deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

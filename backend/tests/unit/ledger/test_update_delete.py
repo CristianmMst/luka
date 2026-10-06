@@ -9,6 +9,7 @@ import pytest
 from ledger.fakes import FixedClock, build_ledger_repos
 from luka.modules.ledger.application.dto import (
     CapturedTransactionCommand,
+    Filters,
     ManualTransactionCommand,
     SourceInput,
     TransactionPatch,
@@ -36,7 +37,12 @@ from luka.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from luka.modules.ledger.domain.errors import NotManualTransaction, TransactionNotFound
+from luka.modules.ledger.domain.errors import (
+    AccountNotFound,
+    CaptureOfDeletedTransaction,
+    TransactionNotFound,
+    TransferPairedEdit,
+)
 from luka.modules.ledger.domain.merchant import normalize_merchant
 from luka.modules.ledger.domain.transfers import NoMatch, find_transfer_match
 from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
@@ -50,6 +56,7 @@ def _update_use_case(repos) -> UpdateTransaction:
         transactions=repos.transactions,
         categories=repos.categories,
         merchant_rules=repos.merchant_rules,
+        accounts=repos.accounts,
         clock=FixedClock(NOW),
         ids=repos.ids,
         uow=repos.uow,
@@ -63,6 +70,8 @@ def _get_use_case(repos) -> GetTransaction:
 def _delete_use_case(repos) -> DeleteTransaction:
     return DeleteTransaction(
         transactions=repos.transactions,
+        sources=repos.sources,
+        tombstones=repos.tombstones,
         categories=repos.categories,
         events=repos.events,
         clock=FixedClock(NOW),
@@ -121,6 +130,7 @@ async def _capture(  # noqa: PLR0913 - builder de comando con un default por cam
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
         review_queue=repos.review_queue,
+        tombstones=repos.tombstones,
         owner_names=repos.owner_names,
         events=repos.events,
         clock=FixedClock(NOW),
@@ -311,13 +321,44 @@ async def test_borrar_manual_publica_transaction_deleted_despues_del_commit() ->
 
 
 @pytest.mark.unit
-async def test_borrar_transaccion_no_manual_lanza_not_manual_transaction() -> None:
+async def test_borrar_captura_la_quita_y_deja_su_lapida() -> None:
     repos = await build_ledger_repos()
     captured = await _capture(repos)
     use_case = _delete_use_case(repos)
 
-    with pytest.raises(NotManualTransaction):
-        await use_case.execute(USER, captured.transaction.id)
+    await use_case.execute(USER, captured.transaction.id)
+
+    assert await repos.transactions.get(USER, captured.transaction.id) is None
+    [tombstone] = repos.tombstones.items
+    assert tombstone.dedupe_key == captured.transaction.dedupe_key
+    assert tombstone.bank == Bank.BANCOLOMBIA
+    assert tombstone.amount == captured.transaction.amount
+    assert tombstone.channels == frozenset({Channel.EMAIL})
+    assert tombstone.deleted_at == NOW
+    assert isinstance(repos.events.events[-1], TransactionDeleted)
+
+
+@pytest.mark.unit
+async def test_borrar_manual_no_deja_lapida() -> None:
+    repos = await build_ledger_repos()
+    tx = await _create_manual(repos)
+
+    await _delete_use_case(repos).execute(USER, tx.id)
+
+    assert repos.tombstones.items == []
+
+
+@pytest.mark.unit
+async def test_captura_de_una_compra_borrada_no_la_recrea() -> None:
+    """La reentrega del mismo correo (p. ej. un `reparse`) no la vuelve a crear."""
+    repos = await build_ledger_repos()
+    captured = await _capture(repos)
+    await _delete_use_case(repos).execute(USER, captured.transaction.id)
+
+    with pytest.raises(CaptureOfDeletedTransaction):
+        await _capture(repos)
+
+    assert await repos.transactions.list(USER, Filters(), None, 10) == []
 
 
 @pytest.mark.unit
@@ -418,3 +459,140 @@ async def test_get_transaction_id_ajeno_lanza_transaction_not_found() -> None:
 
     with pytest.raises(TransactionNotFound):
         await use_case.execute(USER, uuid4())
+
+
+def _account(*, bank: Bank = Bank.NEQUI, last4: str = "2222", user_id: UUID = USER):
+    return LinkedAccount(
+        id=uuid4(), user_id=user_id, bank=bank, kind=AccountKind.SAVINGS, last4=last4, alias=None
+    )
+
+
+@pytest.mark.unit
+class TestPatchTodosLosCampos:
+    """Spec 005 SS6: el detalle edita monto, direccion, fecha y cuenta, ademas
+    de comercio, categoria, notas y kind."""
+
+    async def test_monto_se_cuantiza(self) -> None:
+        repos = await build_ledger_repos()
+        tx = await _create_manual(repos)
+
+        updated = await _update_use_case(repos).execute(
+            USER, tx.id, TransactionPatch(amount=Decimal("45900.5"))
+        )
+
+        assert updated.amount == Decimal("45900.50")
+
+    async def test_direccion_cambia_el_kind(self) -> None:
+        repos = await build_ledger_repos()
+        tx = await _create_manual(repos)
+
+        updated = await _update_use_case(repos).execute(
+            USER, tx.id, TransactionPatch(direction=Direction.CREDIT)
+        )
+
+        assert updated.direction == Direction.CREDIT
+        assert updated.kind == Kind.INCOME
+
+    async def test_direccion_de_una_transferencia_sin_pareja_sigue_siendo_transferencia(
+        self,
+    ) -> None:
+        repos = await build_ledger_repos()
+        tx = await _create_manual(repos)
+        use_case = _update_use_case(repos)
+        await use_case.execute(USER, tx.id, TransactionPatch(kind=Kind.TRANSFER))
+
+        updated = await use_case.execute(USER, tx.id, TransactionPatch(direction=Direction.CREDIT))
+
+        assert updated.kind == Kind.TRANSFER
+        assert updated.fiscal_tag == FiscalTag.TRANSFERENCIA
+
+    async def test_fecha(self) -> None:
+        repos = await build_ledger_repos()
+        tx = await _create_manual(repos)
+        later = NOW - timedelta(days=2, hours=3)
+
+        updated = await _update_use_case(repos).execute(
+            USER, tx.id, TransactionPatch(occurred_at=later)
+        )
+
+        assert updated.occurred_at == later
+
+    async def test_cuenta_cambia_tambien_el_banco(self) -> None:
+        repos = await build_ledger_repos()
+        tx = await _capture(repos)
+        account = _account(bank=Bank.NEQUI)
+        await repos.accounts.add(account)
+
+        updated = await _update_use_case(repos).execute(
+            USER, tx.transaction.id, TransactionPatch(account_id=account.id)
+        )
+
+        assert updated.account_id == account.id
+        assert updated.bank == Bank.NEQUI
+
+    async def test_cuenta_null_la_quita_y_conserva_el_banco(self) -> None:
+        repos = await build_ledger_repos()
+        account = _account(bank=Bank.NEQUI)
+        await repos.accounts.add(account)
+        tx = await _capture(repos, bank=Bank.NEQUI, last4="2222")
+        assert tx.transaction.account_id == account.id
+
+        updated = await _update_use_case(repos).execute(
+            USER, tx.transaction.id, TransactionPatch(account_id=None)
+        )
+
+        assert updated.account_id is None
+        assert updated.bank == Bank.NEQUI
+
+    async def test_cuenta_ajena_lanza_account_not_found(self) -> None:
+        repos = await build_ledger_repos()
+        tx = await _create_manual(repos)
+        foreign = _account(user_id=uuid4())
+        await repos.accounts.add(foreign)
+
+        with pytest.raises(AccountNotFound):
+            await _update_use_case(repos).execute(
+                USER, tx.id, TransactionPatch(account_id=foreign.id)
+            )
+
+    async def test_la_huella_no_cambia(self) -> None:
+        """La huella original sigue absorbiendo las fuentes tardias (spec 004 SS3)."""
+        repos = await build_ledger_repos()
+        tx = await _capture(repos)
+
+        updated = await _update_use_case(repos).execute(
+            USER,
+            tx.transaction.id,
+            TransactionPatch(amount=Decimal("1000"), occurred_at=NOW - timedelta(hours=1)),
+        )
+
+        assert updated.dedupe_key == tx.transaction.dedupe_key
+
+    @pytest.mark.parametrize(
+        "patch",
+        [TransactionPatch(amount=Decimal("1000")), TransactionPatch(direction=Direction.CREDIT)],
+    )
+    async def test_monto_o_direccion_de_un_par_lanza_transfer_paired_edit(
+        self, patch: TransactionPatch
+    ) -> None:
+        repos = await build_ledger_repos()
+        await repos.accounts.add(_account(bank=Bank.BANCOLOMBIA, last4="1111"))
+        await repos.accounts.add(_account(bank=Bank.NEQUI, last4="2222"))
+        debit = await _capture(
+            repos,
+            bank=Bank.BANCOLOMBIA,
+            last4="1111",
+            merchant=None,
+            source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
+        )
+        await _capture(
+            repos,
+            bank=Bank.NEQUI,
+            last4="2222",
+            direction=Direction.CREDIT,
+            merchant=None,
+            source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
+        )
+
+        with pytest.raises(TransferPairedEdit):
+            await _update_use_case(repos).execute(USER, debit.transaction.id, patch)

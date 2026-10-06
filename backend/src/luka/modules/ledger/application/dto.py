@@ -162,6 +162,10 @@ class TransactionPatch:
     notes: str | Unset | None = UNSET
     merchant: str | Unset | None = UNSET
     kind: Kind | Unset = UNSET
+    amount: Decimal | Unset = UNSET
+    direction: Direction | Unset = UNSET
+    occurred_at: datetime | Unset = UNSET
+    account_id: UUID | Unset | None = UNSET
     learn_merchant_rule: bool = True
 
 

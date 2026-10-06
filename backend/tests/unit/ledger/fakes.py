@@ -18,6 +18,7 @@ from luka.modules.ledger.domain.entities import (
     MerchantRule,
     Transaction,
     TransactionSource,
+    TransactionTombstone,
 )
 from luka.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag, Kind
 from luka.modules.ledger.domain.review import ReviewItem, ReviewResolution
@@ -102,6 +103,39 @@ def _matches_filters(tx: Transaction, filters: Filters) -> bool:
         _matches_query(tx, filters.q),
     )
     return all(checks)
+
+
+class InMemoryTombstoneRepo:
+    """Doble en memoria de `TombstoneRepositoryPort`."""
+
+    def __init__(self) -> None:
+        self.items: list[TransactionTombstone] = []
+
+    async def add(self, tombstone: TransactionTombstone) -> None:
+        self.items.append(tombstone)
+
+    async def find_near(
+        self,
+        user_id: UUID,
+        direction: Direction,
+        amount: Decimal,
+        since: datetime,
+        until: datetime,
+    ) -> list[TransactionTombstone]:
+        return [
+            t
+            for t in self.items
+            if t.user_id == user_id
+            and t.direction == direction
+            and t.amount == amount
+            and since <= t.occurred_at <= until
+        ]
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        kept = [t for t in self.items if t.deleted_at >= cutoff]
+        purged = len(self.items) - len(kept)
+        self.items = kept
+        return purged
 
 
 class InMemoryTransactionRepo:
@@ -219,6 +253,23 @@ class InMemoryTransactionRepo:
             self._dedupe_index.pop((tx.user_id, tx.dedupe_key), None)
 
     async def find_transfer_candidates(
+        self,
+        user_id: UUID,
+        direction: Direction,
+        amount: Decimal,
+        since: datetime,
+        until: datetime,
+    ) -> list[Transaction]:
+        return [
+            t
+            for t in self._by_id.values()
+            if t.user_id == user_id
+            and t.direction == direction
+            and t.amount == amount
+            and since <= t.occurred_at <= until
+        ]
+
+    async def find_captures_near(
         self,
         user_id: UUID,
         direction: Direction,
@@ -491,6 +542,7 @@ class LedgerRepos:
         self.accounts = InMemoryLinkedAccountRepo()
         self.merchant_rules = InMemoryMerchantRuleRepo()
         self.review_queue = InMemoryReviewQueueRepo()
+        self.tombstones = InMemoryTombstoneRepo()
         self.events = RecordingPublisher()
         self.ids = SequenceIdGenerator()
         self.uow = NoopUoW()

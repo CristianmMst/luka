@@ -9,6 +9,7 @@ from luka.modules.ledger.application.ports import (
     CategoryRepositoryPort,
     ClockPort,
     IdGeneratorPort,
+    LinkedAccountRepositoryPort,
     MerchantRuleRepositoryPort,
     TransactionRepositoryPort,
     UnitOfWorkPort,
@@ -19,19 +20,24 @@ from luka.modules.ledger.domain.classification import (
     resolve_fiscal_tag,
     unmark_transfer,
 )
-from luka.modules.ledger.domain.entities import MerchantRule, Transaction
+from luka.modules.ledger.domain.entities import MerchantRule, Transaction, quantize_amount
 from luka.modules.ledger.domain.enums import FiscalTag, Kind
 from luka.modules.ledger.domain.errors import (
+    AccountNotFound,
     CategoryNotFound,
     InvalidKindChange,
     TransactionNotFound,
+    TransferPairedEdit,
 )
 from luka.modules.ledger.domain.merchant import normalize_merchant
 from luka.modules.ledger.domain.transfers import unpair
 
 
 class UpdateTransaction:
-    """Aplica un PATCH parcial: notas, comercio, categoria (con aprendizaje) y kind."""
+    """Aplica un PATCH parcial: monto, direccion, fecha, cuenta, notas, comercio,
+    categoria (con aprendizaje) y kind. La huella (`dedupe_key`) nunca cambia: sigue
+    absorbiendo las fuentes tardias de la misma compra (spec 004 SS3).
+    """
 
     def __init__(  # noqa: PLR0913 - un puerto por dependencia externa
         self,
@@ -39,6 +45,7 @@ class UpdateTransaction:
         transactions: TransactionRepositoryPort,
         categories: CategoryRepositoryPort,
         merchant_rules: MerchantRuleRepositoryPort,
+        accounts: LinkedAccountRepositoryPort,
         clock: ClockPort,
         ids: IdGeneratorPort,
         uow: UnitOfWorkPort,
@@ -46,17 +53,25 @@ class UpdateTransaction:
         self._transactions = transactions
         self._categories = categories
         self._merchant_rules = merchant_rules
+        self._accounts = accounts
         self._clock = clock
         self._ids = ids
         self._uow = uow
 
     async def execute(self, user_id: UUID, id: UUID, patch: TransactionPatch) -> Transaction:
-        """Lanza `TransactionNotFound`/`CategoryNotFound`/`InvalidKindChange` segun aplique."""
+        """Lanza `TransactionNotFound`/`CategoryNotFound`/`AccountNotFound`/
+        `InvalidKindChange`/`TransferPairedEdit` segun aplique."""
         tx = await self._transactions.get(user_id, id)
         if tx is None:
             raise TransactionNotFound
 
         now = self._clock.now()
+
+        tx = self._apply_amount_and_direction(tx, patch)
+        if patch.occurred_at is not UNSET:
+            tx = replace(tx, occurred_at=patch.occurred_at)
+        if patch.account_id is not UNSET:
+            tx = await self._apply_account_change(user_id, tx, patch.account_id)
 
         if patch.notes is not UNSET:
             tx = replace(tx, notes=patch.notes)
@@ -77,6 +92,29 @@ class UpdateTransaction:
         await self._transactions.update(tx)
         await self._uow.commit()
         return tx
+
+    @staticmethod
+    def _apply_amount_and_direction(tx: Transaction, patch: TransactionPatch) -> Transaction:
+        amount = quantize_amount(patch.amount) if patch.amount is not UNSET else tx.amount
+        direction = patch.direction if patch.direction is not UNSET else tx.direction
+        if amount == tx.amount and direction == tx.direction:
+            return tx
+        if tx.transfer_pair_id is not None:
+            raise TransferPairedEdit
+        # Una transferencia sin pareja sigue siendo transferencia; gasto e
+        # ingreso siguen a la direccion.
+        kind = tx.kind if tx.kind == Kind.TRANSFER else derive_kind(direction)
+        return replace(tx, amount=amount, direction=direction, kind=kind)
+
+    async def _apply_account_change(
+        self, user_id: UUID, tx: Transaction, account_id: UUID | None
+    ) -> Transaction:
+        if account_id is None:
+            return replace(tx, account_id=None)
+        account = await self._accounts.get(user_id, account_id)
+        if account is None:
+            raise AccountNotFound
+        return replace(tx, account_id=account.id, bank=account.bank)
 
     async def _apply_category_change(
         self, user_id: UUID, tx: Transaction, category_id: UUID, *, learn_merchant_rule: bool

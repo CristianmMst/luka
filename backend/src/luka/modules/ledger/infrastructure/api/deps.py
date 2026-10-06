@@ -40,6 +40,7 @@ from luka.modules.ledger.infrastructure.repositories import (
     SqlAlchemyLinkedAccountRepository,
     SqlAlchemyMerchantRuleRepository,
     SqlAlchemyReviewQueueRepository,
+    SqlAlchemyTombstoneRepository,
     SqlAlchemyTransactionRepository,
     SqlAlchemyTransactionSourceRepository,
 )
@@ -119,6 +120,7 @@ def get_update_transaction_use_case(
         transactions=SqlAlchemyTransactionRepository(session),
         categories=SqlAlchemyCategoryRepository(session),
         merchant_rules=SqlAlchemyMerchantRuleRepository(session),
+        accounts=SqlAlchemyLinkedAccountRepository(session),
         clock=clock,
         ids=ids,
         uow=SqlAlchemyUnitOfWork(session),
@@ -133,6 +135,8 @@ def get_delete_transaction_use_case(
 ) -> DeleteTransaction:
     return DeleteTransaction(
         transactions=SqlAlchemyTransactionRepository(session),
+        sources=SqlAlchemyTransactionSourceRepository(session),
+        tombstones=SqlAlchemyTombstoneRepository(session),
         categories=SqlAlchemyCategoryRepository(session),
         events=events,
         clock=clock,

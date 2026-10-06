@@ -13,6 +13,7 @@ from luka.modules.ledger.application.dto import (
     Filters,
     SourceInput,
 )
+from luka.modules.ledger.application.use_cases.delete_transaction import DeleteTransaction
 from luka.modules.ledger.application.use_cases.record_captured_transaction import (
     RecordCapturedTransaction,
 )
@@ -30,7 +31,10 @@ from luka.modules.ledger.domain.enums import (
     FiscalTag,
     Kind,
 )
-from luka.modules.ledger.domain.errors import CaptureAlreadyResolved
+from luka.modules.ledger.domain.errors import (
+    CaptureAlreadyResolved,
+    CaptureOfDeletedTransaction,
+)
 from luka.modules.ledger.domain.merchant import normalize_merchant
 from luka.modules.ledger.domain.review import ReviewItem, ReviewReason, ReviewResolution
 from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
@@ -82,6 +86,7 @@ def _make_use_case(
         accounts=repos.accounts,
         merchant_rules=repos.merchant_rules,
         review_queue=repos.review_queue,
+        tombstones=repos.tombstones,
         owner_names=repos.owner_names,
         events=repos.events,
         clock=clock or FixedClock(NOW),
@@ -553,6 +558,28 @@ def _transfer(
     )
 
 
+def _apple_pay(*, at: datetime, bank: Bank = Bank.OTHER, last4: str | None = None):
+    """Pago con Apple Pay del Atajo: solo el nombre de la tarjeta (spec 006 SS3.3)."""
+    return _cmd(
+        bank=bank,
+        last4=last4,
+        occurred_at=at,
+        merchant="Frisby",
+        parsed_by="rule:apple_wallet:compra:v1",
+        source=SourceInput(Channel.NOTIFICATION, uuid4(), at),
+    )
+
+
+def _email(*, at: datetime, bank: Bank = Bank.BANCOLOMBIA, last4: str | None = "1234"):
+    return _cmd(
+        bank=bank,
+        last4=last4,
+        occurred_at=at,
+        merchant="FRISBY I 24",
+        source=SourceInput(Channel.EMAIL, uuid4(), at),
+    )
+
+
 @pytest.mark.unit
 async def test_tres_amigos_que_envian_el_mismo_monto_a_la_vez_son_tres_movimientos() -> None:
     """Mismo monto, cuenta y ventana pero contrapartes distintas: no hay dedupe
@@ -641,3 +668,138 @@ async def test_compras_en_comercios_distintos_con_el_mismo_monto_siguen_uniendos
 
     assert second.created is False
     assert second.transaction.id == first.transaction.id
+
+
+@pytest.mark.unit
+class TestFusionEntreCanales:
+    """Spec 004 SS3: la misma compra por el Atajo de Apple Pay (sin banco o sin
+    `last4`) y por el correo del banco queda en una sola transaccion."""
+
+    @pytest.mark.parametrize("apple_bank", [Bank.OTHER, Bank.BANCOLOMBIA])
+    async def test_apple_pay_y_luego_correo_quedan_en_una(self, apple_bank: Bank) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        first = await use_case.execute(_apple_pay(at=NOW + timedelta(minutes=1), bank=apple_bank))
+        second = await use_case.execute(_email(at=NOW))
+
+        assert second.created is False
+        assert second.source_attached is True
+        assert second.transaction.id == first.transaction.id
+        assert len(await repos.sources.list_for(first.transaction.id)) == 2
+        assert len(repos.events.events) == 1
+
+    async def test_correo_y_luego_apple_pay_quedan_en_una(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        first = await use_case.execute(_email(at=NOW))
+        second = await use_case.execute(_apple_pay(at=NOW + timedelta(minutes=1)))
+
+        assert second.created is False
+        assert second.transaction.id == first.transaction.id
+        assert len(await repos.sources.list_for(first.transaction.id)) == 2
+
+    async def test_mismo_canal_no_se_fusiona(self) -> None:
+        """Dos avisos distintos del mismo monto son dos compras (AC-5.3)."""
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        await use_case.execute(_apple_pay(at=NOW))
+        second = await use_case.execute(
+            _cmd(
+                last4="1234",
+                occurred_at=NOW + timedelta(minutes=2),
+                source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
+            )
+        )
+
+        assert second.created is True
+
+    async def test_last4_distintos_no_se_fusionan(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        await use_case.execute(_email(at=NOW, last4="5678"))
+        second = await use_case.execute(
+            _cmd(
+                last4="1234",
+                occurred_at=NOW + timedelta(minutes=1),
+                source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
+            )
+        )
+
+        assert second.created is True
+
+    async def test_bancos_distintos_no_se_fusionan(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        await use_case.execute(_email(at=NOW, bank=Bank.NEQUI, last4=None))
+        second = await use_case.execute(_apple_pay(at=NOW, bank=Bank.BANCOLOMBIA))
+
+        assert second.created is True
+
+    async def test_dos_candidatos_es_ambiguo_y_no_se_fusiona(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        await use_case.execute(_email(at=NOW, last4="1234"))
+        await use_case.execute(_email(at=NOW + timedelta(minutes=2), last4="5678"))
+        third = await use_case.execute(_apple_pay(at=NOW + timedelta(minutes=1)))
+
+        assert third.created is True
+        assert len(repos.events.events) == 3
+
+    async def test_fuera_de_la_ventana_no_se_fusiona(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+
+        await use_case.execute(_email(at=NOW))
+        second = await use_case.execute(_apple_pay(at=NOW + timedelta(minutes=11)))
+
+        assert second.created is True
+
+
+@pytest.mark.unit
+class TestLapidas:
+    """Una compra que el usuario borro no vuelve con otra fuente (spec 004 SS3)."""
+
+    async def _delete(self, repos, tx_id: UUID) -> None:
+        await DeleteTransaction(
+            transactions=repos.transactions,
+            sources=repos.sources,
+            tombstones=repos.tombstones,
+            categories=repos.categories,
+            events=repos.events,
+            clock=FixedClock(NOW),
+            ids=repos.ids,
+            uow=repos.uow,
+        ).execute(USER, tx_id)
+
+    async def test_correo_tardio_tras_borrar_el_atajo_no_crea_nada(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+        apple = await use_case.execute(_apple_pay(at=NOW + timedelta(minutes=1)))
+        await self._delete(repos, apple.transaction.id)
+
+        with pytest.raises(CaptureOfDeletedTransaction):
+            await use_case.execute(_email(at=NOW))
+
+        assert await repos.transactions.list(USER, Filters(), None, 10) == []
+
+    async def test_otra_compra_del_mismo_canal_si_se_registra(self) -> None:
+        repos = await build_ledger_repos()
+        use_case = _make_use_case(repos)
+        apple = await use_case.execute(_apple_pay(at=NOW))
+        await self._delete(repos, apple.transaction.id)
+
+        second = await use_case.execute(
+            _cmd(
+                last4="1234",
+                occurred_at=NOW + timedelta(minutes=2),
+                source=SourceInput(Channel.NOTIFICATION, uuid4(), NOW),
+            )
+        )
+
+        assert second.created is True

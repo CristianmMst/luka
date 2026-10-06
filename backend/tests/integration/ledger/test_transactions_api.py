@@ -17,6 +17,7 @@ from support.raw_messages import insert_raw_message
 
 from luka.events_registry import build_registry
 from luka.modules.ledger.domain.enums import Bank, Channel, Direction
+from luka.modules.ledger.domain.errors import CaptureOfDeletedTransaction
 from luka.modules.ledger.domain.system_categories import SIN_CATEGORIA_ID
 from luka.modules.ledger.public import (
     CapturedTransactionCommand,
@@ -301,7 +302,7 @@ async def test_auto_pair_entre_dos_cuentas_propias(
     assert manual_pair.json()["transfer_pair_id"] == credit["id"]
 
 
-async def test_delete_transaccion_no_manual_es_403(
+async def test_delete_captura_devuelve_204_y_la_reentrega_no_la_recrea(
     client: AsyncClient,
     user_factory: Callable[..., Awaitable[AuthedUser]],
     session_factory: async_sessionmaker[AsyncSession],
@@ -311,39 +312,42 @@ async def test_delete_transaccion_no_manual_es_403(
     raw_message_id = await insert_raw_message(session_factory, user_id=user.id)
     redis_client = redis_asyncio.from_url(str(settings.redis_url))
     bus = RedisStreamsEventBus(redis_client, build_registry())
+    command = CapturedTransactionCommand(
+        user_id=user.id,
+        bank=Bank.BANCOLOMBIA,
+        amount=Decimal("20000.00"),
+        direction=Direction.DEBIT,
+        occurred_at=datetime(2026, 1, 5, tzinfo=UTC),
+        last4="1234",
+        merchant="Exito",
+        description=None,
+        suggested_category_slug=None,
+        parsed_by="rule:bancolombia:x",
+        confidence=0.8,
+        source=SourceInput(
+            channel=Channel.EMAIL,
+            raw_message_id=raw_message_id,
+            received_at=datetime.now(UTC),
+        ),
+    )
     try:
         async with session_factory() as session:
-            recorded = await record_captured_transaction(
-                session,
-                bus,
-                SystemClock(),
-                CapturedTransactionCommand(
-                    user_id=user.id,
-                    bank=Bank.BANCOLOMBIA,
-                    amount=Decimal("20000.00"),
-                    direction=Direction.DEBIT,
-                    occurred_at=datetime(2026, 1, 5, tzinfo=UTC),
-                    last4="1234",
-                    merchant="Exito",
-                    description=None,
-                    suggested_category_slug=None,
-                    parsed_by="rule:bancolombia:x",
-                    confidence=0.8,
-                    source=SourceInput(
-                        channel=Channel.EMAIL,
-                        raw_message_id=raw_message_id,
-                        received_at=datetime.now(UTC),
-                    ),
-                ),
-            )
+            recorded = await record_captured_transaction(session, bus, SystemClock(), command)
+
+        response = await client.delete(
+            f"/v1/transactions/{recorded.transaction.id}", headers=user.headers
+        )
+        assert response.status_code == 204
+
+        # Spec 004 SS3: la lapida frena la reentrega (p. ej. un `reparse`).
+        async with session_factory() as session:
+            with pytest.raises(CaptureOfDeletedTransaction):
+                await record_captured_transaction(session, bus, SystemClock(), command)
     finally:
         await redis_client.aclose()
 
-    response = await client.delete(
-        f"/v1/transactions/{recorded.transaction.id}", headers=user.headers
-    )
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "forbidden"
+    listing = await client.get("/v1/transactions", headers=user.headers)
+    assert listing.json()["items"] == []
 
 
 async def test_delete_transaccion_manual_devuelve_204_y_luego_404(
@@ -503,3 +507,73 @@ async def test_listado_trae_channels_email_y_notificacion_en_orden_estable(
     items = response.json()["items"]
     assert len(items) == 1
     assert items[0]["channels"] == ["email", "notification"]
+
+
+async def test_patch_edita_monto_direccion_fecha_y_cuenta(
+    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
+) -> None:
+    """Spec 005 SS6: el detalle edita todos los datos del movimiento."""
+    user = await user_factory()
+    created = await _post_transaction(client, user.headers)
+    account = await client.post(
+        "/v1/accounts",
+        json={"bank": "nequi", "kind": "wallet", "last4": "2222"},
+        headers=user.headers,
+    )
+    assert account.status_code == 201, account.text
+
+    response = await client.patch(
+        f"/v1/transactions/{created['id']}",
+        json={
+            "amount": "45900.50",
+            "direction": "credit",
+            "occurred_at": "2026-01-04T15:30:00-05:00",
+            "account_id": account.json()["id"],
+            "merchant": "Frisby",
+        },
+        headers=user.headers,
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["amount"] == "45900.50"
+    assert body["direction"] == "credit"
+    assert body["kind"] == "income"
+    assert datetime.fromisoformat(body["occurred_at"]) == datetime(2026, 1, 4, 20, 30, tzinfo=UTC)
+    assert body["account_id"] == account.json()["id"]
+    assert body["bank"] == "nequi"
+    assert body["merchant"] == "Frisby"
+
+    cleared = await client.patch(
+        f"/v1/transactions/{created['id']}", json={"account_id": None}, headers=user.headers
+    )
+    assert cleared.json()["account_id"] is None
+
+
+@pytest.mark.parametrize(
+    ("body", "field"),
+    [
+        ({"amount": None}, "amount"),
+        ({"amount": "0"}, "amount"),
+        ({"occurred_at": "2026-01-04T15:30:00"}, "occurred_at"),
+        ({"account_id": str(uuid4())}, None),
+    ],
+)
+async def test_patch_invalido_responde_error(
+    client: AsyncClient,
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+    body: dict[str, object],
+    field: str | None,
+) -> None:
+    user = await user_factory()
+    created = await _post_transaction(client, user.headers)
+
+    response = await client.patch(
+        f"/v1/transactions/{created['id']}", json=body, headers=user.headers
+    )
+
+    if field is None:  # cuenta ajena o inexistente: 404, nunca 403 (009 SS4)
+        assert response.status_code == 404
+    else:
+        assert response.status_code == 400, response.text
+        assert response.json()["error"]["field"] == field

@@ -3,7 +3,7 @@
 Ejercita directamente `SqlAlchemyTransactionRepository`/`SqlAlchemyTransactionSourceRepository`
 contra Postgres real: dedupe (`insert_if_absent`), idempotencia de fuentes (`attach`),
 aislamiento por usuario (`list`), escape de `%`/`_` en `q` y la ventana del matcher de
-transferencias (`find_transfer_candidates`).
+transferencias (`find_transfer_candidates`) y de la fusion entre canales (`find_captures_near`).
 """
 
 from collections.abc import Awaitable, Callable
@@ -334,3 +334,51 @@ async def test_find_transfer_candidates_ventana_inclusive(
         )
 
     assert {c.dedupe_key for c in candidates} == {"dedupe-window-boundary"}
+
+
+async def test_find_captures_near_filtra_usuario_direccion_monto_y_ventana(
+    session_factory: async_sessionmaker[AsyncSession],
+    user_factory: Callable[..., Awaitable[AuthedUser]],
+) -> None:
+    """Filtro grueso de la fusion entre canales (spec 004 SS3): la ventana es
+    inclusiva y no exige cuenta vinculada (el Atajo de Apple Pay no trae una)."""
+    user = await user_factory(sub="sub-repo-near-a", email="repo-near-a@example.com")
+    other_user = await user_factory(sub="sub-repo-near-b", email="repo-near-b@example.com")
+    base = datetime(2026, 10, 4, 20, 31, tzinfo=UTC)
+
+    async with session_factory() as session:
+        repo = SqlAlchemyTransactionRepository(session)
+        for key, owner, amount, direction, delta in (
+            ("near-boundary", user.id, "99000.00", Direction.DEBIT, timedelta(minutes=10)),
+            (
+                "near-outside",
+                user.id,
+                "99000.00",
+                Direction.DEBIT,
+                timedelta(minutes=10, seconds=1),
+            ),
+            ("near-other-amount", user.id, "99001.00", Direction.DEBIT, timedelta()),
+            ("near-credit", user.id, "99000.00", Direction.CREDIT, timedelta()),
+            ("near-other-user", other_user.id, "99000.00", Direction.DEBIT, timedelta()),
+        ):
+            await repo.insert_if_absent(
+                _make_tx(
+                    user_id=owner,
+                    dedupe_key=key,
+                    amount=amount,
+                    direction=direction,
+                    occurred_at=base + delta,
+                )
+            )
+        await session.commit()
+
+    async with session_factory() as session:
+        candidates = await SqlAlchemyTransactionRepository(session).find_captures_near(
+            user.id,
+            Direction.DEBIT,
+            Decimal("99000.00"),
+            base - timedelta(minutes=10),
+            base + timedelta(minutes=10),
+        )
+
+    assert {c.dedupe_key for c in candidates} == {"near-boundary"}

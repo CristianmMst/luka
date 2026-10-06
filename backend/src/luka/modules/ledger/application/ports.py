@@ -20,6 +20,7 @@ from luka.modules.ledger.domain.entities import (
     MerchantRule,
     Transaction,
     TransactionSource,
+    TransactionTombstone,
 )
 from luka.modules.ledger.domain.enums import Bank, Channel, Direction, FiscalTag
 from luka.modules.ledger.domain.review import ReviewItem, ReviewResolution
@@ -105,6 +106,19 @@ class TransactionRepositoryPort(Protocol):
         """
         ...
 
+    async def find_captures_near(
+        self,
+        user_id: UUID,
+        direction: Direction,
+        amount: Decimal,
+        since: datetime,
+        until: datetime,
+    ) -> list[Transaction]:
+        """Filtro grueso de la fusion entre canales (usuario/direccion/monto/ventana);
+        el fino lo hace el dominio (`dedupe.is_compatible_capture`, spec 004 SS3).
+        """
+        ...
+
     async def reassign_category(
         self,
         user_id: UUID,
@@ -124,6 +138,30 @@ class TransactionRepositoryPort(Protocol):
     ) -> int:
         """Pone `fiscal_tag` a las transacciones de `category_id` del usuario, salvo las
         transferencias (invariante spec 004 SS2.5), y toca `updated_at` para el pull."""
+        ...
+
+
+class TombstoneRepositoryPort(Protocol):
+    """Lapidas de capturas borradas (spec 004 SS3)."""
+
+    async def add(self, tombstone: TransactionTombstone) -> None:
+        """Guarda la lapida de una captura que el usuario borro."""
+        ...
+
+    async def find_near(
+        self,
+        user_id: UUID,
+        direction: Direction,
+        amount: Decimal,
+        since: datetime,
+        until: datetime,
+    ) -> list[TransactionTombstone]:
+        """Filtro grueso (usuario/direccion/monto/ventana); el fino lo hace el dominio
+        (`dedupe.matches_tombstone`)."""
+        ...
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        """Borra las lapidas con `deleted_at < cutoff`; devuelve cuantas."""
         ...
 
 

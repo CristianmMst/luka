@@ -49,6 +49,7 @@ from luka.modules.ingestion.infrastructure.gmail_sync import (
     SYNC_GMAIL_TIMEOUT_S,
     ArqGmailSyncQueue,
 )
+from luka.modules.ledger import public as ledger_public
 from luka.modules.ledger.infrastructure.consumers import (
     make_parse_failed_handler,
     make_transaction_parsed_handler,
@@ -196,6 +197,19 @@ async def purge_stale_device_tokens(ctx: dict[str, Any]) -> None:
     async with session_factory() as session:
         removed = await notifications_public.purge_stale_tokens(session, SystemClock())
     _logger.info("device_tokens_purged", count=removed)
+
+
+async def purge_transaction_tombstones(ctx: dict[str, Any]) -> None:
+    """Cron diario 08:00 UTC = 03:00 Bogota: borra las lapidas de capturas borradas
+    de mas de 7 dias (spec 004 SS3). Solo loguea el conteo.
+    """
+    session_factory = ctx.get("events_session_factory")
+    if session_factory is None:
+        _logger.warning("cron_sin_contexto", job="purge_transaction_tombstones")
+        return
+    async with session_factory() as session:
+        removed = await ledger_public.purge_tombstones(session, SystemClock().now())
+    _logger.info("transaction_tombstones_purged", count=removed)
 
 
 async def renew_gmail_watches(ctx: dict[str, Any]) -> None:
@@ -532,6 +546,8 @@ class WorkerSettings:
         # F7.5: 14:00 y 22:00 UTC = 09:00 y 17:00 Bogota (spec 011 SS5).
         cron(send_recurring_reminders, hour={14, 22}, minute=0, run_at_startup=False),
         cron(purge_stale_device_tokens, hour=8, minute=0, run_at_startup=False),
+        # F4.5c: lapidas de mas de 7 dias, junto a las demas purgas.
+        cron(purge_transaction_tombstones, hour=8, minute=0, run_at_startup=False),
     ]
     redis_settings = RedisSettings.from_dsn(str(get_settings().redis_url))
     on_startup = on_startup

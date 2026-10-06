@@ -24,6 +24,7 @@ from luka.modules.ledger.application.use_cases.split_merged_captures import (
     SplitMergedCaptures,
     SplitMergedCapturesSummary,
 )
+from luka.modules.ledger.domain.dedupe import TOMBSTONE_RETENTION
 from luka.modules.ledger.events import TransactionCaptured, TransactionDeleted
 from luka.modules.ledger.infrastructure import snapshots as _snapshots
 from luka.modules.ledger.infrastructure.data_export import export_ledger_data
@@ -35,6 +36,7 @@ from luka.modules.ledger.infrastructure.repositories import (
     SqlAlchemyLinkedAccountRepository,
     SqlAlchemyMerchantRuleRepository,
     SqlAlchemyReviewQueueRepository,
+    SqlAlchemyTombstoneRepository,
     SqlAlchemyTransactionRepository,
     SqlAlchemyTransactionSourceRepository,
 )
@@ -66,6 +68,7 @@ __all__ = [
     "export_user_data",
     "get_transaction_snapshot",
     "mark_self_transfers",
+    "purge_tombstones",
     "record_captured_transaction",
     "split_merged_captures",
     "transaction_snapshots",
@@ -84,7 +87,9 @@ async def record_captured_transaction(
     en `event_bus` (spec 004 SS3, AC-5.1/5.2). El llamador es responsable de la
     `session` (scope, cierre) igual que cualquier otro caso de uso de ledger.
     Lanza `CaptureAlreadyResolved` si el usuario ya convirtio o descarto el item de
-    revision de ese `raw_message` (spec 006 SS4.4); no se escribe nada.
+    revision de ese `raw_message` (spec 006 SS4.4), y `CaptureOfDeletedTransaction`
+    si es otra fuente de una compra que el usuario borro (spec 004 SS3); en ninguno
+    se escribe nada.
     """
     return await _record_use_case(session, event_bus, clock).execute(cmd)
 
@@ -99,6 +104,7 @@ def _record_use_case(
         accounts=SqlAlchemyLinkedAccountRepository(session),
         merchant_rules=SqlAlchemyMerchantRuleRepository(session),
         review_queue=SqlAlchemyReviewQueueRepository(session),
+        tombstones=SqlAlchemyTombstoneRepository(session),
         owner_names=IdentityOwnerNames(session),
         events=BusEventPublisher(event_bus),
         clock=clock,
@@ -127,6 +133,14 @@ async def split_merged_captures(  # noqa: PLR0913 - un parametro por dependencia
         uow=SqlAlchemyUnitOfWork(session),
     )
     return await use_case.execute(person_parsed_by=person_parsed_by, user_id=user_id)
+
+
+async def purge_tombstones(session: AsyncSession, now: datetime) -> int:
+    """Borra las lapidas de mas de 7 dias (spec 004 SS3): pasada esa ventana una
+    plantilla ya no acepta el mensaje de la compra. Devuelve cuantas."""
+    count = await SqlAlchemyTombstoneRepository(session).purge_older_than(now - TOMBSTONE_RETENTION)
+    await session.commit()
+    return count
 
 
 async def export_user_data(session: AsyncSession, user_id: UUID) -> dict[str, object]:

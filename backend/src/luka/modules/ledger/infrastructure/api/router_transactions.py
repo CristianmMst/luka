@@ -166,6 +166,7 @@ async def patch_transaction(
 ) -> TransactionResponse:
     """Aplica un PATCH parcial (spec 005 SS6; `learn_merchant_rule` por defecto true)."""
     fields = body.model_fields_set
+    amount = resolve_required_patch_field(body.amount, present="amount" in fields, field="amount")
     patch = TransactionPatch(
         category_id=resolve_required_patch_field(
             body.category_id, present="category_id" in fields, field="category_id"
@@ -173,6 +174,14 @@ async def patch_transaction(
         notes=body.notes if "notes" in fields else DTO_UNSET,
         merchant=body.merchant if "merchant" in fields else DTO_UNSET,
         kind=resolve_required_patch_field(body.kind, present="kind" in fields, field="kind"),
+        amount=Decimal(amount) if isinstance(amount, str) else amount,
+        direction=resolve_required_patch_field(
+            body.direction, present="direction" in fields, field="direction"
+        ),
+        occurred_at=resolve_required_patch_field(
+            body.occurred_at, present="occurred_at" in fields, field="occurred_at"
+        ),
+        account_id=body.account_id if "account_id" in fields else DTO_UNSET,
         learn_merchant_rule=body.learn_merchant_rule,
     )
     tx = await use_case.execute(user_id, id, patch)

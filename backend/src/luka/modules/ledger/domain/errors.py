@@ -21,10 +21,6 @@ class SystemCategoryImmutable(LedgerError):  # noqa: N818
     """Las categorias del sistema (`user_id is None`) no se pueden modificar ni borrar."""
 
 
-class NotManualTransaction(LedgerError):  # noqa: N818
-    """La operacion solicitada solo aplica a transacciones creadas manualmente."""
-
-
 class DuplicateAccount(LedgerError):  # noqa: N818
     """Ya existe una cuenta vinculada equivalente para el usuario."""
 
@@ -57,6 +53,11 @@ class InvalidCursor(LedgerError):  # noqa: N818
     """El cursor de paginacion recibido no es valido."""
 
 
+class TransferPairedEdit(LedgerError):  # noqa: N818
+    """El monto o la direccion de una transferencia emparejada no se editan: hay que
+    desmarcarla primero (spec 005 SS6)."""
+
+
 class InvalidKindChange(LedgerError):  # noqa: N818
     """El `kind` solicitado en un PATCH es incompatible con la `direction` de la transaccion."""
 
@@ -72,4 +73,10 @@ class ReviewAlreadyResolved(LedgerError):  # noqa: N818
 class CaptureAlreadyResolved(LedgerError):  # noqa: N818
     """La captura viene de un `raw_message` cuyo item de revision el usuario ya
     convirtio o descarto: registrarla duplicaria la transaccion (spec 006 SS4.4).
+    """
+
+
+class CaptureOfDeletedTransaction(LedgerError):  # noqa: N818
+    """La captura es otra fuente de una compra que el usuario borro: registrarla
+    la haria reaparecer (spec 004 SS3, lapidas).
     """

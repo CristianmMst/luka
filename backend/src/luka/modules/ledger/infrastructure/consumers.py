@@ -25,7 +25,10 @@ from luka.modules.ledger.application.dto import (
 )
 from luka.modules.ledger.application.use_cases.enqueue_for_review import EnqueueForReview
 from luka.modules.ledger.domain.enums import Bank, Channel, Direction
-from luka.modules.ledger.domain.errors import CaptureAlreadyResolved
+from luka.modules.ledger.domain.errors import (
+    CaptureAlreadyResolved,
+    CaptureOfDeletedTransaction,
+)
 from luka.modules.ledger.domain.review import ReviewReason
 from luka.modules.ledger.infrastructure.repositories.review_queue import (
     SqlAlchemyReviewQueueRepository,
@@ -105,6 +108,16 @@ def make_transaction_parsed_handler(
             _logger.info(
                 "ledger_capture_skipped",
                 reason="review_already_resolved",
+                bank=bank.value,
+                channel=event.channel,
+            )
+            return
+        except CaptureOfDeletedTransaction:
+            # Otra fuente de una compra que el usuario borro (spec 004 SS3): no se
+            # recrea y el evento queda atendido. Sin ids, montos ni comercio (P1).
+            _logger.info(
+                "ledger_capture_skipped",
+                reason="transaction_deleted",
                 bank=bank.value,
                 channel=event.channel,
             )
