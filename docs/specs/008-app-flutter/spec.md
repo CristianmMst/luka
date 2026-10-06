@@ -180,6 +180,7 @@ Feature `recurring` (spec 011). Ruta `/gastos-fijos`, a pantalla completa sobre 
 - Material 3, tema claro/oscuro del sistema; español (Colombia) único idioma MVP (arquitectura lista para i18n con `intl`; textos en `app/lib/core/l10n/arb/app_es.arb`).
 - Formato de moneda: `$1.234.567` COP sin decimales en listas, con decimales en detalle. Los montos se manejan como centavos enteros (`Cop`), nunca `double`. Gasto `−$42.900` (U+2212), ingreso `+$3.500.000`, transferencia propia sin signo.
 - Accesibilidad: targets ≥ 48dp, semántica en widgets custom, contraste AA.
+- Hojas inferiores (`showLukaSheet`): se abren en el navegador raíz, sobre la barra del shell. Se cierran deslizando hacia abajo, tocando fuera o con su botón. Si el contenido no cabe (un formulario largo o el teclado abierto), tirar hacia abajo estando arriba del todo (≥ 64 dp) también las cierra, en vez de que el scroll se quede con el gesto.
 
 ### 7.1 Sistema de diseño "Rojo tomate"
 

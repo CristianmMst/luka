@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luka/core/format/money.dart';
 import 'package:luka/core/time/colombia_month.dart';
+import 'package:luka/features/accounts/application/account_actions.dart';
+import 'package:luka/features/accounts/domain/accounts_ports.dart';
 import 'package:luka/features/recurring/application/recurring_actions.dart';
+import 'package:luka/features/recurring/domain/recurring_draft.dart';
 import 'package:luka/features/recurring/domain/recurring_models.dart';
 import 'package:luka/features/recurring/domain/recurring_ports.dart';
 import 'package:luka/features/recurring/presentation/occurrence_row.dart';
@@ -73,7 +76,10 @@ void main() {
   late _Actions actions;
   late _Store store;
 
-  setUpAll(() => registerFallbackValue(ColombiaMonth(2026, 10)));
+  setUpAll(() {
+    registerFallbackValue(ColombiaMonth(2026, 10));
+    registerFallbackValue(const RecurringDraft(name: ''));
+  });
 
   setUp(() {
     actions = _Actions();
@@ -99,6 +105,9 @@ void main() {
         recurringClockProvider.overrideWithValue(() => _now),
         transactionCategoriesProvider.overrideWith(
           (ref) => Stream.value(const <CategoryOption>[]),
+        ),
+        linkedAccountsProvider.overrideWith(
+          (ref) => Stream.value(const <LinkedAccount>[]),
         ),
       ],
     );
@@ -197,6 +206,47 @@ void main() {
 
     expect(find.text('Gastos fijos'), findsOneWidget);
     expect(find.text('1 activo'), findsOneWidget);
+  });
+
+  testWidgets('editar un gasto fijo se cierra deslizando hacia abajo', (
+    tester,
+  ) async {
+    await pump(tester, const RecurringPage());
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Editar gasto fijo'), findsOneWidget);
+
+    await tester.drag(find.text('Editar gasto fijo'), const Offset(0, 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar gasto fijo'), findsNothing);
+    verifyNever(() => actions.update(any(), any()));
+  });
+
+  testWidgets('nuevo gasto fijo se cierra deslizando con el teclado abierto', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const RecurringPage(),
+      expenses: const [],
+      occurrences: const [],
+    );
+    await tester.tap(find.text('Nuevo gasto fijo'));
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);
+    await tester.pumpAndSettle();
+    final title = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.text('Nuevo gasto fijo'),
+    );
+    expect(title, findsOneWidget);
+
+    await tester.drag(title, const Offset(0, 400));
+    await tester.pumpAndSettle();
+
+    expect(title, findsNothing);
+    verifyNever(() => actions.create(any()));
   });
 
   group('goldens', () {
