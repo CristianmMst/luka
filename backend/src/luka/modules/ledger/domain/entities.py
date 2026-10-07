@@ -76,7 +76,7 @@ class Transaction:
 
 @dataclass(frozen=True, slots=True)
 class TransactionSource:
-    """Fuente cruda (email/notificacion/SMS/manual/NFC) que alimento una transaccion."""
+    """Fuente cruda (email/notificacion/SMS/manual) que alimento una transaccion."""
 
     id: UUID
     transaction_id: UUID
@@ -226,7 +226,7 @@ def new_captured_transaction(  # noqa: PLR0913 - un parametro por atributo inmut
     confidence: float | None,
     dedupe_key: str,
 ) -> Transaction:
-    """Crea una transaccion capturada automaticamente (email/notificacion/SMS/NFC).
+    """Crea una transaccion capturada automaticamente (email/notificacion/SMS).
 
     `last4` no se almacena en la transaccion (solo en `LinkedAccount`): se recibe aqui
     porque el llamador ya lo uso para calcular `dedupe_key` (spec 004 SS3).

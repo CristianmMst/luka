@@ -16,8 +16,6 @@ import 'package:luka/features/capture/presentation/widgets/notification_capture_
 import 'package:luka/features/categories/presentation/categories_settings_tile.dart';
 import 'package:luka/features/dashboard/presentation/widgets/dashboard_format.dart';
 import 'package:luka/features/gmail/presentation/widgets/gmail_settings_tile.dart';
-import 'package:luka/features/nfc/application/nfc_actions.dart';
-import 'package:luka/features/nfc/presentation/nfc_tags_settings_tile.dart';
 import 'package:luka/features/privacy/presentation/privacy_sheet.dart';
 import 'package:luka/features/recurring/presentation/recurring_settings_tile.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
@@ -74,8 +72,6 @@ class AjustesPage extends ConsumerWidget {
                   const NotificationCaptureTile(),
                 if (ref.watch(walletCaptureSupportedProvider))
                   const ApplePaySettingsTile(),
-                if (ref.watch(nfcWriteSupportedProvider))
-                  const NfcTagsSettingsTile(),
               ],
             ),
             const SizedBox(height: 22),

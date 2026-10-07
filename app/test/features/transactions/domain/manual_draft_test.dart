@@ -52,15 +52,12 @@ void main() {
     );
   });
 
-  test('toNewTransaction lleva la cuenta y el tag NFC', () {
+  test('toNewTransaction lleva la cuenta', () {
     final draft = ManualDraft(
       occurredAt: at,
       amount: Cop.pesos(8500),
       accountId: 'a-1',
-      nfcTagId: 'tag-1',
     );
-    final data = draft.toNewTransaction();
-    expect(data.accountId, 'a-1');
-    expect(data.nfcTagId, 'tag-1');
+    expect(draft.toNewTransaction().accountId, 'a-1');
   });
 }

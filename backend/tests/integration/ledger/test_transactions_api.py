@@ -148,15 +148,6 @@ async def test_get_incluye_source_manual(
     assert response.json()["sources"][0]["channel"] == "manual"
 
 
-async def test_get_incluye_source_nfc_cuando_se_envia_nfc_tag_id(
-    client: AsyncClient, user_factory: Callable[..., Awaitable[AuthedUser]]
-) -> None:
-    user = await user_factory()
-    created = await _post_transaction(client, user.headers, nfc_tag_id="tag-abc-123")
-    response = await client.get(f"/v1/transactions/{created['id']}", headers=user.headers)
-    assert response.json()["sources"][0]["channel"] == "nfc"
-
-
 async def test_patch_category_id_aprende_regla_de_comercio(
     client: AsyncClient,
     user_factory: Callable[..., Awaitable[AuthedUser]],

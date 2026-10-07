@@ -32,14 +32,11 @@ Formato: historias de usuario con criterios de aceptación **Given/When/Then**. 
 - **AC-3.3** Given una notificación de una app fuera de la lista de paquetes soportados, Then se ignora localmente y su contenido nunca sale del dispositivo.
 - **AC-3.4** Given el permiso revocado por el usuario o el sistema, Then la app lo detecta y muestra cómo reactivarlo, sin romper el resto de la captura.
 
-### RF-4 · Registro manual y tag NFC
+### RF-4 · Registro manual
 
-*Como usuario, quiero registrar gastos en efectivo en 2 toques acercando el teléfono a un tag NFC.*
+*Como usuario, quiero registrar a mano los gastos que no se capturan solos, como los pagos en efectivo.*
 
-- **AC-4.1** Given un tag NFC escrito por la app, When el usuario lo acerca al teléfono (app abierta o por deep link del sistema en Android), Then se abre el formulario rápido con la categoría preconfigurada del tag.
-- **AC-4.2** Given el formulario rápido, When el usuario ingresa el monto y confirma, Then la transacción se guarda localmente y se sincroniza (funciona offline).
-- **AC-4.3** La app permite escribir/borrar tags NDEF con `nfc_manager` (Android; iOS solo lectura en foreground).
-- **AC-4.4** El registro manual completo (sin NFC) está disponible en ambas plataformas.
+- **AC-4.4** El registro manual completo está disponible en ambas plataformas; se guarda localmente y se sincroniza (funciona offline).
 
 ### RF-5 · Deduplicación multi-fuente
 
@@ -98,7 +95,7 @@ Formato: historias de usuario con criterios de aceptación **Given/When/Then**. 
 *Como usuario, quiero registrar mis pagos fijos de cada mes (Spotify el 22, el arriendo el 5) para ver cuáles ya se pagaron y recibir un aviso antes de que me descuenten la plata.*
 
 - **AC-12.1** Given un usuario con sesión, When registra un gasto fijo con nombre, monto exacto y día del mes (1–31), Then aparece en la lista del mes con su fecha de vencimiento; un día que el mes no tiene (31 en abril) vence el último día del mes (spec 011 §3).
-- **AC-12.2** Given un gasto fijo pendiente, When la captura registra un gasto cuyo comercio contiene alguna palabra del nombre ("Spotify" en "SPOTIFY P3A9C1"), con el monto exacto y la fecha entre 5 días antes y 5 días después del vencimiento, Then la ocurrencia del mes queda pagada con esa transacción y la app la muestra tachada, sin importar el canal (Gmail, notificación, SMS, Apple Pay, manual o NFC).
+- **AC-12.2** Given un gasto fijo pendiente, When la captura registra un gasto cuyo comercio contiene alguna palabra del nombre ("Spotify" en "SPOTIFY P3A9C1"), con el monto exacto y la fecha entre 5 días antes y 5 días después del vencimiento, Then la ocurrencia del mes queda pagada con esa transacción y la app la muestra tachada, sin importar el canal (Gmail, notificación, SMS, Apple Pay o manual).
 - **AC-12.3** Given un gasto fijo creado después de que el pago del mes ya se capturó, Then la ocurrencia nace pagada (barrido retroactivo, spec 011 §4).
 - **AC-12.4** Given una ocurrencia, Then el usuario puede marcarla como pagada sin movimiento, elegir el movimiento que la pagó, omitirla este mes o deshacer. Si deshace un emparejamiento automático, ese movimiento no se vuelve a emparejar solo con esa ocurrencia.
 - **AC-12.5** Given una ocurrencia pendiente y el permiso de notificaciones concedido, When llega cada uno de los 4 avisos —7 y 2 días antes a las 9:00 a. m., y el día antes a las 9:00 a. m. y a las 5:00 p. m., hora de Colombia; siempre los cuatro, el usuario no los elige—, Then llega al celular un aviso, por ejemplo: "Se acerca tu pago de Spotify. El 22 de octubre se te descontarán $16.900 de tu cuenta." Si el pago ya se detectó o la ocurrencia se omitió, no llegan los que faltan.

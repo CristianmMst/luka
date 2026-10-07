@@ -5,7 +5,7 @@
 El usuario registra sus **gastos fijos mensuales** (suscripciones, arriendo, servicios, cuotas): qué comercio los cobra, cuánto cuestan más o menos y qué día del mes vencen. Con eso luka:
 
 1. Arma cada mes la lista de pagos esperados (**ocurrencias**, §3).
-2. Detecta el pago cuando la captura normal lo registra (Gmail, notificación, SMS, Apple Pay, registro manual o NFC; spec 006) y marca esa ocurrencia como **pagada**. En la app se ve **tachada** (§4).
+2. Detecta el pago cuando la captura normal lo registra (Gmail, notificación, SMS, Apple Pay o registro manual; spec 006) y marca esa ocurrencia como **pagada**. En la app se ve **tachada** (§4).
 3. Avisa **7 y 2 días antes a las 9:00 a. m., y el día antes a las 9:00 a. m. y a las 5:00 p. m.**, si el pago aún no se detectó (§5): *"Se acerca tu pago de Spotify. El 22 de octubre se te descontarán $16.900 de tu cuenta."*
 
 Requisito: RF-12 (spec 002). Módulos del backend: `recurring` y `notifications` (spec 003 §2.1). Tablas en spec 004 §2.12–2.15, API en spec 005 §10 y pantallas en spec 008 §3.8.

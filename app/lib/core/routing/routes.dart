@@ -18,19 +18,12 @@ abstract final class Routes {
   /// "Mis cuentas" (F4.4), a pantalla completa sobre Ajustes.
   static const settingsAccounts = '/ajustes/cuentas';
 
-  /// "Tags NFC" (F4.5b), a pantalla completa sobre Ajustes.
-  static const settingsNfcTags = '/ajustes/tags-nfc';
-
   /// Guía de pagos con Apple Pay desde Ajustes (F4.3b, solo iOS).
   static const settingsApplePay = '/ajustes/apple-pay';
 
   /// Gastos fijos (F7.6): `/gastos-fijos?ocurrencia=<id>` a pantalla
   /// completa, desde el Inicio, Ajustes o el aviso push.
   static const recurring = '/gastos-fijos';
-
-  /// Registro rápido de un tag NFC (F4.5b): `/rapido?tag=<uuid>`, sobre el
-  /// Inicio. Llega por el enlace `luka://quick-add?tag=<uuid>`.
-  static const quickAdd = '/rapido';
 
   /// Pasos del onboarding tras el login (F3.6, F4.4), fuera del shell.
   static const onboardingGmail = '/onboarding/gmail';

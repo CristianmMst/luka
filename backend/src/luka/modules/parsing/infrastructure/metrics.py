@@ -1,4 +1,4 @@
-"""Metricas de negocio de parsing via structlog (spec 006 §6).
+"""Metricas de negocio de parsing via structlog (spec 006 §5).
 
 `application` no puede importar `structlog` (R2): `StructlogMetrics` satisface
 `MetricsPort` y es el unico lugar que traduce un resultado a un log.
@@ -14,7 +14,7 @@ _logger = structlog.get_logger("parsing")
 class StructlogMetrics:
     """Implementa `MetricsPort`: un log `parsing_metric` por resultado."""
 
-    def record(  # noqa: PLR0913 - un kwarg por dimension de la metrica (spec 006 §6)
+    def record(  # noqa: PLR0913 - un kwarg por dimension de la metrica (spec 006 §5)
         self,
         outcome: str,
         *,

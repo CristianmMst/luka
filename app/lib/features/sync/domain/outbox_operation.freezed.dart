@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NewTransaction {
 
- Cop get amount; TxDirection get direction; DateTime get occurredAt; TxKind? get kind; String? get categoryId; String? get merchant; String? get description; String? get accountId; String? get notes; String? get nfcTagId;
+ Cop get amount; TxDirection get direction; DateTime get occurredAt; TxKind? get kind; String? get categoryId; String? get merchant; String? get description; String? get accountId; String? get notes;
 /// Create a copy of NewTransaction
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $NewTransactionCopyWith<NewTransaction> get copyWith => _$NewTransactionCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewTransaction&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.nfcTagId, nfcTagId) || other.nfcTagId == nfcTagId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewTransaction&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.notes, notes) || other.notes == notes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amount,direction,occurredAt,kind,categoryId,merchant,description,accountId,notes,nfcTagId);
+int get hashCode => Object.hash(runtimeType,amount,direction,occurredAt,kind,categoryId,merchant,description,accountId,notes);
 
 @override
 String toString() {
-  return 'NewTransaction(amount: $amount, direction: $direction, occurredAt: $occurredAt, kind: $kind, categoryId: $categoryId, merchant: $merchant, description: $description, accountId: $accountId, notes: $notes, nfcTagId: $nfcTagId)';
+  return 'NewTransaction(amount: $amount, direction: $direction, occurredAt: $occurredAt, kind: $kind, categoryId: $categoryId, merchant: $merchant, description: $description, accountId: $accountId, notes: $notes)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $NewTransactionCopyWith<$Res>  {
   factory $NewTransactionCopyWith(NewTransaction value, $Res Function(NewTransaction) _then) = _$NewTransactionCopyWithImpl;
 @useResult
 $Res call({
- Cop amount, TxDirection direction, DateTime occurredAt, TxKind? kind, String? categoryId, String? merchant, String? description, String? accountId, String? notes, String? nfcTagId
+ Cop amount, TxDirection direction, DateTime occurredAt, TxKind? kind, String? categoryId, String? merchant, String? description, String? accountId, String? notes
 });
 
 
@@ -62,7 +62,7 @@ class _$NewTransactionCopyWithImpl<$Res>
 
 /// Create a copy of NewTransaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? amount = null,Object? direction = null,Object? occurredAt = null,Object? kind = freezed,Object? categoryId = freezed,Object? merchant = freezed,Object? description = freezed,Object? accountId = freezed,Object? notes = freezed,Object? nfcTagId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? amount = null,Object? direction = null,Object? occurredAt = null,Object? kind = freezed,Object? categoryId = freezed,Object? merchant = freezed,Object? description = freezed,Object? accountId = freezed,Object? notes = freezed,}) {
   return _then(_self.copyWith(
 amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Cop,direction: null == direction ? _self.direction : direction // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,6 @@ as String?,merchant: freezed == merchant ? _self.merchant : merchant // ignore: 
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String?,nfcTagId: freezed == nfcTagId ? _self.nfcTagId : nfcTagId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -159,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes,  String? nfcTagId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NewTransaction() when $default != null:
-return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes,_that.nfcTagId);case _:
+return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes);case _:
   return orElse();
 
 }
@@ -180,10 +179,10 @@ return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes,  String? nfcTagId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes)  $default,) {final _that = this;
 switch (_that) {
 case _NewTransaction():
-return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes,_that.nfcTagId);case _:
+return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +199,10 @@ return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes,  String? nfcTagId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Cop amount,  TxDirection direction,  DateTime occurredAt,  TxKind? kind,  String? categoryId,  String? merchant,  String? description,  String? accountId,  String? notes)?  $default,) {final _that = this;
 switch (_that) {
 case _NewTransaction() when $default != null:
-return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes,_that.nfcTagId);case _:
+return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.categoryId,_that.merchant,_that.description,_that.accountId,_that.notes);case _:
   return null;
 
 }
@@ -215,7 +214,7 @@ return $default(_that.amount,_that.direction,_that.occurredAt,_that.kind,_that.c
 
 
 class _NewTransaction implements NewTransaction {
-  const _NewTransaction({required this.amount, required this.direction, required this.occurredAt, this.kind, this.categoryId, this.merchant, this.description, this.accountId, this.notes, this.nfcTagId});
+  const _NewTransaction({required this.amount, required this.direction, required this.occurredAt, this.kind, this.categoryId, this.merchant, this.description, this.accountId, this.notes});
   
 
 @override final  Cop amount;
@@ -227,7 +226,6 @@ class _NewTransaction implements NewTransaction {
 @override final  String? description;
 @override final  String? accountId;
 @override final  String? notes;
-@override final  String? nfcTagId;
 
 /// Create a copy of NewTransaction
 /// with the given fields replaced by the non-null parameter values.
@@ -239,16 +237,16 @@ _$NewTransactionCopyWith<_NewTransaction> get copyWith => __$NewTransactionCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewTransaction&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.nfcTagId, nfcTagId) || other.nfcTagId == nfcTagId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewTransaction&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.direction, direction) || other.direction == direction)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.merchant, merchant) || other.merchant == merchant)&&(identical(other.description, description) || other.description == description)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.notes, notes) || other.notes == notes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,amount,direction,occurredAt,kind,categoryId,merchant,description,accountId,notes,nfcTagId);
+int get hashCode => Object.hash(runtimeType,amount,direction,occurredAt,kind,categoryId,merchant,description,accountId,notes);
 
 @override
 String toString() {
-  return 'NewTransaction(amount: $amount, direction: $direction, occurredAt: $occurredAt, kind: $kind, categoryId: $categoryId, merchant: $merchant, description: $description, accountId: $accountId, notes: $notes, nfcTagId: $nfcTagId)';
+  return 'NewTransaction(amount: $amount, direction: $direction, occurredAt: $occurredAt, kind: $kind, categoryId: $categoryId, merchant: $merchant, description: $description, accountId: $accountId, notes: $notes)';
 }
 
 
@@ -259,7 +257,7 @@ abstract mixin class _$NewTransactionCopyWith<$Res> implements $NewTransactionCo
   factory _$NewTransactionCopyWith(_NewTransaction value, $Res Function(_NewTransaction) _then) = __$NewTransactionCopyWithImpl;
 @override @useResult
 $Res call({
- Cop amount, TxDirection direction, DateTime occurredAt, TxKind? kind, String? categoryId, String? merchant, String? description, String? accountId, String? notes, String? nfcTagId
+ Cop amount, TxDirection direction, DateTime occurredAt, TxKind? kind, String? categoryId, String? merchant, String? description, String? accountId, String? notes
 });
 
 
@@ -276,7 +274,7 @@ class __$NewTransactionCopyWithImpl<$Res>
 
 /// Create a copy of NewTransaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? amount = null,Object? direction = null,Object? occurredAt = null,Object? kind = freezed,Object? categoryId = freezed,Object? merchant = freezed,Object? description = freezed,Object? accountId = freezed,Object? notes = freezed,Object? nfcTagId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? amount = null,Object? direction = null,Object? occurredAt = null,Object? kind = freezed,Object? categoryId = freezed,Object? merchant = freezed,Object? description = freezed,Object? accountId = freezed,Object? notes = freezed,}) {
   return _then(_NewTransaction(
 amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
 as Cop,direction: null == direction ? _self.direction : direction // ignore: cast_nullable_to_non_nullable
@@ -287,7 +285,6 @@ as String?,merchant: freezed == merchant ? _self.merchant : merchant // ignore: 
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,accountId: freezed == accountId ? _self.accountId : accountId // ignore: cast_nullable_to_non_nullable
 as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as String?,nfcTagId: freezed == nfcTagId ? _self.nfcTagId : nfcTagId // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

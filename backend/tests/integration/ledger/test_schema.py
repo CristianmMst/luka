@@ -378,7 +378,7 @@ async def test_dos_transaction_sources_con_raw_message_id_null_estan_permitidas(
         await session.commit()
 
     async with session_factory() as session:
-        for channel in ("manual", "nfc"):
+        for channel in ("manual", "manual"):
             await session.execute(
                 text(
                     "INSERT INTO transaction_sources "

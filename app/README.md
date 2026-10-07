@@ -166,7 +166,7 @@ iOS no deja leer notificaciones. La captura automática es una automatización p
 2. Correr `ios-unsigned` y descargar `luka.ipa` de los artefactos.
 3. Instalarlo con SideStore, que lo firma con el Apple ID; con un Apple ID gratuito hay que refrescarlo cada 7 días.
 
-Riesgos conocidos: el Swift solo se compila en Codemagic, así que los errores se corrigen con sus logs. Con un Apple ID gratuito el entitlement de lectura NFC puede no estar disponible; si SideStore lo quita, la lectura de tags en iOS no funciona, pero el resto sí.
+Riesgos conocidos: el Swift solo se compila en Codemagic, así que los errores se corrigen con sus logs.
 
 ### Registrar y categorías propias (F4.5a, F4.8a)
 

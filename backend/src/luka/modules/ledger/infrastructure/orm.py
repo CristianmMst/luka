@@ -28,7 +28,7 @@ _BANK_VALUES = "'bancolombia','nequi','davivienda','daviplata','bbva','banco_bog
 _ACCOUNT_KIND_VALUES = "'savings','checking','credit_card','wallet'"
 _DIRECTION_VALUES = "'debit','credit'"
 _TRANSACTION_KIND_VALUES = "'expense','income','transfer'"
-_CHANNEL_VALUES = "'email','notification','sms_notification','manual','nfc'"
+_CHANNEL_VALUES = "'email','notification','sms_notification','manual'"
 _FISCAL_TAG_VALUES = (
     "'ingreso_laboral','ingreso_honorarios','ingreso_capital','ingreso_no_laboral',"
     "'ingreso_pension','deducible_salud','deducible_vivienda','aporte_pension_voluntaria',"

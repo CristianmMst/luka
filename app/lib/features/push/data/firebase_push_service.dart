@@ -21,7 +21,7 @@ Future<bool> initFirebase() async {
   }
 }
 
-/// [PushService] sobre `firebase_messaging` (spec 008 §4.3).
+/// [PushService] sobre `firebase_messaging` (spec 008 §4.2).
 class FirebasePushService implements PushService {
   FirebasePushService({required bool available}) : _available = available;
 

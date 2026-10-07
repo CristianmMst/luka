@@ -46,7 +46,6 @@ class Channel(StrEnum):
     NOTIFICATION = "notification"
     SMS_NOTIFICATION = "sms_notification"
     MANUAL = "manual"
-    NFC = "nfc"
 
 
 class FiscalTag(StrEnum):

@@ -108,7 +108,7 @@ void main() {
     start();
     await pumpEventQueue();
 
-    final sources = [(channel: TxChannel.nfc, receivedAt: _at)];
+    final sources = [(channel: TxChannel.manual, receivedAt: _at)];
     when(
       () => repository.fetchSources('t1'),
     ).thenAnswer((_) async => sources);

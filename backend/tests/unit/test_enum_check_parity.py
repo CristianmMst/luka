@@ -61,6 +61,7 @@ _M0005 = _load_migration("0005_gmail_connections.py")
 _M0007 = _load_migration("0007_review_resolution_reparsed.py")
 _M0008 = _load_migration("0008_recurring_expenses.py")
 _M0009 = _load_migration("0009_device_tokens.py")
+_M0013 = _load_migration("0013_drop_nfc_channel.py")
 
 
 def _values(sql_list: str) -> tuple[str, ...]:
@@ -104,15 +105,16 @@ def test_canales_de_captura_coinciden_entre_ingestion_parsing_y_su_migracion() -
     assert _values(_M0003._CHANNEL_VALUES) == esperado
 
 
-def test_canales_de_ledger_son_los_de_captura_mas_manual_y_nfc() -> None:
-    """`ledger.Channel` es un superconjunto: agrega los origenes que no vienen de
-    un `raw_message` (`manual`, `nfc`), asi que se compara aparte.
+def test_canales_de_ledger_son_los_de_captura_mas_manual() -> None:
+    """`ledger.Channel` es un superconjunto: agrega el origen que no viene de un
+    `raw_message` (`manual`), asi que se compara aparte. El `CHECK` vigente es
+    el de 0013, que retiro `nfc`.
     """
     esperado = tuple(c.value for c in LedgerChannel)
 
-    assert esperado == (*tuple(c.value for c in IngestionChannel), "manual", "nfc")
+    assert esperado == (*tuple(c.value for c in IngestionChannel), "manual")
     assert _values(ledger_orm._CHANNEL_VALUES) == esperado
-    assert _values(_M0002._CHANNEL_VALUES) == esperado
+    assert _values(_M0013._CHANNEL_VALUES) == esperado
 
 
 def test_estados_de_raw_message_coinciden_con_orm_y_migracion() -> None:

@@ -45,7 +45,7 @@ abstract final class LightTokens {
   static const warningContainer = Color(0xFFFFE9B8);
   static const onWarningContainer = Color(0xFF3A2600);
 
-  /// Cabecera de marca del onboarding, el splash y NFC: blanca en claro
+  /// Cabecera de marca del onboarding y el splash: blanca en claro
   /// (rediseño sobre blanco), con tinta oscura.
   static const hero = Color(0xFFFFFFFF);
   static const onHero = Color(0xFF2A1210);

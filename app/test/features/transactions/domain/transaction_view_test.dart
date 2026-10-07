@@ -8,7 +8,6 @@ void main() {
       'notification': TxChannel.notification,
       'sms_notification': TxChannel.smsNotification,
       'manual': TxChannel.manual,
-      'nfc': TxChannel.nfc,
     };
 
     test('fromWire reconoce cada valor del cable', () {

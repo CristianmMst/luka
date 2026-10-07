@@ -9,9 +9,6 @@ import 'package:luka/features/auth/presentation/splash_page.dart';
 import 'package:luka/features/categories/presentation/my_categories_page.dart';
 import 'package:luka/features/dashboard/presentation/dashboard_page.dart';
 import 'package:luka/features/gmail/presentation/gmail_onboarding_page.dart';
-import 'package:luka/features/nfc/presentation/nfc_format.dart';
-import 'package:luka/features/nfc/presentation/nfc_tags_page.dart';
-import 'package:luka/features/nfc/presentation/quick_add_page.dart';
 import 'package:luka/features/onboarding/application/onboarding_gate.dart';
 import 'package:luka/features/onboarding/presentation/accounts_onboarding_page.dart';
 import 'package:luka/features/onboarding/presentation/apple_pay_onboarding_page.dart';
@@ -37,15 +34,10 @@ export 'package:luka/core/routing/routes.dart';
 /// resto de rutas (incluido `/onboarding/*` por deep link) no se redirige,
 /// así que avanzar entre pasos o desconectar Gmail en Ajustes no saca al
 /// usuario de donde está y no hay rebote entre Inicio y el onboarding.
-///
-/// [pendingDeepLink] es un registro rápido que llegó (por un tag NFC) antes
-/// de que hubiera sesión lista: al salir del splash o del login sin
-/// onboarding pendiente se abre ese en vez de Inicio.
 String? redirectFor(
   AsyncValue<AuthState> auth,
   String location, {
   required OnboardingGate onboarding,
-  String? pendingDeepLink,
 }) {
   final target = switch (auth) {
     AsyncData(value: Authenticated()) =>
@@ -55,7 +47,7 @@ String? redirectFor(
               // onboarding sería un rebote visible.
               OnboardingPending() => Routes.splash,
               OnboardingShow(:final step) => onboardingRoute(step),
-              OnboardingSkip() => pendingDeepLink ?? Routes.home,
+              OnboardingSkip() => Routes.home,
             }
           : null,
     AsyncData(value: Unauthenticated()) || AsyncError() => Routes.login,
@@ -78,36 +70,15 @@ final routerProvider = Provider<GoRouter>((ref) {
   // navegador raíz: a pantalla completa, sin la barra inferior del shell
   // (diseño DetalleA).
   final rootNavigatorKey = GlobalKey<NavigatorState>();
-  String? pendingDeepLink;
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: Routes.splash,
     refreshListenable: refresh,
-    redirect: (context, state) {
-      final auth = ref.read(authControllerProvider);
-      final onboarding = ref.read(onboardingGateProvider);
-      // Enlace externo `luka://quick-add?tag=…` (tag NFC, spec 006 §5).
-      final deepLink = quickAddLocation(state.uri);
-      if (deepLink != null) {
-        final ready =
-            auth is AsyncData<AuthState> &&
-            auth.value is Authenticated &&
-            onboarding is OnboardingSkip;
-        if (ready) return deepLink;
-        // Sin sesión lista: se guarda y se abre al salir del splash/login.
-        pendingDeepLink = deepLink;
-        return redirectFor(auth, Routes.splash, onboarding: onboarding) ??
-            Routes.splash;
-      }
-      final target = redirectFor(
-        auth,
-        state.matchedLocation,
-        onboarding: onboarding,
-        pendingDeepLink: pendingDeepLink,
-      );
-      if (target != null && target == pendingDeepLink) pendingDeepLink = null;
-      return target;
-    },
+    redirect: (context, state) => redirectFor(
+      ref.read(authControllerProvider),
+      state.matchedLocation,
+      onboarding: ref.read(onboardingGateProvider),
+    ),
     routes: [
       GoRoute(
         path: Routes.splash,
@@ -148,16 +119,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Routes.home,
                 builder: (context, state) => const DashboardPage(),
-                routes: [
-                  GoRoute(
-                    path: Routes.quickAdd.substring(1),
-                    parentNavigatorKey: rootNavigatorKey,
-                    // Hoja sobre la app (diseño B): no tapa lo de abajo.
-                    pageBuilder: (context, state) => QuickAddPage.page(
-                      tagId: state.uri.queryParameters['tag'] ?? '',
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -231,11 +192,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'cuentas',
                     parentNavigatorKey: rootNavigatorKey,
                     builder: (context, state) => const MyAccountsPage(),
-                  ),
-                  GoRoute(
-                    path: 'tags-nfc',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const NfcTagsPage(),
                   ),
                   GoRoute(
                     path: 'apple-pay',

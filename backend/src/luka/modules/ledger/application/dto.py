@@ -88,7 +88,7 @@ class Page:
 
 @dataclass(frozen=True, slots=True)
 class SourceInput:
-    """Fuente cruda que origino una captura (email/notificacion/SMS/manual/NFC)."""
+    """Fuente cruda que origino una captura (email/notificacion/SMS/manual)."""
 
     channel: Channel
     raw_message_id: UUID | None

@@ -119,10 +119,10 @@ Convenciones: PK `id UUID DEFAULT gen_random_uuid()`; timestamps `TIMESTAMPTZ`; 
 |---|---|---|
 | id | UUID PK | |
 | transaction_id | UUID FK | `ON DELETE CASCADE` |
-| raw_message_id | UUID NULL FK | `→ raw_messages ON DELETE SET NULL` (la evidencia sobrevive; NULL si fuente manual/NFC o si el mensaje crudo se borró) |
-| channel | TEXT | `email` / `notification` / `sms_notification` / `manual` / `nfc` |
+| raw_message_id | UUID NULL FK | `→ raw_messages ON DELETE SET NULL` (la evidencia sobrevive; NULL si fuente manual o si el mensaje crudo se borró) |
+| channel | TEXT | `email` / `notification` / `sms_notification` / `manual` |
 | received_at | TIMESTAMPTZ | |
-| UNIQUE parcial | `(transaction_id, raw_message_id) WHERE raw_message_id IS NOT NULL` | evita adjuntar la misma fuente dos veces; varias fuentes manuales/NFC (`raw_message_id IS NULL`) sí pueden coexistir |
+| UNIQUE parcial | `(transaction_id, raw_message_id) WHERE raw_message_id IS NOT NULL` | evita adjuntar la misma fuente dos veces; varias fuentes manuales (`raw_message_id IS NULL`) sí pueden coexistir |
 
 ### 2.7 `raw_messages` (ingestion)
 

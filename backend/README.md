@@ -360,7 +360,7 @@ fixture de mensaje real anonimizado.** Para añadir un banco/plantilla nuevos:
 Un evento de log estructurado `parsing_metric` por resultado (nunca datos crudos del mensaje, P1):
 desde `parsing` con claves `outcome, bank, channel, template_id, reason, llm_tokens`
 (`outcome ∈ {parsed_by_rule, parsed_by_llm, sent_to_review, discarded}`); desde `ingestion` con
-`outcome ∈ {accepted, duplicate, discarded}` + `channel, bank, reason, republished`. Ver spec 006 §6.
+`outcome ∈ {accepted, duplicate, discarded}` + `channel, bank, reason, republished`. Ver spec 006 §5.
 No hay agregación en base de datos ni dashboard en Fase 2 — los contadores se calculan agregando
 logs.
 

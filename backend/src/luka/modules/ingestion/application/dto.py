@@ -45,7 +45,7 @@ class Accepted:
 
     `bank` es el banco resuelto por el filtro de remitente/paquete al ingerir; se
     expone aqui (ademas de en la fila) para que `infrastructure` pueda emitir
-    metricas `parsing_metric` por banco/canal (spec 006 §6) sin una SELECT extra.
+    metricas `parsing_metric` por banco/canal (spec 006 §5) sin una SELECT extra.
     """
 
     raw_message_id: UUID
@@ -58,7 +58,7 @@ class Duplicate:
 
     `republished=True` cuando la fila existente seguia `pending` y se volvio a
     publicar `RawMessageReceived` (D9, mitiga la falta de outbox). `bank` es el de
-    la fila ya existente (spec 006 §6, metricas por banco/canal).
+    la fila ya existente (spec 006 §5, metricas por banco/canal).
     """
 
     raw_message_id: UUID

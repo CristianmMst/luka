@@ -9,7 +9,7 @@ import 'package:luka/features/sync/domain/outbox_operation.dart';
   CreateTransactionOp(:final data) => (
     method: 'POST',
     path: '/v1/transactions',
-    body: _newTransactionBody(data, includeNfcTag: true),
+    body: _newTransactionBody(data),
   ),
   PatchTransactionOp(:final id, :final patch) => (
     method: 'PATCH',
@@ -34,7 +34,7 @@ import 'package:luka/features/sync/domain/outbox_operation.dart';
   ConvertReviewOp(:final rawMessageId, :final data) => (
     method: 'POST',
     path: '/v1/review/$rawMessageId/convert',
-    body: _newTransactionBody(data, includeNfcTag: false),
+    body: _newTransactionBody(data),
   ),
   DiscardReviewOp(:final rawMessageId) => (
     method: 'POST',
@@ -43,10 +43,7 @@ import 'package:luka/features/sync/domain/outbox_operation.dart';
   ),
 };
 
-Map<String, Object?> _newTransactionBody(
-  NewTransaction data, {
-  required bool includeNfcTag,
-}) => {
+Map<String, Object?> _newTransactionBody(NewTransaction data) => {
   'amount': data.amount.toWire(),
   'direction': data.direction.name,
   'occurred_at': data.occurredAt.toUtc().toIso8601String(),
@@ -56,7 +53,6 @@ Map<String, Object?> _newTransactionBody(
   if (data.description != null) 'description': data.description,
   if (data.accountId != null) 'account_id': data.accountId,
   if (data.notes != null) 'notes': data.notes,
-  if (includeNfcTag && data.nfcTagId != null) 'nfc_tag_id': data.nfcTagId,
 };
 
 Map<String, Object?> _patchBody(TransactionPatch patch) => {

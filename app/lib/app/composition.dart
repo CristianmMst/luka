@@ -13,8 +13,6 @@ import 'package:luka/features/dashboard/application/dashboard_providers.dart';
 import 'package:luka/features/dashboard/data/dashboard_data_providers.dart';
 import 'package:luka/features/gmail/application/gmail_controller.dart';
 import 'package:luka/features/gmail/data/gmail_data_providers.dart';
-import 'package:luka/features/nfc/application/nfc_actions.dart';
-import 'package:luka/features/nfc/data/nfc_data_providers.dart';
 import 'package:luka/features/onboarding/application/onboarding_gate.dart';
 import 'package:luka/features/onboarding/data/onboarding_data_providers.dart';
 import 'package:luka/features/privacy/application/privacy_actions.dart';
@@ -106,12 +104,6 @@ List<Override> get appOverrides => [
   ),
   accountsRemoteProvider.overrideWith((ref) => ref.watch(accountsApiProvider)),
   privacyRemoteProvider.overrideWith((ref) => ref.watch(privacyApiProvider)),
-  nfcTagStoreProvider.overrideWith(
-    (ref) => ref.watch(driftNfcTagStoreProvider),
-  ),
-  nfcServiceProvider.overrideWith(
-    (ref) => ref.watch(nfcManagerServiceProvider),
-  ),
   accountsStoreProvider.overrideWith(
     (ref) => ref.watch(driftAccountsStoreProvider),
   ),

@@ -14,7 +14,6 @@ part 'app_database.g.dart';
     LocalReview,
     Outbox,
     SyncState,
-    LocalNfcTags,
     LocalRecurringExpenses,
     LocalRecurringOccurrences,
   ],
@@ -24,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'luka'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -43,12 +42,16 @@ class AppDatabase extends _$AppDatabase {
           syncState,
         )..where((s) => s.key.equals('transactions_cursor'))).go();
       }
-      // v4: plantillas de tags NFC (F4.5b).
-      if (from < 4) await m.createTable(localNfcTags);
       // v5: gastos fijos y sus ocurrencias (F7.6).
       if (from < 5) {
         await m.createTable(localRecurringExpenses);
         await m.createTable(localRecurringOccurrences);
+      }
+      // v6: se retiraron los tags NFC; su tabla (v4) sobra.
+      if (from < 6) {
+        await customStatement(
+          'DROP TABLE IF EXISTS local_nfc_tags',
+        );
       }
     },
   );

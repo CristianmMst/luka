@@ -61,8 +61,6 @@ class DriftSyncStore implements SyncStore {
     await (_db.delete(
       _db.syncState,
     )..where((s) => s.key.like('$deviceStatePrefix%').not())).go();
-    // Plantillas de tags NFC: locales, pero del usuario (P6).
-    await _db.delete(_db.localNfcTags).go();
     await _db.delete(_db.localRecurringOccurrences).go();
     await _db.delete(_db.localRecurringExpenses).go();
   }
@@ -549,9 +547,9 @@ class DriftSyncStore implements SyncStore {
     final kind =
         data.kind ??
         (data.direction == TxDirection.debit ? TxKind.expense : TxKind.income);
-    // Como el servidor: el banco sale de la cuenta, y el canal es `nfc` si
-    // vino de un tag (spec 005 §6). Así el filtro por banco y el ícono del
-    // canal se ven bien antes del pull.
+    // Como el servidor: el banco sale de la cuenta y el canal es `manual`
+    // (spec 005 §6). Así el filtro por banco y el ícono del canal se ven
+    // bien antes del pull.
     final accountId = data.accountId;
     final bank = accountId == null
         ? null
@@ -574,9 +572,7 @@ class DriftSyncStore implements SyncStore {
             accountId: Value(accountId),
             categoryId: Value(data.categoryId),
             fiscalTag: Value(await _fiscalTagOf(data.categoryId)),
-            channels: Value(
-              jsonEncode([if (data.nfcTagId != null) 'nfc' else 'manual']),
-            ),
+            channels: Value(jsonEncode(['manual'])),
             parsedBy: 'manual',
             notes: Value(data.notes),
             createdAt: now,

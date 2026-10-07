@@ -40,7 +40,6 @@ class CreateTransactionRequest(BaseModel):
     account_id: UUID | None = None
     notes: str | None = Field(default=None, max_length=1000)
     kind: Kind | None = None
-    nfc_tag_id: str | None = Field(default=None, max_length=128)
 
     @field_validator("occurred_at")
     @classmethod
@@ -139,7 +138,7 @@ class PatchAccountRequest(BaseModel):
 
 class ConvertReviewRequest(BaseModel):
     """Body de `POST /review/{raw_message_id}/convert`: igual a `CreateTransactionRequest`
-    salvo `nfc_tag_id` (la fuente es siempre el `raw_message`, no NFC).
+    (la fuente es siempre el `raw_message`).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -196,7 +195,7 @@ class TransactionListItem(BaseModel):
     por fila haria del listado una consulta N+1). Comparte todos los demas campos con
     `TransactionResponse`, que hereda de esta clase y agrega `sources`/`pair`.
     `channels` son los valores unicos de `Channel` de sus fuentes, en el orden estable
-    del enum (`email`, `notification`, `sms_notification`, `manual`, `nfc`); `[]` si la
+    del enum (`email`, `notification`, `sms_notification`, `manual`); `[]` si la
     transaccion no tiene fuentes (F4.2).
     """
 

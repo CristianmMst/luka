@@ -53,7 +53,7 @@ final class PushState {
 }
 
 /// Registra el token de FCM con sesión, lo borra al salir y guarda los
-/// avisos tocados para abrir `/gastos-fijos` (spec 008 §4.3). Sin Firebase
+/// avisos tocados para abrir `/gastos-fijos` (spec 008 §4.2). Sin Firebase
 /// configurado no hace nada.
 class PushRegistrar extends Notifier<PushState> {
   String? _registered;

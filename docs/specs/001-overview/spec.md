@@ -33,7 +33,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 ### MVP (v1)
 
 - Registro/login con Google Sign-In; conexión de Gmail (scope `gmail.readonly`) en el onboarding.
-- Captura por: correos Gmail (push), notificaciones Android (apps bancarias + Google Wallet + app de Mensajes para SMS), registro manual, tag NFC físico.
+- Captura por: correos Gmail (push), notificaciones Android (apps bancarias + Google Wallet + app de Mensajes para SMS), registro manual y pagos con Apple Pay (iOS).
 - Parsing híbrido (plantillas por banco + DeepSeek V4 Flash) con cola de revisión manual.
 - Bancos soportados al lanzamiento: **Bancolombia, Nequi, Davivienda, Daviplata, BBVA Colombia, Banco de Bogotá**. Otros correos bancarios caen al LLM genérico.
 - Deduplicación multi-fuente y detección de transferencias entre cuentas propias.
@@ -41,7 +41,7 @@ Mercado inicial: Colombia. La app es de **uso masivo** (multiusuario, registro a
 - Dashboard mensual, historial, cola de revisión.
 - Gastos fijos mensuales: se tachan solos cuando la captura detecta el pago y avisan 7 y 2 días antes a las 9:00 a. m., y el día antes a las 9:00 a. m. y a las 5:00 p. m. (hora de Colombia): por push de Firebase en Android y con avisos locales en iPhone (spec 011).
 - Reporte anual estilo formulario 210 (JSON + Excel) y simulación básica de si está obligado a declarar (topes UVT).
-- iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + NFC en foreground + pagos con Apple Pay por una automatización de Atajos, iOS 17+, spec 006 §3.3).
+- iOS: misma app sin listener de notificaciones/SMS (captura vía Gmail + manual + pagos con Apple Pay por una automatización de Atajos, iOS 17+, spec 006 §3.3).
 
 ### Fuera de alcance del MVP (backlog)
 

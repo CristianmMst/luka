@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:luka/core/format/money.dart';
 import 'package:luka/core/l10n/gen/app_localizations.dart';
 import 'package:luka/core/theme/luka_colors.dart';
@@ -10,9 +9,6 @@ import 'package:luka/core/theme/tokens/spacing.dart';
 import 'package:luka/core/widgets/inline_notice.dart';
 import 'package:luka/features/accounts/presentation/account_picker_sheet.dart';
 import 'package:luka/features/categories/presentation/category_visuals.dart';
-import 'package:luka/features/nfc/application/nfc_actions.dart';
-import 'package:luka/features/nfc/domain/nfc_ports.dart';
-import 'package:luka/features/nfc/presentation/nfc_format.dart';
 import 'package:luka/features/review/presentation/widgets/review_format.dart';
 import 'package:luka/features/sync/application/sync_coordinator.dart';
 import 'package:luka/features/sync/domain/synced_models.dart';
@@ -170,30 +166,6 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage>
     });
   }
 
-  /// iOS: lee un tag en primer plano y abre su registro rápido (spec 006
-  /// §5). En Android el tag abre la app solo.
-  Future<void> _readNfc() async {
-    final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
-    try {
-      final uri = await ref.read(nfcServiceProvider).readUri();
-      final location = uri == null ? null : quickAddLocation(uri);
-      if (location == null) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.registerReadNfcUnknown)),
-        );
-        return;
-      }
-      unawaited(router.push(location));
-    } on NfcFailure catch (failure) {
-      if (failure is NfcCancelled) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text(nfcFailureMessage(l10n, failure))),
-      );
-    }
-  }
-
   Future<void> _pickAccount() async {
     final pick = await AccountPickerSheet.show(context, selectedId: _accountId);
     if (pick == null || !mounted) return;
@@ -319,17 +291,6 @@ class _RegistrarPageState extends ConsumerState<RegistrarPage>
                     ],
                   ),
                 ),
-                if (ref.watch(nfcManualReadProvider))
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : () => unawaited(_readNfc()),
-                    icon: const Icon(Icons.nfc_rounded, size: 18),
-                    label: Text(l10n.registerReadNfc),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, minTouchTarget),
-                      shape: const StadiumBorder(),
-                      side: BorderSide(color: context.lukaColors.hairline),
-                    ),
-                  ),
               ],
             ),
             if (offline) ...[

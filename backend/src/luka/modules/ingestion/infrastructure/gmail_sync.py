@@ -102,7 +102,7 @@ class ArqGmailSyncQueue:
 
 
 class _LoggedIngest:
-    """`RawMessageIngestPort` que emite `parsing_metric` por mensaje (spec 006 §6)."""
+    """`RawMessageIngestPort` que emite `parsing_metric` por mensaje (spec 006 §5)."""
 
     def __init__(self, ingest: IngestRawMessage) -> None:
         self._ingest = ingest

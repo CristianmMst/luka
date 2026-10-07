@@ -107,7 +107,6 @@ class _SourceCard extends StatelessWidget {
       TxChannel.smsNotification => (l10n.sourceSms, 'male'),
       TxChannel.email => (l10n.sourceEmail, 'male'),
       TxChannel.manual => (l10n.sourceManual, 'other'),
-      TxChannel.nfc => (l10n.sourceNfc, 'female'),
     };
 
     return Semantics(

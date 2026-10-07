@@ -3,7 +3,7 @@
 `application` no puede importar `structlog` (R2); este helper vive en
 `infrastructure` y traduce un `IngestOutcome` ya resuelto a una linea de log,
 sin volver a tocar ningun dato crudo del mensaje. `bank` se incluye para
-`accepted`/`duplicate` (spec 006 §6, contadores por banco/canal); `Discarded`
+`accepted`/`duplicate` (spec 006 §5, contadores por banco/canal); `Discarded`
 nunca lo tiene porque el mensaje se descarto antes de resolver un banco.
 """
 

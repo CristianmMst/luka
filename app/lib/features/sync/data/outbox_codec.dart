@@ -96,7 +96,6 @@ class OutboxCodec {
     if (data.description != null) 'description': data.description,
     if (data.accountId != null) 'account_id': data.accountId,
     if (data.notes != null) 'notes': data.notes,
-    if (data.nfcTagId != null) 'nfc_tag_id': data.nfcTagId,
   });
 
   static NewTransaction _decodeNewTransaction(Map<String, dynamic> body) =>
@@ -112,7 +111,6 @@ class OutboxCodec {
         description: body['description'] as String?,
         accountId: body['account_id'] as String?,
         notes: body['notes'] as String?,
-        nfcTagId: body['nfc_tag_id'] as String?,
       );
 
   static String _encodePatch(TransactionPatch patch) => jsonEncode({

@@ -81,7 +81,7 @@ async def record_captured_transaction(
     clock: ClockPort,
     cmd: CapturedTransactionCommand,
 ) -> Recorded:
-    """Registra una captura entrante (email/notificacion/SMS/NFC) sobre `session`.
+    """Registra una captura entrante (email/notificacion/SMS) sobre `session`.
 
     Ensambla `RecordCapturedTransaction` con los repositorios SQLAlchemy y publica
     en `event_bus` (spec 004 SS3, AC-5.1/5.2). El llamador es responsable de la

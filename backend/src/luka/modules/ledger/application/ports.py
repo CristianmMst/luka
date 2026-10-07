@@ -166,7 +166,7 @@ class TombstoneRepositoryPort(Protocol):
 
 
 class TransactionSourceRepositoryPort(Protocol):
-    """Persistencia de fuentes crudas (email/notificacion/SMS/manual/NFC)."""
+    """Persistencia de fuentes crudas (email/notificacion/SMS/manual)."""
 
     async def attach(self, source: TransactionSource) -> bool:
         """Adjunta `source`; `True` si se inserto, `False` si ya existia (idempotente

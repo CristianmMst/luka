@@ -122,7 +122,6 @@ const List<TxChannel> channelOrder = [
   TxChannel.smsNotification,
   TxChannel.email,
   TxChannel.manual,
-  TxChannel.nfc,
 ];
 
 IconData channelIcon(TxChannel channel) => switch (channel) {
@@ -130,7 +129,6 @@ IconData channelIcon(TxChannel channel) => switch (channel) {
   TxChannel.smsNotification => Icons.sms_outlined,
   TxChannel.email => Icons.mail_outline_rounded,
   TxChannel.manual => Icons.edit_outlined,
-  TxChannel.nfc => Icons.nfc_rounded,
 };
 
 String channelName(AppLocalizations l10n, TxChannel channel) =>
@@ -139,7 +137,6 @@ String channelName(AppLocalizations l10n, TxChannel channel) =>
       TxChannel.smsNotification => l10n.channelSms,
       TxChannel.email => l10n.channelEmail,
       TxChannel.manual => l10n.channelManual,
-      TxChannel.nfc => l10n.channelNfc,
     };
 
 /// Opciones de "Fuente" del filtro: "Notificación" cubre también los SMS
@@ -153,7 +150,6 @@ List<({String label, Set<TxChannel> channels})> sourceOptions(
   ),
   (label: l10n.channelEmail, channels: const {TxChannel.email}),
   (label: l10n.channelManual, channels: const {TxChannel.manual}),
-  (label: l10n.channelNfc, channels: const {TxChannel.nfc}),
 ];
 
 // ----------------------------------------------------------------- bancos

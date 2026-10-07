@@ -17,7 +17,6 @@ abstract class NewTransaction with _$NewTransaction {
     String? description,
     String? accountId,
     String? notes,
-    String? nfcTagId,
   }) = _NewTransaction;
 }
 

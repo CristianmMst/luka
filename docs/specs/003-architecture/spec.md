@@ -7,9 +7,7 @@ flowchart TB
     subgraph device["Dispositivo del usuario"]
         APP["App Flutter<br/>(offline-first, Drift)"]
         NL["NotificationListener<br/>(Android)"]
-        NFC["Tag NFC"]
         NL --> APP
-        NFC --> APP
     end
 
     subgraph gcp["Google Cloud (solo mensajería, gratis)"]
@@ -142,7 +140,7 @@ app/lib/
 └── features/
     ├── auth/
     ├── transactions/
-    ├── capture/             # listener notificaciones, NFC, registro manual
+    ├── capture/             # listener notificaciones, Apple Pay, registro manual
     ├── review/
     ├── fiscal_report/
     ├── recurring/           # gastos fijos: lista del mes, tachado, hoja de edición (spec 008 §3.8)
@@ -159,7 +157,7 @@ app/lib/
 - **Riverpod 3** provee estado e inyección de dependencias (repos como providers → mockeables en tests). Los providers se escriben a mano (`Notifier`/`AsyncNotifier`), sin `riverpod_generator`: con Flutter 3.35 ninguna versión del generador resuelve junto a Riverpod 3.3 (conflicto de `meta`/`analyzer`).
 - **Reglas de capas** (verificadas por `app/test/architecture_test.dart`, equivalente a import-linter): `domain` es Dart puro (sin Flutter, dio, Drift ni Riverpod); `application` no importa `data` ni `presentation`; `presentation` no importa `data`; `core` no importa features ni `app`. `application` declara sus puertos como providers que fallan si no se sobrescriben, y `lib/app/composition.dart` es el único lugar que los conecta con las implementaciones de `data`.
 - **Red**: dos clientes dio. El público (`/v1/auth/*`) no tiene interceptor, así un refresh nunca dispara otro refresh. El autenticado usa `AuthInterceptor`, que añade el Bearer y, ante `401 token_expired`, hace un refresh single-flight y reintenta una vez. `core` define el puerto `SessionBridge` y la feature `auth` lo implementa (`SessionManager`).
-- El código de plataforma (notification listener, NFC) vive detrás de interfaces de `capture/domain`; el resto de la app no distingue el origen de una transacción.
+- El código de plataforma (notification listener, cola de Apple Pay) vive detrás de interfaces de `capture/domain`; el resto de la app no distingue el origen de una transacción.
 - iOS compila la misma app: `capture` expone el puerto `NotificationSource`, con `MethodChannelNotificationSource` (listener nativo en `android/app/src/main/kotlin/co/luka/luka/capture/`) en Android e `IosWalletNotificationSource` (cola de pagos con Apple Pay que llena la App Intent de `ios/Runner/`, spec 006 §3.3) en iOS; `readsNotifications` distingue las dos para la UI. `NoopNotificationSource` queda para las plataformas sin captura.
 
 ## 4. Flujo end-to-end (correo → transacción)
@@ -197,7 +195,7 @@ sequenceDiagram
 
 | Capa | Tecnología | Nota |
 |---|---|---|
-| App | Flutter estable (≥3.35), Riverpod 3, Drift, dio, go_router, google_sign_in, nfc_manager, notification_listener_service, firebase_core + firebase_messaging | versiones de Firebase compatibles con Flutter 3.35 |
+| App | Flutter estable (≥3.35), Riverpod 3, Drift, dio, go_router, google_sign_in, notification_listener_service, firebase_core + firebase_messaging | versiones de Firebase compatibles con Flutter 3.35 |
 | API | Python 3.12+, FastAPI, Pydantic v2, SQLAlchemy 2 + Alembic | uv como gestor |
 | Workers | arq (async, nativo Redis) | misma imagen |
 | Datos | PostgreSQL 16, Redis 7 | |

@@ -31,7 +31,7 @@ final class PushOpen {
   int get hashCode => occurrenceId.hashCode;
 }
 
-/// Firebase Cloud Messaging en el teléfono (spec 008 §4.3).
+/// Firebase Cloud Messaging en el teléfono (spec 008 §4.2).
 abstract interface class PushService {
   /// `false` si Firebase no está configurado: la app funciona sin push.
   bool get isAvailable;

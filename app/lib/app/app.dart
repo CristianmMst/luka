@@ -44,7 +44,7 @@ class LukaApp extends ConsumerWidget {
   }
 
   /// Abre `/gastos-fijos?ocurrencia=<id>` para el aviso tocado (spec 008
-  /// §4.3), o lo ofrece como snackbar si llegó con la app abierta.
+  /// §4.2), o lo ofrece como snackbar si llegó con la app abierta.
   static void _onPush(WidgetRef ref, PushState push) {
     final signedIn = switch (ref.read(authControllerProvider)) {
       AsyncData(value: Authenticated()) => true,

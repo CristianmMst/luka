@@ -105,7 +105,6 @@ async def list_transactions(  # noqa: PLR0913, PLR0917 - un parametro por filtro
         category_id=category_id,
         bank=bank,
         account_id=account_id,
-        channel=channel,
         q=q,
         updated_since=updated_since,
     )
@@ -127,7 +126,6 @@ async def create_transaction(
     get_transaction: GetTransaction = Depends(get_get_transaction_use_case),
 ) -> TransactionResponse:
     """Registra una transaccion manual (spec 005 SS6)."""
-    channel = Channel.NFC if body.nfc_tag_id else Channel.MANUAL
     cmd = ManualTransactionCommand(
         user_id=user_id,
         amount=Decimal(body.amount),
@@ -138,7 +136,6 @@ async def create_transaction(
         description=body.description,
         account_id=body.account_id,
         notes=body.notes,
-        channel=channel,
         kind=body.kind,
     )
     tx = await use_case.execute(cmd)

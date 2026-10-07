@@ -9,8 +9,7 @@ enum TxChannel {
   email,
   notification,
   smsNotification,
-  manual,
-  nfc;
+  manual;
 
   /// Convierte el string del cable (`sms_notification`, etc.) al enum.
   /// `null` si no se reconoce.
@@ -19,7 +18,6 @@ enum TxChannel {
     'notification' => TxChannel.notification,
     'sms_notification' => TxChannel.smsNotification,
     'manual' => TxChannel.manual,
-    'nfc' => TxChannel.nfc,
     _ => null,
   };
 
@@ -29,7 +27,6 @@ enum TxChannel {
     TxChannel.notification => 'notification',
     TxChannel.smsNotification => 'sms_notification',
     TxChannel.manual => 'manual',
-    TxChannel.nfc => 'nfc',
   };
 }
 

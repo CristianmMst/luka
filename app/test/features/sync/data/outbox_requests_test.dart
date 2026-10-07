@@ -15,7 +15,6 @@ void main() {
     description: 'mercado',
     accountId: 'a1',
     notes: 'nota',
-    nfcTagId: 'tag-1',
   );
   const newTxKeys = {
     'amount',
@@ -35,7 +34,7 @@ void main() {
       OutboxOperation.createTransaction(localId: 'l1', data: full),
       'POST',
       '/v1/transactions',
-      {...newTxKeys, 'nfc_tag_id'},
+      newTxKeys,
     ),
     (
       'patch',
@@ -69,7 +68,7 @@ void main() {
       null,
     ),
     (
-      'convertir (sin nfc_tag_id)',
+      'convertir',
       OutboxOperation.convertReview(
         rawMessageId: 'r1',
         localId: 'l2',
