@@ -914,7 +914,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationDisclosureReads =>
-      'Leemos solo las notificaciones de las apps de tus bancos y los SMS que envían tus bancos.';
+      'Leemos solo las notificaciones de las apps de tus bancos, de Google Wallet y Samsung Wallet, y los SMS que envían tus bancos.';
 
   @override
   String get notificationDisclosureIgnores =>
@@ -1637,7 +1637,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationsOnboardingReads =>
-      'Solo las apps de tus bancos y los SMS que envían tus bancos.';
+      'Solo las apps de tus bancos, Google Wallet, Samsung Wallet y los SMS que envían tus bancos.';
 
   @override
   String get notificationsOnboardingIgnores =>

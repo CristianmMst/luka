@@ -50,6 +50,10 @@ void main() {
     expect(find.textContaining('Ignoramos todo lo demás'), findsOneWidget);
     verifyNever(() => source.openPermissionSettings());
 
+    await tester.ensureVisible(find.text('Ir a los ajustes'));
+
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Ir a los ajustes'));
     await tester.pumpAndSettle();
     verify(() => source.openPermissionSettings()).called(1);

@@ -14,7 +14,11 @@ banking_apps:
     bank: bbva
   - package: com.bancodebogota.bancamovil
     bank: banco_bogota
+  # Billeteras del celular (pagos sin contacto): sin banco asociado y aun sin
+  # plantilla, asi que su texto lo lee el LLM de respaldo (spec 006 §3.1).
   - package: com.google.android.apps.walletnfcrel
+    bank: null
+  - package: com.samsung.android.spay
     bank: null
   # Sintetico: pagos con Apple Pay que la app de iPhone recibe de la
   # automatizacion "Transaccion" de Atajos (F4.3b). El titulo es el nombre de

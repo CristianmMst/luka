@@ -47,7 +47,10 @@ void main() {
 
     expect(find.text('Registra tus pagos al instante'), findsOneWidget);
     expect(
-      find.text('Solo las apps de tus bancos y los SMS que envían tus bancos.'),
+      find.text(
+        'Solo las apps de tus bancos, Google Wallet, Samsung Wallet y los SMS '
+        'que envían tus bancos.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('Chats, correos y SMS'), findsOneWidget);

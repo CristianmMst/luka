@@ -30,6 +30,7 @@ CAPTURE_CONFIG = {
         {"package": "com.bancolombia.app", "bank": "bancolombia"},
         {"package": "com.nequi.MobileApp", "bank": "nequi"},
         {"package": "com.google.android.apps.walletnfcrel", "bank": None},
+        {"package": "com.samsung.android.spay", "bank": None},
         {"package": "com.apple.wallet", "bank": None, "bank_from_title": True},
     ],
     "messages_apps": [
@@ -115,6 +116,11 @@ class TestCaptureConfigNotification:
         decision = capture.bank_for_notification(
             "com.google.android.apps.walletnfcrel", "notification", None
         )
+        assert decision.accepted is True
+        assert decision.bank is None
+
+    def test_samsung_wallet_aceptada_sin_banco(self, capture: CaptureConfig) -> None:
+        decision = capture.bank_for_notification("com.samsung.android.spay", "notification", None)
         assert decision.accepted is True
         assert decision.bank is None
 

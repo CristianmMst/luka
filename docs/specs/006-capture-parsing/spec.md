@@ -5,7 +5,7 @@
 | Canal | Plataforma | Latencia objetivo | Mecanismo |
 |---|---|---|---|
 | Correo Gmail | Ambas (server-side) | < 60 s p95 | Gmail watch → Pub/Sub → webhook |
-| Notificación bancaria / Google Wallet | Android | < 10 s p95 | NotificationListenerService |
+| Notificación bancaria / Google Wallet / Samsung Wallet | Android | < 10 s p95 | NotificationListenerService |
 | SMS bancario | Android | < 10 s p95 | Notificación de la app de Mensajes (NO READ_SMS) |
 | Pago con Apple Pay | iOS 17+ | al abrir la app | Automatización "Transacción" de Atajos → App Intent → cola nativa (§3.3) |
 | Manual | Ambas | inmediato | formulario |
@@ -87,7 +87,9 @@ banking_apps:
     bank: bbva
   - package: com.bancodebogota.bancamovil
     bank: banco_bogota
-  - package: com.google.android.apps.walletnfcrel   # Google Wallet: sin banco asociado
+  - package: com.google.android.apps.walletnfcrel   # Google Wallet: sin banco ni plantilla (LLM)
+    bank: null
+  - package: com.samsung.android.spay              # Samsung Wallet: sin banco ni plantilla (LLM)
     bank: null
 messages_apps:                    # para SMS-vía-notificación
   - com.google.android.apps.messaging

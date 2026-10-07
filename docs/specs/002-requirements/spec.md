@@ -27,7 +27,7 @@ Formato: historias de usuario con criterios de aceptación **Given/When/Then**. 
 
 *Como usuario Android, quiero que los pagos que hago (incluidos NFC/contactless) se registren al instante desde las notificaciones de mis apps bancarias.*
 
-- **AC-3.1** Given el permiso de acceso a notificaciones concedido, When una app bancaria soportada o Google Wallet publica una notificación de pago, Then la transacción aparece en la app en < 10 segundos (p95).
+- **AC-3.1** Given el permiso de acceso a notificaciones concedido, When una app bancaria soportada, Google Wallet o Samsung Wallet publica una notificación de pago, Then la transacción aparece en la app en < 10 segundos (p95).
 - **AC-3.2** Given una notificación de la app de Mensajes cuyo remitente coincide con un patrón de SMS bancario, Then se procesa igual que una notificación bancaria (así se cubren los SMS sin permisos `READ_SMS`).
 - **AC-3.3** Given una notificación de una app fuera de la lista de paquetes soportados, Then se ignora localmente y su contenido nunca sale del dispositivo.
 - **AC-3.4** Given el permiso revocado por el usuario o el sistema, Then la app lo detecta y muestra cómo reactivarlo, sin romper el resto de la captura.

@@ -1501,7 +1501,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationDisclosureReads.
   ///
   /// In es, this message translates to:
-  /// **'Leemos solo las notificaciones de las apps de tus bancos y los SMS que envían tus bancos.'**
+  /// **'Leemos solo las notificaciones de las apps de tus bancos, de Google Wallet y Samsung Wallet, y los SMS que envían tus bancos.'**
   String get notificationDisclosureReads;
 
   /// No description provided for @notificationDisclosureIgnores.
@@ -2749,7 +2749,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsOnboardingReads.
   ///
   /// In es, this message translates to:
-  /// **'Solo las apps de tus bancos y los SMS que envían tus bancos.'**
+  /// **'Solo las apps de tus bancos, Google Wallet, Samsung Wallet y los SMS que envían tus bancos.'**
   String get notificationsOnboardingReads;
 
   /// No description provided for @notificationsOnboardingIgnores.

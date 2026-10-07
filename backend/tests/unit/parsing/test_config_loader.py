@@ -48,10 +48,11 @@ class TestLoadParsingConfig:
 
     def test_capture_tiene_8_apps(self) -> None:
         config = load_parsing_config()
-        assert len(config.capture.banking_apps) == 8
+        assert len(config.capture.banking_apps) == 9
         assert config.capture.banking_apps["com.apple.wallet"] is None
         assert config.capture.banking_apps["com.bancolombia.app"] == "bancolombia"
         assert config.capture.banking_apps["com.google.android.apps.walletnfcrel"] is None
+        assert config.capture.banking_apps["com.samsung.android.spay"] is None
 
     def test_capture_raw_es_el_dict_crudo_del_yaml(self) -> None:
         config = load_parsing_config()

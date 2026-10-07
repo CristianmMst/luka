@@ -82,6 +82,8 @@ void main() {
 
     await tester.tap(find.byType(InkWell));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Ir a los ajustes'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ir a los ajustes'));
     await tester.pumpAndSettle();
 
