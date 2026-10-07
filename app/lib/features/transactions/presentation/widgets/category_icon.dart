@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:luka/features/categories/presentation/category_visuals.dart';
+import 'package:luka/features/transactions/domain/transaction_view.dart';
 
 /// Ícono Material de cada categoría del sistema, por slug
 /// (`SYSTEM_CATEGORIES` del backend). Las del usuario usan el genérico.
@@ -37,3 +39,10 @@ const IconData transferIcon = Icons.swap_horiz_rounded;
 
 IconData categoryIcon(String? slug) =>
     _systemIcons[slug] ?? genericCategoryIcon;
+
+/// Ícono de la categoría de [tx]: las del sistema por slug, las propias
+/// por el ícono que eligió el usuario.
+IconData transactionCategoryIcon(TransactionView tx) =>
+    tx.categorySlug == null && tx.categoryIconKey != null
+    ? ownCategoryIcon(tx.categoryIconKey)
+    : categoryIcon(tx.categorySlug);

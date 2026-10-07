@@ -48,6 +48,10 @@ abstract class TransactionView with _$TransactionView {
     String? categoryId,
     String? categoryName,
     String? categorySlug,
+
+    /// Clave del ícono de una categoría propia (las del sistema van por
+    /// [categorySlug]).
+    String? categoryIconKey,
     String? bank,
 
     /// Id de la cuenta vinculada (para editarla, spec 008 §3.3).

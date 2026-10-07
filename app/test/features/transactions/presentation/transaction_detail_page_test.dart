@@ -243,6 +243,21 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('una categoría propia muestra el ícono que eligió el usuario', (
+    tester,
+  ) async {
+    rows[_exito.id] = _exito.copyWith(
+      categoryId: 'cat-mascota',
+      categoryName: 'Mascota',
+      categorySlug: null,
+      categoryIconKey: 'pets',
+    );
+    await pumpDetail(tester);
+
+    expect(find.byIcon(Icons.pets_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.label_outline_rounded), findsNothing);
+  });
+
   testWidgets('las áreas táctiles miden al menos 48 dp', (tester) async {
     await pumpDetail(tester);
 

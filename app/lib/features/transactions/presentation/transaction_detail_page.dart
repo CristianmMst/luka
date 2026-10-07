@@ -308,7 +308,7 @@ class _Hero extends StatelessWidget {
                     : brand.neutralChip,
               ),
               child: Icon(
-                isTransfer ? transferIcon : categoryIcon(tx.categorySlug),
+                isTransfer ? transferIcon : transactionCategoryIcon(tx),
                 size: 28,
                 color: isTransfer ? brand.transfer : scheme.primary,
               ),

@@ -441,6 +441,23 @@ void main() {
     expect(find.textContaining('Sin duplicados.'), findsNothing);
   });
 
+  testWidgets('una categoría propia muestra el ícono que eligió el usuario', (
+    tester,
+  ) async {
+    rows = (_) => [
+      _exito.copyWith(
+        categoryId: 'cat-mascota',
+        categoryName: 'Mascota',
+        categorySlug: null,
+        categoryIconKey: 'pets',
+      ),
+    ];
+    await pumpPage(tester);
+
+    expect(find.byIcon(Icons.pets_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.label_outline_rounded), findsNothing);
+  });
+
   testWidgets('una categoría fuera de la lista se lee "Sin categoría"', (
     tester,
   ) async {

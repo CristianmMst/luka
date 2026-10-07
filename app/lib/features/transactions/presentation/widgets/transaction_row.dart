@@ -75,7 +75,7 @@ class TransactionRow extends StatelessWidget {
                           child: Icon(
                             isTransfer
                                 ? transferIcon
-                                : categoryIcon(tx.categorySlug),
+                                : transactionCategoryIcon(tx),
                             size: 20,
                             color: isTransfer ? brand.transfer : scheme.primary,
                           ),
