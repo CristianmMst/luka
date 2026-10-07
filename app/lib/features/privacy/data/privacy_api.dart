@@ -10,22 +10,6 @@ class PrivacyApi implements PrivacyRemote {
   final Dio _dio;
 
   @override
-  Future<String> exportData() async {
-    try {
-      // Texto crudo: se guarda tal cual, sin decodificar y volver a codificar.
-      final response = await _dio.get<String>(
-        '/v1/me/export',
-        options: Options(responseType: ResponseType.plain),
-      );
-      final body = response.data;
-      if (body == null || body.isEmpty) throw const PrivacyUnexpected();
-      return body;
-    } on DioException catch (e) {
-      throw _failure(ApiException.fromDio(e));
-    }
-  }
-
-  @override
   Future<void> deleteAccount() async {
     try {
       await _dio.delete<void>('/v1/me');

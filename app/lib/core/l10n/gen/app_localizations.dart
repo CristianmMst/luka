@@ -2356,18 +2356,6 @@ abstract class AppLocalizations {
   /// **'Nueva categoría'**
   String get myCategoriesNew;
 
-  /// No description provided for @myCategoriesSystemSection.
-  ///
-  /// In es, this message translates to:
-  /// **'De luka'**
-  String get myCategoriesSystemSection;
-
-  /// No description provided for @myCategoriesSystemNote.
-  ///
-  /// In es, this message translates to:
-  /// **'Las categorías de luka se pueden usar, pero no editar ni borrar.'**
-  String get myCategoriesSystemNote;
-
   /// No description provided for @myCategoriesMeta.
   ///
   /// In es, this message translates to:
@@ -3073,7 +3061,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacySubtitle.
   ///
   /// In es, this message translates to:
-  /// **'Exportar · Borrar cuenta'**
+  /// **'Borrar cuenta'**
   String get settingsPrivacySubtitle;
 
   /// No description provided for @privacySheetTitle.
@@ -3081,24 +3069,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Privacidad y datos'**
   String get privacySheetTitle;
-
-  /// No description provided for @privacyExportTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Exportar mis datos'**
-  String get privacyExportTitle;
-
-  /// No description provided for @privacyExportBody.
-  ///
-  /// In es, this message translates to:
-  /// **'Un archivo JSON con tus movimientos, cuentas, categorías y reglas.'**
-  String get privacyExportBody;
-
-  /// No description provided for @privacyExporting.
-  ///
-  /// In es, this message translates to:
-  /// **'Preparando el archivo…'**
-  String get privacyExporting;
 
   /// No description provided for @privacyDeleteTitle.
   ///
@@ -3136,12 +3106,6 @@ abstract class AppLocalizations {
   /// **'La conexión con Gmail'**
   String get privacyDeleteItemGmail;
 
-  /// No description provided for @privacyExportFirst.
-  ///
-  /// In es, this message translates to:
-  /// **'Exportar mis datos antes'**
-  String get privacyExportFirst;
-
   /// No description provided for @privacyDeleteConfirmLabel.
   ///
   /// In es, this message translates to:
@@ -3169,7 +3133,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyErrorOffline.
   ///
   /// In es, this message translates to:
-  /// **'Necesitas conexión para exportar o borrar tu cuenta.'**
+  /// **'Necesitas conexión para borrar tu cuenta.'**
   String get privacyErrorOffline;
 
   /// No description provided for @privacyErrorUnexpected.

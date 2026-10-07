@@ -1384,13 +1384,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myCategoriesNew => 'Nueva categoría';
 
   @override
-  String get myCategoriesSystemSection => 'De luka';
-
-  @override
-  String get myCategoriesSystemNote =>
-      'Las categorías de luka se pueden usar, pero no editar ni borrar.';
-
-  @override
   String myCategoriesMeta(String tag, int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1838,20 +1831,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsPrivacyTitle => 'Privacidad y datos';
 
   @override
-  String get settingsPrivacySubtitle => 'Exportar · Borrar cuenta';
+  String get settingsPrivacySubtitle => 'Borrar cuenta';
 
   @override
   String get privacySheetTitle => 'Privacidad y datos';
-
-  @override
-  String get privacyExportTitle => 'Exportar mis datos';
-
-  @override
-  String get privacyExportBody =>
-      'Un archivo JSON con tus movimientos, cuentas, categorías y reglas.';
-
-  @override
-  String get privacyExporting => 'Preparando el archivo…';
 
   @override
   String get privacyDeleteTitle => 'Borrar mi cuenta';
@@ -1873,9 +1856,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get privacyDeleteItemGmail => 'La conexión con Gmail';
 
   @override
-  String get privacyExportFirst => 'Exportar mis datos antes';
-
-  @override
   String get privacyDeleteConfirmLabel => 'Escribe BORRAR para confirmar';
 
   @override
@@ -1888,8 +1868,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get privacyDeleting => 'Borrando…';
 
   @override
-  String get privacyErrorOffline =>
-      'Necesitas conexión para exportar o borrar tu cuenta.';
+  String get privacyErrorOffline => 'Necesitas conexión para borrar tu cuenta.';
 
   @override
   String get privacyErrorUnexpected =>

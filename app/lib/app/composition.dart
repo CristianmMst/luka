@@ -112,9 +112,6 @@ List<Override> get appOverrides => [
   nfcServiceProvider.overrideWith(
     (ref) => ref.watch(nfcManagerServiceProvider),
   ),
-  exportSaverProvider.overrideWith(
-    (ref) => ref.watch(shareExportSaverProvider),
-  ),
   accountsStoreProvider.overrideWith(
     (ref) => ref.watch(driftAccountsStoreProvider),
   ),

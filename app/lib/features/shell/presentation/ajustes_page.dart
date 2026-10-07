@@ -325,7 +325,7 @@ class _TracePainter extends CustomPainter {
   bool shouldRepaint(_TracePainter oldDelegate) => false;
 }
 
-/// Fila "Privacidad y datos": abre la hoja de exportar y borrar cuenta.
+/// Fila "Privacidad y datos": abre la hoja de borrar cuenta.
 class _PrivacyTile extends StatelessWidget {
   const _PrivacyTile();
 

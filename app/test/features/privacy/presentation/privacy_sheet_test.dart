@@ -14,7 +14,6 @@ void main() {
 
   setUp(() {
     actions = _Actions();
-    when(() => actions.exportData()).thenAnswer((_) async {});
     when(() => actions.deleteAccount()).thenAnswer((_) async {});
   });
 
@@ -58,18 +57,6 @@ void main() {
     verify(() => actions.deleteAccount()).called(1);
   });
 
-  testWidgets('exportar y "Exportar mis datos antes" descargan', (
-    tester,
-  ) async {
-    await pumpSheet(tester);
-
-    await tapVisible(tester, find.text('Exportar mis datos'));
-    await tapVisible(tester, find.text('Exportar mis datos antes'));
-
-    verify(() => actions.exportData()).called(2);
-    verifyNever(() => actions.deleteAccount());
-  });
-
   testWidgets('sin conexión lo dice y no cierra', (tester) async {
     when(() => actions.deleteAccount()).thenThrow(const PrivacyOffline());
     await pumpSheet(tester);
@@ -79,7 +66,7 @@ void main() {
     await tapVisible(tester, deleteButton());
 
     expect(
-      find.text('Necesitas conexión para exportar o borrar tu cuenta.'),
+      find.text('Necesitas conexión para borrar tu cuenta.'),
       findsOneWidget,
     );
     expect(find.byType(PrivacySheet), findsOneWidget);

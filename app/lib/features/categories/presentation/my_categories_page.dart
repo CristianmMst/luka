@@ -89,43 +89,6 @@ class MyCategoriesPage extends ConsumerWidget {
                 side: BorderSide(color: scheme.primary),
               ),
             ),
-            const SizedBox(height: Space.lg),
-            Semantics(
-              header: true,
-              child: Text(
-                l10n.myCategoriesSystemSection.toUpperCase(),
-                style: section,
-              ),
-            ),
-            const SizedBox(height: Space.sm),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.lukaColors.card,
-                borderRadius: Radii.noticeAll,
-                border: Border.all(color: context.lukaColors.hairline),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  spacing: Space.sm,
-                  children: [
-                    Icon(
-                      Icons.lock_outline_rounded,
-                      size: 20,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                    Expanded(
-                      child: Text(
-                        l10n.myCategoriesSystemNote,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),

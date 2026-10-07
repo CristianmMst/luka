@@ -27,7 +27,7 @@ flowchart TD
     ADD --> QA[Formulario rápido<br/>también vía NFC deep link]
     ST --> FR[Reporte de renta]
     ST --> NFCW[Escribir tag NFC]
-    ST --> PRIV[Privacidad: exportar / borrar cuenta]
+    ST --> PRIV[Privacidad: borrar cuenta]
 ```
 
 El shell (`HomeShell`, `StatefulShellRoute.indexedStack`) tiene las 5 pestañas fijas del diagrama con una barra inferior común. El detalle de una transacción (`/movimientos/:id`) se apila sobre el navegador raíz: se ve a pantalla completa, sin la barra, y al volver regresa a la lista. A la fecha, Inicio (F4.6), Transacciones (F4.2), Registrar (F4.5a) y Revisión (F4.7) son reales. Ajustes tiene Gmail, notificaciones, Mis categorías, Mis cuentas y el cierre de sesión (§3.7); el resto llega en F4.8b.
@@ -106,15 +106,15 @@ Diseño Q del canvas de rediseño (https://claude.ai/artifact/Ht1fXBuffrojnVGcfn
   - Fila "Tags NFC" (F4.5b, solo Android, que es donde se escriben) → `/ajustes/tags-nfc`: las plantillas con su "Categoría · Cuenta", editar por fila (48 dp) y "Nuevo tag", con la nota de que funcionan solo en este teléfono.
   - Hoja "Nuevo tag" / "Editar tag": nombre (obligatorio, ≤ 60), categoría, cuenta (el selector de Registrar) y nota. Crear ofrece "Guardar y escribir en un tag" y "Solo guardar"; editar, "Guardar", "Escribir en un tag" y "Borrar tag". No van a la API.
   - "Escribir" abre la pantalla completa de marca (`hero`) "Acerca el tag al teléfono" (diseño B), que escribe el enlace y muestra "Tag listo" o el error (NFC apagado o sin soporte, tag de solo lectura, sin espacio, fallo de lectura) con "Intentar de nuevo". Salir cancela la sesión NFC.
-  - Fila "Mis categorías" (F4.8a) → `/ajustes/categorias`: las categorías propias (solo las ve su dueño, spec 005 §7) con ícono, color, etiqueta en lenguaje claro y conteo local de movimientos; editar y borrar por fila (48 dp) y "Nueva categoría". Las de luka se explican como no editables.
+  - Fila "Mis categorías" (F4.8a) → `/ajustes/categorias`: las categorías propias (solo las ve su dueño, spec 005 §7) con ícono, color, etiqueta en lenguaje claro y conteo local de movimientos; editar y borrar por fila (48 dp) y "Nueva categoría".
   - Hoja "Nueva categoría" / "Editar categoría" (diseño A "Hoja completa"): nombre (1–80), ícono de un set curado de 16 (6 por fila para conservar 48 dp) y color de 8 de la paleta (con ícono blanco AA), y "¿Para qué la usas?", que abre el selector de las 12 etiquetas fiscales agrupadas en gastos, aportes e ingresos, con nombre y pista en lenguaje claro (default "Gasto personal" = `no_deducible`; `transferencia` no se ofrece). Se abre también desde "Nueva categoría" del selector de categoría (no en el filtro), que deja elegida la nueva. Crear, editar y borrar van directo a la API (sin outbox): sin conexión se avisa "Necesitas conexión…"; nombre repetido (sin mayúsculas, propio o de luka) se avisa bajo el campo. Tras un éxito la copia local se actualiza al instante; editar o borrar además pide un sync para traer los movimientos que el servidor retaggeó o pasó a "Sin categoría".
   - Borrar confirma con un diálogo: "¿Borrar «X»? Sus N movimientos pasan a Sin categoría…".
   - Fila "Mis cuentas" (F4.4) → `/ajustes/cuentas`: las cuentas vinculadas (RF-6), con su alias (o el banco si no tiene) y "Banco · Tipo ···últimos 4"; editar y borrar por fila (48 dp) y "Agregar cuenta".
   - Hoja "Nueva cuenta" / "Editar cuenta" (diseño B "Lista + hoja", la misma del paso Cuentas del onboarding): banco (obligatorio, los 7 del backend), tipo (ahorros por defecto; corriente, tarjeta de crédito, billetera), últimos 4 (opcional, 1–4 dígitos) y alias (opcional, ≤ 60). El banco no se edita (el backend no lo acepta): se explica bajo el campo. Van directo a `/v1/accounts` (sin outbox); sin conexión se avisa, y una cuenta repetida (mismo banco y últimos 4, 409) se avisa bajo "últimos 4". Tras un éxito la copia local se actualiza al instante.
   - Borrar confirma: "¿Borrar «X»? Sus N movimientos quedan sin cuenta." En local se hace lo mismo que el servidor (`account_id` en NULL).
 - Privacidad (hoja "Privacidad y datos", diseño B, F4.8b):
-  - **Exportar mis datos** (RF-11.2) descarga `GET /me/export` y lo entrega por la hoja de compartir del sistema como `luka-AAAA-MM-DD.json` (`share_plus`), para guardarlo o mandarlo. Las exportaciones viejas del directorio temporal se borran antes de escribir una nueva.
-  - **Borrar mi cuenta** (RF-11.3) lista lo que se borra: movimientos y fuentes, correos y notificaciones guardados, cuentas, categorías y reglas, y la conexión con Gmail. Ofrece "Exportar mis datos antes" y exige escribir BORRAR para habilitar "Borrar para siempre" (doble confirmación). Tras el 204 de `DELETE /me` se cierra la sesión, lo que borra la base local (P6). Sin red o con error se avisa y no se toca nada local.
+  - Exportar mis datos (RF-11.2) queda pendiente en la app hasta decidir dónde ubicarlo; `GET /me/export` ya existe en el backend.
+  - **Borrar mi cuenta** (RF-11.3) lista lo que se borra: movimientos y fuentes, correos y notificaciones guardados, cuentas, categorías y reglas, y la conexión con Gmail. Exige escribir BORRAR para habilitar "Borrar para siempre" (doble confirmación). Tras el 204 de `DELETE /me` se cierra la sesión, lo que borra la base local (P6). Sin red o con error se avisa y no se toca nada local.
   - La política de privacidad se enlaza cuando exista su URL (F6.5).
 
 ### 3.8 Gastos fijos (RF-12)
